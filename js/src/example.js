@@ -790,6 +790,12 @@ var VolumeView = widgets.DOMWidgetView.extend({
         this.model.on('change:level1', this.value_changed, this);
         this.model.on('change:level2', this.value_changed, this);
         this.model.on('change:level3', this.value_changed, this);
+        this.model.on('change:opacity1', this.value_changed, this);
+        this.model.on('change:opacity2', this.value_changed, this);
+        this.model.on('change:opacity3', this.value_changed, this);
+        this.model.on('change:width1', this.value_changed, this);
+        this.model.on('change:width2', this.value_changed, this);
+        this.model.on('change:width3', this.value_changed, this);
         this.canvas =  $('<canvas/>',{'class':'ipyvolume', 'display':'inline'}).width(512).height(512);
 		//display_javascript(""" $('#%s').vr(
 		//		$.extend({cube:%s, colormap:window.colormap_src}, %s)
