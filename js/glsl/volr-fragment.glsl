@@ -83,9 +83,11 @@ void main(void) {
       //float distance_norm = clamp(((-chi/0.5)+1.)/2., 0., 1.);
       //color_index = 0.9;
       //vec4 color_sample = texture2D(colormap, vec2(1.-volume_level[j], colormap_index_scaled));
-      vec4 color_sample = texture2D(colormap, vec2(data_value, colormap_index_scaled));
+      //vec4 color_sample = texture2D(colormap, vec2(data_value, colormap_index_scaled));
 
-      float intensity = texture2D(transfer_function, vec2(data_value, 0.5)).a;
+      vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
+      float intensity = color_sample.a;
+      //float intensity = texture2D(transfer_function, vec2(data_value, 0.5)).a;
       //color_sample = texture2D(transfer_function, data_value);
       //vec4 color_sample = texture2D(colormap, vec2(sample.a, colormap_index_scaled));
       //color_sample = texture2D(volume, ray_pos.yz);
