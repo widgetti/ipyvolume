@@ -31,12 +31,16 @@ class Volume(widgets.DOMWidget):
     width1 = traitlets.Float(0.1).tag(sync=True)
     width2 = traitlets.Float(0.1).tag(sync=True)
     width3 = traitlets.Float(0.2).tag(sync=True)
+    angle1 = traitlets.Float(0.1).tag(sync=True)
+    angle2 = traitlets.Float(0.2).tag(sync=True)
     def __init__(self, **kwargs):
         super(Volume, self).__init__(**kwargs)
 
 
 def _volume_widets(v):
     import ipywidgets
+    angle1 = ipywidgets.FloatSlider(min=0, max=np.pi*2, value=v.angle1, description="angle1")
+    angle2 = ipywidgets.FloatSlider(min=0, max=np.pi*2, value=v.angle2, description="angle2")
     l1 = ipywidgets.FloatSlider(min=0, max=1, value=v.level1, description="level1")
     l2 = ipywidgets.FloatSlider(min=0, max=1, value=v.level2, description="level2")
     l3 = ipywidgets.FloatSlider(min=0, max=1, value=v.level3, description="level3")
@@ -49,9 +53,11 @@ def _volume_widets(v):
     ipywidgets.jslink((v, 'opacity1'), (o1, 'value'))
     ipywidgets.jslink((v, 'opacity2'), (o2, 'value'))
     ipywidgets.jslink((v, 'opacity3'), (o3, 'value'))
+    ipywidgets.jslink((v, 'angle1'), (angle1, 'value'))
+    ipywidgets.jslink((v, 'angle2'), (angle2, 'value'))
     #ipywidgets.HBox([l1, l2, l3]), ipywidgets.HBox([o1, o2, o3]),
     return ipywidgets.VBox(
-        [v.tf.control(), v.tf, v]
+        [v.tf.control(), v, ipywidgets.HBox([angle1, angle2])]
     )
 
 
