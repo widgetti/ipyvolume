@@ -3,6 +3,7 @@ import numpy as np
 logger = logging.getLogger("ipyvolume")
 from io import BytesIO as StringIO
 from base64 import b64encode
+import warnings
 
 def cube_to_png(grid, file):
 	#f = StringIO()
@@ -15,7 +16,6 @@ def cube_to_png(grid, file):
 
 	vmin, vmax = np.nanmin(grid), np.nanmax(grid)
 	grid_normalized = (grid - vmin) / (vmax - vmin)
-	print(np.nanmin(grid_normalized), np.nanmax(grid_normalized))
 	grid_normalized[~np.isfinite(grid_normalized)] = 0
 	# intensity_normalized = (np.log(self.data3d + 1.) - np.log(mi)) / (np.log(ma) - np.log(mi));
 	import PIL.Image
@@ -28,8 +28,10 @@ def cube_to_png(grid, file):
 			for i in range(3):
 				subdata[...,i+1] = subdata[...,0]
 			#subdata[..., i + 1] = 255
-	img = PIL.Image.frombuffer("RGBA", (128 * 16, 128 * 8), data, 'raw')
-	img.save(file, "png")
+	with warnings.catch_warnings():
+		warnings.simplefilter("ignore")
+		img = PIL.Image.frombuffer("RGBA", (128 * 16, 128 * 8), data, 'raw')
+		img.save(file, "png")
 
 def rgba_to_png(rgba, file):
 	import PIL.Image
@@ -42,8 +44,10 @@ def rgba_to_png(rgba, file):
 	rgba[~np.isfinite(rgba)] = 0
 	data = (np.clip(rgba, 0, 1) * 255).astype(np.uint8)
 	#print("shape rgba", rgba.shape[:2], vmin, vmax, rgba.sum())
-	img = PIL.Image.frombuffer("RGBA", rgba.shape[:2], data, 'raw')
-	img.save(file, "png")
+	with warnings.catch_warnings():
+		warnings.simplefilter("ignore")
+		img = PIL.Image.frombuffer("RGBA", rgba.shape[:2], data, 'raw')
+		img.save(file, "png")
 
 def rgba_to_json(rgba, obj=None):
 	f = StringIO()
@@ -60,8 +64,15 @@ def cube_to_json(grid, obj=None):
 def from_json(value, obj=None):
 	return []
 
+def array_to_json(ar, obj=None):
+	return ar.tolist() if ar is not None else None
+
+def from_json_to_array(value, obj=None):
+	return np.array(value) if value else None
+
 array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
 array_rgba_png_serialization = dict(to_json=rgba_to_json, from_json=from_json)
+array_serialization = dict(to_json=array_to_json, from_json=from_json_to_array)
 
 if __name__ == "__main__":
     import sys
