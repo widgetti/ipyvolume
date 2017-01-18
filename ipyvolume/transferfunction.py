@@ -3,35 +3,66 @@ from traitlets import Unicode, validate
 from traittypes import Array
 import traitlets
 import numpy as np
-from .serialize import array_rgba_png_serialization
+from .serialize import array_rgba_png_serialization, array_serialization
 N = 1024
 x = np.linspace(0, 1, N, endpoint=True)
 import matplotlib.colors
 
-def array_from_json(value, obj=None):
-	if value is not None:
-		return np.asarray(value['values'], dtype=np.float64)
+if 0:
+	def array_from_json(value, obj=None):
+		if value is not None:
+			return np.asarray(value['values'], dtype=np.float64)
 
-def array_to_json(a, obj=None):
-	if a is not None:
-		a = a.astype(np.float64)
-		return dict(values=a.tolist(), type=str(a.dtype))
-	else:
-		return dict(values=a, type=None)
+	def array_to_json(a, obj=None):
+		if a is not None:
+			a = a.astype(np.float64)
+			return dict(values=a.tolist(), type=str(a.dtype))
+		else:
+			return dict(values=a, type=None)
 
 
-array_serialization = dict(to_json=array_to_json, from_json=array_from_json)
+	array_serialization = dict(to_json=array_to_json, from_json=array_from_json)
 
 @widgets.register('ipyvolume.transferfunction.TransferFunction')
 class TransferFunction(widgets.DOMWidget):
 	_view_name = Unicode('TransferFunctionView').tag(sync=True)
 	_view_module = Unicode('ipyvolume').tag(sync=True)
 	style = Unicode("height: 32px; width: 100%;").tag(sync=True)
-	rgba = Array().tag(sync=True, **array_rgba_png_serialization)
-	r = Array(x).tag(sync=True, **array_serialization)
-	g = Array(x*0).tag(sync=True, **array_serialization)
-	b = Array(1-x).tag(sync=True, **array_serialization)
-	a = Array(np.cos(x*np.pi/2)**2).tag(sync=True, **array_serialization)
+	rgba = Array().tag(sync=True, **array_serialization)
+
+class TransferFunctionWidgetJs3(TransferFunction):
+	_model_name = Unicode('TransferFunctionWidgetJs3Model').tag(sync=True)
+	_model_module = Unicode('ipyvolume').tag(sync=True)
+	level1 = traitlets.Float(0.1).tag(sync=True)
+	level2 = traitlets.Float(0.5).tag(sync=True)
+	level3 = traitlets.Float(0.8).tag(sync=True)
+	opacity1 = traitlets.Float(0.4).tag(sync=True)
+	opacity2 = traitlets.Float(0.1).tag(sync=True)
+	opacity3 = traitlets.Float(0.1).tag(sync=True)
+	width1 = traitlets.Float(0.1).tag(sync=True)
+	width2 = traitlets.Float(0.1).tag(sync=True)
+	width3 = traitlets.Float(0.1).tag(sync=True)
+
+
+	def control(self):
+		import ipywidgets
+		l1 = ipywidgets.FloatSlider(min=0, max=1, value=self.level1)
+		l2 = ipywidgets.FloatSlider(min=0, max=1, value=self.level2)
+		l3 = ipywidgets.FloatSlider(min=0, max=1, value=self.level3)
+		o1 = ipywidgets.FloatSlider(min=0, max=0.1, step=0.01, value=self.opacity1)
+		o2 = ipywidgets.FloatSlider(min=0, max=0.1, step=0.01, value=self.opacity2)
+		o3 = ipywidgets.FloatSlider(min=0, max=0.1, step=0.01, value=self.opacity2)
+		ipywidgets.jslink((self, 'level1'), (l1, 'value'))
+		ipywidgets.jslink((self, 'level2'), (l2, 'value'))
+		ipywidgets.jslink((self, 'level3'), (l3, 'value'))
+		ipywidgets.jslink((self, 'opacity1'), (o1, 'value'))
+		ipywidgets.jslink((self, 'opacity2'), (o2, 'value'))
+		ipywidgets.jslink((self, 'opacity3'), (o3, 'value'))
+		return ipywidgets.VBox(
+			[ipywidgets.HBox([ipywidgets.Label(value="levels:"), l1, l2, l3]),
+			 ipywidgets.HBox([ipywidgets.Label(value="opacities:"), o1, o2, o3])]
+		)
+
 
 class TransferFunctionWidget3(TransferFunction):
 	level1 = traitlets.Float(0.1).tag(sync=True)
@@ -55,8 +86,8 @@ class TransferFunctionWidget3(TransferFunction):
 		self.recompute_rgba()
 
 	def recompute_rgba(self, *_ignore):
-		old_value = np.zeros((1024, 1, 4))
-		rgba = np.zeros((1024, 1, 4))
+		old_value = np.zeros((1024, 4))
+		rgba = np.zeros((1024, 4))
 		N = range(1,4)
 		levels = [getattr(self, "level%d" % k) for k in N]
 		opacities = [getattr(self, "opacity%d" % k) for k in N]
@@ -70,9 +101,9 @@ class TransferFunctionWidget3(TransferFunction):
 			#self.rgba[i, 0, :] = 0
 			for j in range(3):
 				intensity = np.exp(-((position-levels[j]) / widths[j])**2)
-				rgba[i,0,0:3] += colors[j] * opacities[j] * intensity
-				rgba[i, 0, 3] += opacities[j] * intensity
-			rgba[i, 0, 0:3] /= rgba[i,0,0:3].max()
+				rgba[i,0:3] += colors[j] * opacities[j] * intensity
+				rgba[i,3] += opacities[j] * intensity
+			rgba[i, 0:3] /= rgba[i,0:3].max()
 		rgba = np.clip(rgba, 0, 1)
 		self.rgba = rgba
 		#self._notify_trait("rgba", old_value, self.rgba)
