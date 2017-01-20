@@ -32,7 +32,6 @@ def cube_to_png(grid, file):
 		warnings.simplefilter("ignore")
 		img = PIL.Image.frombuffer("RGBA", (image_width, image_height), data, 'raw')
 		img.save(file, "png")
-		img.save("ser.png")
 	return (image_width, image_height), (grid.shape[2], grid.shape[1]), rows, columns, grid.shape[0]
 
 def rgba_to_png(rgba, file):
