@@ -222,7 +222,9 @@ var VolumeModel = widgets.DOMWidgetModel.extend({
         _view_name : 'VolumeView',
         _model_module : 'ipyvolume',
         _view_module : 'ipyvolume',
-        value : 'Volume World'
+        value : 'Volume World',
+        angle1: 0.1,
+        angle2: 0.2
     })
 }, {
     serializers: _.extend({
@@ -244,18 +246,14 @@ var VolumeView = widgets.DOMWidgetView.extend({
 
         this.model.on('change:angle1', this.update_scene, this);
         this.model.on('change:angle2', this.update_scene, this);
+        this.model.on('change:volume', this.volume_changed, this);
 
         window.tf = this.model.get("tf")
         this.model.get("tf").on('change:rgba', this.tf_changed, this);
-        //console.log("initial volume:")
-        //console.log(this.model.get("volume"))
         this.canvas =  $('<canvas/>',{'class':'ipyvolume', 'display':'inline'}).width(512).height(512);
 		//display_javascript(""" $('#%s').vr(
 		//		$.extend({cube:%s, colormap:window.colormap_src}, %s)
 		$(this.el).append(this.canvas)
-		console.log(this.el)
-		console.log(this.canvas)
-		console.log(shaders)
 
         var shader_cube;
         var shader_texture;
@@ -316,7 +314,9 @@ var VolumeView = widgets.DOMWidgetView.extend({
         this.shader_volume_rendering_updates = this.shader_volume_rendering_poor;
         this.shader_volume_rendering_final = this.shader_volume_rendering_best;
 
-        this.texture_volume = this.init_volume_texture(default_cube_url)
+        this.texture_volume = this.init_volume_texture()
+        this.volume_changed()
+
         this.texture_colormaps = this.init_colormap_texture(colormap_url)
 
         var triangleVertexPositionBuffer;
@@ -347,8 +347,6 @@ var VolumeView = widgets.DOMWidgetView.extend({
         //console.log("array > " + transfer_function_array.length)
         //gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.ALPHA, transfer_function_array.length, 1, 0, this.gl.ALPHA, this.gl.UNSIGNED_BYTE, transfer_function_uint8_array);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1024, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-
-        console.log(this.gl.getError())
 
         this.frame_buffer = this.gl.createFramebuffer();
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frame_buffer);
@@ -552,20 +550,9 @@ var VolumeView = widgets.DOMWidgetView.extend({
         event.preventDefault();
     },
     canvas_onmousedown: function(event){
-        console.log("down")
-        var elm = this.canvas.offset();
-        console.log(elm)
-        var msg = "Handler for .mousedown() called at ";
-        msg += event.pageX + ", " + event.pageY;
-        //$( "#log" ).append( "<div>" + msg + "</div>" );
-        //event.preventDefault();
         this.mouse_down = true;
     },
     canvas_onmouseup: function(event){
-        console.log("up")
-        var msg = "Handler for .mouseup() called at ";
-        msg += event.pageX + ", " + event.pageY;
-        //$( "#log" ).append( "<div>" + msg + "</div>" );
         event.preventDefault();
         this.mouse_down = false;
     },
@@ -632,7 +619,6 @@ var VolumeView = widgets.DOMWidgetView.extend({
         //gl.drawElements(this.gl.LINES, cubeIndexBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
     },
     draw_scene: function() {
-        console.log("draw scene")
 
         /*canvas2d_element = document.getElementById("canvas-transfer");
         canvas2d = canvas2d_element.getContext("2d");
@@ -713,17 +699,20 @@ var VolumeView = widgets.DOMWidgetView.extend({
         this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "brightness"), this.brightness);
         this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "data_min"), this.data_min);
         this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "data_max"), this.data_max);
+        this.gl.uniform2f(this.gl.getUniformLocation(this.shader_volume_rendering, "volume_size"), this.volume.image_shape[0], this.volume.image_shape[1]);
+        this.gl.uniform2f(this.gl.getUniformLocation(this.shader_volume_rendering, "volume_slice_size"), this.volume.slice_shape[0], this.volume.slice_shape[1]);
+        this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "volume_rows"), this.volume.rows);
+        this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "volume_slices"), this.volume.slices);
+        this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "volume_columns"), this.volume.columns);
 
         //this.gl.uniform1fv(this.gl.getUniformLocation(shader_volume_rendering, "opacity"),  this.opacity);
         //this.gl.uniform1fv(this.gl.getUniformLocation(shader_volume_rendering, "volume_level"), options.volume_level);
         //this.gl.uniform1fv(this.gl.getUniformLocation(shader_volume_rendering, "volume_width"), options.volume_width);
 
-        console.log("draw cube")
         this.draw_cube(this.shader_volume_rendering);
 
         this.gl.cullFace(this.gl.BACK);
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-        console.log("draw texture")
         this.draw_texture();
     },
     update_scene: function() {
@@ -742,16 +731,13 @@ var VolumeView = widgets.DOMWidgetView.extend({
         //this.()
     },
     update_scene_direct: function() {
-        console.log("real update scene")
         this.gl.clearColor(0.0, 1.0, 0.0, 1.0);
         this.gl.enable(this.gl.DEPTH_TEST);
         this.draw_scene();
     },
     tf_changed: function() {
-        console.log("updateing TF")
         var vr = $(this.vr).data('vr')
         src = this.model.get("tf").get("rgba")
-        console.log(src)
         this.updateTFTexture(src)
     },
     set_matrix_uniforms: function (program) {
@@ -759,10 +745,11 @@ var VolumeView = widgets.DOMWidgetView.extend({
         this.gl.uniformMatrix4fv(program.mvMatrixUniform, false, this.mvMatrix);
     },
     volume_changed: function() {
-        var vr = $(this.vr).data('vr')
-        //console.log("volume:")
-        //console.log(this.model.get("volume"))
-        vr.set_volume_texture_data(this.model.get("volume"))
+        this.volume = this.model.get("volume")
+        if(!this.volume) {
+            this.volume = {image_shape: [2048, 1024], slice_shape: [128, 128], rows: 8, columns:16, slices: 128, src:default_cube_url}
+        }
+        this.set_volume_texture_data(this.volume.src)
     },
     value_changed: function() {
         return;
@@ -771,20 +758,15 @@ var VolumeView = widgets.DOMWidgetView.extend({
             volume_width: [this.model.get('width1'), this.model.get('width2'), this.model.get('width3')],
             opacity: [this.model.get('opacity1'), this.model.get('opacity2'), this.model.get('opacity3')]
          };
-         //console.log("volume(value changed):")
-         //console.log(this.model.get("volume"))
          var vr = $(this.vr).data('vr')
-         console.log("new settings")
-         console.log(new_settings)
          $.extend(vr.settings, new_settings)
-         console.log(this.vr)
          window.vr = this.vr
          window.vv = this;
          vr.update_transfer_function_array()
 		 vr.updateScene()
     },
     set_volume_texture_data: function(src) {
-        loadTexture(this.texture_volume, this.gl.RGBA, src);
+        this.load_texture(this.texture_volume, this.gl.RGBA, src);
     },
     init_colormap_texture: function(src) {
         var texture_colormaps = this.gl.createTexture();
@@ -800,7 +782,7 @@ var VolumeView = widgets.DOMWidgetView.extend({
         //var ext = this.gl.getExtension("OES_texture_float")
         //console.log("ext:" + ext.FLOAT);
     },
-    init_volume_texture: function(src) {
+    init_volume_texture: function() {
         var texture_volume = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture_volume);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
@@ -809,7 +791,7 @@ var VolumeView = widgets.DOMWidgetView.extend({
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.volume_size, this.volume_size, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-        this.load_texture(texture_volume, this.gl.RGBA, src);
+        //this.load_texture(texture_volume, this.gl.RGBA, src);
         return texture_volume
     },
     load_texture: function (texture, format, url) {
@@ -827,8 +809,6 @@ var VolumeView = widgets.DOMWidgetView.extend({
     updateTFTexture: function(rgba) {
         var textureImage = new Image();
         var that = this;
-        console.log("new transfer function data")
-        console.log(rgba)
         var flat_array = [];
         window.rgba = rgba
         for(var i = 0; i < rgba.length; i++) {
@@ -848,18 +828,12 @@ var VolumeView = widgets.DOMWidgetView.extend({
         textureImage.onload = function() {
             that.gl.bindTexture(that.gl.TEXTURE_2D, that.texture_transfer_function);
             that.gl.texImage2D(that.gl.TEXTURE_2D, 0, that.gl.RGBA, that.gl.RGBA, that.gl.UNSIGNED_BYTE, textureImage);
-            //gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, array.length, 1, 0, this.gl.ALPHA, this.gl.UNSIGNED_BYTE, transfer_function_uint8_array);
-            //alert("loaded: " +volumeImage.src + " " +gl.getError() + ":" +volumeImage);
-            console.log("loaded tf texture: " +that.texture_transfer_function)
             that.update_scene()
         }
         textureImage.src = src;
         return textureImage;
     },
     init_GL: function (canvas) {
-        console.log(window.WebGLRenderingContext)
-        console.log(canvas)
-        console.log(canvas.getContext)
         window.canvas = canvas
         this.gl = canvas.getContext("experimental-webgl");
         if(this.gl) {
@@ -872,9 +846,7 @@ var VolumeView = widgets.DOMWidgetView.extend({
     },
     load_shader: function (url, name) {
         assign = function(response) {
-            //console.log("name " + name +" = " + response)
             shader_text[name] = response
-            console.log("shader: " +name)
             shaders_loaded += 1;
         }
         return $.ajax({
@@ -971,6 +943,15 @@ var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
     defaults: _.extend({}, TransferFunctionModel.prototype.defaults, {
         _model_name : 'TransferFunctionWidgetJs3Model',
         _model_module : 'ipyvolume',
+        level1: 0.1,
+        level2: 0.5,
+        level3: 0.8,
+        opacity1: 0.01,
+        opacity2: 0.05,
+        opacity3: 0.1,
+        width1: 0.1,
+        width2: 0.1,
+        width3: 0.1
     }),
     initialize: function() {
         TransferFunctionWidgetJs3Model.__super__.initialize.apply(this, arguments);
@@ -994,9 +975,6 @@ var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
         var opacities = [this.get("opacity1"), this.get("opacity2"), this.get("opacity3")]
         window.rgba = rgba
         window.tfjs = this
-        console.log(levels)
-        console.log(widths)
-        console.log(opacities)
         var N = 256
         for(var i = 0; i < N; i++) {
             var x = i/(N-1);
@@ -1029,3 +1007,11 @@ module.exports = {
     TransferFunctionView: TransferFunctionView,
     TransferFunctionWidgetJs3Model: TransferFunctionWidgetJs3Model
 };
+
+
+
+//////////////////
+// WEBPACK FOOTER
+// ./src/volume.js
+// module id = 1
+// module chunks = 0
