@@ -12,39 +12,36 @@ uniform float volume_width[4];
 uniform float brightness;
 uniform float data_min;
 uniform float data_max;
+uniform float volume_rows;
+uniform float volume_columns;
+uniform float volume_slices;
+uniform vec2 volume_size;
+uniform vec2 volume_slice_size;
 
 uniform sampler2D transfer_function;
 
 //uniform float color_index;
 
-vec2 computeSliceOffset(float slice, float slicesPerRow, vec2 sliceSize) {
-return sliceSize * vec2(mod(slice, slicesPerRow),
-            floor(slice / slicesPerRow));
+vec2 compute_slice_offset(float slice, float columns, vec2 uv_slice_spacing) {
+    return uv_slice_spacing * vec2(mod(slice, columns), floor(slice / columns));
 }
-vec4 sampleAs3DTexture(sampler2D tex, vec3 texCoord, float size, float numRows, float slicesPerRow) {
-  //float slice   = texCoord.z*0. + 1.*size*(size-1.)/size ;
-  float slice   = texCoord.z*size*(size-1.)/size ;
-  float sliceZ  = floor(slice);                         // slice we need
-  float zOffset = fract(slice);                         // dist between slices
-  //sliceZ = 64.;
+vec4 sample_as_3d_texture(sampler2D tex, vec2 tex_size, vec3 texCoord, vec2 slice_size, float slices, float rows, float columns) {
+  float slice   = texCoord.z*slices*(slices-1.)/slices ;
+  float slice_z  = floor(slice);
+  float slice_z_offset = fract(slice);
 
-  vec2 sliceSize = vec2((1.0-1./2048.) / slicesPerRow,             // u space of 1 slice
-              (1.0-1./1024.) / numRows);                 // v space of 1 slice
-
-  vec2 slice0Offset = computeSliceOffset(sliceZ, slicesPerRow, sliceSize);
-  vec2 slice1Offset = computeSliceOffset(sliceZ + 1.0, slicesPerRow, sliceSize);
-
-  vec2 slicePixelSize = sliceSize / size;               // space of 1 pixel
-  vec2 sliceInnerSize = slicePixelSize * (size - 1.0);  // space of size pixels
+  vec2 pixel = 1./tex_size;
+  vec2 uv_slice_spacing = slice_size/tex_size;
 
   vec2 coord = vec2(texCoord.x, texCoord.y);
-  vec2 uv = slicePixelSize * 0.5 + coord * sliceInnerSize;
-  vec4 slice0Color = texture2D(tex, slice0Offset + uv);
-  //vec2 uv1 = slice0Offset + uv.xy;
-  //vec4 slice0Color = texture2D(tex, vec2(uv1.x, uv1.y));
-  vec4 slice1Color = texture2D(tex, slice1Offset + uv);
-  return mix(slice0Color, slice1Color, zOffset);
-  ///return slice0Color;
+  vec2 uv = pixel * 0.5 + coord * (uv_slice_spacing - pixel);
+
+  vec2 slice0_offset = compute_slice_offset(slice_z, columns, uv_slice_spacing);
+  vec2 slice1_offset = compute_slice_offset(slice_z + 1.0, columns, uv_slice_spacing);
+
+  vec4 slice0_color = texture2D(tex, slice0_offset + uv);
+  vec4 slice1_color = texture2D(tex, slice1_offset + uv);
+  return mix(slice0_color, slice1_color, slice_z_offset);
 }
 
 void main(void) {
@@ -70,7 +67,7 @@ void main(void) {
     //pos = vec3(ray_pos.xy, 1./128. * mod1); //ray_pos.z * 0.9 + 0.05);
     //pos = vec3(ray_pos.x, ray_pos.y, 1./128. * mod1); //ray_pos.z * 0.9 + 0.05);
     //vec4 color_sample = sampleAs3DTexture(volume, pos, 128., 8., 16.);
-    vec4 sample = sampleAs3DTexture(volume, pos, 128., 8., 16.);
+    vec4 sample = sample_as_3d_texture(volume, volume_size, pos, volume_slice_size, volume_slices, volume_rows, volume_columns);
     //for(int j = 0; j < 3; j++) {
       //float bla = length(sample)/sqrt(3.);
       float data_value = (sample.a - data_min) * data_scale;
