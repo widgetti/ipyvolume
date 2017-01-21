@@ -12,8 +12,8 @@ shaders["texture_vertex"] = require('../glsl/texture-vertex.glsl');
 shaders["volr_fragment"] = require('../glsl/volr-fragment.glsl');
 shaders["volr_vertex"] = require('../glsl/volr-vertex.glsl');
 
-var colormap_url = require('../colormap.png');
-var default_cube_url = require('../cube.png');
+var colormap_url;// = require('../colormap.png');
+var default_cube_url; //= require('../cube.png');
 
 (function($) {
 var colormap_names = ["PaulT_plusmin", "binary", "Blues", "BuGn", "BuPu", "gist_yarg", "GnBu", "Greens", "Greys", "Oranges", "OrRd", "PuBu", "PuBuGn", "PuRd", "Purples", "RdPu", "Reds", "YlGn", "YlGnBu", "YlOrBr", "YlOrRd", "afmhot", "autumn", "bone", "cool", "copper", "gist_gray", "gist_heat", "gray", "hot", "pink", "spring", "summer", "winter", "BrBG", "bwr", "coolwarm", "PiYG", "PRGn", "PuOr", "RdBu", "RdGy", "RdYlBu", "RdYlGn", "seismic", "Accent", "Dark2", "hsv", "Paired", "Pastel1", "Pastel2", "Set1", "Set2", "Set3", "spectral", "gist_earth", "gist_ncar", "gist_rainbow", "gist_stern", "jet", "brg", "CMRmap", "cubehelix", "gnuplot", "gnuplot2", "ocean", "rainbow", "terrain", "flag", "prism"];
@@ -217,15 +217,16 @@ var colormap_names = ["PaulT_plusmin", "binary", "Blues", "BuGn", "BuPu", "gist_
 // When serialiazing entire widget state for embedding, only values different from the
 // defaults will be specified.
 var VolumeModel = widgets.DOMWidgetModel.extend({
-    defaults: _.extend({}, widgets.DOMWidgetModel.prototype.defaults, {
-        _model_name : 'VolumeModel',
-        _view_name : 'VolumeView',
-        _model_module : 'ipyvolume',
-        _view_module : 'ipyvolume',
-        value : 'Volume World',
-        angle1: 0.1,
-        angle2: 0.2
-    })
+    defaults: function() {
+        return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
+            _model_name : 'VolumeModel',
+            _view_name : 'VolumeView',
+            _model_module : 'ipyvolume',
+            _view_module : 'ipyvolume',
+            angle1: 0.1,
+            angle2: 0.2
+        })
+    }
 }, {
     serializers: _.extend({
         tf: { deserialize: widgets.unpack_models },
@@ -931,28 +932,31 @@ var TransferFunctionView = widgets.DOMWidgetView.extend( {
 });
 
 var TransferFunctionModel = widgets.DOMWidgetModel.extend({
-    defaults: _.extend({}, widgets.DOMWidgetModel.prototype.defaults, {
-        _model_name : 'TransferFunctionModel',
-        _view_name : 'TransferFunctionView',
-        _model_module : 'ipyvolume',
-        _view_module : 'ipyvolume',
-    })
+    defaults: function() {
+        return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
+            _model_name : 'TransferFunctionModel',
+            _view_name : 'TransferFunctionView',
+            _model_module : 'ipyvolume',
+            _view_module : 'ipyvolume',
+        })
+    }
 });
 
 var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
-    defaults: _.extend({}, TransferFunctionModel.prototype.defaults, {
-        _model_name : 'TransferFunctionWidgetJs3Model',
-        _model_module : 'ipyvolume',
-        level1: 0.1,
-        level2: 0.5,
-        level3: 0.8,
-        opacity1: 0.01,
-        opacity2: 0.05,
-        opacity3: 0.1,
-        width1: 0.1,
-        width2: 0.1,
-        width3: 0.1
-    }),
+    defaults: function() {
+        return _.extend(TransferFunctionModel.prototype.defaults(), {
+            _model_name : 'TransferFunctionWidgetJs3Model',
+            level1: 0.1,
+            level2: 0.5,
+            level3: 0.8,
+            opacity1: 0.01,
+            opacity2: 0.05,
+            opacity3: 0.1,
+            width1: 0.1,
+            width2: 0.1,
+            width3: 0.1
+        })
+    },
     initialize: function() {
         TransferFunctionWidgetJs3Model.__super__.initialize.apply(this, arguments);
         this.on("change:level1", this.recalculate_rgba, this);
