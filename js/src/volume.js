@@ -309,10 +309,10 @@ var VolumeView = widgets.DOMWidgetView.extend({
         this.gl.useProgram(this.shader_cube);
         this.shader_texture = this.init_shaders("texture");
         this.shader_volume_rendering_best = this.init_shaders("volr", {NR_OF_STEPS:300});
-        this.shader_volume_rendering_fast = this.init_shaders("volr", {NR_OF_STEPS:80});
+        this.shader_volume_rendering_fast = this.init_shaders("volr", {NR_OF_STEPS:150});
         this.shader_volume_rendering_poor = this.init_shaders("volr", {NR_OF_STEPS:40});
         this.shader_volume_rendering = this.shader_volume_rendering_fast;
-        this.shader_volume_rendering_updates = this.shader_volume_rendering_poor;
+        this.shader_volume_rendering_updates = this.shader_volume_rendering_fast;
         this.shader_volume_rendering_final = this.shader_volume_rendering_best;
 
         this.texture_volume = this.init_volume_texture()
