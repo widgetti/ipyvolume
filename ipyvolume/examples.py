@@ -25,11 +25,11 @@ def xyz(shape=128, limits=[-3, 3], spherical=False):
 		return x, y, z
 
 
-def example_ylm(shape=128, limits=[-3, 3], **kwargs):
+def example_ylm(m=0, n=2, shape=128, limits=[-4, 4], **kwargs):
 	__, __, __, r, theta, phi = xyz(shape=shape, limits=limits, spherical=True)
 	radial = np.exp(-(r - 2) ** 2)
-	data = np.abs(scipy.special.sph_harm(0, 2, theta, phi) ** 2) * radial
-	return ipyvolume.volume(data=data.T, **kwargs)
+	data = np.abs(scipy.special.sph_harm(m, n, theta, phi) ** 2) * radial
+	return ipyvolume.volshow(data=data.T, **kwargs)
 
 
 # http://graphics.stanford.edu/data/voldata/
