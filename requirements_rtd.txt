@@ -4,4 +4,3 @@ traittypes
 traitlets
 ipywidgets
 Pillow
-vaex
