@@ -37,7 +37,7 @@ def _volume_widets(v):
         [v.tf.control(), v] # , ipywidgets.HBox([angle1, angle2])
     )
 
-def volume(data, **kwargs):
+def volshow(data, **kwargs):
     if "tf" not in kwargs:
         kwargs["tf"] = TransferFunctionWidgetJs3(**kwargs)
     v = Volume(volume=data, **kwargs)
