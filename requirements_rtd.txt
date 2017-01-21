@@ -1,2 +1,6 @@
 jupyter_sphinx
 ipyvolume
+traittypes
+traitlets
+ipywidgets
+Pillow
