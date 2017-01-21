@@ -22,7 +22,7 @@ log.set_verbosity(log.DEBUG)
 log.info('setup.py entered')
 log.info('$PATH=%s' % os.environ['PATH'])
 
-LONG_DESCRIPTION = 'IPython widget for rendering 3d volumes'
+LONG_DESCRIPTION = 'IPython widget for rendering 3d volumes in the Jupter notebook'
 
 def js_prerelease(command, strict=False):
     """decorator for building minified js/css prior to another command"""
@@ -142,11 +142,12 @@ setup_args = {
 
     'author': 'Maarten A. Breddels',
     'author_email': 'maartenbreddels@gmail.com',
-    'url': 'http://jupyter.org',
+    'url': 'https://github.com/maartenbreddels/ipyvolume',
     'keywords': [
         'ipython',
         'jupyter',
         'widgets',
+        'volume rendering'
     ],
     'classifiers': [
         'Development Status :: 4 - Beta',
