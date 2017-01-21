@@ -1,1 +1,2 @@
 jupyter_sphinx
+ipyvolume
