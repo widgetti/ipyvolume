@@ -68,4 +68,3 @@ def volshow(data, lighting=False, **kwargs):
     v = Volume(volume=data, **kwargs)
     return _volume_widets(v, lighting=lighting)
 
-import jupyter_sphinx
