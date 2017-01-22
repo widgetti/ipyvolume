@@ -15,7 +15,7 @@ def cube_to_png(grid, file):
 	data = np.zeros((image_height, image_width, 4), dtype=np.uint8)
 
 	vmin, vmax = np.nanmin(grid), np.nanmax(grid)
-	grid_normalized = (grid - vmin) / (vmax - vmin)
+	grid_normalized = (grid*1.0 - vmin) / (vmax - vmin)
 	grid_normalized[~np.isfinite(grid_normalized)] = 0
 	# intensity_normalized = (np.log(self.data3d + 1.) - np.log(mi)) / (np.log(ma) - np.log(mi));
 	import PIL.Image
