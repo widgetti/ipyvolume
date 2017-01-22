@@ -40,11 +40,30 @@ Builtin funtional examples
 
     ipyvolume.example_ylm()
 
+Dataset: Aquarius A2 - pure dark matter simulation
+--------------------------------------------------
+
+.. ipywidgets-display::
+
+   aqa2 = ipyvolume.datasets.aquariusA2.fetch()
+   ipyvolume.volshow(aqa2.data.T, lighting=True,
+                  level1=0.16, opacity1=0.06,
+                  level2=0.25, opacity2=0.06,
+                  level3=0.45, opacity3=0.06)
+
+Dataset: Helmi & de Zeeuw 2000
+------------------------------
+
+.. ipywidgets-display::
+
+   hdz2000 = ipyvolume.datasets.hdz2000.fetch()
+   ipyvolume.volshow(hdz2000.data.T, lighting=True, level1=0.6, level2=0.8, level3=0.9, opacity2=0.03)
 
 Use with vaex
 -------------
 
-(currently now working on rtd)
+(currently not working on rtd)
+
 .. ipywidgets-display::
 
    import vaex as vx
