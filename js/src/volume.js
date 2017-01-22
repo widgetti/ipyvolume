@@ -224,7 +224,11 @@ var VolumeModel = widgets.DOMWidgetModel.extend({
             _model_module : 'ipyvolume',
             _view_module : 'ipyvolume',
             angle1: 0.1,
-            angle2: 0.2
+            angle2: 0.2,
+            ambient_coefficient: 0.5,
+            diffuse_coefficient: 0.8,
+            specular_coefficient: 0.5,
+            specular_exponent: 5
         })
     }
 }, {
@@ -248,6 +252,12 @@ var VolumeView = widgets.DOMWidgetView.extend({
         this.model.on('change:angle1', this.update_scene, this);
         this.model.on('change:angle2', this.update_scene, this);
         this.model.on('change:volume', this.volume_changed, this);
+
+        this.model.on('change:ambient_coefficient', this.update_scene, this);
+        this.model.on('change:diffuse_coefficient', this.update_scene, this);
+        this.model.on('change:specular_coefficient', this.update_scene, this);
+        this.model.on('change:specular_exponent', this.update_scene, this);
+
 
         window.tf = this.model.get("tf")
         this.model.get("tf").on('change:rgba', this.tf_changed, this);
@@ -705,6 +715,19 @@ var VolumeView = widgets.DOMWidgetView.extend({
         this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "volume_rows"), this.volume.rows);
         this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "volume_slices"), this.volume.slices);
         this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "volume_columns"), this.volume.columns);
+
+
+        var mat = glm.mat3.create();
+        glm.mat3.fromMat4(mat, this.mvMatrix)
+        //glm.mat3.invert(mat, mat)
+        this.gl.uniformMatrix3fv(this.gl.getUniformLocation(this.shader_volume_rendering, "mvMatrix"), false, mat);
+
+
+        this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "ambient_coefficient"), this.model.get("ambient_coefficient"));
+        this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "diffuse_coefficient"), this.model.get("diffuse_coefficient"));
+        this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "specular_coefficient"), this.model.get("specular_coefficient"));
+        this.gl.uniform1f(this.gl.getUniformLocation(this.shader_volume_rendering, "specular_exponent"), this.model.get("specular_exponent"));
+
 
         //this.gl.uniform1fv(this.gl.getUniformLocation(shader_volume_rendering, "opacity"),  this.opacity);
         //this.gl.uniform1fv(this.gl.getUniformLocation(shader_volume_rendering, "volume_level"), options.volume_level);
