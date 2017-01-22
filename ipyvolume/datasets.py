@@ -27,7 +27,8 @@ class Dataset(object):
 		return self
 
 	def wget_command(self):
-		return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url)
+		return "cd %s; curl -O -L %s" % (data_dir, self.url)
+		#return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url)
 
 hdz2000 = Dataset("hdz2000")
 aquariusA2 =  Dataset("aquarius-A2")
