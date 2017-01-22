@@ -1,6 +1,6 @@
 {
   "name": "ipyvolume",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "IPython widget for rendering 3d volumes",
   "author": "Maarten A. Breddels",
   "main": "src/index.js",
