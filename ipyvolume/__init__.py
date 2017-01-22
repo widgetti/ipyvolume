@@ -3,6 +3,8 @@ from ._version import version_info, __version__
 from .volume import *
 from .transferfunction import *
 from .examples import  *
+from . import datasets
+
 def _jupyter_nbextension_paths():
     return [{
         'section': 'notebook',
