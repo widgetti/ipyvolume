@@ -56,10 +56,7 @@ Dataset: Helmi & de Zeeuw 2000
 
 .. ipywidgets-display::
 
-   ipyvolume.datasets.hdz2000.download(force=True)
    hdz2000 = ipyvolume.datasets.hdz2000.fetch()
-   print(hdz2000.data)
-   print(hdz2000.data.min(), hdz2000.data.max())
    ipyvolume.volshow(hdz2000.data.T, lighting=True, level1=0.6, level2=0.8, level3=0.9, opacity2=0.03)
 
 Use with vaex
