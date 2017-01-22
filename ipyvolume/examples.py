@@ -1,10 +1,11 @@
 import numpy as np
 import scipy.special
 import ipyvolume
+import scipy.ndimage
 
 __all__ = ["example_ylm"]
 
-def xyz(shape=128, limits=[-3, 3], spherical=False):
+def xyz(shape=128, limits=[-3, 3], spherical=False, sparse=True):
 	dim = 3
 	try:
 		shape[0]
@@ -15,7 +16,10 @@ def xyz(shape=128, limits=[-3, 3], spherical=False):
 	except:
 		limits = [limits] * dim
 	v = [slice(vmin, vmax+(vmax-vmin)/float(N)/2, (vmax-vmin)/float(N-1)) for (vmin, vmax), N in zip(limits, shape)]
-	x, y, z = np.ogrid.__getitem__(v)
+	if sparse:
+		x, y, z = np.ogrid.__getitem__(v)
+	else:
+		x, y, z = np.mgrid.__getitem__(v)
 	if spherical:
 		r = np.linalg.norm([x, y, z])
 		theta = np.arctan2(y, x)
@@ -31,5 +35,12 @@ def example_ylm(m=0, n=2, shape=128, limits=[-4, 4], **kwargs):
 	data = np.abs(scipy.special.sph_harm(m, n, theta, phi) ** 2) * radial
 	return ipyvolume.volshow(data=data.T, **kwargs)
 
+def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], **kwargs):
+	__, __, __, r, theta, phi = xyz(shape=shape, limits=limits, spherical=True)
+	data = r * 0
+	data[(r < rmax) & (r >= rmin)] = 0.5
+	data[0,0,0] = 1
+	#data = scipy.ndimage.gaussian_filter(data, 3)
+	return ipyvolume.volshow(data=data.T, **kwargs)
 
 # http://graphics.stanford.edu/data/voldata/
