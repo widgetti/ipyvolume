@@ -19,7 +19,9 @@ class Volume(widgets.DOMWidget):
     _model_name = Unicode('VolumeModel').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
-    volume = Array().tag(sync=True, **array_cube_png_serialization)
+    data = Array().tag(sync=True, **array_cube_png_serialization)
+    data_min = traitlets.Float().tag(sync=True)
+    data_max = traitlets.Float().tag(sync=True)
     tf = traitlets.Instance(TransferFunction).tag(sync=True, **ipywidgets.widget_serialization)
     angle1 = traitlets.Float(0.1).tag(sync=True)
     angle2 = traitlets.Float(0.2).tag(sync=True)
@@ -62,9 +64,13 @@ def _volume_widets(v, lighting=False):
          ] + widgets_bottom# , ipywidgets.HBox([angle1, angle2])
     )
 
-def volshow(data, lighting=False, **kwargs):
+def volshow(data, lighting=False, data_min=None, data_max=None, **kwargs):
     if "tf" not in kwargs:
         kwargs["tf"] = TransferFunctionWidgetJs3(**kwargs)
-    v = Volume(volume=data, **kwargs)
+    if data_min is None:
+        data_min = np.nanmin(data)
+    if data_max is None:
+        data_max = np.nanmax(data)
+    v = Volume(data=data, data_min=data_min, data_max=data_max, **kwargs)
     return _volume_widets(v, lighting=lighting)
 

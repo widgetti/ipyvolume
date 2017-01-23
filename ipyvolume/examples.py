@@ -1,8 +1,10 @@
 import numpy as np
 import scipy.special
 import ipyvolume
-import scipy.ndimage
-
+try:
+	scipy.ndimage
+except:
+	pass # it's ok, it's not crucial
 __all__ = ["example_ylm"]
 
 def xyz(shape=128, limits=[-3, 3], spherical=False, sparse=True):
@@ -39,8 +41,10 @@ def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], **kwargs):
 	__, __, __, r, theta, phi = xyz(shape=shape, limits=limits, spherical=True)
 	data = r * 0
 	data[(r < rmax) & (r >= rmin)] = 0.5
-	data[0,0,0] = 1
-	#data = scipy.ndimage.gaussian_filter(data, 3)
+	if "data_min" not in kwargs:
+		kwargs["data_min"] = 0
+	if "data_max" not in kwargs:
+		kwargs["data_max"] = 1
 	return ipyvolume.volshow(data=data.T, **kwargs)
 
 # http://graphics.stanford.edu/data/voldata/

@@ -6,7 +6,7 @@ from io import BytesIO as StringIO
 from base64 import b64encode
 import warnings
 
-def cube_to_png(grid, file):
+def cube_to_png(grid, vmin, vmax, file):
 	image_width = 2048
 	slices = grid.shape[0]
 	columns = image_width // grid.shape[2]
@@ -14,7 +14,7 @@ def cube_to_png(grid, file):
 	image_height = rows * grid.shape[1]
 	data = np.zeros((image_height, image_width, 4), dtype=np.uint8)
 
-	vmin, vmax = np.nanmin(grid), np.nanmax(grid)
+	#vmin, vmax = np.nanmin(grid), np.nanmax(grid)
 	grid_normalized = (grid*1.0 - vmin) / (vmax - vmin)
 	grid_normalized[~np.isfinite(grid_normalized)] = 0
 	# intensity_normalized = (np.log(self.data3d + 1.) - np.log(mi)) / (np.log(ma) - np.log(mi));
@@ -57,7 +57,7 @@ def rgba_to_json(rgba, obj=None):
 
 def cube_to_json(grid, obj=None):
 	f = StringIO()
-	image_shape, slice_shape, rows, columns, slices = cube_to_png(grid, f)
+	image_shape, slice_shape, rows, columns, slices = cube_to_png(grid, obj.data_min, obj.data_max, f)
 	image_url = "data:image/png;base64," + b64encode(f.getvalue()).decode("ascii") # + "'"
 	json = {"image_shape": image_shape, "slice_shape": slice_shape, "rows": rows, "columns": columns, "slices": slices, "src": image_url}
 	return json
