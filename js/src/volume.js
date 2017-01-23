@@ -251,7 +251,7 @@ var VolumeView = widgets.DOMWidgetView.extend({
 
         this.model.on('change:angle1', this.update_scene, this);
         this.model.on('change:angle2', this.update_scene, this);
-        this.model.on('change:volume', this.volume_changed, this);
+        this.model.on('change:data', this.volume_changed, this);
 
         this.model.on('change:ambient_coefficient', this.update_scene, this);
         this.model.on('change:diffuse_coefficient', this.update_scene, this);
@@ -302,7 +302,7 @@ var VolumeView = widgets.DOMWidgetView.extend({
         this.model.on('change:volume', this.volume_changed, this);*/
 		//*
 		var cube = default_cube_url;
-		cube = this.model.get("volume")
+		cube = this.model.get("data")
 		/*this.vr = $(this.canvas).vr(
 				$.extend(
 				{
@@ -769,7 +769,7 @@ var VolumeView = widgets.DOMWidgetView.extend({
         this.gl.uniformMatrix4fv(program.mvMatrixUniform, false, this.mvMatrix);
     },
     volume_changed: function() {
-        this.volume = this.model.get("volume")
+        this.volume = this.model.get("data")
         if(!this.volume) {
             this.volume = {image_shape: [2048, 1024], slice_shape: [128, 128], rows: 8, columns:16, slices: 128, src:default_cube_url}
         }
