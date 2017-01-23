@@ -32,4 +32,4 @@ class Dataset(object):
 
 hdz2000    = Dataset("hdz2000")
 aquariusA2 = Dataset("aquarius-A2")
-egpbosLCDM  = Dataset("egpbosLCDM")
+egpbosLCDM  = Dataset("egpbos-LCDM")
