@@ -9,6 +9,26 @@ Ipyvolume
 IPyvolume is a Python library to visualize 3d volumes (in the Jupyter notebook), with minimal configuration and effort. It is currently pre-alpha, use at own risk. IPyvolume's *volshow* is to 3d arrays what matplotlib's imshow is to 2d arrays.
 
 
+Installation
+============
+
+Pip as root
+-----------
+
+::
+
+    pip install ipyvolume
+    jupyter nbextension enable --py --sys-prefix widgetsnbextension
+
+Pip as user
+-----------
+
+::
+
+    pip install ipyvolume --user
+    jupyter nbextension enable --py --user widgetsnbextension
+
+
 Examples
 ========
 .. ipywidgets-setup::
@@ -21,6 +41,7 @@ Generated volume
 ----------------
 .. ipywidgets-display::
    import numpy as np
+   import ipyvolume
    V = np.zeros((128,128,128)) # our 3d array
    # outer box
    V[30:-30,30:-30,30:-30] = 0.75
@@ -28,11 +49,10 @@ Generated volume
    # inner box
    V[50:-50,50:-50,50:-50] = 0.25
    V[55:-55,55:-55,55:-55] = 0.0
-   #V[10:30,10:30,10:30] = 0.5
-   # for normalization
-   V[0,0,0] = 1
    ipyvolume.volshow(V, opacity1=0.03, level1=0.25,
-                  opacity2=0.03, level2=0.75, opacity3=0)
+                  opacity2=0.03, level2=0.75,
+                  opacity3=0,
+                  data_min=0, data_max=1)
 
 Builtin funtional examples
 --------------------------
@@ -62,7 +82,7 @@ Dataset: Helmi & de Zeeuw 2000
 Use with vaex
 -------------
 
-(currently not working on rtd)
+In combination with `vaex <//vaex.astro.rug.nl/>`_ .(currently not working on rtd)
 
 .. ipywidgets-display::
 
@@ -74,6 +94,18 @@ Use with vaex
    counts = ds.count(binby=["x", "y", "z"], limits=[-10, 10], shape=128)
    counts = np.log10(gf(counts, 2))
    ipyvolume.volshow(counts.T, level1=0.6, level2=0.8, level3=0.9, opacity2=0.03)
+
+
+API docs
+========
+
+ipyvolume.volume
+----------------
+
+.. automodule:: ipyvolume.volume
+    :members: volshow, Volume
+    :undoc-members:
+    :show-inheritance:
 
 
 Indices and tables
