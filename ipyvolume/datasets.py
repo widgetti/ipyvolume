@@ -30,5 +30,6 @@ class Dataset(object):
 		return "cd %s; curl -O -L %s" % (data_dir, self.url)
 		#return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url)
 
-hdz2000 = Dataset("hdz2000")
-aquariusA2 =  Dataset("aquarius-A2")
+hdz2000    = Dataset("hdz2000")
+aquariusA2 = Dataset("aquarius-A2")
+egpbosLCDM  = Dataset("egpbosLCDM")
