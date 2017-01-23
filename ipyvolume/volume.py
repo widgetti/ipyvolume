@@ -14,14 +14,14 @@ logger = logging.getLogger("ipyvolume")
 
 @widgets.register('ipyvolume.Volume')
 class Volume(widgets.DOMWidget):
-    """"""
+    """Widget class representing a volume (rendering)"""
     _view_name = Unicode('VolumeView').tag(sync=True)
     _model_name = Unicode('VolumeModel').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
     data = Array().tag(sync=True, **array_cube_png_serialization)
-    data_min = traitlets.Float().tag(sync=True)
-    data_max = traitlets.Float().tag(sync=True)
+    data_min = traitlets.CFloat().tag(sync=True)
+    data_max = traitlets.CFloat().tag(sync=True)
     tf = traitlets.Instance(TransferFunction).tag(sync=True, **ipywidgets.widget_serialization)
     angle1 = traitlets.Float(0.1).tag(sync=True)
     angle2 = traitlets.Float(0.2).tag(sync=True)
@@ -64,13 +64,25 @@ def _volume_widets(v, lighting=False):
          ] + widgets_bottom# , ipywidgets.HBox([angle1, angle2])
     )
 
-def volshow(data, lighting=False, data_min=None, data_max=None, **kwargs):
-    if "tf" not in kwargs:
-        kwargs["tf"] = TransferFunctionWidgetJs3(**kwargs)
+def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, **kwargs):
+    """
+    Visualize a 3d array using volume rendering
+
+    :param data: 3d numpy array
+    :param lighting: boolean, to use lighting or not
+    :param data_min: minimum value to consider for data, if None, computed using np.nanmin
+    :param data_max: maximum value to consider for data, if None, computed using np.nanmax
+    :param tf: transfer function (see ipyvolume.transfer_function)
+    :param kwargs: extra argument passed to Volume and default transfer function
+    :return:
+
+    """
+    if tf is None:
+        tf = TransferFunctionWidgetJs3(**kwargs)
     if data_min is None:
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
-    v = Volume(data=data, data_min=data_min, data_max=data_max, **kwargs)
+    v = Volume(data=data, data_min=data_min, data_max=data_max, tf=tf, **kwargs)
     return _volume_widets(v, lighting=lighting)
 
