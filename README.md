@@ -7,7 +7,7 @@ ipyvolume
 
 IPython widget for rendering 3d volumes in the Jupyter notebook
 
-[![screencast](https://raw.githubusercontent.com/maartenbreddels/ipyvolume/master/misc/screencast.gif)
+![screencast](https://raw.githubusercontent.com/maartenbreddels/ipyvolume/master/misc/screencast.gif)
 
 Installation
 ------------
