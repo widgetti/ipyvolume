@@ -39,6 +39,9 @@ Examples
 
 Generated volume
 ----------------
+
+From a numpy array, we create two boxes, using slicing, and visualize it using :any:`volshow`.
+
 .. ipywidgets-display::
    import numpy as np
    import ipyvolume
@@ -54,14 +57,19 @@ Generated volume
                   opacity3=0,
                   data_min=0, data_max=1)
 
-Builtin funtional examples
---------------------------
+Math example
+------------
+
+Here we visualize spherical harmonics.
+
 .. ipywidgets-display::
 
     ipyvolume.example_ylm()
 
 Dataset: Aquarius A2 - pure dark matter simulation
 --------------------------------------------------
+
+This is a snapshot of the pure dark matter simulations of the Aquarius project `(Springel et al. 2008) <http://adsabs.harvard.edu/abs/2008MNRAS.391.1685S>`_.
 
 .. ipywidgets-display::
 
@@ -74,6 +82,8 @@ Dataset: Aquarius A2 - pure dark matter simulation
 Dataset: Helmi & de Zeeuw 2000
 ------------------------------
 
+This is a visualization of a simulation of the stellar accreted halo of the Milky Way `(Helmi & de Zeeuw 2000 <http://adsabs.harvard.edu/abs/2000MNRAS.319..657H>`_.
+
 .. ipywidgets-display::
 
    hdz2000 = ipyvolume.datasets.hdz2000.fetch()
@@ -82,7 +92,7 @@ Dataset: Helmi & de Zeeuw 2000
 Use with vaex
 -------------
 
-In combination with `vaex <//vaex.astro.rug.nl/>`_ .(currently not working on rtd)
+In combination with `vaex <http://vaex.astro.rug.nl/>`_ .(currently not working on rtd)
 
 .. ipywidgets-display::
 
