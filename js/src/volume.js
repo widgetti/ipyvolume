@@ -1493,7 +1493,7 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             fullscreen: false,
             width: 500,
             height: 400,
-            downscale: 0,
+            downscale: 1,
         })
     }
 }, {
@@ -1515,6 +1515,7 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
 
 
 })
+
 //////////////////
 // WEBPACK FOOTER
 // ./src/volume.js
