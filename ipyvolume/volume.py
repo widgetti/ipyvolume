@@ -11,6 +11,32 @@ from .transferfunction import *
 
 logger = logging.getLogger("ipyvolume")
 
+@widgets.register('ipyvolume.VolumeRendererThree')
+class VolumeRendererThree(widgets.DOMWidget):
+    """Widget class representing a volume (rendering) using three.js"""
+    _view_name = Unicode('VolumeRendererThreeView').tag(sync=True)
+    _view_module = Unicode('ipyvolume').tag(sync=True)
+    _model_name = Unicode('VolumeRendererThreeModel').tag(sync=True)
+    _model_module = Unicode('ipyvolume').tag(sync=True)
+
+    data = Array().tag(sync=True, **array_cube_png_serialization)
+    data_min = traitlets.CFloat().tag(sync=True)
+    data_max = traitlets.CFloat().tag(sync=True)
+    tf = traitlets.Instance(TransferFunction).tag(sync=True, **ipywidgets.widget_serialization)
+    angle1 = traitlets.Float(0.1).tag(sync=True)
+    angle2 = traitlets.Float(0.2).tag(sync=True)
+
+    ambient_coefficient = traitlets.Float(0.5).tag(sync=True)
+    diffuse_coefficient = traitlets.Float(0.8).tag(sync=True)
+    specular_coefficient = traitlets.Float(0.5).tag(sync=True)
+    specular_exponent = traitlets.Float(5).tag(sync=True)
+    stereo = traitlets.Bool(False).tag(sync=True)
+    fullscreen = traitlets.Bool(False).tag(sync=True)
+
+    width = traitlets.CInt(500).tag(sync=True)
+    height = traitlets.CInt(400).tag(sync=True)
+    downscale = traitlets.CInt(1).tag(sync=True)
+
 
 @widgets.register('ipyvolume.Volume')
 class Volume(widgets.DOMWidget):
@@ -59,12 +85,20 @@ def _volume_widets(v, lighting=False):
         v.diffuse_coefficient = 0
         v.specular_coefficient = 0
 
+    if 1:
+        stereo = widgets.ToggleButton(value=v.stereo, description='stereo', icon='eye')
+        fullscreen = widgets.ToggleButton(value=v.stereo, description='fullscreen', icon='arrows-alt')
+        ipywidgets.jslink((v, 'stereo'), (stereo, 'value'))
+        ipywidgets.jslink((v, 'fullscreen'), (fullscreen, 'value'))
+        widgets_bottom += [ipywidgets.HBox([stereo,fullscreen])]
+
     return ipywidgets.VBox(
         [v.tf.control(), v,
          ] + widgets_bottom# , ipywidgets.HBox([angle1, angle2])
     )
 
-def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, **kwargs):
+def volshow(data, lighting=False, data_min=None, data_max=None, tf=None,
+            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], width=0.1, **kwargs):
     """
     Visualize a 3d array using volume rendering
 
@@ -78,11 +112,38 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, **kwarg
 
     """
     if tf is None:
-        tf = TransferFunctionWidgetJs3(**kwargs)
+        #tf = TransferFunctionJsBumps(**kwargs)
+        tf_kwargs = {}
+        # opacity and widths can be scalars
+        try:
+            opacity[0]
+        except:
+            opacity = [opacity] * 3
+        try:
+            width[0]
+        except:
+            width = [width] * 3
+        #clip off lists
+        min_length = min(len(level), len(width), len(opacity))
+        level = list(level[:min_length])
+        opacity = list(opacity[:min_length])
+        width = list(width[:min_length])
+        # append with zeros
+        while len(level) < 3:
+            level.append(0)
+        while len(opacity) < 3:
+            opacity.append(0)
+        while len(width) < 3:
+            width.append(0)
+        for i in range(1,4):
+            tf_kwargs["level"+str(i)] = level[i-1]
+            tf_kwargs["opacity"+str(i)] = opacity[i-1]
+            tf_kwargs["width"+str(i)] = width[i-1]
+        tf = TransferFunctionWidgetJs3(**tf_kwargs)
     if data_min is None:
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
-    v = Volume(data=data, data_min=data_min, data_max=data_max, tf=tf, **kwargs)
+    v = VolumeRendererThree(data=data, data_min=data_min, data_max=data_max, tf=tf, **kwargs)
     return _volume_widets(v, lighting=lighting)
 

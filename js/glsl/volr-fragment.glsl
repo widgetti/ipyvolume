@@ -3,12 +3,12 @@ varying vec4 vertex_color;
 uniform sampler2D front;
 uniform sampler2D back;
 uniform sampler2D volume;
-uniform sampler2D colormap;
-uniform int colormap_index;
-uniform int surfaces;
-uniform float opacity[4];
-uniform float volume_level[4];
-uniform float volume_width[4];
+//uniform sampler2D colormap;
+//uniform int colormap_index;
+//uniform int surfaces;
+//uniform float opacity[4];
+//uniform float volume_level[4];
+//uniform float volume_width[4];
 uniform float brightness;
 uniform float data_min;
 uniform float data_max;
@@ -17,6 +17,7 @@ uniform float volume_columns;
 uniform float volume_slices;
 uniform vec2 volume_size;
 uniform vec2 volume_slice_size;
+uniform vec2 render_size;
 
 uniform sampler2D transfer_function;
 
@@ -53,24 +54,37 @@ uniform float diffuse_coefficient;
 uniform float specular_coefficient;
 uniform float specular_exponent;
 
+mat3 transpose3(mat3 m) {
+    vec3 v0 = m[0];
+    vec3 v1 = m[1];
+    vec3 v2 = m[2];
+    return mat3(
+        vec3(v0.x, v1.x, v2.x),
+        vec3(v0.y, v1.y, v2.y),
+        vec3(v0.z, v1.z, v2.z)
+        );
+}
 void main(void) {
-    const int steps = NR_OF_STEPS;
+    const int steps = 150;
 
-    vec2 pixel = vec2(gl_FragCoord.x/256., gl_FragCoord.y/256.);
+    vec2 pixel = vec2(gl_FragCoord.x, gl_FragCoord.y) / render_size;
     //vec4 textureColor = texture2D(volume, vec2(pixel.x * width + x_index, pixel.y*height + y_index));
-    vec3 ray_begin = vertex_color.xyz;//texture2D(front, pixel).rgb;
-    vec3 ray_end = texture2D(back, pixel).rgb;
+    //vec3 ray_begin = vertex_color.xyz;//texture2D(front, pixel).rgb;
+    //vec3 ray_end = texture2D(back, pixel).rgb;
+    vec3 ray_end = vertex_color.xyz;//texture2D(front, pixel).rgb;
+    vec3 ray_begin = texture2D(front, pixel).rgb;
     vec3 ray_direction = ray_end - ray_begin;
     vec3 ray_delta = ray_direction * (1./float(steps));
     vec3 ray_pos = ray_begin;
 	float ray_length = sqrt(ray_direction.x*ray_direction.x + ray_direction.y*ray_direction.y + ray_direction.z*ray_direction.z);
     vec4 color = vec4(0, 0, 0, 0);
     float alpha_total = 0.;
-    float colormap_index_scaled = 0.5/70. + float(colormap_index)/70.;
+    //float colormap_index_scaled = 0.5/70. + float(colormap_index)/70.;
     float color_index;
     float data_scale = 1./(data_max - data_min);
 
-    mat3 rotation = mat3(mvMatrix);
+    //mat3 rotation = mat3(mvMatrix);
+    mat3 rotation = (mat3(viewMatrix));
 	vec3 light_dir = normalize(vec3(-1,-1,1) * rotation);
 	vec3 eye = vec3(0, 0, 1) * rotation;
 
@@ -129,6 +143,13 @@ void main(void) {
         ray_pos += ray_delta;
     }
     gl_FragColor = vec4(color.rgb, 1) * brightness;
+    //gl_FragColor = vec4(rotation[0], 1) * brightness;
+    //gl_FragColor = vec4(alpha_total, 0., 0., 1.) * brightness;
+    //gl_FragColor = texture2D(volume, vec2(ray_begin.x, ray_begin.y));
+    //gl_FragColor = vec4(ray_pos.x, ray_pos.y, ray_pos.z, 1);
+    //gl_FragColor = texture2D(transfer_function, vec2(pixel.x, 0.5));
+    //gl_FragColor = vec4(pixel.x, pixel.y, 0, 1);
+    //gl_FragColor = vec4(ray_end, 1);
     //float tintensity = texture2D(transfer_function, vec2(pixel.x / 1., 0.5)).a;
     //gl_FragColor = vec4(0, tintensity, 0., 1.);
     //gl_FragColor = vec4(ray_e, 1);

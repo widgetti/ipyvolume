@@ -30,6 +30,36 @@ class TransferFunction(widgets.DOMWidget):
 	style = Unicode("height: 32px; width: 100%;").tag(sync=True)
 	rgba = Array().tag(sync=True, **array_serialization)
 
+
+class TransferFunctionJsBumps(TransferFunction):
+	_model_name = Unicode('TransferFunctionJsBumpsModel').tag(sync=True)
+	_model_module = Unicode('ipyvolume').tag(sync=True)
+	levels = traitlets.List(traitlets.CFloat, default_value=[0.1, 0.5, 0.8]).tag(sync=True)
+	opacities = traitlets.List(traitlets.CFloat, default_value=[0.01, 0.05, 0.1]).tag(sync=True)
+	widths = traitlets.List(traitlets.CFloat, default_value=[0.1, 0.1, 0.1]).tag(sync=True)
+
+
+	def control(self):
+		import ipywidgets
+		return ipywidgets.VBox()
+		l1 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level1)
+		l2 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level2)
+		l3 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level3)
+		o1 = ipywidgets.FloatSlider(min=0, max=.2, step=0.001, value=self.opacity1)
+		o2 = ipywidgets.FloatSlider(min=0, max=.2, step=0.001, value=self.opacity2)
+		o3 = ipywidgets.FloatSlider(min=0, max=.2, step=0.001, value=self.opacity2)
+		ipywidgets.jslink((self, 'level1'), (l1, 'value'))
+		ipywidgets.jslink((self, 'level2'), (l2, 'value'))
+		ipywidgets.jslink((self, 'level3'), (l3, 'value'))
+		ipywidgets.jslink((self, 'opacity1'), (o1, 'value'))
+		ipywidgets.jslink((self, 'opacity2'), (o2, 'value'))
+		ipywidgets.jslink((self, 'opacity3'), (o3, 'value'))
+		return ipywidgets.VBox(
+			[ipywidgets.HBox([ipywidgets.Label(value="levels:"), l1, l2, l3]),
+			 ipywidgets.HBox([ipywidgets.Label(value="opacities:"), o1, o2, o3])]
+		)
+
+
 class TransferFunctionWidgetJs3(TransferFunction):
 	_model_name = Unicode('TransferFunctionWidgetJs3Model').tag(sync=True)
 	_model_module = Unicode('ipyvolume').tag(sync=True)

@@ -1,19 +1,27 @@
-var widgets = require('jupyter-js-widgets');
-var _ = require('underscore');
-var glm = require('gl-matrix');
-var $ = require('jquery');
-var jQuery = $;
+define(["jupyter-js-widgets", "underscore", "three", "jquery", "gl-matrix"],
+        function(widgets, _, THREE, $, glm) {
+
+window.THREE = THREE;
+//window.THREEx = {};
+require("./three/OrbitControls.js")
+require("./three/StereoEffect.js")
+require("./three/THREEx.FullScreen.js")
 
 var shaders = {}
 shaders["cube_fragment"] = require('../glsl/cube-fragment.glsl');
 shaders["cube_vertex"] = require('../glsl/cube-vertex.glsl');
+shaders["box_fragment"] = require('../glsl/box-fragment.glsl');
+shaders["box_vertex"] = require('../glsl/box-vertex.glsl');
 shaders["texture_fragment"] = require('../glsl/texture-fragment.glsl');
 shaders["texture_vertex"] = require('../glsl/texture-vertex.glsl');
 shaders["volr_fragment"] = require('../glsl/volr-fragment.glsl');
 shaders["volr_vertex"] = require('../glsl/volr-vertex.glsl');
+shaders["screen_fragment"] = require('../glsl/screen-fragment.glsl');
+shaders["screen_vertex"] = require('../glsl/screen-vertex.glsl');
 
-var colormap_url;// = require('../colormap.png');
-var default_cube_url; //= require('../cube.png');
+//var colormap_url = require('../colormap.png');
+//var default_cube_url = require('../cube.png');
+
 
 (function($) {
 var colormap_names = ["PaulT_plusmin", "binary", "Blues", "BuGn", "BuPu", "gist_yarg", "GnBu", "Greens", "Greys", "Oranges", "OrRd", "PuBu", "PuBuGn", "PuRd", "Purples", "RdPu", "Reds", "YlGn", "YlGnBu", "YlOrBr", "YlOrRd", "afmhot", "autumn", "bone", "cool", "copper", "gist_gray", "gist_heat", "gray", "hot", "pink", "spring", "summer", "winter", "BrBG", "bwr", "coolwarm", "PiYG", "PRGn", "PuOr", "RdBu", "RdGy", "RdYlBu", "RdYlGn", "seismic", "Accent", "Dark2", "hsv", "Paired", "Pastel1", "Pastel2", "Set1", "Set2", "Set3", "spectral", "gist_earth", "gist_ncar", "gist_rainbow", "gist_stern", "jet", "brg", "CMRmap", "cubehelix", "gnuplot", "gnuplot2", "ocean", "rainbow", "terrain", "flag", "prism"];
@@ -965,6 +973,57 @@ var TransferFunctionModel = widgets.DOMWidgetModel.extend({
     }
 });
 
+var TransferFunctionJsBumpsModel  = TransferFunctionModel.extend({
+    defaults: function() {
+        return _.extend(TransferFunctionModel.prototype.defaults(), {
+            _model_name : 'TransferFunctionJsBumpsModel',
+            levels: [0.1, 0.5, 0.8],
+            opacities: [0.01, 0.05, 0.1],
+            widths: [0.1, 0.1, 0.1]
+        })
+    },
+    initialize: function() {
+        TransferFunctionJsBumpsModel.__super__.initialize.apply(this, arguments);
+        this.on("change:levels", this.recalculate_rgba, this);
+        this.on("change:opacities", this.recalculate_rgba, this);
+        this.on("change:widths", this.recalculate_rgba, this);
+        this.recalculate_rgba()
+    },
+    recalculate_rgba: function() {
+        console.log("recalc rgba")
+        var rgba = []
+        var colors = [[1,0,0], [0,1,0], [0,0,1]]
+        var levels = this.get("levels")
+        var widths = this.get("widths")
+        var opacities = this.get("opacities")
+        window.rgba = rgba
+        window.tfjs = this
+        var N = 256
+        for(var i = 0; i < N; i++) {
+            var x = i/(N-1);
+			var color = [0, 0, 0, 0]; // red, green, blue and alpha
+            for(var j = 0; j < levels.length; j++) {
+                var basecolor = colors[j]
+				var intensity = Math.exp(-(Math.pow(x-levels[j],2) / Math.pow(widths[j], 2)))
+				for(var k = 0; k < 3; k++) {
+				    color[k] += (basecolor[k] * intensity * opacities[j])
+				}
+                color[3] += intensity * opacities[j]
+            }
+            var max_value = color[0];
+            for(var k = 1; k < 3; k++) {
+                max_value = Math.max(max_value, color[k])
+            }
+            for(var k = 0; k < 3; k++) {
+                color[k] = Math.min(1, color[k]/max_value); // normalize and clip to 1
+            }
+            color[3] = Math.min(1, color[3]); // clip alpha
+            rgba.push(color)
+        }
+        this.set("rgba", rgba)
+    }
+});
+
 var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
     defaults: function() {
         return _.extend(TransferFunctionModel.prototype.defaults(), {
@@ -1025,18 +1084,437 @@ var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
             rgba.push(color)
         }
         this.set("rgba", rgba)
+    },
+    get_data_array: function() {
+        var flat_array = [];
+        window.rgba = rgba
+        for(var i = 0; i < rgba.length; i++) {
+            for(var j = 0; j < 4; j++) {
+              flat_array.push(rgba[i][j]*255)
+            }
+        }
+        var transfer_function_uint8_array = new Uint8Array(flat_array);
+        // REMOVE: for debugging
+        window.transfer_function_uint8_array = transfer_function_uint8_array
+        window.flat_array = flat_array
+        return transfer_function_uint8_array
+    },
+
+});
+
+
+var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
+    render: function() {
+        this.update_counter = 0
+        width = this.model.get("width");
+        height = this.model.get("height");
+        this.renderer = new THREE.WebGLRenderer();
+        const VIEW_ANGLE = 45;
+        const aspect = width / height;
+        const NEAR = 0.1;
+        const FAR = 10000;
+        this.camera = new THREE.PerspectiveCamera(
+            VIEW_ANGLE,
+            aspect,
+            NEAR,
+            FAR
+        );
+        this.camera_stereo = new THREE.StereoCamera()
+        this.renderer.setSize(width, height);
+
+        this.renderer_stereo = new THREE.StereoEffect(this.renderer);
+        this.renderer_selected = this.renderer_stereo;
+
+        this.box_geo = new THREE.BoxGeometry(1, 1, 1)
+        //this.box_material = new THREE.MeshLambertMaterial({color: 0xCC0000});
+        this.box_material = new THREE.ShaderMaterial({
+            fragmentShader: shaders["box_fragment"],
+            vertexShader: shaders["box_vertex"],
+            side: THREE.BackSide
+        });
+        this.box_mesh = new THREE.Mesh(this.box_geo, this.box_material)
+        //this.box_mesh.position.z = -5;
+        this.box_mesh.updateMatrix()
+        this.box_mesh.matrixAutoUpdate = true
+
+        const pointLight = new THREE.PointLight(0xFFFFFF);
+
+        // set its position
+        pointLight.position.x = 10;
+        pointLight.position.y = 50;
+        pointLight.position.z = 130;
+        this.camera.position.z = 2
+
+        // add to the scene
+
+        this.scene = new THREE.Scene();
+        this.scene.add(this.camera);
+        this.scene.add(this.box_mesh)
+        this.scene.add(pointLight);
+
+        var render_width = width;
+        var render_height = height;
+        if(this.model.get("stereo"))
+            render_width /= 2;
+        render_width /= this.model.get("downscale")
+        render_height /= this.model.get("downscale")
+
+        this.back_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+        this.front_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+        this.volr_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+
+        this.screen_texture = this.volr_texture
+        this.screen_scene = new THREE.Scene();
+        this.screen_plane = new THREE.PlaneBufferGeometry( 1.0, 1.0 );
+        this.screen_material = new THREE.ShaderMaterial( {
+					uniforms: { tex: { type: 't', value: this.front_texture.texture } },
+					vertexShader: shaders["screen_vertex"],
+					fragmentShader: shaders["screen_fragment"],
+					depthWrite: false
+
+				} );
+
+        this.screen_mesh = new THREE.Mesh(this.screen_plane, this.screen_material );
+        this.screen_scene.add(this.screen_mesh)
+        this.screen_camera = new THREE.OrthographicCamera( 1 / - 2, 1 / 2, 1 / 2, 1 / - 2, -10000, 10000 );
+        this.screen_camera.position.z = 10;
+
+        this.controls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
+        this.controls.enablePan = false;
+        //this.controls.
+
+        this.texture_loader = new THREE.TextureLoader()
+        //this.texture_volume = this.texture_loader.load(default_cube_url, _.bind(this.update, this), _.bind(this.update, this))
+        //setTimeout( _.bind(this.update, this), 1000)
+        //this.texture_volume.needsUpdate = true
+        //this.texture_volume.magFilter = THREE.LinearFilter
+        //this.texture_volume.minFilter = THREE.LinearFilter
+        //window.texture_volume = this.texture_volume
+
+        //tf_url = this.model.get("tf").get("rgba")
+        //var data_array_tf = this.model.get("tf").get_data_array()
+        //var rgba_tf = this.model.get("tf").get("rgba")
+        //console.log(data_array_tf)
+        //console.log(rgba_tf.length)
+        //this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, rgba.length, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, transfer_function_uint8_array);
+
+        this.texture_tf = new THREE.DataTexture(null, this.model.get("tf").get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
+        this.texture_tf.needsUpdate = true
+        //    THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter, 1)
+        console.log(this.texture_tf)
+        this.box_material_volr = new THREE.ShaderMaterial({
+            uniforms: {
+                front: { type: 't', value: null },
+                back : { type: 't', value: null },
+                volume : { type: 't', value: null },
+                transfer_function : { type: 't', value: this.texture_tf },
+                brightness : { type: "f", value: 2. },
+                data_min : { type: "f", value: 0. },
+                data_max : { type: "f", value: 1. },
+                volume_rows : { type: "f", value: 8. },
+                volume_columns : { type: "f", value: 16. },
+                volume_slices : { type: "f", value: 128. },
+                volume_size : { type: "2f", value: [2048., 1024.] },
+                volume_slice_size : { type: "2f", value: [128., 128.] },
+                ambient_coefficient : { type: "f", value: this.model.get("ambient_coefficient") },
+                diffuse_coefficient : { type: "f", value: this.model.get("diffuse_coefficient") },
+                specular_coefficient : { type: "f", value: this.model.get("specular_coefficient") },
+                specular_exponent : { type: "f", value: this.model.get("specular_exponent") },
+                render_size : { type: "2f", value: [render_width, render_height] },
+            },
+            fragmentShader: shaders["volr_fragment"],
+            vertexShader: shaders["volr_vertex"],
+            side: THREE.BackSide
+        });
+        this.volume_changed()
+        this.update_size()
+        this.tf_changed()
+
+//            this.volume = {image_shape: [2048, 1024], slice_shape: [128, 128], rows: 8, columns:16, slices: 128, src:default_cube_url}
+
+        this.el.appendChild(this.renderer.domElement);
+        var that = this;
+        //*
+        this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
+        this.update()
+        console.log("render att3")
+
+        this.model.on('change:downscale', this.update_size, this);
+        this.model.on('change:stereo', this.update_size, this);
+        this.model.on('change:angle1', this.update_scene, this);
+        this.model.on('change:angle2', this.update_scene, this);
+        this.model.on('change:data', this.volume_changed, this);
+
+        this.model.on('change:width', this.update_size, this);
+        this.model.on('change:height', this.update_size, this);
+        this.model.on('change:fullscreen', this.update_fullscreen, this);
+
+        this.model.on('change:ambient_coefficient', this.update_light, this);
+        this.model.on('change:diffuse_coefficient', this.update_light, this);
+        this.model.on('change:specular_coefficient', this.update_light, this);
+        this.model.on('change:specular_exponent', this.update_light, this);
+
+        this.controls.addEventListener( 'change', _.bind(this.update, this) );
+
+        //window.addEventListener("keypress", _.bind(this.keypress, this));
+        //$(this.renderer.domElement).keypress(_.bind(this.keypress, this))
+
+        window.tf = this.model.get("tf")
+        this.model.get("tf").on('change:rgba', this.tf_changed, this);
+
+        this.renderer.domElement.addEventListener( 'resize', _.bind(this.on_canvas_resize, this), false );
+        THREEx.FullScreen.addFullScreenChangeListener(_.bind(this.on_fullscreen_change, this))
+
+        function onWindowResize(){
+
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize( window.innerWidth, window.innerHeight );
+
+        }
+
+
+        return
+        /**/
+        //this.controls.autoRotate = true;
+        function update () {
+          // Draw!
+          that.controls.update()
+          that.renderer.render(that.scene, that.camera);
+
+          // Schedule the next frame.
+          requestAnimationFrame(update);
+        }
+
+        // Schedule the first frame.
+        requestAnimationFrame(update);
+        console.log("render 4")
+
+        return
+
+        this.img = document.createElement('img');
+        this.img.setAttribute('src', this.model.get('rgba'));
+        this.img.setAttribute('style', this.model.get('style'));
+        this.model.on('change:rgba', function() {
+            console.log("set src")
+            console.log(this.model.get('rgba'))
+            this.img.setAttribute('src', this.model.get('rgba'));
+        }, this);
+        this.model.on('change:style', function() {
+            this.img.setAttribute('style', this.model.get('style'));
+        }, this);
+        this.el.appendChild(this.img);
+        console.log(this.model.get('r'))
+    },
+    on_canvas_resize: function(event) {
+        console.log(event)
+    },
+    keypress: function(event) {
+        console.log("key press")
+        console.log(event)
+        var code = event.keyCode || event.which;
+        if (event.keyCode == 27) {
+            console.log("exit fullscreen")
+            this.model.set("fullscreen", false)
+        }
+        if (event.key == 'f') {
+            console.log("toggle fullscreen")
+            this.model.set("fullscreen", !this.model.get("fullscreen"))
+        }
+    },
+
+    on_fullscreen_change: function() {
+        var elem = THREEx.FullScreen.element()
+        if(elem == this.renderer.domElement) {
+            console.log("fullscreen")
+            // TODO: we should actually reflect the fullscreen, since if it fails, we still have the fullscreen model var
+            // set to true
+            this.update_size()
+        } else {
+            if(this.model.get("fullscreen"))
+                this.model.set("fullscreen", false)
+        }
+    },
+    update_fullscreen: function() {
+        if(this.model.get("fullscreen")) {
+            console.log("request fullscreen for:")
+            console.log(this.renderer.domElement)
+            THREEx.FullScreen.request(this.renderer.domElement)
+        } else {
+            console.log("cancel fullscreen for:")
+            console.log(this.renderer.domElement)
+            // make sure we exit fullscreen
+            var elem = THREEx.FullScreen.element()
+            if(elem == this.renderer.domElement)
+                THREEx.FullScreen.cancel();
+            this.update_size()
+        }
+    },
+    update: function() {
+        _.bind(function(local_update_counter) {
+            setTimeout(_.bind(function(){
+                //console.log("update: " +this.update_counter +" / " +local_update_counter);
+                if(local_update_counter == this.update_counter) {
+                    //shader_volume_rendering = shader_volume_rendering_final;
+                    console.log("real update");
+                    this._real_update()
+                } else {
+                    console.log("skip update");
+                }
+            }, this), 10);
+        }, this)(++this.update_counter);
+        //shader_volume_rendering = shader_volume_rendering_updates;
+        //plugin.real_updateScene()
+    },
+    _real_update: function() {
+        this.renderer.clear()
+        if(!this.model.get("stereo")) {
+    		this._render_eye(this.camera);
+		} else {
+            var size = this.renderer.getSize();
+            if (this.camera.parent === null ) this.camera.updateMatrixWorld();
+            this.camera_stereo.update(this.camera)
+
+            // left eye
+            this.renderer.setScissorTest( true );
+            this.renderer.setScissor( 0, 0, size.width / 2, size.height );
+            this.renderer.setViewport( 0, 0, size.width / 2, size.height );
+            //this.renderer.render(this.scene, this.camera_stereo.cameraL );
+            this._render_eye(this.camera_stereo.cameraL);
+
+            // right eye
+            this.renderer.setScissor( size.width / 2, 0, size.width / 2, size.height );
+            this.renderer.setViewport( size.width / 2, 0, size.width / 2, size.height );
+            //this.renderer.render(this.scene, this.camera_stereo.cameraR );
+            this._render_eye(this.camera_stereo.cameraR);
+
+            this.renderer.setScissorTest( false );
+            this.renderer.setViewport( 0, 0, size.width, size.height );
+        }
+    },
+    _render_eye: function(camera) {
+        // render the back coordinates
+        this.box_mesh.material = this.box_material;
+        this.box_material.side = THREE.BackSide;
+        this.renderer.clearTarget(this.back_texture, true, true, true)
+        this.renderer.render(this.scene, camera, this.back_texture);
+
+        // the front coordinates
+        this.box_material.side = THREE.FrontSide;
+        this.renderer.clearTarget(this.front_texture, true, true, true)
+        this.renderer.render(this.scene, camera, this.front_texture);
+
+        // render the volume
+        this.box_mesh.material = this.box_material_volr;
+        //this.renderer.clearTarget(this.volr_texture, true, true, true)
+        this.renderer.render(this.scene, camera, this.volr_texture);
+
+        this.screen_material.uniforms.tex.value = this.screen_texture.texture
+        //this.screen_material.uniforms.tex.value = this.texture_tf
+        this.renderer.render(this.screen_scene, this.screen_camera);
+    },
+    update_light: function() {
+        this.box_material_volr.uniforms.ambient_coefficient.value = this.model.get("ambient_coefficient")
+        this.box_material_volr.uniforms.diffuse_coefficient.value = this.model.get("diffuse_coefficient")
+        this.box_material_volr.uniforms.specular_coefficient.value = this.model.get("specular_coefficient")
+        this.box_material_volr.uniforms.specular_exponent.value = this.model.get("specular_exponent")
+        this.update()
+    },
+    update_size: function(skip_update) {
+        console.log("update size")
+        var width = this.model.get("width");
+        var height = this.model.get("height");
+        if(this.model.get("fullscreen")) {
+            width = window.innerWidth;
+            height = window.innerHeight;
+        }
+        var aspect = width / height;
+        this.camera.aspect = aspect
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(width, height);
+
+        var render_width = width;
+        var render_height = height;
+        if(this.model.get("stereo"))
+            render_width /= 2;
+        render_width /= this.model.get("downscale")
+        render_height /= this.model.get("downscale")
+
+        console.log("render width: " +render_width)
+        this.back_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+        this.front_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+        this.volr_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+        this.screen_texture = this.volr_texture
+        this.box_material_volr.uniforms.back.value = this.back_texture.texture
+        this.box_material_volr.uniforms.front.value = this.front_texture.texture
+        this.box_material_volr.uniforms.render_size.value = [render_width, render_height]
+        if(!skip_update)
+            this.update()
+    },
+    volume_changed: function() {
+        this.volume = this.model.get("data")
+        if(!this.volume) {
+            this.volume = {image_shape: [2048, 1024], slice_shape: [128, 128], rows: 8, columns:16, slices: 128, src:default_cube_url}
+        }
+        this.texture_volume = this.texture_loader.load(this.volume.src, _.bind(this.update, this), _.bind(this.update, this))
+        this.texture_volume.magFilter = THREE.LinearFilter
+        this.texture_volume.minFilter = THREE.LinearFilter
+        this.box_material_volr.uniforms.volume_rows.value = this.volume.rows,
+        this.box_material_volr.uniforms.volume_columns.value = this.volume.columns
+        this.box_material_volr.uniforms.volume_slices.value = this.volume.slices
+        this.box_material_volr.uniforms.volume_size.value = this.volume.image_shape
+        this.box_material_volr.uniforms.volume_slice_size.value = this.volume.slice_shape
+        this.box_material_volr.uniforms.volume.value = this.texture_volume
+        this.update()
+    },
+    tf_changed: function() {
+        var data_array_tf = this.model.get("tf").get_data_array()
+        this.texture_tf.image.data = data_array_tf
+        this.texture_tf.needsUpdate = true
+        this.update()
     }
 });
 
-module.exports = {
-    VolumeModel : VolumeModel,
-    VolumeView : VolumeView,
-    TransferFunctionView: TransferFunctionView,
-    TransferFunctionWidgetJs3Model: TransferFunctionWidgetJs3Model
-};
+var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
+    defaults: function() {
+        return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
+            _model_name : 'VolumeRendererThreeModel',
+            _view_name : 'VolumeRendererThreeView',
+            _model_module : 'ipyvolume',
+            _view_module : 'ipyvolume',
+            angle1: 0.1,
+            angle2: 0.2,
+            ambient_coefficient: 0.5,
+            diffuse_coefficient: 0.8,
+            specular_coefficient: 0.5,
+            specular_exponent: 5,
+            stereo: false,
+            fullscreen: false,
+            width: 500,
+            height: 400,
+            downscale: 0,
+        })
+    }
+}, {
+    serializers: _.extend({
+        tf: { deserialize: widgets.unpack_models },
+    }, widgets.DOMWidgetModel.serializers)
+});
 
 
+    return {
+        VolumeRendererThreeView: VolumeRendererThreeView,
+        VolumeRendererThreeModel: VolumeRendererThreeModel,
+        VolumeModel : VolumeModel,
+        VolumeView : VolumeView,
+        TransferFunctionView: TransferFunctionView,
+        TransferFunctionWidgetJs3Model: TransferFunctionWidgetJs3Model,
+        TransferFunctionJsBumpsModel: TransferFunctionJsBumpsModel
+    };
 
+
+})
 //////////////////
 // WEBPACK FOOTER
 // ./src/volume.js

@@ -43,19 +43,16 @@ Generated volume
 From a numpy array, we create two boxes, using slicing, and visualize it using :any:`volshow`.
 
 .. ipywidgets-display::
-   import numpy as np
-   import ipyvolume
-   V = np.zeros((128,128,128)) # our 3d array
-   # outer box
-   V[30:-30,30:-30,30:-30] = 0.75
-   V[35:-35,35:-35,35:-35] = 0.0
-   # inner box
-   V[50:-50,50:-50,50:-50] = 0.25
-   V[55:-55,55:-55,55:-55] = 0.0
-   ipyvolume.volshow(V, opacity1=0.03, level1=0.25,
-                  opacity2=0.03, level2=0.75,
-                  opacity3=0,
-                  data_min=0, data_max=1)
+    import numpy as np
+    import ipyvolume
+    V = np.zeros((128,128,128)) # our 3d array
+    # outer box
+    V[30:-30,30:-30,30:-30] = 0.75
+    V[35:-35,35:-35,35:-35] = 0.0
+    # inner box
+    V[50:-50,50:-50,50:-50] = 0.25
+    V[55:-55,55:-55,55:-55] = 0.0
+    ipyvolume.volshow(V, levels=[0.25, 0.75], opacities=0.03, widths=0.1, data_min=0, data_max=1)
 
 Math example
 ------------
@@ -73,11 +70,8 @@ This is a snapshot of the pure dark matter simulations of the Aquarius project `
 
 .. ipywidgets-display::
 
-   aqa2 = ipyvolume.datasets.aquariusA2.fetch()
-   ipyvolume.volshow(aqa2.data.T, lighting=True,
-                  level1=0.16, opacity1=0.06,
-                  level2=0.25, opacity2=0.06,
-                  level3=0.45, opacity3=0.06)
+    aqa2 = ipyvolume.datasets.aquariusA2.fetch()
+    ipyvolume.volshow(aqa2.data.T, lighting=True, level=[0.16, 0.25, 0.46], opacity=0.06)
 
 Dataset: Helmi & de Zeeuw 2000
 ------------------------------
@@ -86,8 +80,8 @@ This is a visualization of a simulation of the stellar accreted halo of the Milk
 
 .. ipywidgets-display::
 
-   hdz2000 = ipyvolume.datasets.hdz2000.fetch()
-   ipyvolume.volshow(hdz2000.data.T, lighting=True, level1=0.6, level2=0.8, level3=0.9, opacity2=0.03)
+    hdz2000 = ipyvolume.datasets.hdz2000.fetch()
+    ipyvolume.volshow(hdz2000.data.T, lighting=True, level=[0.6, 0.8, 0.9], opacity=[0.01, 0.03, 0.05])
 
 Use with vaex
 -------------
@@ -103,7 +97,7 @@ In combination with `vaex <http://vaex.astro.rug.nl/>`_ .(currently not working 
    ds = vx.datasets.helmi_de_zeeuw.fetch()
    counts = ds.count(binby=["x", "y", "z"], limits=[-10, 10], shape=128)
    counts = np.log10(gf(counts, 2))
-   ipyvolume.volshow(counts.T, level1=0.6, level2=0.8, level3=0.9, opacity2=0.03)
+   ipyvolume.volshow(counts.T, levels=[0.6, 0.8, 0.9], opacity=[0.01, 0.03, 0.05])
 
 
 API docs
