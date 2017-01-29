@@ -52,7 +52,7 @@ From a numpy array, we create two boxes, using slicing, and visualize it using :
     # inner box
     V[50:-50,50:-50,50:-50] = 0.25
     V[55:-55,55:-55,55:-55] = 0.0
-    ipyvolume.volshow(V, levels=[0.25, 0.75], opacities=0.03, widths=0.1, data_min=0, data_max=1)
+    ipyvolume.volshow(V, level=[0.25, 0.75], opacity=0.03, width=0.1, data_min=0, data_max=1)
 
 Math example
 ------------
@@ -97,7 +97,7 @@ In combination with `vaex <http://vaex.astro.rug.nl/>`_ .(currently not working 
    ds = vx.datasets.helmi_de_zeeuw.fetch()
    counts = ds.count(binby=["x", "y", "z"], limits=[-10, 10], shape=128)
    counts = np.log10(gf(counts, 2))
-   ipyvolume.volshow(counts.T, levels=[0.6, 0.8, 0.9], opacity=[0.01, 0.03, 0.05])
+   ipyvolume.volshow(counts.T, level=[0.6, 0.8, 0.9], opacity=[0.01, 0.03, 0.05])
 
 
 API docs
