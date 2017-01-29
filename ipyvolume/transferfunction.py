@@ -6,7 +6,7 @@ import numpy as np
 from .serialize import array_rgba_png_serialization, array_serialization
 N = 1024
 x = np.linspace(0, 1, N, endpoint=True)
-import matplotlib.colors
+
 
 if 0:
 	def array_from_json(value, obj=None):
