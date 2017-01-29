@@ -1053,14 +1053,11 @@ var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
         this.recalculate_rgba()
     },
     recalculate_rgba: function() {
-        console.log("recalc rgba")
         var rgba = []
         var colors = [[1,0,0], [0,1,0], [0,0,1]]
         var levels = [this.get("level1"), this.get("level2"), this.get("level3")]
         var widths = [this.get("width1"), this.get("width2"), this.get("width3")]
         var opacities = [this.get("opacity1"), this.get("opacity2"), this.get("opacity3")]
-        window.rgba = rgba
-        window.tfjs = this
         var N = 256
         for(var i = 0; i < N; i++) {
             var x = i/(N-1);
@@ -1087,7 +1084,7 @@ var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
     },
     get_data_array: function() {
         var flat_array = [];
-        window.rgba = rgba
+        var rgba = this.get("rgba")
         for(var i = 0; i < rgba.length; i++) {
             for(var j = 0; j < 4; j++) {
               flat_array.push(rgba[i][j]*255)
@@ -1095,8 +1092,8 @@ var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
         }
         var transfer_function_uint8_array = new Uint8Array(flat_array);
         // REMOVE: for debugging
-        window.transfer_function_uint8_array = transfer_function_uint8_array
-        window.flat_array = flat_array
+        //window.transfer_function_uint8_array = transfer_function_uint8_array
+        //window.flat_array = flat_array
         return transfer_function_uint8_array
     },
 
@@ -1106,9 +1103,10 @@ var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
 var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
     render: function() {
         this.update_counter = 0
-        width = this.model.get("width");
-        height = this.model.get("height");
+        var width = this.model.get("width");
+        var height = this.model.get("height");
         this.renderer = new THREE.WebGLRenderer();
+        this.el.appendChild(this.renderer.domElement);
         const VIEW_ANGLE = 45;
         const aspect = width / height;
         const NEAR = 0.1;
@@ -1137,7 +1135,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.box_mesh.updateMatrix()
         this.box_mesh.matrixAutoUpdate = true
 
-        const pointLight = new THREE.PointLight(0xFFFFFF);
+        var pointLight = new THREE.PointLight(0xFFFFFF);
 
         // set its position
         pointLight.position.x = 10;
@@ -1198,8 +1196,8 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         //console.log(rgba_tf.length)
         //this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, rgba.length, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, transfer_function_uint8_array);
 
-        this.texture_tf = new THREE.DataTexture(null, this.model.get("tf").get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
-        this.texture_tf.needsUpdate = true
+        this.texture_tf = new THREE.DataTexture(this.model.get("tf").get_data_array(), this.model.get("tf").get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
+        //this.texture_tf.needsUpdate = true
         //    THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter, 1)
         console.log(this.texture_tf)
         this.box_material_volr = new THREE.ShaderMaterial({
@@ -1232,7 +1230,6 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
 
 //            this.volume = {image_shape: [2048, 1024], slice_shape: [128, 128], rows: 8, columns:16, slices: 128, src:default_cube_url}
 
-        this.el.appendChild(this.renderer.domElement);
         var that = this;
         //*
         this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
