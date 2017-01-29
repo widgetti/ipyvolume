@@ -1,8 +1,8 @@
 import numpy as np
-import scipy.special
 import ipyvolume
 try:
-	scipy.ndimage
+	import scipy.ndimage
+	import scipy.special
 except:
 	pass # it's ok, it's not crucial
 __all__ = ["example_ylm"]

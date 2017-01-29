@@ -4,3 +4,4 @@ traittypes
 traitlets
 ipywidgets
 Pillow
+scipy
