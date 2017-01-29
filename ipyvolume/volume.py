@@ -97,16 +97,31 @@ def _volume_widets(v, lighting=False):
          ] + widgets_bottom# , ipywidgets.HBox([angle1, angle2])
     )
 
-def volshow(data, lighting=False, data_min=None, data_max=None, tf=None,
-            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], width=0.1, **kwargs):
+def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=False,
+            width=400, height=500,
+            ambient_coefficient=0.5, diffuse_coefficient=0.8,
+            specular_coefficient=0.5, specular_exponent=5,
+            downscale=1,
+            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, **kwargs):
     """
     Visualize a 3d array using volume rendering
 
     :param data: 3d numpy array
-    :param lighting: boolean, to use lighting or not
+    :param lighting: boolean, to use lighting or not, if set to false, lighting parameters will be overriden
     :param data_min: minimum value to consider for data, if None, computed using np.nanmin
     :param data_max: maximum value to consider for data, if None, computed using np.nanmax
-    :param tf: transfer function (see ipyvolume.transfer_function)
+    :param tf: transfer function (see ipyvolume.transfer_function, or use the argument below)
+    :param stereo: stereo view for virtual reality (cardboard and similar VR head mount)
+    :param width: width of rendering surface
+    :param height: height of rendering surface
+    :param ambient_coefficient: lighting parameter
+    :param diffuse_coefficient: lighting parameter
+    :param specular_coefficient: lighting parameter
+    :param specular_exponent: lighting parameter
+    :param downscale: downscale the rendering for better performance, for instance when set to 2, a 512x512 canvas will show a 256x256 rendering upscaled, but it will render twice as fast.
+    :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
+    :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
+    :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
     :param kwargs: extra argument passed to Volume and default transfer function
     :return:
 
@@ -120,30 +135,36 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None,
         except:
             opacity = [opacity] * 3
         try:
-            width[0]
+            level_width[0]
         except:
-            width = [width] * 3
+            level_width = [level_width] * 3
         #clip off lists
-        min_length = min(len(level), len(width), len(opacity))
+        min_length = min(len(level), len(level_width), len(opacity))
         level = list(level[:min_length])
         opacity = list(opacity[:min_length])
-        width = list(width[:min_length])
+        level_width = list(level_width[:min_length])
         # append with zeros
         while len(level) < 3:
             level.append(0)
         while len(opacity) < 3:
             opacity.append(0)
-        while len(width) < 3:
-            width.append(0)
+        while len(level_width) < 3:
+            level_width.append(0)
         for i in range(1,4):
             tf_kwargs["level"+str(i)] = level[i-1]
             tf_kwargs["opacity"+str(i)] = opacity[i-1]
-            tf_kwargs["width"+str(i)] = width[i-1]
+            tf_kwargs["width"+str(i)] = level_width[i-1]
         tf = TransferFunctionWidgetJs3(**tf_kwargs)
     if data_min is None:
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
-    v = VolumeRendererThree(data=data, data_min=data_min, data_max=data_max, tf=tf, **kwargs)
+    v = VolumeRendererThree(data=data, data_min=data_min, data_max=data_max, stereo=stereo,
+                            width=width, height=height,
+                            ambient_coefficient=ambient_coefficient,
+                            diffuse_coefficient=diffuse_coefficient,
+                            specular_coefficient=specular_coefficient,
+                            specular_exponent=specular_exponent,
+                            tf=tf, **kwargs)
     return _volume_widets(v, lighting=lighting)
 

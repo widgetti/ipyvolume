@@ -52,7 +52,7 @@ From a numpy array, we create two boxes, using slicing, and visualize it using :
     # inner box
     V[50:-50,50:-50,50:-50] = 0.25
     V[55:-55,55:-55,55:-55] = 0.0
-    ipyvolume.volshow(V, level=[0.25, 0.75], opacity=0.03, width=0.1, data_min=0, data_max=1)
+    ipyvolume.volshow(V, level=[0.25, 0.75], opacity=0.03, level_width=0.1, data_min=0, data_max=1)
 
 Math example
 ------------
