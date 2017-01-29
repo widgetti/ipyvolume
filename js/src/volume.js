@@ -1422,14 +1422,15 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         console.log("update size")
         var width = this.model.get("width");
         var height = this.model.get("height");
-        if(this.model.get("fullscreen")) {
-            width = window.innerWidth;
-            height = window.innerHeight;
-        }
         var aspect = width / height;
         this.camera.aspect = aspect
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
+        if(this.model.get("fullscreen")) {
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+        } else {
+            this.renderer.setSize(width, height);
+        }
 
         var render_width = width;
         var render_height = height;
