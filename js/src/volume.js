@@ -1349,20 +1349,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         }
     },
     update: function() {
-        _.bind(function(local_update_counter) {
-            setTimeout(_.bind(function(){
-                //console.log("update: " +this.update_counter +" / " +local_update_counter);
-                if(local_update_counter == this.update_counter) {
-                    //shader_volume_rendering = shader_volume_rendering_final;
-                    console.log("real update");
-                    this._real_update()
-                } else {
-                    console.log("skip update");
-                }
-            }, this), 10);
-        }, this)(++this.update_counter);
-        //shader_volume_rendering = shader_volume_rendering_updates;
-        //plugin.real_updateScene()
+        requestAnimationFrame(_.bind(this._real_update, this))
     },
     _real_update: function() {
         this.renderer.clear()
