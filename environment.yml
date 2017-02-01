@@ -9,4 +9,4 @@ dependencies:
  - traitlets
  - pillow
  - pip:
-   - git+https://github.com/maartenbreddels/ipyvolume
+   - ipyvolume
