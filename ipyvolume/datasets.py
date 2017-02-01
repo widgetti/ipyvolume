@@ -1,9 +1,13 @@
 import os
 import numpy as np
 import bz2
+import platform
 data_dir = os.path.expanduser("~/.ipyvolume/datasets")
 if not os.path.exists(data_dir):
 	os.makedirs(data_dir)
+
+
+osname = dict(darwin="osx", linux="linux", windows="windows")[platform.system().lower()]
 
 
 class Dataset(object):
@@ -15,7 +19,7 @@ class Dataset(object):
 	def download(self, force=False):
 		if not os.path.exists(self.path) or force:
 			print("Downloading %s to %s" % (self.url, self.path))
-			code = os.system(self.wget_command())
+			code = os.system(self.download_command())
 
 	def fetch(self):
 		self.download()
@@ -26,9 +30,11 @@ class Dataset(object):
 			raise Exception("file not found and/or download failed")
 		return self
 
-	def wget_command(self):
-		return "cd %s; curl -O -L %s" % (data_dir, self.url)
-		#return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url)
+	def download_command(self):
+		if os == "osx":
+			return "cd %s; curl -O -L %s" % (data_dir, self.url)
+		else:
+			return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url)
 
 hdz2000    = Dataset("hdz2000")
 aquariusA2 = Dataset("aquarius-A2")
