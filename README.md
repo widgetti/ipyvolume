@@ -7,6 +7,8 @@ ipyvolume
 
 IPython widget for rendering 3d volumes in the Jupyter notebook
 
+Try out in mybinder: [![Binder](http://mybinder.org/badge.svg)](http://mybinder.org:/repo/maartenbreddels/ipyvolume)
+
 ![screencast](https://raw.githubusercontent.com/maartenbreddels/ipyvolume/master/misc/screencast.gif)
 
 Installation
