@@ -9,7 +9,7 @@ Ipyvolume
 
 IPyvolume is a Python library to visualize 3d volumes (in the Jupyter notebook), with minimal configuration and effort. It is currently pre-alpha, use at own risk. IPyvolume's *volshow* is to 3d arrays what matplotlib's imshow is to 2d arrays.
 
-Other (more mature but possibly more difficult to use) related packages are `VTK <www.vtk.org>`_ and/or `Mayavi <http://docs.enthought.com/mayavi/mayavi/>`_.
+Other (more mature but possibly more difficult to use) related packages are `yt <http://yt-project.org/>`_, `VTK <www.vtk.org>`_ and/or `Mayavi <http://docs.enthought.com/mayavi/mayavi/>`_.
 
 
 Feedback and contributions are welcome: `Github <https://github.com/maartenbreddels/ipyvolume>`_, `Email <mailto:maartenbreddels@gmail.com>`_ or `Twitter <https://twitter.com/maartenbreddels>`_.
