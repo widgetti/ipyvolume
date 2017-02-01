@@ -50,13 +50,13 @@ def get_state(widget, store=None, drop_defaults=False):
     return store
 
 
-def embed_html(filename, widget, drop_defaults=False):
+def embed_html(filename, widget, drop_defaults=False, title="ipyvolume embed example", template=template):
     with open(filename, "w") as f:
         if widget is None:
             state = ipywidgets.Widget.get_manager_state(drop_defaults=drop_defaults)["state"]
         else:
             state = get_state(widget, drop_defaults=drop_defaults)
-        values = dict(title="ipyvolume embed example",
+        values = dict(title=title,
                       json_data=json.dumps(dict(version_major=1, version_minor=0, state=state)),
                       model_id=widget.model_id)
         html_code = template.format(**values)
