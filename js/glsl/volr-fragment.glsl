@@ -93,53 +93,39 @@ void main(void) {
 
     for(int i = 0; i < steps; i++) {
         vec3 pos = ray_pos;
-        //pos = vec3(pos.xy, 1./128. * mod1); //ray_pos.z * 0.9 + 0.05);
-        //pos = vec3(1./128. * mod1, pos.yz); //ray_pos.z * 0.9 + 0.05);
-        //pos = vec3(pos.x, pos.yz); //ray_pos.z * 0.9 + 0.05);
-        //pos = vec3(ray_pos.xy, 1./128. * mod1); //ray_pos.z * 0.9 + 0.05);
-        //pos = vec3(ray_pos.x, ray_pos.y, 1./128. * mod1); //ray_pos.z * 0.9 + 0.05);
-        //vec4 color_sample = sampleAs3DTexture(volume, pos, 128., 8., 16.);
         vec4 sample = sample_as_3d_texture(volume, volume_size, pos, volume_slice_size, volume_slices, volume_rows, volume_columns);
-        vec4 sample_x = sample_as_3d_texture(volume, volume_size, pos + vec3(delta, 0, 0), volume_slice_size, volume_slices, volume_rows, volume_columns);
+        /*vec4 sample_x = sample_as_3d_texture(volume, volume_size, pos + vec3(delta, 0, 0), volume_slice_size, volume_slices, volume_rows, volume_columns);
         vec4 sample_y = sample_as_3d_texture(volume, volume_size, pos + vec3(0, delta, 0), volume_slice_size, volume_slices, volume_rows, volume_columns);
         vec4 sample_z = sample_as_3d_texture(volume, volume_size, pos + vec3(0, 0, delta), volume_slice_size, volume_slices, volume_rows, volume_columns);
 
         vec3 normal = normalize(vec3((sample_x[0]-sample[0])/delta, (sample_y[0]-sample[0])/delta, (sample_z[0]-sample[0])/delta));
         normal = -vec3(normal.x, normal.y, normal.z);
         float cosangle_light = max((dot(light_dir, normal)), 0.);
+        float cosangle_eye = max((dot(eye, normal)), 0.);*/
+
+        vec3 normal = (-sample.xyz)*2.+1.;
+        //normal = -vec3(normal.x, normal.y, normal.z);
+        float cosangle_light = max((dot(light_dir, normal)), 0.);
         float cosangle_eye = max((dot(eye, normal)), 0.);
 
-        //for(int j = 0; j < 3; j++) {
-          //float bla = length(sample)/sqrt(3.);
-          float data_value = (sample.a - data_min) * data_scale;
-          //float volume_level_value = (volume_level[j] - data_min) * data_scale;;
-          //float chi = (data_value-volume_level[j])/volume_width[j];
-          //float chisq = pow(chi, 2.);
-          //float intensity = exp(-chisq);
-          //vec4 color_sample = texture2D(colormap, vec2(clamp((level+2.)/2., 0., 1.), colormap_index_scaled));
-          //intensity = clamp(intensity, 0., 1.);
-          //float distance_norm = clamp(((-chi/0.5)+1.)/2., 0., 1.);
-          //color_index = 0.9;
-          //vec4 color_sample = texture2D(colormap, vec2(1.-volume_level[j], colormap_index_scaled));
-          //vec4 color_sample = texture2D(colormap, vec2(data_value, colormap_index_scaled));
+        float data_value = (sample.a - data_min) * data_scale;
+        vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
 
-          vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
+        color_sample = color_sample * (ambient_coefficient + diffuse_coefficient*cosangle_light + specular_coefficient * pow(cosangle_eye, specular_exponent));
 
-          color_sample = color_sample * (ambient_coefficient + diffuse_coefficient*cosangle_light + specular_coefficient * pow(cosangle_eye, specular_exponent));
-
-          float intensity = color_sample.a;
-          //float intensity = texture2D(transfer_function, vec2(data_value, 0.5)).a;
-          //color_sample = texture2D(transfer_function, data_value);
-          //vec4 color_sample = texture2D(colormap, vec2(sample.a, colormap_index_scaled));
-          //color_sample = texture2D(volume, ray_pos.yz);
-          //float alpha_sample = opacity*intensity;//1./128.* length(color_sample) * 100.;
-          float alpha_sample = intensity * sign(data_value) * sign(1.-data_value) * 100. / float(steps) * ray_length;//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
-          alpha_sample = clamp(alpha_sample, 0., 1.);
-          color = color + (1.0 - alpha_total) * color_sample * alpha_sample;
-          if(alpha_total >= 1.)
+        float intensity = color_sample.a;
+        //float intensity = texture2D(transfer_function, vec2(data_value, 0.5)).a;
+        //color_sample = texture2D(transfer_function, data_value);
+        //vec4 color_sample = texture2D(colormap, vec2(sample.a, colormap_index_scaled));
+        //color_sample = texture2D(volume, ray_pos.yz);
+        //float alpha_sample = opacity*intensity;//1./128.* length(color_sample) * 100.;
+        float alpha_sample = intensity * sign(data_value) * sign(1.-data_value) * 100. / float(steps) * ray_length;//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
+        alpha_sample = clamp(alpha_sample, 0., 1.);
+        color = color + (1.0 - alpha_total) * color_sample * alpha_sample;
+        if(alpha_total >= 1.)
             break;
-          alpha_total = clamp(alpha_total + alpha_sample, 0., 1.);
-        //}
+        alpha_total = clamp(alpha_total + alpha_sample, 0., 1.);
+
         ray_pos += ray_delta;
     }
     gl_FragColor = vec4(color.rgb, 1) * brightness;

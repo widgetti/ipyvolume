@@ -6,6 +6,7 @@ from io import BytesIO as StringIO
 from base64 import b64encode
 import warnings
 
+
 def cube_to_png(grid, vmin, vmax, file):
 	image_width = 2048
 	slices = grid.shape[0]
@@ -17,6 +18,10 @@ def cube_to_png(grid, vmin, vmax, file):
 	#vmin, vmax = np.nanmin(grid), np.nanmax(grid)
 	grid_normalized = (grid*1.0 - vmin) / (vmax - vmin)
 	grid_normalized[~np.isfinite(grid_normalized)] = 0
+	gradient = np.gradient(grid_normalized)
+	gradient = gradient / np.sqrt(gradient[0]**2 + gradient[1]**2 + gradient[2]**2)
+	print(np.nanmin(gradient[0]))
+	print(np.nanmax(gradient[0]))
 	# intensity_normalized = (np.log(self.data3d + 1.) - np.log(mi)) / (np.log(ma) - np.log(mi));
 	import PIL.Image
 	for y2d in range(rows):
@@ -25,9 +30,11 @@ def cube_to_png(grid, vmin, vmax, file):
 			if zindex < slices:
 				I = grid_normalized[zindex]
 				subdata = data[y2d * I.shape[0]:(y2d + 1) * I.shape[0], x2d * I.shape[1]:(x2d + 1) * I.shape[1]]
-				subdata[...,0] = (I*255).astype(np.uint8)
+				subdata[...,3] = (I*255).astype(np.uint8)
 				for i in range(3):
-					subdata[...,i+1] = subdata[...,0]
+					subdata[...,i] = ((gradient[i][zindex]/2.+0.5)*255).astype(np.uint8)
+				#for i in range(3):
+				#	subdata[...,i+1] = subdata[...,0]
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
 		img = PIL.Image.frombuffer("RGBA", (image_width, image_height), data, 'raw')
