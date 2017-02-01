@@ -4,6 +4,7 @@ from .volume import *
 from .transferfunction import *
 from .examples import  *
 from . import datasets
+from . import embed
 
 def _jupyter_nbextension_paths():
     return [{
