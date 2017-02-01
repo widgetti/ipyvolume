@@ -22,7 +22,10 @@ log.set_verbosity(log.DEBUG)
 log.info('setup.py entered')
 log.info('$PATH=%s' % os.environ['PATH'])
 
-LONG_DESCRIPTION = 'IPython widget for rendering 3d volumes in the Jupter notebook'
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
+LONG_DESCRIPTION = read("README.rst")
 
 def js_prerelease(command, strict=False):
     """decorator for building minified js/css prior to another command"""
