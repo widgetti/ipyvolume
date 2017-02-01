@@ -1,0 +1,12 @@
+name: ipyvolume
+ channels:
+   - conda-forge
+ dependencies:
+   - ipywidgets
+   - numpy
+   - scipy
+   - traittypes
+   - traitlets
+   - pillow
+   - pip:
+     - git+https://github.com/maartenbreddels/ipyvolume
