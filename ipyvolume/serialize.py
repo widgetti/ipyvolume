@@ -20,8 +20,6 @@ def cube_to_png(grid, vmin, vmax, file):
 	grid_normalized[~np.isfinite(grid_normalized)] = 0
 	gradient = np.gradient(grid_normalized)
 	gradient = gradient / np.sqrt(gradient[0]**2 + gradient[1]**2 + gradient[2]**2)
-	print(np.nanmin(gradient[0]))
-	print(np.nanmax(gradient[0]))
 	# intensity_normalized = (np.log(self.data3d + 1.) - np.log(mi)) / (np.log(ma) - np.log(mi));
 	import PIL.Image
 	for y2d in range(rows):
