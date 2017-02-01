@@ -4,6 +4,7 @@ define(["jupyter-js-widgets", "underscore", "three", "jquery", "gl-matrix"],
 window.THREE = THREE;
 //window.THREEx = {};
 require("./three/OrbitControls.js")
+require("./three/DeviceOrientationControls.js")
 require("./three/StereoEffect.js")
 require("./three/THREEx.FullScreen.js")
 
@@ -19,6 +20,7 @@ shaders["volr_vertex"] = require('../glsl/volr-vertex.glsl');
 shaders["screen_fragment"] = require('../glsl/screen-fragment.glsl');
 shaders["screen_vertex"] = require('../glsl/screen-vertex.glsl');
 
+var jQuery = $
 //var colormap_url = require('../colormap.png');
 //var default_cube_url = require('../cube.png');
 
@@ -215,7 +217,7 @@ var colormap_names = ["PaulT_plusmin", "binary", "Blues", "BuGn", "BuPu", "gist_
         }
     };
 
-}(jQuery));
+}($));
 
 
 // Custom Model. Custom widgets models must at least provide default values
@@ -1179,6 +1181,10 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
 
         this.controls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
         this.controls.enablePan = false;
+
+        //this.controls_device = controls = new THREE.DeviceOrientationControls( this.box_mesh );
+		window.addEventListener( 'deviceorientation', _.bind(this.on_orientationchange, this), false );
+		//window.addEventListener( 'deviceorientation', _.bind(this.update, this), false );
         //this.controls.
 
         this.texture_loader = new THREE.TextureLoader()
@@ -1271,6 +1277,9 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
 
         }
 
+        window.last_volume = this;
+        //navigator.wakeLock.request("display")
+
 
         return
         /**/
@@ -1304,6 +1313,25 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.el.appendChild(this.img);
         console.log(this.model.get('r'))
     },
+    on_orientationchange: function(e) {
+        this.box_mesh.rotation.reorder( "ZXY" );
+        this.box_mesh.rotation.y = -e.alpha * Math.PI / 180;
+        this.box_mesh.rotation.x = -(e.gamma * Math.PI / 180 + Math.PI*2);
+        this.box_mesh.rotation.z = -(e.beta * Math.PI / 180 + Math.PI*2);
+        this.box_mesh.rotation.z = -((e.alpha-180) * Math.PI / 180);
+        this.box_mesh.rotation.x = -(e.beta * Math.PI / 180 + Math.PI*2);
+        this.box_mesh.rotation.y = -(e.gamma * Math.PI / 180 + Math.PI*2);
+
+        this.box_mesh.rotation.reorder( "XYZ" );
+        this.box_mesh.rotation.x = (e.gamma * Math.PI / 180 + Math.PI*2);
+        this.box_mesh.rotation.y = -(e.beta * Math.PI / 180 + Math.PI*2);
+        this.box_mesh.rotation.z = -((e.alpha-180) * Math.PI / 180);
+
+        // this.box_mesh.updateMatrix()
+        //this.box_mesh.matrixAutoUpdate = true
+        this.update()
+
+    },
     on_canvas_resize: function(event) {
         console.log(event)
     },
@@ -1320,7 +1348,6 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             this.model.set("fullscreen", !this.model.get("fullscreen"))
         }
     },
-
     on_fullscreen_change: function() {
         var elem = THREEx.FullScreen.element()
         if(elem == this.renderer.domElement) {
@@ -1352,6 +1379,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         requestAnimationFrame(_.bind(this._real_update, this))
     },
     _real_update: function() {
+        //this.controls_device.update()
         this.renderer.clear()
         if(!this.model.get("stereo")) {
     		this._render_eye(this.camera);
@@ -1409,9 +1437,6 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         console.log("update size")
         var width = this.model.get("width");
         var height = this.model.get("height");
-        var aspect = width / height;
-        this.camera.aspect = aspect
-        this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
         if(this.model.get("fullscreen")) {
             this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1421,11 +1446,15 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
 
         var render_width = width;
         var render_height = height;
-        if(this.model.get("stereo"))
+        if(this.model.get("stereo")) {
             render_width /= 2;
+        }
         render_width /= this.model.get("downscale")
         render_height /= this.model.get("downscale")
 
+        var aspect = render_width / render_height;
+        this.camera.aspect = aspect
+        this.camera.updateProjectionMatrix();
         console.log("render width: " +render_width)
         this.back_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
         this.front_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
