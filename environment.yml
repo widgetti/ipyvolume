@@ -3,6 +3,7 @@ channels:
  - conda-forge
 dependencies:
  - ipywidgets
+ - python=2
  - numpy
  - scipy
  - traittypes
