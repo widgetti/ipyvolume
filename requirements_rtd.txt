@@ -5,3 +5,4 @@ traitlets
 ipywidgets>=6.0.0b5
 Pillow
 scipy
+nbsphinx
