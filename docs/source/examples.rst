@@ -52,3 +52,11 @@ In combination with `vaex <http://vaex.astro.rug.nl/>`_ .(currently not working 
    counts = np.log10(gf(counts, 2))
    ipyvolume.volshow(counts.T, level=[0.6, 0.8, 0.9], opacity=[0.01, 0.03, 0.05])
 
+
+More example
+------------
+
+.. toctree::
+   :maxdepth: 2
+
+   example_mcmc

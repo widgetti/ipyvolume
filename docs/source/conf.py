@@ -38,7 +38,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'jupyter_sphinx.embed_widgets'
+    'jupyter_sphinx.embed_widgets',
+	'nbsphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -151,8 +152,6 @@ except:
 # documentation.
 #
 html_theme_options = {
-	'collapse_navigation': False,
-	'display_version': False,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
