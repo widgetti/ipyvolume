@@ -2,12 +2,7 @@ name: ipyvolume
 channels:
  - conda-forge
 dependencies:
- - ipywidgets
- - python=2
- - numpy
+ - ipyvolume
  - scipy
- - traittypes
- - traitlets
- - pillow
  - pip:
-   - ipyvolume
+   - ipywidgets>=6.0.0.b5
