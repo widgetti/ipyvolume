@@ -6,10 +6,22 @@ import traitlets
 from traittypes import Array
 import logging
 import numpy as np
-from .serialize import array_cube_png_serialization
+from .serialize import array_cube_png_serialization, array_serialization
 from .transferfunction import *
 
 logger = logging.getLogger("ipyvolume")
+
+_last_volume_renderer = None
+
+@widgets.register('ipyvolume.Scatter')
+class Scatter(widgets.DOMWidget):
+    _view_name = Unicode('ScatterView').tag(sync=True)
+    x = Array().tag(sync=True, **array_serialization)
+    y = Array().tag(sync=True, **array_serialization)
+    z = Array().tag(sync=True, **array_serialization)
+    size = traitlets.Float(0.1).tag(sync=True)
+    color = traitlets.Tuple(traitlets.CFloat(1), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
+
 
 @widgets.register('ipyvolume.VolumeRendererThree')
 class VolumeRendererThree(widgets.DOMWidget):
@@ -19,12 +31,14 @@ class VolumeRendererThree(widgets.DOMWidget):
     _model_name = Unicode('VolumeRendererThreeModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
 
-    data = Array().tag(sync=True, **array_cube_png_serialization)
+    data = Array(allow_none=True).tag(sync=True, **array_cube_png_serialization)
     data_min = traitlets.CFloat().tag(sync=True)
     data_max = traitlets.CFloat().tag(sync=True)
-    tf = traitlets.Instance(TransferFunction).tag(sync=True, **ipywidgets.widget_serialization)
+    tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
     angle1 = traitlets.Float(0.1).tag(sync=True)
     angle2 = traitlets.Float(0.2).tag(sync=True)
+
+    scatter = traitlets.Instance(Scatter, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
 
     ambient_coefficient = traitlets.Float(0.5).tag(sync=True)
     diffuse_coefficient = traitlets.Float(0.8).tag(sync=True)
@@ -36,6 +50,19 @@ class VolumeRendererThree(widgets.DOMWidget):
     width = traitlets.CInt(500).tag(sync=True)
     height = traitlets.CInt(400).tag(sync=True)
     downscale = traitlets.CInt(1).tag(sync=True)
+
+    xlim = traitlets.List(traitlets.CFloat, default_value=None, minlen=2, maxlen=2)
+    ylim = traitlets.List(traitlets.CFloat, default_value=None, minlen=2, maxlen=2)
+    zlim = traitlets.List(traitlets.CFloat, default_value=None, minlen=2, maxlen=2)
+
+    def _ipython_display_(self, **kwargs):
+        global _last_volume_renderer
+        try:
+            super(VolumeRendererThree, self)._ipython_display_(**kwargs)
+            _last_volume_renderer = None
+            print("reset view")
+        except:
+            raise
 
 
 @widgets.register('ipyvolume.Volume')
@@ -59,6 +86,12 @@ class Volume(widgets.DOMWidget):
 
     def __init__(self, **kwargs):
         super(Volume, self).__init__(**kwargs)
+
+
+# TODO: split off in renderer and volume
+class Figure(widgets.VBox):
+    volume = traitlets.Instance(VolumeRendererThree)
+    scatter = traitlets.Instance(Scatter, allow_none=True)
 
 
 def _volume_widets(v, lighting=False):
@@ -166,5 +199,16 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
                             specular_coefficient=specular_coefficient,
                             specular_exponent=specular_exponent,
                             tf=tf, **kwargs)
-    return _volume_widets(v, lighting=lighting)
+
+    box = _volume_widets(v, lighting=lighting)
+    return box
+
+def scatter(x, y, z, color=(1,0,0), s=0.01):
+    global _last_figure;
+    fig = _last_figure
+    if fig is None:
+        fig = volshow(None)
+    fig.scatter = Scatter(x=x, y=y, z=z, color=color, size=s)
+    fig.volume.scatter = fig.scatter
+    return fig
 

@@ -270,7 +270,6 @@ var VolumeView = widgets.DOMWidgetView.extend({
 
 
         window.tf = this.model.get("tf")
-        this.model.get("tf").on('change:rgba', this.tf_changed, this);
         this.canvas =  $('<canvas/>',{'class':'ipyvolume', 'display':'inline'}).width(512).height(512);
 		//display_javascript(""" $('#%s').vr(
 		//		$.extend({cube:%s, colormap:window.colormap_src}, %s)
@@ -1104,6 +1103,7 @@ var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
 
 var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
     render: function() {
+        this.transitions = []
         this.update_counter = 0
         var width = this.model.get("width");
         var height = this.model.get("height");
@@ -1152,6 +1152,9 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.scene.add(this.box_mesh)
         this.scene.add(pointLight);
 
+        this.scene_opaque = new THREE.Scene();
+        //this.scene.add(this.camera);
+
         var render_width = width;
         var render_height = height;
         if(this.model.get("stereo"))
@@ -1187,6 +1190,16 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
 		//window.addEventListener( 'deviceorientation', _.bind(this.update, this), false );
         //this.controls.
 
+
+        this.vector_mesh = new THREE.Mesh(new THREE.CubeGeometry(0.1,1.0,0.2), new THREE.MeshBasicMaterial({color: 0xFFccAA}));
+        //#this.vector_mesh.material_normal = this.vector_mesh.material
+        //this.scene_opaque.add(this.vector_mesh)
+
+        this.model.on('change:scatter', this.scatter_changed, this);
+        this.scatter_changed()
+        //this.create_scatter()
+        //this.scene_opaque.add(this.scatter_mesh)
+
         this.texture_loader = new THREE.TextureLoader()
         //this.texture_volume = this.texture_loader.load(default_cube_url, _.bind(this.update, this), _.bind(this.update, this))
         //setTimeout( _.bind(this.update, this), 1000)
@@ -1202,7 +1215,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         //console.log(rgba_tf.length)
         //this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, rgba.length, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, transfer_function_uint8_array);
 
-        this.texture_tf = new THREE.DataTexture(this.model.get("tf").get_data_array(), this.model.get("tf").get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
+        this.texture_tf = null;//new THREE.DataTexture(null, this.model.get("tf").get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
         //this.texture_tf.needsUpdate = true
         //    THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter, 1)
         console.log(this.texture_tf)
@@ -1226,6 +1239,11 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
                 specular_exponent : { type: "f", value: this.model.get("specular_exponent") },
                 render_size : { type: "2f", value: [render_width, render_height] },
             },
+            blending: THREE.CustomBlending,
+            blendSrc: THREE.SrcAlphaFactor,
+            blendDst: THREE.OneMinusSrcAlphaFactor,
+            blendEquation: THREE.AddEquation,
+            transparent: true,
             fragmentShader: shaders["volr_fragment"],
             vertexShader: shaders["volr_vertex"],
             side: THREE.BackSide
@@ -1257,13 +1275,9 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.model.on('change:specular_coefficient', this.update_light, this);
         this.model.on('change:specular_exponent', this.update_light, this);
 
+        this.model.on('change:tf', this.tf_set, this)
+
         this.controls.addEventListener( 'change', _.bind(this.update, this) );
-
-        //window.addEventListener("keypress", _.bind(this.keypress, this));
-        //$(this.renderer.domElement).keypress(_.bind(this.keypress, this))
-
-        window.tf = this.model.get("tf")
-        this.model.get("tf").on('change:rgba', this.tf_changed, this);
 
         this.renderer.domElement.addEventListener( 'resize', _.bind(this.on_canvas_resize, this), false );
         THREEx.FullScreen.addFullScreenChangeListener(_.bind(this.on_fullscreen_change, this))
@@ -1313,7 +1327,180 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.el.appendChild(this.img);
         console.log(this.model.get('r'))
     },
-    on_orientationchange: function(e) {
+    transition: function(obj, prop) {
+        var that = this;
+        var object = obj;
+        var property = prop;
+        console.log("transition")
+        console.log(obj)
+        console.log(property)
+        var Transition = function() {
+            //this.objects = []
+            this.time_start = (new Date()).getTime();
+            this.duration = 400;
+            this.cancelled = false;
+            this.set = function(obj) {
+                this.objects.push(obj)
+            }
+            this.is_done = function() {
+                var dt = (new Date()).getTime() - this.time_start;
+                return (dt >= this.duration) || this.cancelled
+            }
+            this.cancel = function() {
+                this.cancelled = true;
+            },
+            this.update = function() {
+                if(this.cancelled)
+                    return
+                var dt = ((new Date()).getTime() - this.time_start)/this.duration;
+                var u = Math.min(1, dt);
+                u = Math.pow(u, 0.5)
+                //console.log("setting ")
+                //console.log(object)
+                //console.log(property)
+                object[property] = u;
+            }
+            //this.settime(name)
+            that.transitions.push(this)
+        }
+        return new Transition()
+    },
+    schedule_update_scatter: function(attribute) {
+        _.mapObject(this.model.get("scatter").changedAttributes(), function(val, key){
+            console.log("changed " +key)
+            this.scatter_previous[key] = this.model.get("scatter").previous(key)
+        }, this)
+        this.update_scatter_debounced()
+    },
+    scatter_changed: function() {
+        console.log("scatter_changed")
+        if(this.scatter_mesh)
+            this.scene_opaque.remove(this.scatter_mesh)
+        this.scatter_previous = {}
+        this.update_scatter_debounced = _.debounce(_.bind(this.update_scatter, this), 50)
+        var scatter = this.model.get("scatter")
+        if(scatter) {
+            scatter.on("change:size change:color change:x change:y change:z",   this.schedule_update_scatter, this)
+            this.update_scatter()
+        } else {
+            this.update()
+        }
+    },
+    update_scatter: function() {
+        console.log("update scatter")
+        this.scene_opaque.remove(this.scatter_mesh)
+        this.create_scatter()
+        this.scene_opaque.add(this.scatter_mesh)
+        this.update()
+    },
+    create_scatter: function() {
+        var scatter = this.model.get("scatter")
+        console.log("create scatter")
+        console.log(this.scatter_previous)
+        var geo = new THREE.SphereGeometry(1, 2, 2)
+        //var geo = new THREE.SphereGeometry(0.1, 32, 32)
+
+        this.scatter_material = new THREE.RawShaderMaterial({
+            uniforms: {animation_time : { type: "f", value: 0. },},
+            vertexShader: require('../glsl/scatter-vertex.glsl'),
+            fragmentShader: require('../glsl/scatter-fragment.glsl')
+            })
+
+        this.scatter_material_rgb = new THREE.RawShaderMaterial({
+            uniforms: {animation_time : { type: "f", value: 0. },},
+            vertexShader: "#define USE_RGB\n"+require('../glsl/scatter-vertex.glsl'),
+            fragmentShader: "#define USE_RGB\n"+require('../glsl/scatter-fragment.glsl')
+            })
+
+        var buffer_geo = new THREE.BufferGeometry().fromGeometry(geo);
+        var instanced_geo = new THREE.InstancedBufferGeometry();
+
+        var vertices = buffer_geo.attributes.position.clone();
+        instanced_geo.addAttribute( 'position', vertices );
+
+
+        var x = scatter.get("x");
+        var y = scatter.get("y");
+        var z = scatter.get("z");
+        var has_previous_xyz = scatter.previous("x") && scatter.previous("y") && scatter.previous("z")
+        var count = Math.min(x.length, y.length, z.length);
+        var count_previous = count;
+        console.log("count: " +count)
+        if(has_previous_xyz) {
+            count_previous = Math.min(scatter.previous("x").length, scatter.previous("y").length, scatter.previous("z").length)
+            console.log("has previous")
+        }
+        console.log("count_previous: " +count_previous)
+        var max_count = Math.max(count, count_previous);
+        console.log("max_count: " +max_count)
+
+        //previous offsets
+        var x_previous = this.scatter_previous["x"]|| x;
+        var y_previous = this.scatter_previous["y"] || y;
+        var z_previous = this.scatter_previous["z"] || z;
+
+
+        // offsets
+        var offsets = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
+        var offsets_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
+	    for(var i = 0; i < max_count; i++) {
+	        if(i < count)
+	            offsets.setXYZ(i, x[i]-0.5, y[i]-0.5, z[i]-0.5);
+	        else
+	            offsets.setXYZ(i, x_previous[i]-0.5, y_previous[i]-0.5, z_previous[i]-0.5);
+	        if(i < count_previous)
+	            offsets_previous.setXYZ(i, x_previous[i]-0.5, y_previous[i]-0.5, z_previous[i]-0.5);
+	        else
+	            offsets_previous.setXYZ(i, x[i]-0.5, y[i]-0.5, z[i]-0.5);
+	    }
+        instanced_geo.addAttribute( 'position_offset', offsets );
+        instanced_geo.addAttribute( 'position_offset_previous', offsets_previous );
+
+        // scales
+        var scales = new THREE.InstancedBufferAttribute(new Float32Array( max_count ), 1, 1);
+        var scales_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count ), 1, 1);
+        var size = scatter.get("size")
+        var size_previous = this.scatter_previous["size"]
+        if(size_previous  == undefined)
+            size_previous  = size;
+	    for(var i = 0; i < max_count; i++) {
+	        if(i < count)
+    	        scales.setX(i, size);
+    	    else
+    	        scales.setX(i, 0.);
+	        if(i < count_previous)
+    	        scales_previous.setX(i, size_previous);
+    	    else
+    	        scales_previous.setX(i, 0.);
+	    }
+        instanced_geo.addAttribute( 'scale', scales);
+        instanced_geo.addAttribute( 'scale_previous', scales_previous);
+
+        // colors
+        var colors = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
+        var colors_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
+        var color = scatter.get("color")
+        var color_previous = this.scatter_previous["color"]
+        if(!color_previous)
+            color_previous = color;
+	    for(var i = 0; i < max_count; i++) {
+   	        colors.setXYZ(i, color[0], color[1], color[2]);
+   	        colors_previous.setXYZ(i, color_previous[0], color_previous[1], color_previous[2]);
+	    }
+
+        instanced_geo.addAttribute( 'color', colors );
+        instanced_geo.addAttribute( 'color_previous', colors_previous );
+	    this.scatter_mesh = new THREE.Mesh( instanced_geo, this.scatter_material );
+	    this.scatter_mesh.material_rgb = this.scatter_material_rgb
+	    this.scatter_mesh.material_normal = this.scatter_material
+
+        this.scatter_previous = {}
+        this.transition(this.scatter_material    .uniforms.animation_time, "value")
+        this.transition(this.scatter_material_rgb.uniforms.animation_time, "value")
+        //this.scatter_material.uniforms.time.value = u;
+        //this.box_material.uniforms.time.value = u;
+    },
+    on_orientationchange: function(e) {/*
         this.box_mesh.rotation.reorder( "ZXY" );
         this.box_mesh.rotation.y = -e.alpha * Math.PI / 180;
         this.box_mesh.rotation.x = -(e.gamma * Math.PI / 180 + Math.PI*2);
@@ -1329,7 +1516,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
 
         // this.box_mesh.updateMatrix()
         //this.box_mesh.matrixAutoUpdate = true
-        this.update()
+        this.update()*/
 
     },
     on_canvas_resize: function(event) {
@@ -1380,6 +1567,23 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
     },
     _real_update: function() {
         //this.controls_device.update()
+        /*this.time_render = (new Date()).getTime() / 1000;
+        var dt = (this.time_render - this.time_start)*2;
+        var u = Math.min(1, dt);
+        u = Math.pow(u, 0.5)
+        this.scatter_material.uniforms.time.value = u;
+        this.box_material.uniforms.time.value = u;*/
+
+
+        var transitions_todo = []
+        for(var i = 0; i < this.transitions.length; i++) {
+            var t = this.transitions[i];
+            if(!t.is_done())
+                transitions_todo.push(t)
+            t.update()
+        }
+
+
         this.renderer.clear()
         if(!this.model.get("stereo")) {
     		this._render_eye(this.camera);
@@ -1404,27 +1608,58 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             this.renderer.setScissorTest( false );
             this.renderer.setViewport( 0, 0, size.width, size.height );
         }
+        this.transitions = transitions_todo;
+        if(this.transitions.length > 0) {
+            this.update()
+        }
     },
     _render_eye: function(camera) {
-        // render the back coordinates
-        this.box_mesh.material = this.box_material;
-        this.box_material.side = THREE.BackSide;
-        this.renderer.clearTarget(this.back_texture, true, true, true)
-        this.renderer.render(this.scene, camera, this.back_texture);
+        if(this.model.get("data")) {
+            // render the back coordinates
+            this.box_mesh.material = this.box_material;
+            this.box_material.side = THREE.BackSide;
+            this.renderer.clearTarget(this.back_texture, true, true, true)
+            this.renderer.render(this.scene, camera, this.back_texture);
 
-        // the front coordinates
-        this.box_material.side = THREE.FrontSide;
-        this.renderer.clearTarget(this.front_texture, true, true, true)
-        this.renderer.render(this.scene, camera, this.front_texture);
+            // now render the opaque object, such that we limit the rays
+            this.box_material.side = THREE.FrontSide;
+            this.renderer.autoClear = false;
+            //this.scene_opaque.overrideMaterial = this.box_material;
+            this.scatter_mesh.material = this.scatter_mesh.material_rgb
+            this.renderer.render(this.scene_opaque, camera, this.back_texture);
+            this.renderer.autoClear = true;
 
-        // render the volume
-        this.box_mesh.material = this.box_material_volr;
-        //this.renderer.clearTarget(this.volr_texture, true, true, true)
-        this.renderer.render(this.scene, camera, this.volr_texture);
+            this.scatter_mesh.material = this.scatter_mesh.material_normal
 
-        this.screen_material.uniforms.tex.value = this.screen_texture.texture
-        //this.screen_material.uniforms.tex.value = this.texture_tf
-        this.renderer.render(this.screen_scene, this.screen_camera);
+            // the front coordinates
+            this.box_material.side = THREE.FrontSide;
+            this.renderer.autoClear = false; // TODO move
+            this.renderer.clearTarget(this.front_texture, true, true, true)
+            this.renderer.render(this.scene, camera, this.front_texture);
+            this.renderer.autoClear = true; // TODO move
+
+            // render the opaque with normal materials
+            this.scene_opaque.overrideMaterial = null;
+            this.renderer.render(this.scene_opaque, camera, this.volr_texture);
+
+            // render the volume
+            this.box_mesh.material = this.box_material_volr;
+            this.renderer.autoClear = false;
+            // clear depth buffer
+            this.renderer.clearTarget(this.volr_texture, false, true, false)
+            this.renderer.render(this.scene, camera, this.volr_texture);
+            this.renderer.autoClear = true;
+
+            //this.screen_texture = this.back_texture
+            this.screen_material.uniforms.tex.value = this.screen_texture.texture
+            //this.renderer.clearTarget(this.renderer, true, true, true)
+            this.renderer.render(this.screen_scene, this.screen_camera);
+         } else {
+            this.camera.updateMatrixWorld();
+            this.renderer.render(this.scene_opaque, camera);
+         }
+
+
     },
     update_light: function() {
         this.box_material_volr.uniforms.ambient_coefficient.value = this.model.get("ambient_coefficient")
@@ -1437,15 +1672,20 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         console.log("update size")
         var width = this.model.get("width");
         var height = this.model.get("height");
+        var render_width = width;
+        var render_height = height;
         this.renderer.setSize(width, height);
         if(this.model.get("fullscreen")) {
             this.renderer.setSize(window.innerWidth, window.innerHeight);
+            if(!this.model.get("data")) { // no volume data means full rendering
+                console.log("do a fullscreen render")
+                render_width  = window.innerWidth
+                render_height = window.innerHeight
+            }
         } else {
             this.renderer.setSize(width, height);
         }
 
-        var render_width = width;
-        var render_height = height;
         if(this.model.get("stereo")) {
             render_width /= 2;
         }
@@ -1469,7 +1709,9 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
     volume_changed: function() {
         this.volume = this.model.get("data")
         if(!this.volume) {
-            this.volume = {image_shape: [2048, 1024], slice_shape: [128, 128], rows: 8, columns:16, slices: 128, src:default_cube_url}
+            this.update_size()
+            return;
+            //this.volume = {image_shape: [2048, 1024], slice_shape: [128, 128], rows: 8, columns:16, slices: 128, src:default_cube_url}
         }
         this.texture_volume = this.texture_loader.load(this.volume.src, _.bind(this.update, this), _.bind(this.update, this))
         this.texture_volume.magFilter = THREE.LinearFilter
@@ -1480,13 +1722,30 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.box_material_volr.uniforms.volume_size.value = this.volume.image_shape
         this.box_material_volr.uniforms.volume_slice_size.value = this.volume.slice_shape
         this.box_material_volr.uniforms.volume.value = this.texture_volume
-        this.update()
+        if(this.model.previous("data")) {
+            console.log("it's ok, just update, we previously had a volume")
+            this.update()
+        } else {
+            console.log("we didn't have that, so we may need to resize")
+            this.update_size()
+        }
+    },
+    tf_set: function() {
+        this.model.get("tf").on('change:rgba', this.tf_changed, this);
+        this.tf_changed()
     },
     tf_changed: function() {
-        var data_array_tf = this.model.get("tf").get_data_array()
-        this.texture_tf.image.data = data_array_tf
-        this.texture_tf.needsUpdate = true
-        this.update()
+        var tf = this.model.get("tf")
+        if(tf) {
+            if(!this.texture_tf) {
+                this.texture_tf = new THREE.DataTexture(tf.get_data_array(), this.model.get("tf").get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
+            } else {
+                this.texture_tf.image.data = tf.get_data_array()
+                this.texture_tf.needsUpdate = true
+            }
+            this.box_material_volr.uniforms.value = this.texture_tf
+            this.update()
+        }
     }
 });
 
@@ -1508,14 +1767,43 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             width: 500,
             height: 400,
             downscale: 1,
+            scatter: null,
         })
     }
 }, {
     serializers: _.extend({
         tf: { deserialize: widgets.unpack_models },
+        scatter: { deserialize: widgets.unpack_models },
     }, widgets.DOMWidgetModel.serializers)
 });
 
+var ScatterModel = widgets.DOMWidgetModel.extend({
+    defaults: function() {
+        return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
+            _model_name : 'VolumeRendererThreeModel',
+            _view_name : 'VolumeRendererThreeView',
+            _model_module : 'ipyvolume',
+            _view_module : 'ipyvolume',
+            angle1: 0.1,
+            angle2: 0.2,
+            ambient_coefficient: 0.5,
+            diffuse_coefficient: 0.8,
+            specular_coefficient: 0.5,
+            specular_exponent: 5,
+            stereo: false,
+            fullscreen: false,
+            width: 500,
+            height: 400,
+            downscale: 1,
+            scatter: null,
+        })
+    }
+}, {
+    serializers: _.extend({
+        tf: { deserialize: widgets.unpack_models },
+        scatter: { deserialize: widgets.unpack_models },
+    }, widgets.DOMWidgetModel.serializers)
+});
 
     return {
         VolumeRendererThreeView: VolumeRendererThreeView,

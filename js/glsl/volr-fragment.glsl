@@ -70,8 +70,8 @@ void main(void) {
     vec2 pixel = vec2(gl_FragCoord.x, gl_FragCoord.y) / render_size;
     //vec4 textureColor = texture2D(volume, vec2(pixel.x * width + x_index, pixel.y*height + y_index));
     //vec3 ray_begin = vertex_color.xyz;//texture2D(front, pixel).rgb;
-    //vec3 ray_end = texture2D(back, pixel).rgb;
-    vec3 ray_end = vertex_color.xyz;//texture2D(front, pixel).rgb;
+    vec3 ray_end = texture2D(back, pixel).rgb;
+    //vec3 ray_end = vertex_color.xyz;//texture2D(front, pixel).rgb;
     vec3 ray_begin = texture2D(front, pixel).rgb;
     vec3 ray_direction = ray_end - ray_begin;
     vec3 ray_delta = ray_direction * (1./float(steps));
@@ -122,13 +122,14 @@ void main(void) {
         float alpha_sample = intensity * sign(data_value) * sign(1.-data_value) * 100. / float(steps) * ray_length;//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
         alpha_sample = clamp(alpha_sample, 0., 1.);
         color = color + (1.0 - alpha_total) * color_sample * alpha_sample;
+        alpha_total = clamp(alpha_total + alpha_sample, 0., 1.);
         if(alpha_total >= 1.)
             break;
-        alpha_total = clamp(alpha_total + alpha_sample, 0., 1.);
 
         ray_pos += ray_delta;
     }
-    gl_FragColor = vec4(color.rgb, 1) * brightness;
+    gl_FragColor = vec4(color.rgb, alpha_total) * brightness;
+    //gl_FragColor = vec4(ray_begin.xyz, 0.1) * brightness;
     //gl_FragColor = vec4(rotation[0], 1) * brightness;
     //gl_FragColor = vec4(alpha_total, 0., 0., 1.) * brightness;
     //gl_FragColor = texture2D(volume, vec2(ray_begin.x, ray_begin.y));
