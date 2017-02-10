@@ -42,7 +42,7 @@ class VolumeRendererThree(widgets.DOMWidget):
     _model_name = Unicode('VolumeRendererThreeModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
 
-    data = Array(allow_none=True).tag(sync=True, **array_cube_png_serialization)
+    data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_png_serialization)
     data_min = traitlets.CFloat().tag(sync=True)
     data_max = traitlets.CFloat().tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
