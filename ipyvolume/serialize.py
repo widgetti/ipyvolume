@@ -14,7 +14,6 @@ def cube_to_png(grid, vmin, vmax, file):
 	rows = int(math.ceil(slices/columns))
 	image_height = rows * grid.shape[1]
 	data = np.zeros((image_height, image_width, 4), dtype=np.uint8)
-
 	#vmin, vmax = np.nanmin(grid), np.nanmax(grid)
 	grid_normalized = (grid*1.0 - vmin) / (vmax - vmin)
 	grid_normalized[~np.isfinite(grid_normalized)] = 0
