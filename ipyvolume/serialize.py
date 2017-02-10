@@ -60,7 +60,7 @@ def rgba_to_json(rgba, obj=None):
 	return {"image_shape": image_shape, "slice_shape": slice_shape,"rows": rows, "columns": columns, "slices": slices, "src": image_url} #dict(shape=grid.shape, image=image_url)
 
 def cube_to_json(grid, obj=None):
-	if grid is None:
+	if grid is None or len(grid.shape) == 1:
 		return None
 	f = StringIO()
 	image_shape, slice_shape, rows, columns, slices = cube_to_png(grid, obj.data_min, obj.data_max, f)
