@@ -135,6 +135,7 @@ void main(void) {
     //gl_FragColor = texture2D(volume, vec2(ray_begin.x, ray_begin.y));
     //gl_FragColor = vec4(ray_pos.x, ray_pos.y, ray_pos.z, 1);
     //gl_FragColor = texture2D(transfer_function, vec2(pixel.x, 0.5));
+    //gl_FragColor = vec4(texture2D(volume, vec2(pixel.x, pixel.y)).rgb, 1.0);
     //gl_FragColor = vec4(pixel.x, pixel.y, 0, 1);
     //gl_FragColor = vec4(ray_end, 1);
     //float tintensity = texture2D(transfer_function, vec2(pixel.x / 1., 0.5)).a;

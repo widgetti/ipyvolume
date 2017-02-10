@@ -16,11 +16,22 @@ _last_volume_renderer = None
 @widgets.register('ipyvolume.Scatter')
 class Scatter(widgets.DOMWidget):
     _view_name = Unicode('ScatterView').tag(sync=True)
+    _view_module = Unicode('ipyvolume').tag(sync=True)
+    _model_name = Unicode('ScatterModel').tag(sync=True)
+    _model_module = Unicode('ipyvolume').tag(sync=True)
     x = Array().tag(sync=True, **array_serialization)
     y = Array().tag(sync=True, **array_serialization)
     z = Array().tag(sync=True, **array_serialization)
-    size = traitlets.Float(0.1).tag(sync=True)
+    vx = Array(allow_none=True).tag(sync=True, **array_serialization)
+    vy = Array(allow_none=True).tag(sync=True, **array_serialization)
+    vz = Array(allow_none=True).tag(sync=True, **array_serialization)
+    selected = Array(allow_none=True).tag(sync=True, **array_serialization)
+    size = traitlets.Float(0.01).tag(sync=True)
+    size_selected = traitlets.Float(0.02).tag(sync=True)
     color = traitlets.Tuple(traitlets.CFloat(1), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
+    color_selected = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
+    geo = traitlets.Unicode('diamond').tag(sync=True)
+
 
 
 @widgets.register('ipyvolume.VolumeRendererThree')
@@ -38,7 +49,9 @@ class VolumeRendererThree(widgets.DOMWidget):
     angle1 = traitlets.Float(0.1).tag(sync=True)
     angle2 = traitlets.Float(0.2).tag(sync=True)
 
-    scatter = traitlets.Instance(Scatter, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
+    scatters = traitlets.List(traitlets.Instance(Scatter), [], allow_none=False).tag(sync=True, **ipywidgets.widget_serialization)
+
+    animation = traitlets.Float(1000.0).tag(sync=True)
 
     ambient_coefficient = traitlets.Float(0.5).tag(sync=True)
     diffuse_coefficient = traitlets.Float(0.8).tag(sync=True)
@@ -50,10 +63,14 @@ class VolumeRendererThree(widgets.DOMWidget):
     width = traitlets.CInt(500).tag(sync=True)
     height = traitlets.CInt(400).tag(sync=True)
     downscale = traitlets.CInt(1).tag(sync=True)
+    show = traitlets.Unicode("Volume").tag(sync=True) # for debugging
 
-    xlim = traitlets.List(traitlets.CFloat, default_value=None, minlen=2, maxlen=2)
-    ylim = traitlets.List(traitlets.CFloat, default_value=None, minlen=2, maxlen=2)
-    zlim = traitlets.List(traitlets.CFloat, default_value=None, minlen=2, maxlen=2)
+    xlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+    ylim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+    zlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+    #xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
+    #y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
+    #zlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
 
     def _ipython_display_(self, **kwargs):
         global _last_volume_renderer
