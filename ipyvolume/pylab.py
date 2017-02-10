@@ -33,7 +33,7 @@ def figure(width=400, height=500, lighting=False, controls=True, debug=False):
 
 def gcf():
 	if current.figure is None:
-		return figure(r)
+		return figure()
 	else:
 		return current.figure
 
