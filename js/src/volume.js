@@ -1131,14 +1131,14 @@ var ScatterView = widgets.WidgetView.extend( {
                 xlim : { type: "2f", value: [0., 1.] },
                 ylim : { type: "2f", value: [0., 1.] },
                 zlim : { type: "2f", value: [0., 1.] },
-                animation_time_x : { type: "f", value: 0. },
-                animation_time_y : { type: "f", value: 0. },
-                animation_time_z : { type: "f", value: 0. },
-                animation_time_vx : { type: "f", value: 0. },
-                animation_time_vy : { type: "f", value: 0. },
-                animation_time_vz : { type: "f", value: 0. },
-                animation_time_size : { type: "f", value: 0. },
-                animation_time_color : { type: "f", value: 0. },
+                animation_time_x : { type: "f", value: 1. },
+                animation_time_y : { type: "f", value: 1. },
+                animation_time_z : { type: "f", value: 1. },
+                animation_time_vx : { type: "f", value: 1. },
+                animation_time_vy : { type: "f", value: 1. },
+                animation_time_vz : { type: "f", value: 1. },
+                animation_time_size : { type: "f", value: 1. },
+                animation_time_color : { type: "f", value: 1. },
             },
             vertexShader: require('../glsl/scatter-vertex.glsl'),
             fragmentShader: require('../glsl/scatter-fragment.glsl')
@@ -1460,11 +1460,14 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         // add to the scene
 
         this.scene = new THREE.Scene();
-        this.scene.add(this.camera);
+        //this.scene.add(this.camera);
         this.scene.add(this.box_mesh)
 
         this.scene_scatter = new THREE.Scene();
+        //this.scene_scatter.add(this.camera);
+
         this.scene_opaque = new THREE.Scene();
+        //this.scene_opaque.add(this.camera);
         this.scene_opaque.add(this.wire_box)
         this.scene_opaque.add(this.axes)
 
@@ -1680,17 +1683,12 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.box_mesh.rotation.x = -(e.beta * Math.PI / 180 + Math.PI*2);
         this.box_mesh.rotation.y = -(e.gamma * Math.PI / 180 + Math.PI*2);*/
 
-
         _.each([this.scene, this.scene_opaque, this.scene_scatter], function(scene){
             scene.rotation.reorder( "XYZ" );
             scene.rotation.x = (e.gamma * Math.PI / 180 + Math.PI*2);
             scene.rotation.y = -(e.beta * Math.PI / 180 + Math.PI*2);
             scene.rotation.z = -((e.alpha) * Math.PI / 180);
-            scene.updateMatrix()
-            scene.matrixAutoUpdate = true
         }, this)
-        //this.box_mesh.updateMatrix()
-        //this.box_mesh.matrixAutoUpdate = true
         this.update()
 
     },
@@ -1712,14 +1710,18 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
     },
     on_fullscreen_change: function() {
         var elem = THREEx.FullScreen.element()
+        console.log("fullscreen event")
         if(elem == this.renderer.domElement) {
             console.log("fullscreen")
             // TODO: we should actually reflect the fullscreen, since if it fails, we still have the fullscreen model var
             // set to true
             this.update_size()
         } else {
-            if(this.model.get("fullscreen"))
+            if(this.model.get("fullscreen")) {
+                console.log("left fullscreen")
                 this.model.set("fullscreen", false)
+                this.model.save()
+            }
         }
     },
     update_fullscreen: function() {
@@ -1787,8 +1789,10 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
     },
     _render_eye: function(camera) {
         if(this.model.get("data")) {
+            this.camera.updateMatrixWorld();
             // render the back coordinates
             // render the back coordinates of the box
+            //camera.updateMatrixWorld();
             this.box_mesh.material = this.box_material;
             this.box_material.side = THREE.BackSide;
             this.renderer.clearTarget(this.back_texture, true, true, true)
