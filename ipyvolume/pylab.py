@@ -62,7 +62,10 @@ def ylim(ymin, ymax):
 def zlim(zmin, zmax):
 	fig = gcf()
 	fig.zlim = [zmin, zmax]
-
+def xyzlim(vmin, vmax):
+	xlim(vmin, vmax)
+	ylim(vmin, vmax)
+	zlim(vmin, vmax)
 
 default_color = (1,0,0)
 default_color_selected = (1,1,1)
