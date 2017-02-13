@@ -6,23 +6,27 @@ template = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <title>{title}</title>
+{extra_script_head}
 </head>
 <body>
+{body_pre}
 
 <script src="https://unpkg.com/jupyter-js-widgets@~2.0.20/dist/embed.js"></script>
 <script type="application/vnd.jupyter.widget-state+json">
 {json_data}
 </script>
-</script>
-<script type="application/vnd.jupyter.widget-view+json">
-{{
-    "model_id": "{model_id}"
-}}
-</script>
+{widget_views}
 
+{body_post}
 </body>
 </html>
 """
+
+widget_view_template = """<script type="application/vnd.jupyter.widget-view+json">
+{{
+    "model_id": "{model_id}"
+}}
+</script>"""
 
 
 def get_state(widget, store=None, drop_defaults=False):
@@ -83,16 +87,29 @@ def add_referring_widgets(states, drop_defaults=False):
 
                                 #get_state(value, store, drop_defaults=drop_defaults)
     return found_new
-def embed_html(filename, widget, drop_defaults=False, title="ipyvolume embed example", template=template):
+def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolume embed example", template=template, **kwargs):
+    try:
+        widgets[0]
+    except IndexError:
+        widgets = [widgets]
     with open(filename, "w") as f:
-        if widget is None:
+        # collect the state of all relevant widgets
+        state = {}
+        if all:
             state = ipywidgets.Widget.get_manager_state(drop_defaults=drop_defaults)["state"]
-        else:
-            state = get_state(widget, drop_defaults=drop_defaults)
-            while add_referring_widgets(state):
-                pass
-        values = dict(title=title,
+        for widget in widgets:
+            if not all:
+                get_state(widget, state, drop_defaults=drop_defaults)
+        # it may be that other widgets refer to the collected widgets, such as layouts, include those as well
+        while add_referring_widgets(state):
+            pass
+        values = dict(extra_script_head="", body_pre="", body_post="")
+        values.update(kwargs)
+        widget_views = ""
+        for widget in widgets:
+            widget_views += widget_view_template.format(**dict(model_id=widget.model_id))
+        values.update(dict(title=title,
                       json_data=json.dumps(dict(version_major=1, version_minor=0, state=state)),
-                      model_id=widget.model_id)
+                           widget_views=widget_views))
         html_code = template.format(**values)
         f.write(html_code)
