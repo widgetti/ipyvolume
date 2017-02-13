@@ -1,6 +1,11 @@
 define(["jupyter-js-widgets", "underscore", "three", "jquery", "gl-matrix"],
         function(widgets, _, THREE, $, glm) {
 
+// same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
+// so that N.M.x is allowed (we don't care about x, but we assume 0.2.x is not compatible with 0.3.x
+var semver_range = `~${require('../package.json').version}`
+
+//
 window.THREE = THREE;
 //window.THREEx = {};
 require("./three/OrbitControls.js")
@@ -972,6 +977,8 @@ var TransferFunctionModel = widgets.DOMWidgetModel.extend({
             _view_name : 'TransferFunctionView',
             _model_module : 'ipyvolume',
             _view_module : 'ipyvolume',
+            _model_module_version: semver_range,
+            _view_module_version: semver_range,
         })
     }
 });
@@ -1957,6 +1964,8 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             _view_name : 'VolumeRendererThreeView',
             _model_module : 'ipyvolume',
             _view_module : 'ipyvolume',
+            _model_module_version: semver_range,
+             _view_module_version: semver_range,
             angle1: 0.1,
             angle2: 0.2,
             ambient_coefficient: 0.5,
