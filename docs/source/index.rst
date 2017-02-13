@@ -47,7 +47,7 @@ This will most likely work, otherwise read :ref:`install`
 About
 =====
 
-Ipyvolume is an offspring project from `vaex <http://vaex.astro.rug.nl/>`_.
+Ipyvolume is an offspring project from `vaex <http://vaex.astro.rug.nl/>`_. Ipyvolume makes use of `threejs <https://threejs.org/>`_, and excellent Javascript library for OpenGL/WebGL rendering.
 
 
 
