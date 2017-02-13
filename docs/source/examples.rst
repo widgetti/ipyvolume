@@ -59,4 +59,5 @@ More example
 .. toctree::
    :maxdepth: 2
 
+   bokeh
    example_mcmc
