@@ -1998,12 +1998,32 @@ var ScatterModel = widgets.WidgetModel.extend({
             _view_name : 'ScatterView',
             _model_module : 'ipyvolume',
             _view_module : 'ipyvolume',
+            _model_module_version: semver_range,
+             _view_module_version: semver_range,
             size: 0.1,
         })
     }
 });
 
+var WidgetManagerHackModel = widgets.WidgetModel.extend({
+    defaults: function() {
+        return _.extend(widgets.WidgetModel.prototype.defaults(), {
+            _model_name : 'WidgetManagerHack',
+            _model_module : 'ipyvolume',
+            _model_module_version: semver_range,
+             _view_module_version: semver_range,
+        })
+    },
+    initialize: function(attributes, options) {
+        console.log(this)
+        WidgetManagerHackModel.__super__.initialize.apply(this, arguments);
+        console.info("get reference to widget manager")
+        window.jupyter_widget_manager = this.widget_manager;
+        window.jupyter_widgets = widgets
+    }
+});
     return {
+        WidgetManagerHackModel: WidgetManagerHackModel,
         ScatterView: ScatterView,
         ScatterModel: ScatterModel,
         VolumeRendererThreeView: VolumeRendererThreeView,
