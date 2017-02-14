@@ -1184,8 +1184,13 @@ var ScatterView = widgets.WidgetView.extend( {
             if(key_animation == "geo") {
                 // direct change, no animation
             } if(key_animation == "selected") { // and no explicit animation on this one
+                /* TODO: we use size double for animating the selection
+                    but that means if we for instance change x, it will animate x
+                    and notice we don't have a previous selection, and will animate the size as well
+                    rething this
+                */
                 //this.attributes_changed["selected"] = []
-                this.attributes_changed["color"] = []
+                this.attributes_changed["color"] = [key]
                 this.attributes_changed["size"] = []
             } else {
                 this.attributes_changed[key_animation] = [key]
@@ -1372,6 +1377,7 @@ var ScatterView = widgets.WidgetView.extend( {
             var property = "animation_time_" + key
             console.log("transition for " +property + " / " +changed_properties)
             var done = function done() {
+                console.log("transition done for " +property + " / " +changed_properties)
                 _.each(changed_properties, function clear(prop) {
                     console.log("remove previous value " +prop)
                     delete this.previous_values[prop]
