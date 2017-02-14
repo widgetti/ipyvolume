@@ -26,7 +26,7 @@ class Scatter(widgets.DOMWidget):
     vx = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
     vy = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
     vz = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
-    selected = Array(allow_none=True).tag(sync=True, **array_serialization)
+    selected = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
     size = traitlets.Float(0.01).tag(sync=True)
     size_selected = traitlets.Float(0.02).tag(sync=True)
     color = traitlets.Tuple(traitlets.CFloat(1), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
@@ -149,11 +149,18 @@ def _volume_widets(v, lighting=False):
     )
 
 def volshow(*args, **kwargs):
-    """Deprecated: please use ipyvolume.quickshow or use the ipyvolume.pylab interface"""
-    warnings.warn("Please use ipyvolume.quickshow or use the ipyvolume.pylab interface", DeprecationWarning, stacklevel=2)
+    """Deprecated: please use ipyvolume.quickvol or use the ipyvolume.pylab interface"""
+    warnings.warn("Please use ipyvolume.quickvol or use the ipyvolume.pylab interface", DeprecationWarning, stacklevel=2)
     return quickshow(*args, **kwargs)
 
-def quickshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=False,
+def quickquiver(x, y, z, u, v, w, **kwargs):
+    import ipyvolume.pylab as p3
+    p3.figure()
+    p3.quiver(x, y, z, u, v, w, **kwargs)
+    return p3.current.container
+
+
+def quickvol(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=False,
             width=400, height=500,
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
             specular_coefficient=0.5, specular_exponent=5,
