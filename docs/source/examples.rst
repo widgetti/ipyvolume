@@ -4,11 +4,14 @@ Examples
 
    from ipywidgets import VBox, jsdlink, IntSlider, Button
    import ipyvolume
+   import ipyvolume.pylab as p3
    import numpy as np
 
+Volume rendering only
+---------------------
 
 Math example
-------------
+~~~~~~~~~~~~
 
 Here we visualize spherical harmonics.
 
@@ -17,7 +20,7 @@ Here we visualize spherical harmonics.
     ipyvolume.example_ylm()
 
 Dataset: Aquarius A2 - pure dark matter simulation
---------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is a snapshot of the pure dark matter simulations of the Aquarius project `(Springel et al. 2008) <http://adsabs.harvard.edu/abs/2008MNRAS.391.1685S>`_.
 
@@ -27,7 +30,7 @@ This is a snapshot of the pure dark matter simulations of the Aquarius project `
     ipyvolume.volshow(aqa2.data.T, lighting=True, level=[0.16, 0.25, 0.46], opacity=0.06)
 
 Dataset: Helmi & de Zeeuw 2000
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is a visualization of a simulation of the stellar accreted halo of the Milky Way `(Helmi & de Zeeuw 2000 <http://adsabs.harvard.edu/abs/2000MNRAS.319..657H>`_.
 
@@ -37,7 +40,7 @@ This is a visualization of a simulation of the stellar accreted halo of the Milk
     ipyvolume.volshow(hdz2000.data.T, lighting=True, level=[0.6, 0.8, 0.9], opacity=[0.01, 0.03, 0.05])
 
 Use with vaex
--------------
+~~~~~~~~~~~~~
 
 In combination with `vaex <http://vaex.astro.rug.nl/>`_ .(currently not working on rtd)
 
@@ -61,3 +64,4 @@ More example
 
    bokeh
    example_mcmc
+   example_scatter
