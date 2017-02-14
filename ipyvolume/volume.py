@@ -8,6 +8,7 @@ import logging
 import numpy as np
 from .serialize import array_cube_png_serialization, array_serialization
 from .transferfunction import *
+import warnings
 
 logger = logging.getLogger("ipyvolume")
 
@@ -147,7 +148,12 @@ def _volume_widets(v, lighting=False):
          ] + widgets_bottom# , ipywidgets.HBox([angle1, angle2])
     )
 
-def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=False,
+def volshow(*args, **kwargs):
+    """Deprecated: please use ipyvolume.quickshow or use the ipyvolume.pylab interface"""
+    warnings.warn("Please use ipyvolume.quickshow or use the ipyvolume.pylab interface", DeprecationWarning, stacklevel=2)
+    return quickshow(*args, **kwargs)
+
+def quickshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=False,
             width=400, height=500,
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
             specular_coefficient=0.5, specular_exponent=5,
