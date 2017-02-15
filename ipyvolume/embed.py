@@ -90,7 +90,7 @@ def add_referring_widgets(states, drop_defaults=False):
 def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolume embed example", template=template, **kwargs):
     try:
         widgets[0]
-    except IndexError:
+    except (IndexError, TypeError):
         widgets = [widgets]
     with open(filename, "w") as f:
         # collect the state of all relevant widgets
