@@ -151,7 +151,7 @@ def _volume_widets(v, lighting=False):
 def volshow(*args, **kwargs):
     """Deprecated: please use ipyvolume.quickvol or use the ipyvolume.pylab interface"""
     warnings.warn("Please use ipyvolume.quickvol or use the ipyvolume.pylab interface", DeprecationWarning, stacklevel=2)
-    return quickshow(*args, **kwargs)
+    return quickvolshow(*args, **kwargs)
 
 def quickquiver(x, y, z, u, v, w, **kwargs):
     import ipyvolume.pylab as p3
@@ -159,8 +159,14 @@ def quickquiver(x, y, z, u, v, w, **kwargs):
     p3.quiver(x, y, z, u, v, w, **kwargs)
     return p3.current.container
 
+def quickscatter(x, y, z, **kwargs):
+    import ipyvolume.pylab as p3
+    p3.figure()
+    p3.scatter(x, y, z, **kwargs)
+    return p3.current.container
 
-def quickvol(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=False,
+
+def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=False,
             width=400, height=500,
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
             specular_coefficient=0.5, specular_exponent=5,
