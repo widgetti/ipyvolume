@@ -9,6 +9,9 @@ ipyvolume.volume
     :undoc-members:
     :show-inheritance:
 
+ipyvolume.pylab
+---------------
+
 .. automodule:: ipyvolume.pylab
     :members: scatter, quiver, volshow, xlim, ylim, zlim, xyzlim, figure, gcf, clear, show, transfer_function
     :undoc-members:
