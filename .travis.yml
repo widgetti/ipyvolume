@@ -14,7 +14,10 @@ matrix:
     env: PYTHON_VERSION=3.6
 
 before_install:
-  - npm upgrade npm
+  - sudo apt-get update
+  - . $HOME/.nvm/nvm.sh
+  - nvm install stable
+  - nvm use stable
   - if [[ $TRAVIS_OS_NAME == linux ]]; then wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh; fi
   - if [[ $TRAVIS_OS_NAME == osx ]]; then wget https://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
   - bash miniconda.sh -b -p $HOME/miniconda
