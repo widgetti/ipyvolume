@@ -91,7 +91,12 @@ def quiver(X, Y, Z, U, V, W, s=default_size*10, ss=default_size_selected*10, col
 
 def show():
 	gcf() # make sure we have something..
-	display(current.container)
+	display(gcc())
+
+def gcc():
+	"""Return the current container, that is the widget holding the figure and all the control widgets, buttons etc."""
+	gcf() # make sure we have something..
+	return current.container
 
 def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, controls=True):
 	tf_kwargs = {}
