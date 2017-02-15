@@ -7,31 +7,66 @@ import os
 import numpy as np
 import shutil
 
+def _docsubst(f):
+	"""Perform docstring substitutions"""
+	f.__doc__ = f.__doc__.format(**_doc_snippets)
+	return f
+
+_doc_snippets = {}
+_doc_snippets["color"] = "string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0)"
+_doc_snippets["size"] = "float representing the size of the glyph in fraction of the viewport, where 1. is full viewport"
+_doc_snippets["marker"] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere'"
+_doc_snippets["x"] = "1d numpy array with x positions"
+_doc_snippets["u"] = "1d numpy array indicating the x direction"
+
 class current:
 	figure = None
+	container = None
+	figures = {}
+	containers = {}
 
 def clear():
+	"""Remove current figure (and container)"""
 	current.container = None
 	current.figure = None
 
 
-def figure(width=400, height=500, lighting=False, controls=True, debug=False):
-	current.figure = volume.VolumeRendererThree(data=None)
-	current.container = ipywidgets.VBox()
-	current.container.children = [current.figure]
-	if controls:
-		stereo = ipywidgets.ToggleButton(value=current.figure.stereo, description='stereo', icon='eye')
-		fullscreen = ipywidgets.ToggleButton(value=current.figure.stereo, description='fullscreen', icon='arrows-alt')
-		l1 = ipywidgets.jslink((current.figure, 'stereo'), (stereo, 'value'))
-		l2 = ipywidgets.jslink((current.figure, 'fullscreen'), (fullscreen, 'value'))
-		current.container.children += (ipywidgets.HBox([stereo, fullscreen]),)
-	if debug:
-		show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front"])
-		current.container.children += (show,)
-		ipywidgets.jslink((current.figure, 'show'), (show, 'value'))
+def figure(key=None, width=400, height=500, lighting=True, controls=True, debug=False):
+	"""Create a new figure (if no key is given) or return the figure associated with key
+
+	:param key: Python object that identifies this figure
+	:param width: pixel width of WebGL canvas
+	:param height:  .. height ..
+	:param lighting: use lighting or not
+	:param controls: show controls or not
+	:param debug: show debug buttons or not
+	:return:
+	"""
+	if key is not None and key in current.figures:
+		current.figure = current.figures[key]
+		current.container = current.containers[key]
+	else:
+		current.figure = volume.VolumeRendererThree(data=None)
+		current.container = ipywidgets.VBox()
+		current.container.children = [current.figure]
+		if key is not None:
+			current.figures[key] = current.figure
+			current.containers[key] = current.container
+		if controls:
+			stereo = ipywidgets.ToggleButton(value=current.figure.stereo, description='stereo', icon='eye')
+			fullscreen = ipywidgets.ToggleButton(value=current.figure.stereo, description='fullscreen',
+												 icon='arrows-alt')
+			l1 = ipywidgets.jslink((current.figure, 'stereo'), (stereo, 'value'))
+			l2 = ipywidgets.jslink((current.figure, 'fullscreen'), (fullscreen, 'value'))
+			current.container.children += (ipywidgets.HBox([stereo, fullscreen]),)
+		if debug:
+			show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front"])
+			current.container.children += (show,)
+			ipywidgets.jslink((current.figure, 'show'), (show, 'value'))
 	return current.figure
 
 def gcf():
+	"""Get current figure, or create a new one"""
 	if current.figure is None:
 		return figure()
 	else:
@@ -54,15 +89,19 @@ def _grow_limits(x, y, z):
 	zlim(*_grow_limit(fig.zlim, z))
 
 def xlim(xmin, xmax):
+	"""Set limits of x axis"""
 	fig = gcf()
 	fig.xlim = [xmin, xmax]
 def ylim(ymin, ymax):
+	"""Set limits of y axis"""
 	fig = gcf()
 	fig.ylim = [ymin, ymax]
 def zlim(zmin, zmax):
+	"""Set limits of zaxis"""
 	fig = gcf()
 	fig.zlim = [zmin, zmax]
 def xyzlim(vmin, vmax):
+	"""Set limits or all axis the same"""
 	xlim(vmin, vmax)
 	ylim(vmin, vmax)
 	zlim(vmin, vmax)
@@ -72,24 +111,56 @@ default_color_selected = "white"
 default_size = 0.02
 default_size_selected = default_size*1.3
 
-def scatter(x, y, z, color=default_color, s=default_size, ss=default_size_selected, color_selected=default_color_selected, marker="diamond", **kwargs):
+@_docsubst
+def scatter(x, y, z, color=default_color, s=default_size, ss=default_size_selected, color_selected=default_color_selected, marker="diamond", selection=None, **kwargs):
+	"""Create a scatter 3d plot with
+
+	:param x: {x}
+	:param y:
+	:param z:
+	:param color: {color}
+	:param s: {size}
+	:param ss: like size, but for selected glyphs
+	:param color_selected:  like color, but for selected glyphs
+	:param marker: {marker}
+	:param selection: array with indices of x,y,z arrays of the selected markers, which can have a different size and color
+	:param kwargs:
+	:return:
+	"""
 	fig = gcf()
 	_grow_limits(x, y, z)
-	scatter = volume.Scatter(x=x, y=y, z=z, color=color, size=s, color_selected=color_selected, size_selected=ss, geo=marker, **kwargs)
+	scatter = volume.Scatter(x=x, y=y, z=z, color=color, size=s, color_selected=color_selected, size_selected=ss, geo=marker, selection=selection, **kwargs)
 	fig.scatters = fig.scatters + [scatter]
 	return scatter
 
 
-def quiver(X, Y, Z, U, V, W, s=default_size*10, ss=default_size_selected*10, color=default_color, color_selected=default_color_selected, marker="arrow", **kwargs):
+def quiver(x, y, z, u, v, w, s=default_size*10, ss=default_size_selected*10, color=default_color, color_selected=default_color_selected, marker="arrow", **kwargs):
+	"""Create a quiver plot, which is like a scatter plot but with arrows pointing in the direction given by u, v and w
+
+	:param x: {x}, for convenience the array is flattened if not 1d.
+	:param y:
+	:param z:
+	:param u: {u}
+	:param v:
+	:param w:
+	:param s: {size}
+	:param ss: like size, but for selected glyphs
+	:param color: {color}
+	:param color_selected: like color, but for selected glyphs
+	:param marker: (currently only 'arrow' would make sense)
+	:param kwargs:
+	:return:
+	"""
 	fig = gcf()
-	_grow_limits(X, Y, Z)
-	scatter = volume.Scatter(x=X.flatten(), y=Y.flatten(), z=Z.flatten(), vx=U.flatten(), vy=V.flatten(), vz=W.flatten(), color=color, size=s, color_selected=color_selected, size_selected=ss,
+	_grow_limits(x, y, z)
+	scatter = volume.Scatter(x=x.flatten(), y=y.flatten(), z=z.flatten(), vx=u.flatten(), vy=v.flatten(), vz=w.flatten(), color=color, size=s, color_selected=color_selected, size_selected=ss,
 							 geo=marker, **kwargs)
 	fig.scatters = fig.scatters + [scatter]
 	return scatter
 
 
 def show():
+	"""Display (like in IPython.display.dispay(...) the current figure"""
 	gcf() # make sure we have something..
 	display(gcc())
 
@@ -99,6 +170,7 @@ def gcc():
 	return current.container
 
 def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, controls=True):
+	"""Create a transfer function, see volshow"""
 	tf_kwargs = {}
 	# opacity and widths can be scalars
 	try:
@@ -137,6 +209,28 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
             downscale=1,
             level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1,
 			controls=True):
+	"""Visualize a 3d array using volume rendering.
+
+	Currently only 1 volume can be rendered.
+
+
+	:param data: 3d numpy array
+    :param lighting: boolean, to use lighting or not, if set to false, lighting parameters will be overriden
+    :param data_min: minimum value to consider for data, if None, computed using np.nanmin
+    :param data_max: maximum value to consider for data, if None, computed using np.nanmax
+    :param tf: transfer function (or a default one)
+    :param stereo: stereo view for virtual reality (cardboard and similar VR head mount)
+    :param ambient_coefficient: lighting parameter
+    :param diffuse_coefficient: lighting parameter
+    :param specular_coefficient: lighting parameter
+    :param specular_exponent: lighting parameter
+    :param downscale: downscale the rendering for better performance, for instance when set to 2, a 512x512 canvas will show a 256x256 rendering upscaled, but it will render twice as fast.
+    :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
+    :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
+    :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
+	:param controls: add controls for lighting and transfer function or not
+	:return:
+	"""
 	if tf is None:
 		tf = transfer_function(level, opacity, level_width, controls=controls)
 	if data_min is None:
@@ -174,7 +268,8 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
 
 	return vol
 
-def save_html(filename, copy_js=True):
+def save(filename, copy_js=True):
+	"""Save the figure/visualization as html file, and optionally copy the .js file to the same directory """
 	ipyvolume.embed.embed_html(filename, current.container)
 	if copy_js:
 		dir_name_dst = os.path.dirname(os.path.abspath(filename))
