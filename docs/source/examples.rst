@@ -63,5 +63,6 @@ More example
    :maxdepth: 2
 
    bokeh
+   example_glyphs
    example_mcmc
-   example_scatter
+
