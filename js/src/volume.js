@@ -1184,12 +1184,6 @@ var ScatterView = widgets.WidgetView.extend( {
             if(key_animation == "geo") {
                 // direct change, no animation
             } if(key_animation == "selected") { // and no explicit animation on this one
-                /* TODO: we use size double for animating the selection
-                    but that means if we for instance change x, it will animate x
-                    and notice we don't have a previous selection, and will animate the size as well
-                    rething this
-                */
-                //this.attributes_changed["selected"] = []
                 this.attributes_changed["color"] = [key]
                 this.attributes_changed["size"] = []
             } else {
@@ -1308,14 +1302,14 @@ var ScatterView = widgets.WidgetView.extend( {
         instanced_geo.addAttribute( 'vector_previous', vector_previous );
 
         var selected = this.model.get("selected") || []
-        var selected_previous = this.previous_values["selected"] || []
-        // scales
+        var selected_previous = "selected" in this.previous_values ? this.previous_values["selected"] : selected;
+
         var scales = new THREE.InstancedBufferAttribute(new Float32Array( max_count ), 1, 1);
         var scales_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count ), 1, 1);
         var size = this.model.get("size")
         var size_selected = this.model.get("size_selected")
-        var size_previous = this.previous_values["size"]
-        var size_selected_previous = this.previous_values["size_selected"]
+        var size_previous = "size" in this.previous_values ? this.previous_values["size"] : size;
+        var size_selected_previous = "size_selected" in this.previous_values ? this.previous_values["size_selected"] : size_selected;
         if(size_previous  == undefined)
             size_previous  = size;
         if(size_selected_previous  == undefined)
@@ -1327,8 +1321,6 @@ var ScatterView = widgets.WidgetView.extend( {
 	            cur_size = size_selected
 	        if(selected_previous.indexOf(i) != -1)
 	            cur_size_previous = size_selected_previous
-	        if(selected.indexOf(i) != -1)
-	            cur_size = size_selected
 	        if(i < count)
     	        scales.setX(i, cur_size);
     	    else
@@ -1345,13 +1337,17 @@ var ScatterView = widgets.WidgetView.extend( {
         var colors = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
         var colors_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
 
-        var color = this.model.get("color")
-        var color_previous = this.previous_values["color"]
+        function to_rgb(color) {
+            color = new THREE.Color(color)
+            return [color.r, color.g, color.b]
+        }
+        var color = to_rgb(this.model.get("color"))
+        var color_previous = "color" in this.previous_values ? to_rgb(this.previous_values["color"]) : color;
         if(!color_previous)
             color_previous = color;
 
-        var color_selected = this.model.get("color_selected")
-        var color_selected_previous = this.previous_values["color_selected"]
+        var color_selected = to_rgb(this.model.get("color_selected"))
+        var color_selected_previous = "color_selected" in this.previous_values ? to_rgb(this.previous_values["color_selected"]) : color_selected;
         if(!color_selected_previous)
             color_selected_previous = color_selected;
 
