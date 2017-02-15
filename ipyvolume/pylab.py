@@ -67,8 +67,8 @@ def xyzlim(vmin, vmax):
 	ylim(vmin, vmax)
 	zlim(vmin, vmax)
 
-default_color = (1,0,0)
-default_color_selected = (1,1,1)
+default_color = "red"
+default_color_selected = "white"
 default_size = 0.02
 default_size_selected = default_size*1.3
 
