@@ -83,29 +83,6 @@ class VolumeRendererThree(widgets.DOMWidget):
             raise
 
 
-@widgets.register('ipyvolume.Volume')
-class Volume(widgets.DOMWidget):
-    """Widget class representing a volume (rendering)"""
-    _view_name = Unicode('VolumeView').tag(sync=True)
-    _model_name = Unicode('VolumeModel').tag(sync=True)
-    _view_module = Unicode('ipyvolume').tag(sync=True)
-    _model_module = Unicode('ipyvolume').tag(sync=True)
-    data = Array().tag(sync=True, **array_cube_png_serialization)
-    data_min = traitlets.CFloat().tag(sync=True)
-    data_max = traitlets.CFloat().tag(sync=True)
-    tf = traitlets.Instance(TransferFunction).tag(sync=True, **ipywidgets.widget_serialization)
-    angle1 = traitlets.Float(0.1).tag(sync=True)
-    angle2 = traitlets.Float(0.2).tag(sync=True)
-
-    ambient_coefficient = traitlets.Float(0.5).tag(sync=True)
-    diffuse_coefficient = traitlets.Float(0.8).tag(sync=True)
-    specular_coefficient = traitlets.Float(0.5).tag(sync=True)
-    specular_exponent = traitlets.Float(5).tag(sync=True)
-
-    def __init__(self, **kwargs):
-        super(Volume, self).__init__(**kwargs)
-
-
 # TODO: split off in renderer and volume
 class Figure(widgets.VBox):
     volume = traitlets.Instance(VolumeRendererThree)
