@@ -7,3 +7,4 @@ Pillow
 scipy
 nbsphinx
 recommonmark
+matplotlib
