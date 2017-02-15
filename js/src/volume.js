@@ -1108,8 +1108,6 @@ var WidgetManagerHackModel = widgets.WidgetModel.extend({
         ScatterModel: ScatterModel,
         VolumeRendererThreeView: VolumeRendererThreeView,
         VolumeRendererThreeModel: VolumeRendererThreeModel,
-        VolumeModel : VolumeModel,
-        VolumeView : VolumeView,
         TransferFunctionView: TransferFunctionView,
         TransferFunctionWidgetJs3Model: TransferFunctionWidgetJs3Model,
         TransferFunctionJsBumpsModel: TransferFunctionJsBumpsModel
