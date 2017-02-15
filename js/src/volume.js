@@ -1984,6 +1984,7 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             xlim: [0., 1.],
             ylim: [0., 1.],
             zlim: [0., 1.],
+            animation: 1000,
         })
     }
 }, {
@@ -2002,7 +2003,11 @@ var ScatterModel = widgets.WidgetModel.extend({
             _view_module : 'ipyvolume',
             _model_module_version: semver_range,
              _view_module_version: semver_range,
-            size: 0.1,
+            size: 0.01,
+            size_selected: 0.02,
+            color: "red",
+            color_selected: "white",
+            geo: 'diamond'
         })
     }
 });
