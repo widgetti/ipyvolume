@@ -29,8 +29,8 @@ class Scatter(widgets.DOMWidget):
     selected = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
     size = traitlets.Float(0.01).tag(sync=True)
     size_selected = traitlets.Float(0.02).tag(sync=True)
-    color = traitlets.Tuple(traitlets.CFloat(1), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
-    color_selected = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
+    color = traitlets.Unicode(default_value="red").tag(sync=True)
+    color_selected = traitlets.Unicode(default_value="white").tag(sync=True)
     geo = traitlets.Unicode('diamond').tag(sync=True)
 
 
