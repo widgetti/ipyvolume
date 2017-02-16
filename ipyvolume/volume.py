@@ -83,10 +83,6 @@ class VolumeRendererThree(widgets.DOMWidget):
             raise
 
 
-# TODO: split off in renderer and volume
-class Figure(widgets.VBox):
-    volume = traitlets.Instance(VolumeRendererThree)
-    scatter = traitlets.Instance(Scatter, allow_none=True)
 
 
 def _volume_widets(v, lighting=False):
