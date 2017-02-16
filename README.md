@@ -3,7 +3,7 @@ ipyvolume
 [![Documentation](https://readthedocs.org/projects/ipyvolume/badge/?version=latest)](https://ipyvolume.readthedocs.io/en/latest/?badge=latest)
 [![Version](https://img.shields.io/pypi/v/ipyvolume.svg)](https://pypi.python.org/pypi/ipyvolume)
 [![Downloads](https://img.shields.io/pypi/dm/ipyvolume.svg)](https://pypi.python.org/pypi/ipyvolume)
-
+[![Coverage Status](https://coveralls.io/repos/github/maartenbreddels/ipyvolume/badge.svg)](https://coveralls.io/github/maartenbreddels/ipyvolume)
 
 IPython widget for rendering 3d volumes in the Jupyter notebook
 
