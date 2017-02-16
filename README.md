@@ -4,12 +4,17 @@ ipyvolume
 [![Version](https://img.shields.io/pypi/v/ipyvolume.svg)](https://pypi.python.org/pypi/ipyvolume)
 [![Downloads](https://img.shields.io/pypi/dm/ipyvolume.svg)](https://pypi.python.org/pypi/ipyvolume)
 [![Coverage Status](https://coveralls.io/repos/github/maartenbreddels/ipyvolume/badge.svg)](https://coveralls.io/github/maartenbreddels/ipyvolume)
+[![Build Status](https://travis-ci.org/maartenbreddels/ipyvolume.svg?branch=master)](https://travis-ci.org/maartenbreddels/ipyvolume)
 
 IPython widget for rendering 3d volumes and glyphs (e.g. scatter and quiver) in the Jupyter notebook
 
 Try out in mybinder: [![Binder](https://img.shields.io/badge/launch-binder-red.svg)](http://mybinder.org/repo/maartenbreddels/ipyvolume/notebooks/examples/simple.ipynb?kernel_name=python2)
 
+Screencast showing the volume rendering
 ![screencast](https://raw.githubusercontent.com/maartenbreddels/ipyvolume/master/misc/screencast.gif)
+
+Volume rendering and glyphs (quiver)
+![screencast quiver](https://raw.githubusercontent.com/maartenbreddels/ipyvolume/master/misc/screencast_quiver.gif)
 
 Installation
 ------------
