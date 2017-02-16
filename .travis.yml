@@ -28,10 +28,14 @@ before_install:
   - conda create -q -n test-environment python=$PYTHON_VERSION numpy scipy runipy
   - source activate test-environment
   - conda install -c conda-forge pytest pytest-cov
+  - pip install coveralls
 
 install:
   - pip install -e .
 
 script:
-  - py.test ipyvolume/test.py --cov=ipyvolume  --cov-report term-missing
+  - py.test ipyvolume/test.py --cov-report= --cov=ipyvolume
 #  - runipy examples/examples.ipynb
+
+after_success:
+  coveralls
