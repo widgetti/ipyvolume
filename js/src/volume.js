@@ -376,6 +376,8 @@ var ScatterView = widgets.WidgetView.extend( {
 
         var selected = this.model.get("selected") || []
         var selected_previous = "selected" in this.previous_values ? this.previous_values["selected"] : selected;
+        if(!selected_previous)
+            selected_previous = []
 
         var scales = new THREE.InstancedBufferAttribute(new Float32Array( max_count ), 1, 1);
         var scales_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count ), 1, 1);
