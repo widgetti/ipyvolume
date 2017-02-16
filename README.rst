@@ -3,7 +3,7 @@ ipyvolume
 
 |Documentation| |Version| |Downloads|
 
-IPython widget for rendering 3d volumes in the Jupyter notebook
+IPython widget for rendering 3d volumes and glyphs (e.g. scatter and quiver) in the Jupyter notebook
 
 .. figure:: https://raw.githubusercontent.com/maartenbreddels/ipyvolume/master/misc/screencast.gif
    :alt: screencast
