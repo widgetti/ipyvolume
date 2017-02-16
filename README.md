@@ -7,7 +7,7 @@ ipyvolume
 
 IPython widget for rendering 3d volumes and glyphs (e.g. scatter and quiver) in the Jupyter notebook
 
-Try out in mybinder: [![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/maartenbreddels/ipyvolume/notebooks/examples/simple.ipynb?kernel_name=python2)
+Try out in mybinder: [![Binder](https://img.shields.io/badge/launch-binder-red.svg)](http://mybinder.org/repo/maartenbreddels/ipyvolume/notebooks/examples/simple.ipynb?kernel_name=python2)
 
 ![screencast](https://raw.githubusercontent.com/maartenbreddels/ipyvolume/master/misc/screencast.gif)
 
