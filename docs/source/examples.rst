@@ -39,7 +39,7 @@ This is a snapshot of the pure dark matter simulations of the Aquarius project `
 .. ipywidgets-display::
 
     aqa2 = ipyvolume.datasets.aquariusA2.fetch()
-    ipyvolume.volshow(aqa2.data.T, lighting=True, level=[0.16, 0.25, 0.46], opacity=0.06)
+    ipyvolume.quickvolshow(aqa2.data.T, lighting=True, level=[0.16, 0.25, 0.46], opacity=0.06)
 
 Dataset: Helmi & de Zeeuw 2000
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,7 +49,7 @@ This is a visualization of a simulation of the stellar accreted halo of the Milk
 .. ipywidgets-display::
 
     hdz2000 = ipyvolume.datasets.hdz2000.fetch()
-    ipyvolume.volshow(hdz2000.data.T, lighting=True, level=[0.6, 0.8, 0.9], opacity=[0.01, 0.03, 0.05])
+    ipyvolume.quickvolshow(hdz2000.data.T, lighting=True, level=[0.6, 0.8, 0.9], opacity=[0.01, 0.03, 0.05])
 
 Use with vaex
 ~~~~~~~~~~~~~
@@ -65,6 +65,6 @@ In combination with `vaex <http://vaex.astro.rug.nl/>`_ .(currently not working 
    ds = vx.datasets.helmi_de_zeeuw.fetch()
    counts = ds.count(binby=["x", "y", "z"], limits=[-10, 10], shape=128)
    counts = np.log10(gf(counts, 2))
-   ipyvolume.volshow(counts.T, level=[0.6, 0.8, 0.9], opacity=[0.01, 0.03, 0.05])
+   ipyvolume.quickvolshow(counts.T, level=[0.6, 0.8, 0.9], opacity=[0.01, 0.03, 0.05])
 
 
