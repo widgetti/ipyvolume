@@ -19,18 +19,15 @@ More example
    example_mcmc
 
 
-Volume rendering only
----------------------
+Dataset: Helmi & de Zeeuw 2000
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Math example
-~~~~~~~~~~~~
-
-Here we visualize spherical harmonics.
+This is a visualization of a simulation of the stellar accreted halo of the Milky Way `(Helmi & de Zeeuw 2000 <http://adsabs.harvard.edu/abs/2000MNRAS.319..657H>`_.
 
 .. ipywidgets-display::
 
-    ipyvolume.example_ylm(shape=32)
-
+    hdz2000 = ipyvolume.datasets.hdz2000.fetch()
+    ipyvolume.quickvolshow(hdz2000.data.T, lighting=True, level=[0.6, 0.8, 0.9], opacity=[0.01, 0.03, 0.05])
 
 Use with vaex
 ~~~~~~~~~~~~~
