@@ -44,13 +44,20 @@ class Dataset(object):
 		return self
 
 	def download_command(self):
-		if os == "osx":
-			return "cd %s; curl -O -L %s" % (data_dir, self.url)
-		else:
+		use_wget = True # we prefer wget...
+		if osname in ["linux", "osx"]: # for linux
+			if os.system("wget --version > /dev/null") != 0:
+				use_wget = False
+
+		if use_wget:
 			return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url)
+		else:
+			return "cd %s; curl -O -L %s" % (data_dir, self.url)
 
 
 hdz2000    = Dataset("hdz2000")
 aquariusA2 = Dataset("aquarius-A2")
 egpbosLCDM  = Dataset("egpbos-LCDM")
 zeldovich  = Dataset("zeldovich", density=False)
+
+# low poly cat from: https://sketchfab.com/models/1e7143dfafd04ff4891efcb06949a0b4#
