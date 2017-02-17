@@ -73,18 +73,6 @@ class VolumeRendererThree(widgets.DOMWidget):
     #y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #zlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
 
-    def _ipython_display_(self, **kwargs):
-        global _last_volume_renderer
-        try:
-            super(VolumeRendererThree, self)._ipython_display_(**kwargs)
-            _last_volume_renderer = None
-            print("reset view")
-        except:
-            raise
-
-
-
-
 def _volume_widets(v, lighting=False):
     import ipywidgets
     #angle1 = ipywidgets.FloatSlider(min=0, max=np.pi*2, value=v.angle1, description="angle1")
@@ -168,10 +156,14 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
     :return:
 
     """
-    if tf is None:
+    if tf is None: # TODO: should this just call the pylab interface?
         #tf = TransferFunctionJsBumps(**kwargs)
         tf_kwargs = {}
-        # opacity and widths can be scalars
+        # level, opacity and widths can be scalars
+        try:
+            level[0]
+        except:
+            level = [level]
         try:
             opacity[0]
         except:

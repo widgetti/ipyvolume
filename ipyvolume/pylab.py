@@ -172,7 +172,11 @@ def gcc():
 def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, controls=True):
 	"""Create a transfer function, see volshow"""
 	tf_kwargs = {}
-	# opacity and widths can be scalars
+	# level, opacity and widths can be scalars
+	try:
+		level[0]
+	except:
+		level = [level]
 	try:
 		opacity[0]
 	except:
