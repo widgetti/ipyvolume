@@ -29,6 +29,10 @@ To install use pip (as non-admin):
     $ pip install ipyvolume --user
     $ jupyter nbextension enable --py --user ipyvolume
 
+Or with anaconda/conda:
+ 
+    $ pip install ipywidgets~=6.0.0b5
+    $ conda install -c conda-forge ipyvolume
 
 For a development installation (requires npm),
 
