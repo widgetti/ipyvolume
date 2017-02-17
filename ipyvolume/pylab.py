@@ -219,19 +219,19 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
 
 
 	:param data: 3d numpy array
-    :param lighting: boolean, to use lighting or not, if set to false, lighting parameters will be overriden
-    :param data_min: minimum value to consider for data, if None, computed using np.nanmin
-    :param data_max: maximum value to consider for data, if None, computed using np.nanmax
-    :param tf: transfer function (or a default one)
-    :param stereo: stereo view for virtual reality (cardboard and similar VR head mount)
-    :param ambient_coefficient: lighting parameter
-    :param diffuse_coefficient: lighting parameter
-    :param specular_coefficient: lighting parameter
-    :param specular_exponent: lighting parameter
-    :param downscale: downscale the rendering for better performance, for instance when set to 2, a 512x512 canvas will show a 256x256 rendering upscaled, but it will render twice as fast.
-    :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
-    :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
-    :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
+	:param lighting: boolean, to use lighting or not, if set to false, lighting parameters will be overriden
+	:param data_min: minimum value to consider for data, if None, computed using np.nanmin
+	:param data_max: maximum value to consider for data, if None, computed using np.nanmax
+	:param tf: transfer function (or a default one)
+	:param stereo: stereo view for virtual reality (cardboard and similar VR head mount)
+	:param ambient_coefficient: lighting parameter
+	:param diffuse_coefficient: lighting parameter
+	:param specular_coefficient: lighting parameter
+	:param specular_exponent: lighting parameter
+	:param downscale: downscale the rendering for better performance, for instance when set to 2, a 512x512 canvas will show a 256x256 rendering upscaled, but it will render twice as fast.
+	:param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
+	:param opacity: opacity(ies) for each level, scalar or sequence of max length 3
+	:param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
 	:param controls: add controls for lighting and transfer function or not
 	:return:
 	"""

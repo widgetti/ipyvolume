@@ -8,6 +8,7 @@ var semver_range = `~${require('../package.json').version}`
 //
 window.THREE = THREE;
 //window.THREEx = {};
+var cat_data = require("../data/cat.json")
 require("./three/OrbitControls.js")
 require("./three/DeviceOrientationControls.js")
 require("./three/StereoEffect.js")
@@ -197,6 +198,31 @@ var ScatterView = widgets.WidgetView.extend( {
         this.geo_diamond = new THREE.SphereGeometry(1, 2, 2)
         this.geo_sphere = new THREE.SphereGeometry(1, 12, 12)
         this.geo_box = new THREE.BoxGeometry(1, 1, 1)
+        this.geo_cat = new THREE.Geometry(1, 1, 1)
+        for(var i = 0; i < cat_data.vertices.length; i++) {
+            var v = new THREE.Vector3( cat_data.vertices[i][1], cat_data.vertices[i][2], cat_data.vertices[i][0]);
+            this.geo_cat.vertices.push(v)
+        }
+        var i = 0;
+        while(i < cat_data.indices.length ) {
+            var indices = []
+            var start = i;
+            var length = 0;
+            var done = false;
+            while(!done) {
+                indices.push(cat_data.indices[i])
+                length++;
+                if(cat_data.indices[i] < 0)
+                    done = true
+                i++;
+            }
+            indices[length-1] = -1-indices[length-1];// indicates end, so swap sign
+            for(var j = 0; j < indices.length-2; j++) {
+            //for(var j = 0; j < 1; j++) {
+                var face = new THREE.Face3( indices[0], indices[1+j], indices[2+j])
+                this.geo_cat.faces.push(face)
+            }
+        }
         //this.geo = new THREE.ConeGeometry(0.2, 1)
         this.geo_arrow = new THREE.CylinderGeometry(0, 0.2, 1)
         this.geos = {
@@ -204,6 +230,7 @@ var ScatterView = widgets.WidgetView.extend( {
             box: this.geo_box,
             arrow: this.geo_arrow,
             sphere: this.geo_sphere,
+            cat: this.geo_cat,
         }
 
         this.material = new THREE.RawShaderMaterial({
