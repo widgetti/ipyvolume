@@ -531,19 +531,24 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.box_material_wire = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
         this.box_mesh_wire = new THREE.LineSegments(this.box_geo, this.box_material)
 
-        var make_line = function(x1, y1, z1, x2, y2, z2, color) {
-            var linewidth = 2;
-            var material = new THREE.LineBasicMaterial({color: color, linewidth: linewidth});
+        var make_line = function(x1, y1, z1, x2, y2, z2, material) {
+            //var linewidth = 2;
+            //var material = new THREE.LineBasicMaterial({color: color, linewidth: linewidth});
             var geometry = new THREE.Geometry();
             geometry.vertices.push(new THREE.Vector3( x1, y1, z1 ), new THREE.Vector3( x2, y2, z2));
             return new THREE.Line( geometry, material );
         }
-        var make_axis = function(x, y, z, color) {
-            return make_line(-0.5, -0.5, -0.5 ,  -0.5+x, -0.5+y, -0.5+z, color)
+        var make_axis = function(x, y, z, material) {
+            return make_line(-0.5, -0.5, -0.5 ,  -0.5+x, -0.5+y, -0.5+z, material)
         }
-        this.x_axis = make_axis(1, 0, 0, 0xff0000)
-        this.y_axis = make_axis(0, 1, 0, 0x00ff00)
-        this.z_axis = make_axis(0, 0, 1, 0x0000ff)
+        var linewidth = 2;
+        this.axes_material = new THREE.LineBasicMaterial({color: "cyan", linewidth: linewidth});
+        this.xaxes_material = new THREE.LineBasicMaterial({color: "red", linewidth: linewidth});
+        this.yaxes_material = new THREE.LineBasicMaterial({color: "green", linewidth: linewidth});
+        this.zaxes_material = new THREE.LineBasicMaterial({color: "blue", linewidth: linewidth});
+        this.x_axis = make_axis(1, 0, 0, this.xaxes_material)
+        this.y_axis = make_axis(0, 1, 0, this.yaxes_material)
+        this.z_axis = make_axis(0, 0, 1, this.zaxes_material)
         this.axes = new THREE.Object3D()
         this.axes.add(this.x_axis)
         this.axes.add(this.y_axis)
@@ -552,19 +557,19 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.wire_box = new THREE.Object3D()
         var grey = 0xCCccCC;
         //this.wire_box.add(make_line(-0.5, -0.5, -0.5, -0.5+1, -0.5, -0.5, grey))
-        this.wire_box.add(make_line(-0.5, -0.5+1, -0.5, -0.5+1, -0.5+1, -0.5, grey))
-        this.wire_box.add(make_line(-0.5, -0.5, -0.5+1, -0.5+1, -0.5, -0.5+1, grey))
-        this.wire_box.add(make_line(-0.5, -0.5+1, -0.5+1, -0.5+1, -0.5+1, -0.5+1, grey))
+        this.wire_box.add(make_line(-0.5, -0.5+1, -0.5, -0.5+1, -0.5+1, -0.5, this.axes_material))
+        this.wire_box.add(make_line(-0.5, -0.5, -0.5+1, -0.5+1, -0.5, -0.5+1, this.axes_material))
+        this.wire_box.add(make_line(-0.5, -0.5+1, -0.5+1, -0.5+1, -0.5+1, -0.5+1, this.axes_material))
 
-        //this.wire_box.add(make_line(-0.5, -0.5, -0.5, -0.5, -0.5+1, -0.5, grey))
-        this.wire_box.add(make_line(-0.5+1, -0.5, -0.5, -0.5+1, -0.5+1, -0.5, grey))
-        this.wire_box.add(make_line(-0.5, -0.5, -0.5+1, -0.5, -0.5+1, -0.5+1, grey))
-        this.wire_box.add(make_line(-0.5+1, -0.5, -0.5+1, -0.5+1, -0.5+1, -0.5+1, grey))
+        //this.wire_box.add(make_line(-0.5, -0.5, -0.5, -0.5, -0.5+1, -0.5, this.axes_material))
+        this.wire_box.add(make_line(-0.5+1, -0.5, -0.5, -0.5+1, -0.5+1, -0.5, this.axes_material))
+        this.wire_box.add(make_line(-0.5, -0.5, -0.5+1, -0.5, -0.5+1, -0.5+1, this.axes_material))
+        this.wire_box.add(make_line(-0.5+1, -0.5, -0.5+1, -0.5+1, -0.5+1, -0.5+1, this.axes_material))
 
-        //this.wire_box.add(make_line(-0.5, -0.5, -0.5, -0.5, -0.5, -0.5+1, grey))
-        this.wire_box.add(make_line(-0.5+1, -0.5, -0.5, -0.5+1, -0.5, -0.5+1, grey))
-        this.wire_box.add(make_line(-0.5, -0.5+1, -0.5, -0.5, -0.5+1, -0.5+1, grey))
-        this.wire_box.add(make_line(-0.5+1, -0.5+1, -0.5, -0.5+1, -0.5+1, -0.5+1, grey))
+        //this.wire_box.add(make_line(-0.5, -0.5, -0.5, -0.5, -0.5, -0.5+1, this.axes_material))
+        this.wire_box.add(make_line(-0.5+1, -0.5, -0.5, -0.5+1, -0.5, -0.5+1, this.axes_material))
+        this.wire_box.add(make_line(-0.5, -0.5+1, -0.5, -0.5, -0.5+1, -0.5+1, this.axes_material))
+        this.wire_box.add(make_line(-0.5+1, -0.5+1, -0.5, -0.5+1, -0.5+1, -0.5+1, this.axes_material))
 
         this.camera.position.z = 2
 
@@ -660,6 +665,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         //*
         this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
 
+        this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:downscale', this.update_size, this);
         this.model.on('change:stereo', this.update_size, this);
@@ -898,7 +904,15 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             this.update()
         }
     },
+    get_style_color: function(name) {
+        return new THREE.Color(this.model.get("style")[name])
+    },
     _render_eye: function(camera) {
+        this.renderer.setClearColor(this.get_style_color('figure.facecolor'))
+        this.axes_material.color = this.get_style_color('axes.color')
+        this.xaxes_material.color = this.get_style_color('xaxis.color')
+        this.yaxes_material.color = this.get_style_color('yaxis.color')
+        this.zaxes_material.color = this.get_style_color('zaxis.color')
         if(this.model.get("data")) {
             this.camera.updateMatrixWorld();
             // render the back coordinates
@@ -957,6 +971,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             this.renderer.render(this.screen_scene, this.screen_camera);
          } else {
             this.camera.updateMatrixWorld();
+            console.log(this.renderer.autoClearColor)
             _.each(this.scatter_views, function(scatter) {
                 scatter.mesh.material = scatter.mesh.material_normal
                 scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))

@@ -33,7 +33,12 @@ class Scatter(widgets.DOMWidget):
     color_selected = traitlets.Unicode(default_value="white").tag(sync=True)
     geo = traitlets.Unicode('diamond').tag(sync=True)
 
-
+default_style = dict()
+default_style["figure.facecolor"] = "black"
+default_style["xaxis.color"] = "red"
+default_style["yaxis.color"] = "green"
+default_style["zaxis.color"] = "blue"
+default_style["axes.color"] = "grey"
 
 @widgets.register('ipyvolume.VolumeRendererThree')
 class VolumeRendererThree(widgets.DOMWidget):
@@ -69,6 +74,8 @@ class VolumeRendererThree(widgets.DOMWidget):
     xlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
     ylim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
     zlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+
+    style = traitlets.Dict(default_value=default_style).tag(sync=True)
     #xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #zlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)

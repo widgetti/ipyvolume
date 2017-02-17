@@ -281,3 +281,47 @@ def save(filename, copy_js=True):
 		dst = os.path.join(dir_name_dst, "ipyvolume.js")
 		src = os.path.join(dir_name_src, "index.js")
 		shutil.copy(src, dst)
+
+# mimic matplotlib namesace
+class style:
+	"""'Static class that mimics a matplotlib module.
+
+	Example:
+	>>> import ipyvolume.pylab as p3
+	>>> p3.style.use('seaborn-darkgrid'])
+	>>> p3.style.use(['seaborn-darkgrid', {'xaxis.color':'orange'}])
+
+	Possible style values:
+	 * figure.facecolor: background color
+	 * axes.color: color of the box around the volume/viewport
+	 * xaxis.color: color of xaxis
+	 * yaxis.color: color of xaxis
+	 * zaxis.color: color of xaxis
+
+	"""
+	@staticmethod
+	def use(style):
+		"""Set the style of the current figure/visualization
+
+		:param style: matplotlib style name, or dict with values, or a sequence of these, where the last value overrides previous
+		:return:
+		"""
+		import matplotlib.style
+		import six
+		def valid(value): # checks if json'able
+			return isinstance(value, six.string_types)
+		if isinstance(style, six.string_types):
+			styles = [style]
+		else:
+			styles = style
+		totalstyle = dict()
+		for style in [ipyvolume.volume.default_style] + styles:
+			if isinstance(style, six.string_types):
+				# we assume now it's a matplotlib style, get all properties that we understand
+				cleaned_style = {key:value for key, value in dict(matplotlib.style.library[style]).items() if valid(value)}
+				totalstyle.update(cleaned_style)
+			else:
+				# otherwise assume it's a dict
+				totalstyle.update(style)
+		fig = gcf()
+		fig.style = totalstyle
