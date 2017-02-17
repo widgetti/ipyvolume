@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import ipyvolume.pylab as p3
 import ipyvolume.examples
 import ipyvolume.datasets
