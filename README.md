@@ -6,7 +6,7 @@ ipyvolume
 [![Coverage Status](https://coveralls.io/repos/github/maartenbreddels/ipyvolume/badge.svg)](https://coveralls.io/github/maartenbreddels/ipyvolume)
 [![Build Status](https://travis-ci.org/maartenbreddels/ipyvolume.svg?branch=master)](https://travis-ci.org/maartenbreddels/ipyvolume)
 
-IPython widget for rendering 3d volumes and glyphs (e.g. scatter and quiver) in the Jupyter notebook
+IPython widget for rendering 3d volumes and glyphs (e.g. scatter and quiver) in the Jupyter notebook. Plots can be exported as standalone html, and render in stereo to show it in virtual reality on your phone with Google Cardboard.
 
 Try out in mybinder: [![Binder](https://img.shields.io/badge/launch-binder-red.svg)](http://mybinder.org/repo/maartenbreddels/ipyvolume/notebooks/examples/simple.ipynb?kernel_name=python2)
 
