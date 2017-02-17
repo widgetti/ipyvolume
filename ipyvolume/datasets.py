@@ -25,7 +25,13 @@ class Dataset(object):
 	def download(self, force=False):
 		if not os.path.exists(self.path) or force:
 			print("Downloading %s to %s" % (self.url, self.path))
-			code = os.system(self.download_command())
+			code = os.system(self.download_command_wget())
+			if not os.path.exists(self.path):
+				print("Download failed, exit code was: " +str(code) +" will try with curl")
+				code = os.system(self.download_command_curl())
+				if not os.path.exists(self.path):
+					print("Download failed again, exit code was: " +str(code) +" giving up")
+
 
 	def fetch(self):
 		self.download()
@@ -43,16 +49,11 @@ class Dataset(object):
 			raise Exception("file not found and/or download failed")
 		return self
 
-	def download_command(self):
-		use_wget = True # we prefer wget...
-		#if osname in ["linux", "osx"]: # for linux
-		if os.system("wget --version &> /dev/null") != 0:
-			use_wget = False
+	def download_command_wget(self):
+		return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url)
 
-		if use_wget:
-			return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url)
-		else:
-			return "cd %s; curl -O -L %s" % (data_dir, self.url)
+	def download_command_curl(self):
+		return "cd %s; curl -O -L %s" % (data_dir, self.url)
 
 
 hdz2000    = Dataset("hdz2000")
