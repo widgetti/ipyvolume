@@ -29,17 +29,8 @@ Here we visualize spherical harmonics.
 
 .. ipywidgets-display::
 
-    ipyvolume.example_ylm()
+    ipyvolume.example_ylm(shape=32)
 
-Dataset: Aquarius A2 - pure dark matter simulation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This is a snapshot of the pure dark matter simulations of the Aquarius project `(Springel et al. 2008) <http://adsabs.harvard.edu/abs/2008MNRAS.391.1685S>`_.
-
-.. ipywidgets-display::
-
-    aqa2 = ipyvolume.datasets.aquariusA2.fetch()
-    ipyvolume.quickvolshow(aqa2.data.T, lighting=True, level=[0.16, 0.25, 0.46], opacity=0.06)
 
 Dataset: Helmi & de Zeeuw 2000
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
