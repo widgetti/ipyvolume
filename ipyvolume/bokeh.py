@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from bokeh.models import CustomJS
 from bokeh.plotting import figure
 
