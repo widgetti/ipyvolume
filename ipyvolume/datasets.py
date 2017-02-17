@@ -45,9 +45,9 @@ class Dataset(object):
 
 	def download_command(self):
 		use_wget = True # we prefer wget...
-		if osname in ["linux", "osx"]: # for linux
-			if os.system("wget --version > /dev/null") != 0:
-				use_wget = False
+		#if osname in ["linux", "osx"]: # for linux
+		if os.system("wget --version &> /dev/null") != 0:
+			use_wget = False
 
 		if use_wget:
 			return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url)
