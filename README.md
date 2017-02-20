@@ -27,7 +27,7 @@ Ipyvolume will probably, but not yet:
 
 # Documentation
 
-Documentation is generated at readthedocs:: [![Documentation](https://readthedocs.org/projects/ipyvolume/badge/?version=latest)](https://ipyvolume.readthedocs.io/en/latest/?badge=latest)
+Documentation is generated at readthedocs: [![Documentation](https://readthedocs.org/projects/ipyvolume/badge/?version=latest)](https://ipyvolume.readthedocs.io/en/latest/?badge=latest)
 
 # Screencast demos
 
