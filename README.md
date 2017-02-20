@@ -13,11 +13,14 @@
 Ipyvolume currenty can
  * Do volume rendering.
  * Create scatter plots (up to ~1 million glyphs).
- * Create quiver plots.
+ * Create quiver plots (like scatter, but with an arrow pointing in a particular direction).
  * Render in the Jupyter notebook, or create a standalone html page (or snippet to embed in your page).
  * Render in stereo, for virtual reality with Google Cardboard.
  * Animate in d3 style, for instance if the x coordinates or color of a scatter plots changes.
- 
+ * Integrates with
+  * [ipywidgets](https://github.com/ipython/ipywidgets) for adding gui controls (sliders, button etc), see an [example at the documentation homepage](http://ipyvolume.readthedocs.io/en/latest/index.html#built-on-ipywidgets)
+  * [bokeh](//bokeh.pydata.org) or [bqplot](https://github.com/bloomberg/bqplot) by [linking the selection](http://ipyvolume.readthedocs.io/en/latest/bqplot.html)
+  
 Ipyvolume will probably, but not yet:
  * Render labels in latex.
  * Do isosurface rendering.
