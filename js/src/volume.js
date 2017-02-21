@@ -1,5 +1,5 @@
-define(["jupyter-js-widgets", "underscore", "three", "gl-matrix"],
-        function(widgets, _, THREE, glm) {
+define(["jupyter-js-widgets", "underscore", "three", "three-text2d", "gl-matrix"],
+        function(widgets, _, THREE, THREEtext2d, glm) {
 
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
 // so that N.M.x is allowed (we don't care about x, but we assume 0.2.x is not compatible with 0.3.x
@@ -424,11 +424,11 @@ var ScatterView = widgets.WidgetView.extend( {
 	        if(selected_previous.indexOf(i) != -1)
 	            cur_size_previous = size_selected_previous
 	        if(i < count)
-    	        scales.setX(i, cur_size);
+    	        scales.setX(i, cur_size/100.); // sizes are in percentages, but in viewport it's normalized
     	    else
     	        scales.setX(i, 0.);
 	        if(i < count_previous)
-    	        scales_previous.setX(i, cur_size_previous);
+    	        scales_previous.setX(i, cur_size_previous/100.);
     	    else
     	        scales_previous.setX(i, 0.);
 	    }
@@ -573,6 +573,52 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
 
         this.camera.position.z = 2
 
+
+        this.axis_z = new THREE.Object3D()
+        this.axis_z.translateX(-0.5)
+        this.axis_z.translateY(-0.5)
+        this.axis_z.rotateY(-Math.PI/2)
+        this.axis_z.rotateX(-Math.PI/4)
+
+        this.axis_y = new THREE.Object3D()
+        this.axis_y.translateX(-0.5)
+        this.axis_y.translateZ(-0.5)
+        this.axis_y.rotateZ(Math.PI/2)
+        this.axis_y.rotateX(Math.PI*3/4)
+
+        this.axis_x = new THREE.Object3D()
+        this.axis_x.translateY(-0.5)
+        this.axis_x.translateZ(-0.5)
+        this.axis_x.rotateY(-Math.PI)
+        this.axis_x.rotateX(-Math.PI/4)
+
+
+
+        this.axes.add(this.axis_z)
+        this.axes.add(this.axis_y)
+        this.axes.add(this.axis_x)
+
+        var s = 0.01*0.4
+        this.axis_z_label = new THREEtext2d.SpriteText2D("z", { align: THREEtext2d.textAlign.center, font: '30px Arial', fillStyle: '#00FF00', antialias: true })
+        this.axis_z_label.material.transparent = true
+        this.axis_z_label.material.alphaTest = 0.01
+        this.axis_z_label.scale.set(s,s,s)
+        this.axis_z.add(this.axis_z_label)
+
+        this.axis_y_label = new THREEtext2d.SpriteText2D("y", { align: THREEtext2d.textAlign.center, font: '30px Arial', fillStyle: '#00FF00', antialias: true })
+        //this.axis_y_label.material.rotation = Math.PI/2
+        this.axis_y_label.material.transparent = true
+        this.axis_y_label.material.alphaTest = 0.05
+        this.axis_y_label.scale.set(s,s,s)
+        this.axis_y.add(this.axis_y_label)
+
+        this.axis_x_label = new THREEtext2d.SpriteText2D("x", { align: THREEtext2d.textAlign.center, font: '30px Arial', fillStyle: '#00FF00', antialias: true })
+        this.axis_x_label.material.transparent = true
+        this.axis_x_label.material.alphaTest = 0.1
+        this.axis_x_label.scale.set(s,s,s)
+        this.axis_x.add(this.axis_x_label)
+
+
         // add to the scene
 
         this.scene = new THREE.Scene();
@@ -665,6 +711,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         //*
         this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
 
+        this.model.on('change:xlabel change:ylabel change:zlabel', this.update, this);
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:downscale', this.update_size, this);
@@ -913,6 +960,15 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.xaxes_material.color = this.get_style_color('xaxis.color')
         this.yaxes_material.color = this.get_style_color('yaxis.color')
         this.zaxes_material.color = this.get_style_color('zaxis.color')
+
+        this.axis_x_label.fillStyle = this.model.get("style")['xaxis.color']
+        this.axis_y_label.fillStyle = this.model.get("style")['yaxis.color']
+        this.axis_z_label.fillStyle = this.model.get("style")['zaxis.color']
+
+        this.axis_x_label.text = this.model.get("xlabel")
+        this.axis_y_label.text = this.model.get("ylabel")
+        this.axis_z_label.text = this.model.get("zlabel")
+
         if(this.model.get("data")) {
             this.camera.updateMatrixWorld();
             // render the back coordinates
