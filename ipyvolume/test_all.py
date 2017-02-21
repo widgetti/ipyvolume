@@ -49,6 +49,19 @@ def test_limits():
     assert f.zlim[0] == -17
     assert f.zlim[1] == 17
 
+def test_labels():
+    f = p3.figure()
+    p3.xlabel("x1")
+    p3.ylabel("y1")
+    p3.zlabel("z1")
+    assert f.xlabel == "x1"
+    assert f.ylabel == "y1"
+    assert f.zlabel == "z1"
+    p3.xyzlabel("x2", "y2", "z2")
+    assert f.xlabel == "x2"
+    assert f.ylabel == "y2"
+    assert f.zlabel == "z2"
+
 
 def test_scatter():
     x, y, z = np.random.random((3, 100))

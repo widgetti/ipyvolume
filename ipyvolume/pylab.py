@@ -282,6 +282,28 @@ def save(filename, copy_js=True):
 		src = os.path.join(dir_name_src, "index.js")
 		shutil.copy(src, dst)
 
+def xlabel(label):
+	"""Set the labels for the x-axis"""
+	fig = gcf()
+	fig.xlabel = label
+
+def ylabel(label):
+	"""Set the labels for the y-axis"""
+	fig = gcf()
+	fig.ylabel = label
+
+def zlabel(label):
+	"""Set the labels for the z-axis"""
+	fig = gcf()
+	fig.zlabel = label
+
+def xyzlabel(labelx, labely, labelz):
+	"""Set all labels at once"""
+	xlabel(labelx)
+	ylabel(labely)
+	zlabel(labelz)
+
+
 # mimic matplotlib namesace
 class style:
 	"""'Static class that mimics a matplotlib module.

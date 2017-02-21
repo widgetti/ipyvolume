@@ -13,6 +13,6 @@ ipyvolume.pylab
 ---------------
 
 .. automodule:: ipyvolume.pylab
-    :members: scatter, quiver, volshow, xlim, ylim, zlim, xyzlim, figure, gcf, clear, show, transfer_function, style
+    :members: scatter, quiver, volshow, xlim, ylim, zlim, xyzlim, xlabel, ylabel, zlabel, xyzlabel, figure, gcf, clear, show, transfer_function, style
     :undoc-members:
     :show-inheritance:
