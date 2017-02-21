@@ -424,11 +424,11 @@ var ScatterView = widgets.WidgetView.extend( {
 	        if(selected_previous.indexOf(i) != -1)
 	            cur_size_previous = size_selected_previous
 	        if(i < count)
-    	        scales.setX(i, cur_size);
+    	        scales.setX(i, cur_size/100.); // sizes are in percentages, but in viewport it's normalized
     	    else
     	        scales.setX(i, 0.);
 	        if(i < count_previous)
-    	        scales_previous.setX(i, cur_size_previous);
+    	        scales_previous.setX(i, cur_size_previous/100.);
     	    else
     	        scales_previous.setX(i, 0.);
 	    }

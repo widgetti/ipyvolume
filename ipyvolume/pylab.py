@@ -14,7 +14,7 @@ def _docsubst(f):
 
 _doc_snippets = {}
 _doc_snippets["color"] = "string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0)"
-_doc_snippets["size"] = "float representing the size of the glyph in fraction of the viewport, where 1. is full viewport"
+_doc_snippets["size"] = "float representing the size of the glyph in percentage of the viewport, where 100 is the full size of the viewport"
 _doc_snippets["marker"] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere'"
 _doc_snippets["x"] = "1d numpy array with x positions"
 _doc_snippets["u"] = "1d numpy array indicating the x direction"
@@ -108,19 +108,19 @@ def xyzlim(vmin, vmax):
 
 default_color = "red"
 default_color_selected = "white"
-default_size = 0.02
+default_size = 2
 default_size_selected = default_size*1.3
 
 @_docsubst
-def scatter(x, y, z, color=default_color, s=default_size, ss=default_size_selected, color_selected=default_color_selected, marker="diamond", selection=None, **kwargs):
+def scatter(x, y, z, color=default_color, size=default_size, size_selected=default_size_selected, color_selected=default_color_selected, marker="diamond", selection=None, **kwargs):
 	"""Create a scatter 3d plot with
 
 	:param x: {x}
 	:param y:
 	:param z:
 	:param color: {color}
-	:param s: {size}
-	:param ss: like size, but for selected glyphs
+	:param size: {size}
+	:param size_selected: like size, but for selected glyphs
 	:param color_selected:  like color, but for selected glyphs
 	:param marker: {marker}
 	:param selection: array with indices of x,y,z arrays of the selected markers, which can have a different size and color
@@ -129,12 +129,12 @@ def scatter(x, y, z, color=default_color, s=default_size, ss=default_size_select
 	"""
 	fig = gcf()
 	_grow_limits(x, y, z)
-	scatter = volume.Scatter(x=x, y=y, z=z, color=color, size=s, color_selected=color_selected, size_selected=ss, geo=marker, selection=selection, **kwargs)
+	scatter = volume.Scatter(x=x, y=y, z=z, color=color, size=size, color_selected=color_selected, size_selected=size_selected, geo=marker, selection=selection, **kwargs)
 	fig.scatters = fig.scatters + [scatter]
 	return scatter
 
 
-def quiver(x, y, z, u, v, w, s=default_size*10, ss=default_size_selected*10, color=default_color, color_selected=default_color_selected, marker="arrow", **kwargs):
+def quiver(x, y, z, u, v, w, size=default_size*10, size_selected=default_size_selected*10, color=default_color, color_selected=default_color_selected, marker="arrow", **kwargs):
 	"""Create a quiver plot, which is like a scatter plot but with arrows pointing in the direction given by u, v and w
 
 	:param x: {x}, for convenience the array is flattened if not 1d.
@@ -143,8 +143,8 @@ def quiver(x, y, z, u, v, w, s=default_size*10, ss=default_size_selected*10, col
 	:param u: {u}
 	:param v:
 	:param w:
-	:param s: {size}
-	:param ss: like size, but for selected glyphs
+	:param size: {size}
+	:param size_selected: like size, but for selected glyphs
 	:param color: {color}
 	:param color_selected: like color, but for selected glyphs
 	:param marker: (currently only 'arrow' would make sense)
@@ -153,7 +153,8 @@ def quiver(x, y, z, u, v, w, s=default_size*10, ss=default_size_selected*10, col
 	"""
 	fig = gcf()
 	_grow_limits(x, y, z)
-	scatter = volume.Scatter(x=x.flatten(), y=y.flatten(), z=z.flatten(), vx=u.flatten(), vy=v.flatten(), vz=w.flatten(), color=color, size=s, color_selected=color_selected, size_selected=ss,
+	scatter = volume.Scatter(x=x.flatten(), y=y.flatten(), z=z.flatten(), vx=u.flatten(), vy=v.flatten(), vz=w.flatten(),
+							 color=color, size=size, color_selected=color_selected, size_selected=size_selected,
 							 geo=marker, **kwargs)
 	fig.scatters = fig.scatters + [scatter]
 	return scatter
