@@ -76,8 +76,8 @@ class VolumeRendererThree(widgets.DOMWidget):
     zlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
 
     xlabel = traitlets.Unicode("x").tag(sync=True)
-    ylabel = traitlets.Unicode("x").tag(sync=True)
-    zlabel = traitlets.Unicode("x").tag(sync=True)
+    ylabel = traitlets.Unicode("y").tag(sync=True)
+    zlabel = traitlets.Unicode("z").tag(sync=True)
 
     style = traitlets.Dict(default_value=default_style).tag(sync=True)
     #xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
