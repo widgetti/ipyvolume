@@ -387,12 +387,10 @@ var ScatterView = widgets.WidgetView.extend( {
         console.log("count_previous: " +count_previous)
         var max_count = Math.max(count, count_previous);
         console.log("max_count: " +max_count)
-        console.log("diff",x,this.previous_values["x"])
         //previous offsets
         var x_previous = this.previous_values["x"] || x;
         var y_previous = this.previous_values["y"] || y;
         var z_previous = this.previous_values["z"] || z;
-        console.log("previous", x_previous)
         var vcount_previous = vcount;
         console.log("vcount: " +vcount)
         if(this.previous_values["vx"])
