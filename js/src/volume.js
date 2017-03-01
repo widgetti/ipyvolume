@@ -246,6 +246,9 @@ var ScatterView = widgets.WidgetView.extend( {
                 animation_time_vz : { type: "f", value: 1. },
                 animation_time_size : { type: "f", value: 1. },
                 animation_time_color : { type: "f", value: 1. },
+                animation_time_index : { type: "f", value: 1. },
+
+
             },
             vertexShader: require('../glsl/scatter-vertex.glsl'),
             fragmentShader: require('../glsl/scatter-fragment.glsl')
@@ -258,7 +261,7 @@ var ScatterView = widgets.WidgetView.extend( {
             })
         this.create_mesh()
         this.add_to_scene()
-        this.model.on("change:size change:size_selected change:color change:color_selected change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
+        this.model.on("change:size change:size_selected change:color change:color_selected change:index change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
         this.model.on("change:geo", this.update, this)
     },
     set_limits: function(limits) {
@@ -279,6 +282,20 @@ var ScatterView = widgets.WidgetView.extend( {
         _.mapObject(this.model.changedAttributes(), function(val, key){
             console.log("changed " +key)
             this.previous_values[key] = this.model.previous(key)
+            if (key == "index"){
+              pindex = this.previous_values["index"]
+              this.previous_values["x"] = this.model.previous("x")[pindex]
+              this.previous_values["y"] = this.model.previous("y")[pindex]
+              this.previous_values["z"] = this.model.previous("z")[pindex]
+              var vx = this.model.previous("vx")
+              if (vx && typeof vx[0][0] != "undefined" ) {
+                this.previous_values["vx"] = this.model.previous("vx")[pindex]
+                this.previous_values["vy"] = this.model.previous("vy")[pindex]
+                this.previous_values["vz"] = this.model.previous("vz")[pindex]
+              }
+
+            }
+
             // we treat changes in _selected attributes the same
             var key_animation = key.replace("_selected", "")
             if(key_animation == "geo") {
@@ -293,6 +310,7 @@ var ScatterView = widgets.WidgetView.extend( {
                     //console.log("adding size to list of changed attributes")
                     this.attributes_changed["size"] = []
                 }
+
             }
         }, this)
         this.update()
@@ -369,12 +387,12 @@ var ScatterView = widgets.WidgetView.extend( {
         console.log("count_previous: " +count_previous)
         var max_count = Math.max(count, count_previous);
         console.log("max_count: " +max_count)
-
+        console.log("diff",x,this.previous_values["x"])
         //previous offsets
         var x_previous = this.previous_values["x"] || x;
         var y_previous = this.previous_values["y"] || y;
         var z_previous = this.previous_values["z"] || z;
-
+        console.log("previous", x_previous)
         var vcount_previous = vcount;
         console.log("vcount: " +vcount)
         if(this.previous_values["vx"])
