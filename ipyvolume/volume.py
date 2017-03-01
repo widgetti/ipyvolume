@@ -1,7 +1,7 @@
 import ipywidgets as widgets
 import ipywidgets
 
-from traitlets import Unicode
+from traitlets import Unicode, Integer
 import traitlets
 from traittypes import Array
 import logging
@@ -27,6 +27,7 @@ class Scatter(widgets.DOMWidget):
     vy = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
     vz = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
     selected = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
+    index = Integer(default_value=0).tag(sync=True)
     size = traitlets.Float(0.01).tag(sync=True)
     size_selected = traitlets.Float(0.02).tag(sync=True)
     color = traitlets.Unicode(default_value="red").tag(sync=True)
@@ -223,4 +224,3 @@ def scatter(x, y, z, color=(1,0,0), s=0.01):
     fig.scatter = Scatter(x=x, y=y, z=z, color=color, size=s)
     fig.volume.scatter = fig.scatter
     return fig
-

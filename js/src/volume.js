@@ -289,7 +289,7 @@ var ScatterView = widgets.WidgetView.extend( {
             } else {
                 this.attributes_changed[key_animation] = [key]
                 // animate the size as well on x y z changes
-                if(["x", "y", "z", "vx", "vy", "vz"].indexOf(key) != -1) {
+                if(["x", "y", "z", "vx", "vy", "vz","index"].indexOf(key) != -1) {
                     //console.log("adding size to list of changed attributes")
                     this.attributes_changed["size"] = []
                 }
@@ -318,11 +318,35 @@ var ScatterView = widgets.WidgetView.extend( {
         instanced_geo.addAttribute( 'position', vertices );
 
         var x = this.model.get("x");
-        var y = this.model.get("y");
-        var z = this.model.get("z");
-        var vx = this.model.get("vx");
-        var vy = this.model.get("vy");
-        var vz = this.model.get("vz");
+        var index = this.model.get("index");
+
+        if (typeof x[0][0] != "undefined") {
+            // two-dimensional
+            index = Math.min(index,x.length - 1)
+            var x = this.model.get("x")[index];
+            var y = this.model.get("y")[index];
+            var z = this.model.get("z")[index];
+
+            var vx = this.model.get("vx");
+            if (vx && typeof vx[0][0] != "undefined" ) {
+              var vx = this.model.get("vx")[index];
+              var vy = this.model.get("vy")[index];
+              var vz = this.model.get("vz")[index];
+
+            }
+            else{
+              vx = []
+            }
+
+        }
+        else {
+            var y = this.model.get("y");
+            var z = this.model.get("z");
+            var vx = this.model.get("vx");
+            var vy = this.model.get("vy");
+            var vz = this.model.get("vz");
+        }
+
         //var has_previous_xyz = this.previous_values["x"] && this.previous_values["y"] && this.previous_values["z"]
         var count = Math.min(x.length, y.length, z.length);
         var vcount = 0
