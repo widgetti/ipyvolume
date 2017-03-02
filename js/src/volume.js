@@ -196,7 +196,7 @@ var ScatterView = widgets.WidgetView.extend( {
         console.log("create scatter")
 
         this.geo_diamond = new THREE.SphereGeometry(1, 2, 2)
-        this.geo_sphere = new THREE.SphereGeometry(1, 12, 12)
+        this.geo_sphere = new THREE.SphereGeometry(1, 4*12, 4*12)
         this.geo_box = new THREE.BoxGeometry(1, 1, 1)
         this.geo_cat = new THREE.Geometry(1, 1, 1)
         for(var i = 0; i < cat_data.vertices.length; i++) {
@@ -478,32 +478,58 @@ var ScatterView = widgets.WidgetView.extend( {
         // colors
         var colors = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
         var colors_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
-
         function to_rgb(color) {
             color = new THREE.Color(color)
             return [color.r, color.g, color.b]
         }
-        var color = to_rgb(this.model.get("color"))
-        var color_previous = "color" in this.previous_values ? to_rgb(this.previous_values["color"]) : color;
-        if(!color_previous)
-            color_previous = color;
 
-        var color_selected = to_rgb(this.model.get("color_selected"))
-        var color_selected_previous = "color_selected" in this.previous_values ? to_rgb(this.previous_values["color_selected"]) : color_selected;
-        if(!color_selected_previous)
-            color_selected_previous = color_selected;
+        var multi_colors = this.model.get("multi_colors")
+        //console.log("multi",multi_colors)
+        if( multi_colors){
 
-	    for(var i = 0; i < max_count; i++) {
-	        var cur_color = color;
-	        if(selected.indexOf(i) != -1)
-	            cur_color = color_selected
-   	        colors.setXYZ(i, cur_color[0], cur_color[1], cur_color[2]);
+          if( (typeof multi_colors[0][0] != "undefined") && (typeof multi_colors[0] === 'string')){
+            //1D
+            console.log("1D color")
+          }
+          else {
+            //2D + index
+            console.log("2D color")
+            multi_colors = multi_colors[index]
+          }
 
-	        var cur_color_previous = color_previous;
-	        if(selected_previous.indexOf(i) != -1)
-	            cur_color_previous = color_selected_previous
-   	        colors_previous.setXYZ(i, cur_color_previous[0], cur_color_previous[1], cur_color_previous[2]);
-	    }
+          for(var i = 0; i < max_count; i++) {
+              var cur_color = to_rgb(multi_colors[i]);
+              if(selected.indexOf(i) != -1)
+                  cur_color = color_selected
+                colors.setXYZ(i, cur_color[0], cur_color[1], cur_color[2]);
+            }
+
+
+        }
+        else {
+
+          var color = to_rgb(this.model.get("color"))
+          var color_previous = "color" in this.previous_values ? to_rgb(this.previous_values["color"]) : color;
+          if(!color_previous)
+              color_previous = color;
+
+          var color_selected = to_rgb(this.model.get("color_selected"))
+          var color_selected_previous = "color_selected" in this.previous_values ? to_rgb(this.previous_values["color_selected"]) : color_selected;
+          if(!color_selected_previous)
+              color_selected_previous = color_selected;
+
+    	    for(var i = 0; i < max_count; i++) {
+    	        var cur_color = color;
+    	        if(selected.indexOf(i) != -1)
+    	            cur_color = color_selected
+       	        colors.setXYZ(i, cur_color[0], cur_color[1], cur_color[2]);
+
+    	        var cur_color_previous = color_previous;
+    	        if(selected_previous.indexOf(i) != -1)
+    	            cur_color_previous = color_selected_previous
+       	        colors_previous.setXYZ(i, cur_color_previous[0], cur_color_previous[1], cur_color_previous[2]);
+    	    }
+        }
 
         instanced_geo.addAttribute( 'color', colors );
         instanced_geo.addAttribute( 'color_previous', colors_previous );
