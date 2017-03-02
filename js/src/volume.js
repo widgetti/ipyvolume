@@ -246,7 +246,7 @@ var ScatterView = widgets.WidgetView.extend( {
                 animation_time_vz : { type: "f", value: 1. },
                 animation_time_size : { type: "f", value: 1. },
                 animation_time_color : { type: "f", value: 1. },
-                animation_time_index : { type: "f", value: 1. },
+                animation_time_sequence_index : { type: "f", value: 1. },
 
 
             },
@@ -261,7 +261,7 @@ var ScatterView = widgets.WidgetView.extend( {
             })
         this.create_mesh()
         this.add_to_scene()
-        this.model.on("change:size change:size_selected change:color change:color_selected change:index change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
+        this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
         this.model.on("change:geo", this.update, this)
     },
     set_limits: function(limits) {
@@ -282,18 +282,35 @@ var ScatterView = widgets.WidgetView.extend( {
         _.mapObject(this.model.changedAttributes(), function(val, key){
             console.log("changed " +key)
             this.previous_values[key] = this.model.previous(key)
-            if (key == "index"){
-              pindex = this.previous_values["index"]
-              this.previous_values["x"] = this.model.previous("x")[pindex]
-              this.previous_values["y"] = this.model.previous("y")[pindex]
-              this.previous_values["z"] = this.model.previous("z")[pindex]
-              var vx = this.model.previous("vx")
-              if (vx && typeof vx[0][0] != "undefined" ) {
-                this.previous_values["vx"] = this.model.previous("vx")[pindex]
-                this.previous_values["vy"] = this.model.previous("vy")[pindex]
-                this.previous_values["vz"] = this.model.previous("vz")[pindex]
+            if (key == "sequence_index"){
+              pindex = this.model.previous("sequence_index")
+
+
+              if (this.model.get("x") && typeof this.model.get("x")[0][0] != "undefined" ) {
+                this.previous_values["x"] = this.model.get("x")[pindex]
+                this.attributes_changed["x"] =["x"]
               }
 
+              if (this.model.get("y") && typeof this.model.get("y")[0][0] != "undefined" ) {
+                this.previous_values["y"] = this.model.get("y")[pindex]
+                this.attributes_changed["y"] =["y"]
+              }
+              if (this.model.get("z") && typeof this.model.get("z")[0][0] != "undefined" ) {
+                this.previous_values["z"] = this.model.get("z")[pindex]
+                this.attributes_changed["z"] =["z"]
+              }
+              if (this.model.get("vx") && typeof this.model.get("vx")[0][0] != "undefined" ) {
+                this.previous_values["vx"] = this.model.get("vx")[pindex]
+                this.attributes_changed["vx"] =["vx"]
+              }
+              if (this.model.get("vy") && typeof this.model.get("vy")[0][0] != "undefined" ) {
+                this.previous_values["vy"] = this.model.get("vy")[pindex]
+                this.attributes_changed["vy"] =["vy"]
+              }
+              if (this.model.get("vz") && typeof this.model.get("vz")[0][0] != "undefined" ) {
+                this.previous_values["vz"] = this.model.get("vz")[pindex]
+                this.attributes_changed["vz"] =["vz"]
+              }
             }
 
             // we treat changes in _selected attributes the same
@@ -306,7 +323,7 @@ var ScatterView = widgets.WidgetView.extend( {
             } else {
                 this.attributes_changed[key_animation] = [key]
                 // animate the size as well on x y z changes
-                if(["x", "y", "z", "vx", "vy", "vz","index"].indexOf(key) != -1) {
+                if(["x", "y", "z", "vx", "vy", "vz","sequence_index"].indexOf(key) != -1) {
                     //console.log("adding size to list of changed attributes")
                     this.attributes_changed["size"] = []
                 }
@@ -336,7 +353,7 @@ var ScatterView = widgets.WidgetView.extend( {
         instanced_geo.addAttribute( 'position', vertices );
 
         var x = this.model.get("x");
-        var index = this.model.get("index");
+        var index = this.model.get("sequence_index");
 
         if (typeof x[0][0] != "undefined") {
             // two-dimensional
