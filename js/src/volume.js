@@ -352,35 +352,28 @@ var ScatterView = widgets.WidgetView.extend( {
         var vertices = buffer_geo.attributes.position.clone();
         instanced_geo.addAttribute( 'position', vertices );
 
-        var x = this.model.get("x");
         var index = this.model.get("sequence_index");
 
-        if (typeof x[0][0] != "undefined") {
-            // two-dimensional
-            index = Math.min(index,x.length - 1)
-            var x = this.model.get("x")[index];
-            var y = this.model.get("y")[index];
-            var z = this.model.get("z")[index];
-
-            var vx = this.model.get("vx");
-            if (vx && typeof vx[0][0] != "undefined" ) {
-              var vx = this.model.get("vx")[index];
-              var vy = this.model.get("vy")[index];
-              var vz = this.model.get("vz")[index];
-
+        function get_value_index(variable,index){
+            if ( !variable){
+              // if undefined
+              return variable
             }
-            else{
-              vx = []
+            if (typeof index != "undefined"  && typeof variable[0][0] != "undefined") {
+              // if two D
+              index1 = Math.min(index,variable.length - 1);
+              return variable[index1]
             }
+            //1D
+            return variable
+        }
 
-        }
-        else {
-            var y = this.model.get("y");
-            var z = this.model.get("z");
-            var vx = this.model.get("vx");
-            var vy = this.model.get("vy");
-            var vz = this.model.get("vz");
-        }
+        var x = get_value_index(this.model.get("x"),index);
+        var y = get_value_index(this.model.get("y"),index);
+        var z = get_value_index(this.model.get("z"),index);
+        var vx = get_value_index(this.model.get("vx"),index);
+        var vy = get_value_index(this.model.get("vy"),index);
+        var vz = get_value_index(this.model.get("vz"),index);
 
         //var has_previous_xyz = this.previous_values["x"] && this.previous_values["y"] && this.previous_values["z"]
         var count = Math.min(x.length, y.length, z.length);
