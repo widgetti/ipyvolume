@@ -310,10 +310,11 @@ var ScatterView = widgets.WidgetView.extend( {
                 this.previous_values["vz"] = this.model.get("vz")[pindex]
                 this.attributes_changed["vz"] =["vz"]
               }
-            } else
-            if(key_animation == "geo") {
+            }
+	    else if(key_animation == "geo") {
                 // direct change, no animation
-            } if(key_animation == "selected") { // and no explicit animation on this one
+            }
+	    else if(key_animation == "selected") { // and no explicit animation on this one
                 this.attributes_changed["color"] = [key]
                 this.attributes_changed["size"] = []
             } else {
