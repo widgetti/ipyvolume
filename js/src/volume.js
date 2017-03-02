@@ -258,7 +258,7 @@ var ScatterView = widgets.WidgetView.extend( {
             })
         this.create_mesh()
         this.add_to_scene()
-        this.model.on("change:size change:size_selected change:color change:color_selected change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
+        this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
         this.model.on("change:geo", this.update, this)
     },
     set_limits: function(limits) {
@@ -281,18 +281,50 @@ var ScatterView = widgets.WidgetView.extend( {
             this.previous_values[key] = this.model.previous(key)
             // we treat changes in _selected attributes the same
             var key_animation = key.replace("_selected", "")
-            if(key_animation == "geo") {
+            if (key_animation == "sequence_index"){
+              pindex = this.model.previous("sequence_index")
+
+
+              if (this.model.get("x") && typeof this.model.get("x")[0][0] != "undefined" ) {
+                this.previous_values["x"] = this.model.get("x")[pindex]
+                this.attributes_changed["x"] =["x"]
+              }
+
+              if (this.model.get("y") && typeof this.model.get("y")[0][0] != "undefined" ) {
+                this.previous_values["y"] = this.model.get("y")[pindex]
+                this.attributes_changed["y"] =["y"]
+              }
+              if (this.model.get("z") && typeof this.model.get("z")[0][0] != "undefined" ) {
+                this.previous_values["z"] = this.model.get("z")[pindex]
+                this.attributes_changed["z"] =["z"]
+              }
+              if (this.model.get("vx") && typeof this.model.get("vx")[0][0] != "undefined" ) {
+                this.previous_values["vx"] = this.model.get("vx")[pindex]
+                this.attributes_changed["vx"] =["vx"]
+              }
+              if (this.model.get("vy") && typeof this.model.get("vy")[0][0] != "undefined" ) {
+                this.previous_values["vy"] = this.model.get("vy")[pindex]
+                this.attributes_changed["vy"] =["vy"]
+              }
+              if (this.model.get("vz") && typeof this.model.get("vz")[0][0] != "undefined" ) {
+                this.previous_values["vz"] = this.model.get("vz")[pindex]
+                this.attributes_changed["vz"] =["vz"]
+              }
+            }
+	    else if(key_animation == "geo") {
                 // direct change, no animation
-            } if(key_animation == "selected") { // and no explicit animation on this one
+            }
+	    else if(key_animation == "selected") { // and no explicit animation on this one
                 this.attributes_changed["color"] = [key]
                 this.attributes_changed["size"] = []
             } else {
                 this.attributes_changed[key_animation] = [key]
                 // animate the size as well on x y z changes
-                if(["x", "y", "z", "vx", "vy", "vz"].indexOf(key) != -1) {
+                if(["x", "y", "z", "vx", "vy", "vz","sequence_index"].indexOf(key) != -1) {
                     //console.log("adding size to list of changed attributes")
                     this.attributes_changed["size"] = []
                 }
+
             }
         }, this)
         this.update()
@@ -317,12 +349,29 @@ var ScatterView = widgets.WidgetView.extend( {
         var vertices = buffer_geo.attributes.position.clone();
         instanced_geo.addAttribute( 'position', vertices );
 
-        var x = this.model.get("x");
-        var y = this.model.get("y");
-        var z = this.model.get("z");
-        var vx = this.model.get("vx");
-        var vy = this.model.get("vy");
-        var vz = this.model.get("vz");
+        var index = this.model.get("sequence_index");
+
+        function get_value_index(variable,index){
+            if ( !variable){
+              // if undefined
+              return variable
+            }
+            if (typeof index != "undefined"  && typeof variable[0][0] != "undefined") {
+              // if two D
+              index1 = Math.min(index,variable.length - 1);
+              return variable[index1]
+            }
+            //1D
+            return variable
+        }
+
+        var x = get_value_index(this.model.get("x"),index);
+        var y = get_value_index(this.model.get("y"),index);
+        var z = get_value_index(this.model.get("z"),index);
+        var vx = get_value_index(this.model.get("vx"),index);
+        var vy = get_value_index(this.model.get("vy"),index);
+        var vz = get_value_index(this.model.get("vz"),index);
+
         //var has_previous_xyz = this.previous_values["x"] && this.previous_values["y"] && this.previous_values["z"]
         var count = Math.min(x.length, y.length, z.length);
         var vcount = 0
@@ -345,12 +394,10 @@ var ScatterView = widgets.WidgetView.extend( {
         console.log("count_previous: " +count_previous)
         var max_count = Math.max(count, count_previous);
         console.log("max_count: " +max_count)
-
         //previous offsets
         var x_previous = this.previous_values["x"] || x;
         var y_previous = this.previous_values["y"] || y;
         var z_previous = this.previous_values["z"] || z;
-
         var vcount_previous = vcount;
         console.log("vcount: " +vcount)
         if(this.previous_values["vx"])
