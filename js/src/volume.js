@@ -246,9 +246,6 @@ var ScatterView = widgets.WidgetView.extend( {
                 animation_time_vz : { type: "f", value: 1. },
                 animation_time_size : { type: "f", value: 1. },
                 animation_time_color : { type: "f", value: 1. },
-                animation_time_sequence_index : { type: "f", value: 1. },
-
-
             },
             vertexShader: require('../glsl/scatter-vertex.glsl'),
             fragmentShader: require('../glsl/scatter-fragment.glsl')
@@ -282,7 +279,9 @@ var ScatterView = widgets.WidgetView.extend( {
         _.mapObject(this.model.changedAttributes(), function(val, key){
             console.log("changed " +key)
             this.previous_values[key] = this.model.previous(key)
-            if (key == "sequence_index"){
+            // we treat changes in _selected attributes the same
+            var key_animation = key.replace("_selected", "")
+            if (key_animation == "sequence_index"){
               pindex = this.model.previous("sequence_index")
 
 
@@ -311,10 +310,7 @@ var ScatterView = widgets.WidgetView.extend( {
                 this.previous_values["vz"] = this.model.get("vz")[pindex]
                 this.attributes_changed["vz"] =["vz"]
               }
-            }
-
-            // we treat changes in _selected attributes the same
-            var key_animation = key.replace("_selected", "")
+            } else
             if(key_animation == "geo") {
                 // direct change, no animation
             } if(key_animation == "selected") { // and no explicit animation on this one
