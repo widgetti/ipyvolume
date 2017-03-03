@@ -6,6 +6,7 @@ import ipyvolume.embed
 import os
 import numpy as np
 import shutil
+from . import utils
 
 def _docsubst(f):
 	"""Perform docstring substitutions"""
@@ -29,7 +30,6 @@ def clear():
 	"""Remove current figure (and container)"""
 	current.container = None
 	current.figure = None
-
 
 def figure(key=None, width=400, height=500, lighting=True, controls=True, debug=False):
 	"""Create a new figure (if no key is given) or return the figure associated with key
@@ -307,44 +307,75 @@ def xyzlabel(labelx, labely, labelz):
 
 # mimic matplotlib namesace
 class style:
-	"""'Static class that mimics a matplotlib module.
+    """'Static class that mimics a matplotlib module.
 
-	Example:
-	>>> import ipyvolume.pylab as p3
-	>>> p3.style.use('seaborn-darkgrid'])
-	>>> p3.style.use(['seaborn-darkgrid', {'xaxis.color':'orange'}])
+    Example:
+    >>> import ipyvolume.pylab as p3
+    >>> p3.style.use('light'])
+    >>> p3.style.use('seaborn-darkgrid'])
+    >>> p3.style.use(['seaborn-darkgrid', {'axes.x.color':'orange'}])
 
-	Possible style values:
-	 * figure.facecolor: background color
-	 * axes.color: color of the box around the volume/viewport
-	 * xaxis.color: color of xaxis
-	 * yaxis.color: color of xaxis
-	 * zaxis.color: color of xaxis
+    Possible style values:
+     * figure.facecolor: background color
+     * axes.color: color of the box around the volume/viewport
+     * xaxis.color: color of xaxis
+     * yaxis.color: color of xaxis
+     * zaxis.color: color of xaxis
 
-	"""
-	@staticmethod
-	def use(style):
-		"""Set the style of the current figure/visualization
+    """
 
-		:param style: matplotlib style name, or dict with values, or a sequence of these, where the last value overrides previous
-		:return:
-		"""
-		import matplotlib.style
-		import six
-		def valid(value): # checks if json'able
-			return isinstance(value, six.string_types)
-		if isinstance(style, six.string_types):
-			styles = [style]
-		else:
-			styles = style
-		totalstyle = dict()
-		for style in [ipyvolume.volume.default_style] + styles:
-			if isinstance(style, six.string_types):
-				# we assume now it's a matplotlib style, get all properties that we understand
-				cleaned_style = {key:value for key, value in dict(matplotlib.style.library[style]).items() if valid(value)}
-				totalstyle.update(cleaned_style)
-			else:
-				# otherwise assume it's a dict
-				totalstyle.update(style)
-		fig = gcf()
-		fig.style = totalstyle
+    @staticmethod
+    def use(style):
+        """Set the style of the current figure/visualization
+
+        :param style: matplotlib style name, or dict with values, or a sequence of these, where the last value overrides previous
+        :return:
+        """
+        import six
+        def valid(value): # checks if json'able
+            return isinstance(value, six.string_types)
+        def translate(mplstyle):
+            style = {}
+            mapping = [
+                    ['figure.facecolor','background-color'],
+                    ['xtick.color', 'axes.x.color'], # TODO: is this the right thing?
+                    ['xtick.color', 'axes.z.color'], # map x to z as well
+                    ['ytick.color', 'axes.y.color'],
+                    ['axes.labelcolor', 'axes.label.color'],
+                    ['text.color', 'color'],
+                    ['axes.edgecolor', 'axes.color']
+            ]
+            for from_name, to_name in mapping:
+                if from_name in mplstyle:
+                    value = mplstyle[from_name]
+                    if "color" in from_name:
+                        try: # threejs doesn't like a color like '.13', so try to convert to proper format
+                            value = float(value) * 255
+                            value = "rgb(%d, %d, %d)" % (value, value, value)
+                        except:
+                            pass
+
+                    utils.nested_setitem(style, to_name, value)
+            return style
+        if isinstance(style, six.string_types):
+            styles = [style]
+        else:
+            styles = style
+        totalstyle = utils.dict_deep_update({}, ipyvolume.style._defaults)
+        for style in styles:
+            if isinstance(style, six.string_types):
+                if hasattr(ipyvolume.style, style):
+                    style = getattr(ipyvolume.style, style)
+                else:
+                    # lets see if we can copy matplotlib's style
+                    # we assume now it's a matplotlib style, get all properties that we understand
+                    import matplotlib.style
+                    cleaned_style = {key:value for key, value in dict(matplotlib.style.library[style]).items() if valid(value)}
+                    style = translate(cleaned_style)
+                    #totalstyle.update(cleaned_style)
+            else:
+                # otherwise assume it's a dict
+                pass
+            totalstyle = utils.dict_deep_update(totalstyle, style)
+        fig = gcf()
+        fig.style = totalstyle
