@@ -196,7 +196,7 @@ var ScatterView = widgets.WidgetView.extend( {
         console.log("create scatter")
 
         this.geo_diamond = new THREE.SphereGeometry(1, 2, 2)
-        this.geo_sphere = new THREE.SphereGeometry(1, 4*12, 4*12)
+        this.geo_sphere = new THREE.SphereGeometry(1, 12, 12)
         this.geo_box = new THREE.BoxGeometry(1, 1, 1)
         this.geo_cat = new THREE.Geometry(1, 1, 1)
         for(var i = 0; i < cat_data.vertices.length; i++) {
