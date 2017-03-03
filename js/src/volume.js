@@ -555,7 +555,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.update_counter = 0
         var width = this.model.get("width");
         var height = this.model.get("height");
-        this.renderer = new THREE.WebGLRenderer();
+        this.renderer = new THREE.WebGLRenderer({antialias: true});
         this.el.appendChild(this.renderer.domElement);
 
         // el_mirror is a 'mirror' dom tree that d3 needs
@@ -844,6 +844,9 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         //console.log("update axis", d, this.model.get(d.name + "lim"))
         d.object_label.text = d.label;
         d.object_label.fillStyle = d.fillStyle;
+        var n = d.name // x, y or z
+        d.object_label.fillStyle = this.get_style('axes.' +n +'.label.color axes.'   +n +'.color axes.label.color axes.color')
+        d.object_label.visible = this.get_style(  'axes.' +n +'.label.visible axes.' +n +'.visible axes.label.visible axes.visible')
         d.scale = d3.scaleLinear().domain(this.model.get(d.name + "lim")).range([-0.5, 0.5])
     },
     _d3_add_axis_tick: function(node, d, i) {
@@ -858,12 +861,17 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         var aligns = {x: THREEtext2d.textAlign.topRight, y:THREEtext2d.textAlign.topRight, z:THREEtext2d.textAlign.center}
         var sprite =  new THREEtext2d.SpriteText2D(tick_text, { align: aligns[parent_data.name], font: '30px Arial', fillStyle: '#00FF00', antialias: true })
         sprite.material.transparent = true
-        sprite.material.alphaTest = 0.1
+        //sprite.material.alphaTest = 0.1
+        sprite.blending = THREE.CustomBlending
+        sprite.blendSrc = THREE.SrcAlphaFactor
+        sprite.blendDst = THREE.OneMinusSrcAlphaFactor
+        sprite.blendEquation = THREE.AddEquation
         var s = 0.01*0.4*0.5;
         //sprite.position.x = scale(d.value)
         //sprite.scale.set(s,s,s)
         sprite.scale.multiplyScalar(s)
-        sprite.fillStyle = this.model.get("style")[parent_data.name + 'axis.color']
+        var n = parent_data.name // x, y or z
+        sprite.fillStyle = this.get_style('axes.' +n +'.ticklabel.color axes.ticklabel.color axes.' +n +'.color axes.color')
         parent_data.object.add(sprite)
         d.object_ticklabel = sprite;
         return sprite
@@ -879,7 +887,9 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         var tick_text = tick_format(d.value);
         d.object_ticklabel.text = tick_text
         d.object_ticklabel.position.x = scale(d.value)
-        d.object_ticklabel.fillStyle = this.model.get("style")[parent_data.name + 'axis.color']
+        var n = parent_data.name // x, y or z
+        d.object_ticklabel.fillStyle = this.get_style('axes.' +n +'.ticklabel.color axes.ticklabel.color axes.' +n +'.color axes.color')
+        d.object_ticklabel.visible = this.get_style('axes.' +n +'.ticklabel.visible axes.' +n +'.visible axes.visible')
         //d.object_ticklabel.fillStyle = this.model.get("style")[parent_data.name + 'axis.color']
     },
     _d3_remove_axis_tick: function(node, d, i) {
@@ -1018,19 +1028,24 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         //this.controls_device.update()
         this._update_requested = false
 
-        this.renderer.setClearColor(this.get_style_color('figure.facecolor'))
+        this.renderer.setClearColor(this.get_style_color('background-color'))
+        this.x_axis.visible = this.get_style('axes.x.visible axes.visible')
+        this.y_axis.visible = this.get_style('axes.y.visible axes.visible')
+        this.z_axis.visible = this.get_style('axes.z.visible axes.visible')
         this.axes_material.color = this.get_style_color('axes.color')
-        this.xaxes_material.color = this.get_style_color('xaxis.color')
-        this.yaxes_material.color = this.get_style_color('yaxis.color')
-        this.zaxes_material.color = this.get_style_color('zaxis.color')
+        this.xaxes_material.color = this.get_style_color('axes.x.color axes.color')
+        this.yaxes_material.color = this.get_style_color('axes.y.color axes.color')
+        this.zaxes_material.color = this.get_style_color('axes.z.color axes.color')
 
-        this.axes_data[0].fillStyle = this.model.get("style")['xaxis.color']
-        this.axes_data[1].fillStyle = this.model.get("style")['yaxis.color']
-        this.axes_data[2].fillStyle = this.model.get("style")['zaxis.color']
+        this.axes_data[0].fillStyle = this.get_style('axes.x.color axes.color')
+        this.axes_data[1].fillStyle = this.get_style('axes.y.color axes.color')
+        this.axes_data[2].fillStyle = this.get_style('axes.z.color axes.color')
 
         this.axes_data[0].label = this.model.get("xlabel")
         this.axes_data[1].label = this.model.get("ylabel")
         this.axes_data[2].label = this.model.get("zlabel")
+
+        this.wire_box.visible = this.get_style('box.visible')
 
         d3.select(this.el_axes).selectAll(".ipyvol-axis")
                 .data(this.axes_data)
@@ -1046,15 +1061,10 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
 
         this.last_tick_selection = d3.select(this.el_axes).selectAll(".ipyvol-axis").data(this.axes_data).selectAll(".ipyvol-tick").data(
             function(d, i, node) {
-                console.log(d, i, this)
-                //console.log(this, this.parentNode)
-                //var parent_data = d3.select(this).datum()
                 var child_data = d.ticks
-                //console.log("cached child data", d, child_data)
                 if(child_data) {
                     child_data = d.ticks = child_data.slice()
                     var ticks = d.scale.ticks(that.ticks)
-                    //console.log("new ticks", ticks)
                     while(child_data.length < ticks.length) // ticks may return a larger array, so grow child data
                         child_data.push({})
                     while(child_data.length > ticks.length) // ticks may return a smaller array, so pop child data
@@ -1064,12 +1074,9 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
                     });
                     return child_data
                 } else {
-                //child_data = parent_data
-                //console.log(parent_data)
                     var scale = d.scale;
                     var ticks = scale.ticks(that.ticks)
                     var child_data = _.map(ticks, function(value) { return {value: value}});
-                    //console.log("child data", child_data)
                     d.ticks = child_data;
                     return child_data;
                 }
@@ -1123,7 +1130,27 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         }
     },
     get_style_color: function(name) {
-        return new THREE.Color(this.model.get("style")[name])
+        style = this.get_style(name)
+        if(style) {
+            return new THREE.Color(style)
+        } else {
+            console.error("could not find color for", name)
+        }
+    },
+    get_style: function(name) {
+        var value = [null]
+        _.each(name.split(" "), function(property) {
+            var value_found = _.reduce(property.split("."), function(object, property) {
+                if(object != null && object[property] != undefined)
+                    return object[property]
+                else
+                    return null
+            }, this.model.get("style"), this)
+            if(value_found != null && value[0] == null)
+                value[0] = value_found
+        }, this)
+
+        return value[0]
     },
     _render_eye: function(camera) {
         if(this.model.get("data")) {
@@ -1165,8 +1192,8 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             this.scene_opaque.overrideMaterial = null;
             this.renderer.autoClear = false;
             this.renderer.clearTarget(this.volr_texture, true, true, true)
-            this.renderer.render(this.scene_opaque, camera, this.volr_texture);
             this.renderer.render(this.scene_scatter, camera, this.volr_texture);
+            this.renderer.render(this.scene_opaque, camera, this.volr_texture);
             this.renderer.autoClear = true;
 
             // last pass, render the volume
@@ -1190,8 +1217,8 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             }, this)
             this.renderer.autoClear = false;
             this.renderer.clear()
-            this.renderer.render(this.scene_opaque, camera);
             this.renderer.render(this.scene_scatter, camera);
+            this.renderer.render(this.scene_opaque, camera);
             this.renderer.autoClear = true;
          }
 
