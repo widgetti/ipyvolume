@@ -284,12 +284,10 @@ var ScatterView = widgets.WidgetView.extend( {
             if (key_animation == "sequence_index"){
               pindex = this.model.previous("sequence_index")
 
-
               if (this.model.get("x") && typeof this.model.get("x")[0][0] != "undefined" ) {
                 this.previous_values["x"] = this.model.get("x")[pindex]
                 this.attributes_changed["x"] =["x"]
               }
-
               if (this.model.get("y") && typeof this.model.get("y")[0][0] != "undefined" ) {
                 this.previous_values["y"] = this.model.get("y")[pindex]
                 this.attributes_changed["y"] =["y"]
@@ -310,6 +308,7 @@ var ScatterView = widgets.WidgetView.extend( {
                 this.previous_values["vz"] = this.model.get("vz")[pindex]
                 this.attributes_changed["vz"] =["vz"]
               }
+
             }
 	    else if(key_animation == "geo") {
                 // direct change, no animation
@@ -490,53 +489,72 @@ var ScatterView = widgets.WidgetView.extend( {
             return [color.r, color.g, color.b]
         }
 
-        var multi_colors = this.model.get("multi_colors")
-        //console.log("multi",multi_colors)
-        if( multi_colors){
+        function get_value_index_color(variable,index,max_count){
+            //Return a two D array (max_count,3)
+          var tmp_color = new Array(max_count);
+          console.log(variable)
+          console.log(typeof variable)
 
-          if( (typeof multi_colors[0][0] != "undefined") && (typeof multi_colors[0] === 'string')){
-            //1D
-            console.log("1D color")
+         if ( typeof variable == "string") {
+           //OD
+            console.log("0D")
+            color =  to_rgb(variable)
+            console.log(color)
+            for(var i = 0; i < max_count; i++) {
+              tmp_color[i] = color
+            }
           }
+
           else {
-            //2D + index
-            console.log("2D color")
-            multi_colors = multi_colors[index]
-          }
-
-          for(var i = 0; i < max_count; i++) {
-              var cur_color = to_rgb(multi_colors[i]);
-              if(selected.indexOf(i) != -1)
-                  cur_color = color_selected
-                colors.setXYZ(i, cur_color[0], cur_color[1], cur_color[2]);
+            if ( typeof variable[0] == "string") {
+              // if one D
+              to_convert = variable
+              console.log("1D")
+            }
+            else if (typeof index != "undefined"  && typeof variable[0][0] == "string"){
+              //Two D
+              console.log("2D")
+              index1 = Math.min(index,variable.length - 1);
+              to_convert = variable[index1]
             }
 
 
+            for(var i = 0; i < max_count; i++) {
+              tmp_color[i] = to_rgb(to_convert[i])
+            }
+          }
+
+          return tmp_color
         }
-        else {
 
-          var color = to_rgb(this.model.get("color"))
-          var color_previous = "color" in this.previous_values ? to_rgb(this.previous_values["color"]) : color;
-          if(!color_previous)
-              color_previous = color;
 
-          var color_selected = to_rgb(this.model.get("color_selected"))
-          var color_selected_previous = "color_selected" in this.previous_values ? to_rgb(this.previous_values["color_selected"]) : color_selected;
-          if(!color_selected_previous)
-              color_selected_previous = color_selected;
+        var color = get_value_index_color(this.model.get("color"),index,max_count)
 
-    	    for(var i = 0; i < max_count; i++) {
-    	        var cur_color = color;
-    	        if(selected.indexOf(i) != -1)
-    	            cur_color = color_selected
-       	        colors.setXYZ(i, cur_color[0], cur_color[1], cur_color[2]);
+        var color_previous = "color" in this.previous_values ? get_value_index_color(this.previous_values["color"],this.previous_values["index"],max_count) : color;
+        if(!color_previous)
+            color_previous = color;
+        console.log("color",color)
+        console.log("color_previous",color_previous)
 
-    	        var cur_color_previous = color_previous;
-    	        if(selected_previous.indexOf(i) != -1)
-    	            cur_color_previous = color_selected_previous
-       	        colors_previous.setXYZ(i, cur_color_previous[0], cur_color_previous[1], cur_color_previous[2]);
-    	    }
-        }
+        var color_selected = to_rgb(this.model.get("color_selected"))
+        var color_selected_previous = "color_selected" in this.previous_values ? to_rgb(this.previous_values["color_selected"]) : color_selected;
+        if(!color_selected_previous)
+            color_selected_previous = color_selected;
+
+  	    for(var i = 0; i < max_count; i++) {
+  	        var cur_color = color[i];
+
+  	        if(selected.indexOf(i) != -1)
+  	            cur_color = color_selected
+
+     	        colors.setXYZ(i, cur_color[0], cur_color[1], cur_color[2]);
+
+  	        var cur_color_previous = color_previous[i];
+  	        if(selected_previous.indexOf(i) != -1)
+  	            cur_color_previous = color_selected_previous
+     	        colors_previous.setXYZ(i, cur_color_previous[0], cur_color_previous[1], cur_color_previous[2]);
+  	    }
+
 
         instanced_geo.addAttribute( 'color', colors );
         instanced_geo.addAttribute( 'color_previous', colors_previous );
