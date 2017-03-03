@@ -1,0 +1,78 @@
+{
+  "demo": {
+    "background-color": "white",
+    "box": {
+      "color": "pink",
+      "visible": true
+    },
+    "axes": {
+      "z": {
+        "color": "#00f",
+        "ticklabel": {
+          "color": "#0f0"
+        },
+        "label": {
+          "color": "#f00"
+        }
+      },
+      "ticklabel": {
+        "color": "black"
+      },
+      "label": {
+        "color": "black"
+      },
+      "x": {
+        "color": "#f00",
+        "ticklabel": {
+          "color": "#00f"
+        },
+        "label": {
+          "color": "#0f0"
+        }
+      },
+      "y": {
+        "color": "#0f0",
+        "ticklabel": {
+          "color": "#f00"
+        },
+        "label": {
+          "color": "#00f"
+        }
+      },
+      "color": "black",
+      "visible": true
+    }
+  },
+  "dark": {
+    "background-color": "black",
+    "box": {
+      "visible": true
+    },
+    "axes": {
+      "color": "white",
+      "ticklabel": {
+        "color": "white"
+      },
+      "visible": true,
+      "label": {
+        "color": "white"
+      }
+    }
+  },
+  "light": {
+    "background-color": "white",
+    "box": {
+      "visible": true
+    },
+    "axes": {
+      "color": "black",
+      "ticklabel": {
+        "color": "black"
+      },
+      "visible": true,
+      "label": {
+        "color": "black"
+      }
+    }
+  }
+}

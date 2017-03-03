@@ -16,10 +16,15 @@ Possible properies
       * color
     * ticklabel
       * color
+
+Run:
+python -m ipyvolume.style
+to update the json style (needed for the js side)
 """
 from . import utils
 import copy
 
+styles = {}
 _defaults = {
     'axes': {
         'visible': True,
@@ -38,6 +43,7 @@ _defaults = {
 def create(name, properties):
     style = copy.deepcopy(_defaults)
     utils.dict_deep_update(style, properties)
+    styles[name] = style
     return style
 
 default = light = create("light", \
@@ -112,3 +118,17 @@ minimal = {
             'color': 'black'
         }
 }
+
+if __name__ == "__main__":
+    import os
+    source = __file__
+    dest = os.path.join(os.path.dirname(source), "../js/data/style.json")
+    print(source, dest)
+    need_update = (not os.path.exists(dest)) or (os.path.getmtime(source) > os.path.getmtime(dest))
+    if need_update:
+        import json
+        print(styles)
+        with open(dest, "w") as f:
+            json.dump(styles, f, indent=2)
+        print("wrote json")
+

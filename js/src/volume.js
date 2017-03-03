@@ -7,6 +7,7 @@ var semver_range = `~${require('../package.json').version}`
 
 var axis_names = ['x', 'y', 'z']
 
+var styles = require('../data/style.json')
 //
 window.THREE = THREE;
 //window.THREEx = {};
@@ -1341,6 +1342,7 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             ylim: [0., 1.],
             zlim: [0., 1.],
             animation: 1000,
+            style: styles['light']
         })
     }
 }, {
