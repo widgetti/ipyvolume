@@ -1,5 +1,6 @@
 from ._version import version_info, __version__
 
+from . import style
 from .volume import *
 from .transferfunction import *
 from .examples import  *
