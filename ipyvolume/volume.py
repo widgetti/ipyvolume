@@ -9,6 +9,7 @@ import numpy as np
 from .serialize import array_cube_png_serialization, array_serialization
 from .transferfunction import *
 import warnings
+import ipyvolume
 
 logger = logging.getLogger("ipyvolume")
 
@@ -34,12 +35,7 @@ class Scatter(widgets.DOMWidget):
     color_selected = traitlets.Unicode(default_value="white").tag(sync=True)
     geo = traitlets.Unicode('diamond').tag(sync=True)
 
-default_style = dict()
-default_style["figure.facecolor"] = "black"
-default_style["xaxis.color"] = "red"
-default_style["yaxis.color"] = "green"
-default_style["zaxis.color"] = "blue"
-default_style["axes.color"] = "grey"
+
 
 @widgets.register('ipyvolume.VolumeRendererThree')
 class VolumeRendererThree(widgets.DOMWidget):
@@ -80,7 +76,7 @@ class VolumeRendererThree(widgets.DOMWidget):
     ylabel = traitlets.Unicode("y").tag(sync=True)
     zlabel = traitlets.Unicode("z").tag(sync=True)
 
-    style = traitlets.Dict(default_value=default_style).tag(sync=True)
+    style = traitlets.Dict(default_value=ipyvolume.style.default).tag(sync=True)
     #xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #zlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
