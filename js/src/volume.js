@@ -309,11 +309,11 @@ var ScatterView = widgets.WidgetView.extend( {
                 this.attributes_changed["vz"] =["vz"]
               }
               if (this.model.get("color") ) {
-                color = this.model.get("color")
-                if (!(typeof color == "string" || typeof color[0] == "string")){
-                //check for 2d
-                    this.previous_values["color"] = this.model.get("color")[Math.min(pindex,color.length-1)]
-                    this.attributes_changed["color"] =["color"]
+                  color = this.model.get("color")
+                  if (!(typeof color == "string" || typeof color[0] == "string")){
+                  //check for 2d
+                      this.previous_values["color"] = this.model.get("color")[Math.min(pindex,color.length-1)]
+                      this.attributes_changed["color"] =["color"]
                   }
               }
 
@@ -500,38 +500,35 @@ var ScatterView = widgets.WidgetView.extend( {
 
         function get_value_index_color(variable,index,max_count){
             //Return a two D array (max_count,3)
-
-
-         if ( typeof variable == "string") {
-           //OD
-            color =  to_rgb(variable)
-            return color
-          }
-
-          else {
-            var tmp_color = new Array(max_count);
-            if ( typeof variable[0] == "string") {
-              // 1 D
-              to_convert = variable
+            if ( typeof variable == "string") {
+            //OD
+                color =  to_rgb(variable)
+                return color
             }
-            else if (typeof index != "undefined"  && typeof variable[0][0] == "string"){
-              //Two D
-              index1 = Math.min(index,variable.length - 1);
-              to_convert = variable[index1]
-            }
+            else {
+                var tmp_color = new Array(max_count);
+                if ( typeof variable[0] == "string") {
+                    // 1 D
+                    to_convert = variable
+                }
+                else if (typeof index != "undefined"  && typeof variable[0][0] == "string"){
+                    //Two D
+                    index1 = Math.min(index,variable.length - 1);
+                    to_convert = variable[index1]
+                }
 
-            for(var i = 0; i < max_count; i++) {
-              tmp_color[i] = to_rgb(to_convert[i])
+                for(var i = 0; i < max_count; i++) {
+                    tmp_color[i] = to_rgb(to_convert[i])
+                }
+                return tmp_color
             }
-            return tmp_color
-          }
         }
 
 
         var color = get_value_index_color(this.model.get("color"),index,max_count)
         var color_d = 0;  //Dimension of color
         if (typeof color[0][0] != "undefined"){
-          color_d = 1
+            color_d = 1
         }
 
         var color_previous = "color" in this.previous_values ? get_value_index_color(this.previous_values["color"],this.previous_values["index"],max_count) : color;
@@ -539,7 +536,7 @@ var ScatterView = widgets.WidgetView.extend( {
             color_previous = color;
         var color_previous_d = 0;  //Dimension of color_previous
         if (typeof color_previous[0][0] != "undefined"){
-          color_previous_d = 1
+            color_previous_d = 1
         }
 
         var color_selected = to_rgb(this.model.get("color_selected"))
@@ -549,26 +546,26 @@ var ScatterView = widgets.WidgetView.extend( {
 
   	    for(var i = 0; i < max_count; i++) {
             if (color_d == 0){
-              var cur_color = color;
+                var cur_color = color;
             }
             else{
-  	           var cur_color = color[i];
+  	            var cur_color = color[i];
             }
 
   	        if(selected.indexOf(i) != -1)
   	            cur_color = color_selected
 
-     	        colors.setXYZ(i, cur_color[0], cur_color[1], cur_color[2]);
+     	      colors.setXYZ(i, cur_color[0], cur_color[1], cur_color[2]);
             if (color_previous_d == 0){
-  	           var cur_color_previous = color_previous;
+  	            var cur_color_previous = color_previous;
             }
             else{
-               var cur_color_previous = color_previous[i];
+                var cur_color_previous = color_previous[i];
             }
 
   	        if(selected_previous.indexOf(i) != -1)
   	            cur_color_previous = color_selected_previous
-     	        colors_previous.setXYZ(i, cur_color_previous[0], cur_color_previous[1], cur_color_previous[2]);
+     	      colors_previous.setXYZ(i, cur_color_previous[0], cur_color_previous[1], cur_color_previous[2]);
   	    }
 
 
