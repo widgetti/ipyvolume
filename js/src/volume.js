@@ -491,15 +491,11 @@ var ScatterView = widgets.WidgetView.extend( {
 
         function get_value_index_color(variable,index,max_count){
             //Return a two D array (max_count,3)
-          var tmp_color = new Array(max_count);
-          console.log(variable)
-          console.log(typeof variable)
+         var tmp_color = new Array(max_count);
 
          if ( typeof variable == "string") {
            //OD
-            console.log("0D")
             color =  to_rgb(variable)
-            console.log(color)
             for(var i = 0; i < max_count; i++) {
               tmp_color[i] = color
             }
@@ -507,17 +503,14 @@ var ScatterView = widgets.WidgetView.extend( {
 
           else {
             if ( typeof variable[0] == "string") {
-              // if one D
+              // 1 D
               to_convert = variable
-              console.log("1D")
             }
             else if (typeof index != "undefined"  && typeof variable[0][0] == "string"){
               //Two D
-              console.log("2D")
               index1 = Math.min(index,variable.length - 1);
               to_convert = variable[index1]
             }
-
 
             for(var i = 0; i < max_count; i++) {
               tmp_color[i] = to_rgb(to_convert[i])
