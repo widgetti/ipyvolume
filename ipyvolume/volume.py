@@ -61,6 +61,9 @@ class VolumeRendererThree(widgets.DOMWidget):
     specular_coefficient = traitlets.Float(0.5).tag(sync=True)
     specular_exponent = traitlets.Float(5).tag(sync=True)
     stereo = traitlets.Bool(False).tag(sync=True)
+    screen_capture_enabled = traitlets.Bool(False).tag(sync=True)
+    screen_capture_mime_type = traitlets.Unicode(default_value='image/png').tag(sync=True)
+    screen_capture_data = traitlets.Unicode(read_only=True).tag(sync=True)
     fullscreen = traitlets.Bool(False).tag(sync=True)
 
     width = traitlets.CInt(500).tag(sync=True)
@@ -77,6 +80,7 @@ class VolumeRendererThree(widgets.DOMWidget):
     zlabel = traitlets.Unicode("z").tag(sync=True)
 
     style = traitlets.Dict(default_value=ipyvolume.style.default).tag(sync=True)
+
     #xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #zlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)

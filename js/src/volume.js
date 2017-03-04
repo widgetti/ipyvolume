@@ -741,7 +741,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         //*
         this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
 
-        this.model.on('change:xlabel change:ylabel change:zlabel', this.update, this);
+        this.model.on('change:xlabel change:ylabel change:zlabel change:screen_capture_enabled', this.update, this);
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:downscale', this.update_size, this);
@@ -1125,6 +1125,11 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             this.renderer.setScissorTest( false );
             this.renderer.setViewport( 0, 0, size.width, size.height );
         }
+        if(this.model.get('screen_capture_enabled')) {
+            var data = this.renderer.domElement.toDataURL(this.model.get('screen_capture_mime_type'));
+            this.model.set("screen_capture_data", data)
+            this.model.save()
+        }
         this.transitions = transitions_todo;
         if(this.transitions.length > 0) {
             this.update()
@@ -1332,6 +1337,9 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             specular_coefficient: 0.5,
             specular_exponent: 5,
             stereo: false,
+            screen_capture_enabled: false,
+            screen_capture_mime_type: 'image/png',
+            screen_capture_data: null,
             fullscreen: false,
             width: 500,
             height: 400,

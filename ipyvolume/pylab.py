@@ -137,7 +137,7 @@ def scatter(x, y, z, color=default_color, size=default_size, size_selected=defau
 def quiver(x, y, z, u, v, w, size=default_size*10, size_selected=default_size_selected*10, color=default_color, color_selected=default_color_selected, marker="arrow", **kwargs):
 	"""Create a quiver plot, which is like a scatter plot but with arrows pointing in the direction given by u, v and w
 
-	:param x: {x}, for convenience the array is flattened if not 1d.
+	:param x: {x}
 	:param y:
 	:param z:
 	:param u: {u}
@@ -282,6 +282,25 @@ def save(filename, copy_js=True):
 		dst = os.path.join(dir_name_dst, "ipyvolume.js")
 		src = os.path.join(dir_name_src, "index.js")
 		shutil.copy(src, dst)
+
+def savefig(filename):
+    """Save the current figure to an image (png or jpeg) to a file"""
+    # TODO: might be useful to save to a file object
+    __, ext = os.path.splitext(filename)
+    fig = gcf()
+    fig.screen_capture_mimetype = "image/" + ext[1:] # skip .
+    previous_value = fig.screen_capture_enabled
+    try:
+        fig.screen_capture_enabled = True # this will trigger a redraw
+        data = fig.screen_capture_data
+        # skip a header like 'data:image/png;base64,'
+        data = data[data.find(",")+1:]
+        import base64
+        with open(filename, "wb") as f:
+            f.write(base64.b64decode(data))
+    finally:
+        fig.screen_capture_enabled = previous_value
+    return filename
 
 def xlabel(label):
 	"""Set the labels for the x-axis"""
