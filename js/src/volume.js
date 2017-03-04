@@ -13,6 +13,7 @@ window.THREE = THREE;
 //window.THREEx = {};
 var cat_data = require("../data/cat.json")
 require("./three/OrbitControls.js")
+require("./three/TrackballControls.js")
 require("./three/DeviceOrientationControls.js")
 require("./three/StereoEffect.js")
 require("./three/THREEx.FullScreen.js")
@@ -690,8 +691,12 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.screen_camera = new THREE.OrthographicCamera( 1 / - 2, 1 / 2, 1 / 2, 1 / - 2, -10000, 10000 );
         this.screen_camera.position.z = 10;
 
-        this.controls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
-        this.controls.enablePan = false;
+        this.control_trackball = new THREE.TrackballControls( this.camera, this.renderer.domElement );
+        this.control_orbit = new THREE.OrbitControls( this.camera, this.renderer.domElement );
+        this.control_trackball.noPan = true;
+        this.control_orbit.enablePan = false;
+        this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
+        this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
 
         //this.controls_device = controls = new THREE.DeviceOrientationControls( this.box_mesh );
 		window.addEventListener( 'deviceorientation', _.bind(this.on_orientationchange, this), false );
@@ -741,7 +746,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         //*
         this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
 
-        this.model.on('change:xlabel change:ylabel change:zlabel change:screen_capture_enabled', this.update, this);
+        this.model.on('change:xlabel change:ylabel change:zlabel change:screen_capture_enabled change:camera_control', this.update, this);
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:downscale', this.update_size, this);
@@ -761,7 +766,8 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
 
         this.model.on('change:tf', this.tf_set, this)
 
-        this.controls.addEventListener( 'change', _.bind(this.update, this) );
+        this.control_trackball.addEventListener( 'change', _.bind(this.update, this) );
+        this.control_orbit.addEventListener( 'change', _.bind(this.update, this) );
 
         this.renderer.domElement.addEventListener( 'resize', _.bind(this.on_canvas_resize, this), false );
         THREEx.FullScreen.addFullScreenChangeListener(_.bind(this.on_fullscreen_change, this))
@@ -1027,6 +1033,9 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
     },
     _real_update: function() {
         //this.controls_device.update()
+        this.control_trackball.handleResize()
+        this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
+        this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
         this._update_requested = false
 
         this.renderer.setClearColor(this.get_style_color('background-color'))
@@ -1341,6 +1350,7 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             screen_capture_mime_type: 'image/png',
             screen_capture_data: null,
             fullscreen: false,
+            camera_control: 'trackball',
             width: 500,
             height: 400,
             downscale: 1,

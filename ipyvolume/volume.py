@@ -66,6 +66,8 @@ class VolumeRendererThree(widgets.DOMWidget):
     screen_capture_data = traitlets.Unicode(read_only=True).tag(sync=True)
     fullscreen = traitlets.Bool(False).tag(sync=True)
 
+    camera_control = traitlets.Unicode(default_value='trackball').tag(sync=True)
+
     width = traitlets.CInt(500).tag(sync=True)
     height = traitlets.CInt(400).tag(sync=True)
     downscale = traitlets.CInt(1).tag(sync=True)
