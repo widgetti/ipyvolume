@@ -3,7 +3,7 @@ define(["jupyter-js-widgets", "underscore", "three", "three-text2d", "gl-matrix"
 
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
 // so that N.M.x is allowed (we don't care about x, but we assume 0.2.x is not compatible with 0.3.x
-var semver_range = `~${require('../package.json').version}`
+var semver_range = '~' + require('../package.json').version;
 
 var axis_names = ['x', 'y', 'z']
 
