@@ -35,6 +35,41 @@ function to_rgb(color) {
     return [color.r, color.g, color.b]
 }
 
+function get_array_dimension(array) {
+    var dimension = 0;
+    while(typeof array[0] != "undefined") {
+        array = array[0];
+        dimension += 1;
+    }
+    return dimension
+}
+
+function get_value_size(variable, sequence_index, default_function) {
+    if(typeof variable == "undefined") {
+        return default_function
+    } else {
+        var dimension = get_array_dimension(variable)
+        if(dimension == 0) {
+            return function(glyph_index) {
+                return variable
+            }
+        }
+        else if(dimension == 1) {
+            return function(glyph_index) {
+                return variable[glyph_index]
+            }
+        }
+        else if(dimension == 2) {
+            return function(glyph_index) {
+                return variable[sequence_index][glyph_index]
+            }
+        } else {
+            console.error("unknown array for size:", variable, 'with dimension', dimension)
+        }
+    }
+}
+
+
 function get_value_index_color(variable, index, max_count){
     //Return a function that take the glyph_index as an argument and return the color
     // It can deals with these 6 cases: which are threated in the same order
@@ -254,7 +289,6 @@ var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
 
 });
 
-
 var ScatterView = widgets.WidgetView.extend( {
     render: function() {
         console.log("created scatter view, parent is")
@@ -268,7 +302,7 @@ var ScatterView = widgets.WidgetView.extend( {
         this.geo_diamond = new THREE.SphereGeometry(1, 2, 2)
         this.geo_sphere = new THREE.SphereGeometry(1, 12, 12)
         this.geo_box = new THREE.BoxGeometry(1, 1, 1)
-        this.geo_cat = new THREE.Geometry(1, 1, 1)
+        this.geo_cat = new THREE.Geometry()
         for(var i = 0; i < cat_data.vertices.length; i++) {
             var v = new THREE.Vector3( cat_data.vertices[i][1], cat_data.vertices[i][2], cat_data.vertices[i][0]);
             this.geo_cat.vertices.push(v)
@@ -378,6 +412,10 @@ var ScatterView = widgets.WidgetView.extend( {
                 this.previous_values["vz"] = this.model.get("vz")[pindex]
                 this.attributes_changed["vz"] =["vz"]
               }
+              if (this.model.get("size") && typeof this.model.get("size")[0][0] != "undefined" ) {
+                this.previous_values["size"] = this.model.get("size")[pindex]
+                this.attributes_changed["size"] =["size"]
+              }
 
               if (this.model.get("color") ) {
                   color = this.model.get("color")
@@ -433,7 +471,7 @@ var ScatterView = widgets.WidgetView.extend( {
 
         var index = this.model.get("sequence_index");
 
-        function get_value_index(variable,index){
+        function get_value_index(variable, index){
             if ( !variable){
               // if undefined
               return variable
@@ -537,21 +575,18 @@ var ScatterView = widgets.WidgetView.extend( {
 
         var scales = new THREE.InstancedBufferAttribute(new Float32Array( max_count ), 1, 1);
         var scales_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count ), 1, 1);
-        var size = this.model.get("size")
-        var size_selected = this.model.get("size_selected")
-        var size_previous = "size" in this.previous_values ? this.previous_values["size"] : size;
-        var size_selected_previous = "size_selected" in this.previous_values ? this.previous_values["size_selected"] : size_selected;
-        if(size_previous  == undefined)
-            size_previous  = size;
-        if(size_selected_previous  == undefined)
-            size_selected_previous  = size_selected;
+        var size = get_value_size(this.model.get("size"), index)
+        var size_previous = get_value_size(this.previous_values["size"], index, size)
+        var size_selected = get_value_size(this.model.get("size_selected"), index)
+        var size_selected_previous = get_value_size(this.previous_values["size_selected"], index, size_selected);
+
 	    for(var i = 0; i < max_count; i++) {
-	        var cur_size = size;
-	        var cur_size_previous = size_previous;
+	        var cur_size = size(i);
+	        var cur_size_previous = size_previous(i);
 	        if(selected.indexOf(i) != -1)
-	            cur_size = size_selected
+	            cur_size = size_selected(i)
 	        if(selected_previous.indexOf(i) != -1)
-	            cur_size_previous = size_selected_previous
+	            cur_size_previous = size_selected_previous(i)
 	        if(i < count)
     	        scales.setX(i, cur_size/100.); // sizes are in percentages, but in viewport it's normalized
     	    else
