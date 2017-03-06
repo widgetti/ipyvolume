@@ -308,12 +308,21 @@ var ScatterView = widgets.WidgetView.extend( {
                 this.previous_values["vz"] = this.model.get("vz")[pindex]
                 this.attributes_changed["vz"] =["vz"]
               }
+
               if (this.model.get("color") ) {
                   color = this.model.get("color")
-                  if (!(typeof color == "string" || typeof color[0] == "string")){
-                  //check for 2d
-                      this.previous_values["color"] = this.model.get("color")[Math.min(pindex,color.length-1)]
-                      this.attributes_changed["color"] =["color"]
+                  if ( typeof color == "string" || typeof color[0] == "string" || typeof color[0][0] == "string") {
+                      if (!(typeof color == "string" || typeof color[0] == "string")){
+                      //check for 2d
+                          this.previous_values["color"] = this.model.get("color")[Math.min(pindex,color.length-1)]
+                          this.attributes_changed["color"] =["color"]
+                      }
+                  }
+                  else {
+                      if ( !(_.isNumber(color[0]) || _.isNumber(color[0][0]))){
+                        this.previous_values["color"] = this.model.get("color")[Math.min(pindex,color.length-1)]
+                        this.attributes_changed["color"] =["color"]
+                      }
                   }
               }
 
@@ -500,27 +509,49 @@ var ScatterView = widgets.WidgetView.extend( {
 
         function get_value_index_color(variable,index,max_count){
             //Return a two D array (max_count,3)
-            if ( typeof variable == "string") {
-            //OD
-                color =  to_rgb(variable)
-                return color
+            //First find type and Dimension
+
+            var vartype = 0;  //1 for string
+            if ( typeof variable == "string" || typeof variable[0] == "string" || typeof variable[0][0] == "string") {
+                vartype = 1;
+            }
+
+            if (vartype == 1) {
+                if ( typeof variable == "string") {
+                //OD
+                    color =  to_rgb(variable)
+                    return color
+                }
+                else {
+                    var tmp_color = new Array(max_count);
+                    if ( typeof variable[0] == "string") {
+                        // 1 D
+                        to_convert = variable
+                    }
+                    else if (typeof index != "undefined"  && typeof variable[0][0] == "string"){
+                        //Two D
+                        index1 = Math.min(index,variable.length - 1);
+                        to_convert = variable[index1]
+                    }
+
+                    for(var i = 0; i < max_count; i++) {
+                        tmp_color[i] = to_rgb(to_convert[i])
+                    }
+                    return tmp_color
+                }
             }
             else {
-                var tmp_color = new Array(max_count);
-                if ( typeof variable[0] == "string") {
-                    // 1 D
-                    to_convert = variable
+                // if numeric we only need to change the value if there is and index
+
+                if (_.isNumber(variable[0]) || _.isNumber(variable[0][0]) ){
+                    return variable
                 }
-                else if (typeof index != "undefined"  && typeof variable[0][0] == "string"){
-                    //Two D
-                    index1 = Math.min(index,variable.length - 1);
-                    to_convert = variable[index1]
+                if (typeof index != "undefined"  &&  _.isNumber(variable[0][0][0])){
+                    //console.log(variable[ind])
+                    return variable[Math.min(index,variable.length -1)]
                 }
 
-                for(var i = 0; i < max_count; i++) {
-                    tmp_color[i] = to_rgb(to_convert[i])
-                }
-                return tmp_color
+                return variable
             }
         }
 
