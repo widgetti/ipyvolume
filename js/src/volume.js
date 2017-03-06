@@ -51,7 +51,6 @@ function get_value_index_color(variable, index, max_count){
     }
     else if (typeof variable[0] == "string"){
         //1D string
-        var tmp_color = new Array(max_count);
         return function(glyph_index){
             return to_rgb(variable[glyph_index])
         }
