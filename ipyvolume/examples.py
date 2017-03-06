@@ -7,7 +7,7 @@ except:
 	pass # it's ok, it's not crucial
 __all__ = ["example_ylm"]
 
-def xyz(shape=128, limits=[-3, 3], spherical=False, sparse=True):
+def xyz(shape=128, limits=[-3, 3], spherical=False, sparse=True, centers=False):
 	dim = 3
 	try:
 		shape[0]
@@ -17,7 +17,11 @@ def xyz(shape=128, limits=[-3, 3], spherical=False, sparse=True):
 		limits[0][0]
 	except:
 		limits = [limits] * dim
-	v = [slice(vmin, vmax+(vmax-vmin)/float(N)/2, (vmax-vmin)/float(N-1)) for (vmin, vmax), N in zip(limits, shape)]
+	if centers:
+		print([(   vmin+(vmax-vmin)/float(N)/2, vmax-(vmax-vmin)/float(N)/4, (vmax-vmin)/float(N)) for (vmin, vmax), N in zip(limits, shape)])
+		v = [slice(vmin+(vmax-vmin)/float(N)/2, vmax-(vmax-vmin)/float(N)/4, (vmax-vmin)/float(N)) for (vmin, vmax), N in zip(limits, shape)]
+	else:
+		v = [slice(vmin, vmax+(vmax-vmin)/float(N)/2, (vmax-vmin)/float(N-1)) for (vmin, vmax), N in zip(limits, shape)]
 	if sparse:
 		x, y, z = np.ogrid.__getitem__(v)
 	else:
