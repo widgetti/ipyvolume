@@ -412,7 +412,7 @@ var ScatterView = widgets.WidgetView.extend( {
                 this.previous_values["vz"] = this.model.get("vz")[pindex]
                 this.attributes_changed["vz"] =["vz"]
               }
-              if (this.model.get("size") && typeof this.model.get("size")[0][0] != "undefined" ) {
+              if (this.model.get("size") && typeof this.model.get("size")[0] != "undefined" && typeof this.model.get("size")[0][0] != "undefined" ) {
                 this.previous_values["size"] = this.model.get("size")[pindex]
                 this.attributes_changed["size"] =["size"]
               }
