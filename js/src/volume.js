@@ -520,11 +520,8 @@ var ScatterView = widgets.WidgetView.extend( {
 
         _.mapObject(this.attributes_changed, function(changed_properties, key){
             var property = "animation_time_" + key
-            console.log("transition for " +property + " / " +changed_properties)
             var done = function done() {
-                console.log("transition done for " +property + " / " +changed_properties)
                 _.each(changed_properties, function clear(prop) {
-                    console.log("remove previous value " +prop)
                     delete this.previous_values[prop]
                 }, this)
             }
@@ -784,7 +781,6 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         THREEx.FullScreen.addFullScreenChangeListener(_.bind(this.on_fullscreen_change, this))
         this.update()
 
-        console.log(this.model.get("scatters"))
         this.scatters = [] /*new widgets.ViewList(_.bind(function add(model) {
                 console.log("adding")
                 console.log(model)
@@ -849,9 +845,6 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         var that = this;
         var object = obj;
         var property = prop;
-        console.log("transition")
-        console.log(obj)
-        console.log(property)
         var Transition = function() {
             //this.objects = []
             this.time_start = (new Date()).getTime();
@@ -874,7 +867,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
                 var dt = ((new Date()).getTime() - this.time_start)/this.duration;
 
                 var u = Math.min(1, dt);
-                u = Math.pow(u, 0.5)
+                u = Math.pow(u, that.model.get("animation_exponent"))
                 object[property] = u;
                 if(dt >= 1 && !this.called_on_done) {
                     this.called_on_done = true
@@ -1074,7 +1067,6 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             this.renderer.render(this.screen_scene, this.screen_camera);
          } else {
             this.camera.updateMatrixWorld();
-            console.log(this.renderer.autoClearColor)
             _.each(this.scatter_views, function(scatter) {
                 scatter.mesh.material = scatter.mesh.material_normal
                 scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
@@ -1205,6 +1197,7 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             ylim: [0., 1.],
             zlim: [0., 1.],
             animation: 1000,
+            animation_exponent: 0.5,
         })
     }
 }, {
