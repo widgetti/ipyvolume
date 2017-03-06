@@ -45,7 +45,6 @@ function get_value_index_color(variable, index, max_count){
     if (typeof variable == "string") {
         //OD string
         color =  to_rgb(variable)
-        console.log("color",color)
         return function(glyph_index){
             return color
         }
