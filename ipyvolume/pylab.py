@@ -153,7 +153,7 @@ def quiver(x, y, z, u, v, w, size=default_size*10, size_selected=default_size_se
 	"""
 	fig = gcf()
 	_grow_limits(x, y, z)
-	scatter = volume.Scatter(x=x.flatten(), y=y.flatten(), z=z.flatten(), vx=u.flatten(), vy=v.flatten(), vz=w.flatten(),
+	scatter = volume.Scatter(x=x, y=y, z=z, vx=u, vy=v, vz=w,
 							 color=color, size=size, color_selected=color_selected, size_selected=size_selected,
 							 geo=marker, **kwargs)
 	fig.scatters = fig.scatters + [scatter]
