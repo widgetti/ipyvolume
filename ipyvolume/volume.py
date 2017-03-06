@@ -9,6 +9,7 @@ import numpy as np
 from .serialize import array_cube_png_serialization, array_serialization
 from .transferfunction import *
 import warnings
+import ipyvolume
 
 logger = logging.getLogger("ipyvolume")
 
@@ -34,12 +35,7 @@ class Scatter(widgets.DOMWidget):
     color_selected = traitlets.Unicode(default_value="white").tag(sync=True)
     geo = traitlets.Unicode('diamond').tag(sync=True)
 
-default_style = dict()
-default_style["figure.facecolor"] = "black"
-default_style["xaxis.color"] = "red"
-default_style["yaxis.color"] = "green"
-default_style["zaxis.color"] = "blue"
-default_style["axes.color"] = "grey"
+
 
 @widgets.register('ipyvolume.VolumeRendererThree')
 class VolumeRendererThree(widgets.DOMWidget):
@@ -66,7 +62,12 @@ class VolumeRendererThree(widgets.DOMWidget):
     specular_coefficient = traitlets.Float(0.5).tag(sync=True)
     specular_exponent = traitlets.Float(5).tag(sync=True)
     stereo = traitlets.Bool(False).tag(sync=True)
+    screen_capture_enabled = traitlets.Bool(False).tag(sync=True)
+    screen_capture_mime_type = traitlets.Unicode(default_value='image/png').tag(sync=True)
+    screen_capture_data = traitlets.Unicode(read_only=True).tag(sync=True)
     fullscreen = traitlets.Bool(False).tag(sync=True)
+
+    camera_control = traitlets.Unicode(default_value='trackball').tag(sync=True)
 
     width = traitlets.CInt(500).tag(sync=True)
     height = traitlets.CInt(400).tag(sync=True)
@@ -81,7 +82,8 @@ class VolumeRendererThree(widgets.DOMWidget):
     ylabel = traitlets.Unicode("y").tag(sync=True)
     zlabel = traitlets.Unicode("z").tag(sync=True)
 
-    style = traitlets.Dict(default_value=default_style).tag(sync=True)
+    style = traitlets.Dict(default_value=ipyvolume.style.default).tag(sync=True)
+
     #xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #zlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)

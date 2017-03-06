@@ -1,15 +1,19 @@
-define(["jupyter-js-widgets", "underscore", "three", "three-text2d", "gl-matrix"],
-        function(widgets, _, THREE, THREEtext2d, glm) {
+define(["jupyter-js-widgets", "underscore", "three", "three-text2d", "gl-matrix", "d3"] ,
+        function(widgets, _, THREE, THREEtext2d, glm, d3) {
 
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
 // so that N.M.x is allowed (we don't care about x, but we assume 0.2.x is not compatible with 0.3.x
-var semver_range = `~${require('../package.json').version}`
+var semver_range = '~' + require('../package.json').version;
 
+var axis_names = ['x', 'y', 'z']
+
+var styles = require('../data/style.json')
 //
 window.THREE = THREE;
 //window.THREEx = {};
 var cat_data = require("../data/cat.json")
 require("./three/OrbitControls.js")
+require("./three/TrackballControls.js")
 require("./three/DeviceOrientationControls.js")
 require("./three/StereoEffect.js")
 require("./three/THREEx.FullScreen.js")
@@ -534,6 +538,15 @@ var ScatterView = widgets.WidgetView.extend( {
 });
 
 
+// similar to _.bind, except it
+// puts this as first argument to f, followed be other arguments, and make context f's this
+function bind_d3(f, context) {
+    return function() {
+        var args  = [this].concat([].slice.call(arguments)) // convert argument to array
+        f.apply(context, args)
+    }
+}
+
 var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
     render: function() {
         this.transitions = []
@@ -541,8 +554,17 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.update_counter = 0
         var width = this.model.get("width");
         var height = this.model.get("height");
-        this.renderer = new THREE.WebGLRenderer();
+        this.renderer = new THREE.WebGLRenderer({antialias: true});
         this.el.appendChild(this.renderer.domElement);
+
+        // el_mirror is a 'mirror' dom tree that d3 needs
+        // we use it to attach axes and tickmarks to the dom
+        // which reflect the objects in the scene
+        this.el_mirror = document.createElement("div")
+        this.el.appendChild(this.el_mirror);
+        this.el_axes = document.createElement("div")
+        this.el_mirror.appendChild(this.el_axes);
+
         const VIEW_ANGLE = 45;
         const aspect = width / height;
         const NEAR = 0.1;
@@ -618,52 +640,14 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.camera.position.z = 2
 
 
-        this.axis_z = new THREE.Object3D()
-        this.axis_z.translateX(-0.5)
-        this.axis_z.translateY(-0.5)
-        this.axis_z.rotateY(-Math.PI/2)
-        this.axis_z.rotateX(-Math.PI/4)
+        // d3 data
+        this.axes_data = [
+                {name: 'x', label: 'x', object: null, object_label: null, translate: [ 0.0, -0.5, -0.5], rotate: [Math.PI/4, 0, 0], rotation_order: 'XYZ'},
+                {name: 'y', label: 'y', object: null, object_label: null, translate: [-0.5,  0.0, -0.5], rotate: [Math.PI*3/4, 0, Math.PI/2], rotation_order: 'ZXY'},
+                {name: 'z', label: 'z', object: null, object_label: null,translate: [-0.5, -0.5,  0.0], rotate: [-Math.PI/8, -Math.PI/2, 0], rotation_order: 'YZX'}
+            ]
 
-        this.axis_y = new THREE.Object3D()
-        this.axis_y.translateX(-0.5)
-        this.axis_y.translateZ(-0.5)
-        this.axis_y.rotateZ(Math.PI/2)
-        this.axis_y.rotateX(Math.PI*3/4)
-
-        this.axis_x = new THREE.Object3D()
-        this.axis_x.translateY(-0.5)
-        this.axis_x.translateZ(-0.5)
-        this.axis_x.rotateY(-Math.PI)
-        this.axis_x.rotateX(-Math.PI/4)
-
-
-
-        this.axes.add(this.axis_z)
-        this.axes.add(this.axis_y)
-        this.axes.add(this.axis_x)
-
-        var s = 0.01*0.4
-        this.axis_z_label = new THREEtext2d.SpriteText2D("z", { align: THREEtext2d.textAlign.center, font: '30px Arial', fillStyle: '#00FF00', antialias: true })
-        this.axis_z_label.material.transparent = true
-        this.axis_z_label.material.alphaTest = 0.01
-        this.axis_z_label.scale.set(s,s,s)
-        this.axis_z.add(this.axis_z_label)
-
-        this.axis_y_label = new THREEtext2d.SpriteText2D("y", { align: THREEtext2d.textAlign.center, font: '30px Arial', fillStyle: '#00FF00', antialias: true })
-        //this.axis_y_label.material.rotation = Math.PI/2
-        this.axis_y_label.material.transparent = true
-        this.axis_y_label.material.alphaTest = 0.05
-        this.axis_y_label.scale.set(s,s,s)
-        this.axis_y.add(this.axis_y_label)
-
-        this.axis_x_label = new THREEtext2d.SpriteText2D("x", { align: THREEtext2d.textAlign.center, font: '30px Arial', fillStyle: '#00FF00', antialias: true })
-        this.axis_x_label.material.transparent = true
-        this.axis_x_label.material.alphaTest = 0.1
-        this.axis_x_label.scale.set(s,s,s)
-        this.axis_x.add(this.axis_x_label)
-
-
-        // add to the scene
+        this.ticks = 5; //hardcoded for now
 
         this.scene = new THREE.Scene();
         //this.scene.add(this.camera);
@@ -704,8 +688,12 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.screen_camera = new THREE.OrthographicCamera( 1 / - 2, 1 / 2, 1 / 2, 1 / - 2, -10000, 10000 );
         this.screen_camera.position.z = 10;
 
-        this.controls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
-        this.controls.enablePan = false;
+        this.control_trackball = new THREE.TrackballControls( this.camera, this.renderer.domElement );
+        this.control_orbit = new THREE.OrbitControls( this.camera, this.renderer.domElement );
+        this.control_trackball.noPan = true;
+        this.control_orbit.enablePan = false;
+        this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
+        this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
 
         //this.controls_device = controls = new THREE.DeviceOrientationControls( this.box_mesh );
 		window.addEventListener( 'deviceorientation', _.bind(this.on_orientationchange, this), false );
@@ -755,7 +743,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         //*
         this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
 
-        this.model.on('change:xlabel change:ylabel change:zlabel', this.update, this);
+        this.model.on('change:xlabel change:ylabel change:zlabel change:screen_capture_enabled change:camera_control', this.update, this);
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:downscale', this.update_size, this);
@@ -775,7 +763,8 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
 
         this.model.on('change:tf', this.tf_set, this)
 
-        this.controls.addEventListener( 'change', _.bind(this.update, this) );
+        this.control_trackball.addEventListener( 'change', _.bind(this.update, this) );
+        this.control_orbit.addEventListener( 'change', _.bind(this.update, this) );
 
         this.renderer.domElement.addEventListener( 'resize', _.bind(this.on_canvas_resize, this), false );
         THREEx.FullScreen.addFullScreenChangeListener(_.bind(this.on_fullscreen_change, this))
@@ -824,6 +813,91 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         window.last_volume = this;
         //navigator.wakeLock.request("display")
         return
+    },
+    _d3_add_axis: function(node, d, i) {
+        //console.log("add axis", d, i)
+        var axis = new THREE.Object3D()
+        axis.translateX(d.translate[0])
+        axis.translateY(d.translate[1])
+        axis.translateZ(d.translate[2])
+        d3.select(node).attr("translate-x", d.translate[0])
+        d3.select(node).attr("translate-y", d.translate[1])
+        d3.select(node).attr("translate-z", d.translate[2])
+        //this.axis_x.rotateY(Math.PI/2)
+        axis.rotation.reorder(d.rotation_order)
+        axis.rotation.x = d.rotate[0]
+        axis.rotation.y = d.rotate[1]
+        axis.rotation.z = d.rotate[2]
+        this.axes.add(axis)
+
+        var s = 0.01*0.4
+        // TODO: puzzled by the align not working as expected..
+        var aligns = {x: THREEtext2d.textAlign.topRight, y:THREEtext2d.textAlign.topRight, z:THREEtext2d.textAlign.center}
+        var label = new THREEtext2d.SpriteText2D(d.label, { align: aligns[d.name], font: '30px Arial', fillStyle: '#00FF00', antialias: true })
+        label.material.transparent = true
+        label.material.alphaTest = 0.01
+        label.scale.set(s,s,s)
+        axis.add(label)
+        d.object_label = label;
+        d.object = axis;
+        d.scale = d3.scaleLinear().domain(this.model.get(d.name + "lim")).range([-0.5, 0.5])
+        d.ticks = null
+    },
+    _d3_update_axis: function(node, d, i) {
+        //console.log("update axis", d, this.model.get(d.name + "lim"))
+        d.object_label.text = d.label;
+        d.object_label.fillStyle = d.fillStyle;
+        var n = d.name // x, y or z
+        d.object_label.fillStyle = this.get_style('axes.' +n +'.label.color axes.'   +n +'.color axes.label.color axes.color')
+        d.object_label.visible = this.get_style(  'axes.' +n +'.label.visible axes.' +n +'.visible axes.label.visible axes.visible')
+        d.scale = d3.scaleLinear().domain(this.model.get(d.name + "lim")).range([-0.5, 0.5])
+    },
+    _d3_add_axis_tick: function(node, d, i) {
+        //console.log("add tick", d, node, d3.select(d3.select(node).node().parentNode))
+        var parent_data = d3.select(d3.select(node).node().parentNode).datum(); // TODO: find the proper way to do so
+        var scale = parent_data.scale;
+
+        var tick_format = scale.tickFormat(this.ticks, ".1f");
+        var tick_text = tick_format(d.value);
+
+        // TODO: puzzled by the align not working as expected..
+        var aligns = {x: THREEtext2d.textAlign.topRight, y:THREEtext2d.textAlign.topRight, z:THREEtext2d.textAlign.center}
+        var sprite =  new THREEtext2d.SpriteText2D(tick_text, { align: aligns[parent_data.name], font: '30px Arial', fillStyle: '#00FF00', antialias: true })
+        sprite.material.transparent = true
+        //sprite.material.alphaTest = 0.1
+        sprite.blending = THREE.CustomBlending
+        sprite.blendSrc = THREE.SrcAlphaFactor
+        sprite.blendDst = THREE.OneMinusSrcAlphaFactor
+        sprite.blendEquation = THREE.AddEquation
+        var s = 0.01*0.4*0.5;
+        //sprite.position.x = scale(d.value)
+        //sprite.scale.set(s,s,s)
+        sprite.scale.multiplyScalar(s)
+        var n = parent_data.name // x, y or z
+        sprite.fillStyle = this.get_style('axes.' +n +'.ticklabel.color axes.ticklabel.color axes.' +n +'.color axes.color')
+        parent_data.object.add(sprite)
+        d.object_ticklabel = sprite;
+        return sprite
+
+        sprite.text = tick_text[i]
+        sprite.fillStyle = this.model.get("style")[parent_data.name + 'axis.color']
+    },
+    _d3_update_axis_tick: function(node, d, i) {
+        var parent_data = d3.select(d3.select(node).node().parentNode).datum(); // TODO: find the proper way to do so
+        //console.log("update tick", d, i, parent_data)
+        var scale = parent_data.scale;
+        var tick_format = scale.tickFormat(this.ticks, ".1f");
+        var tick_text = tick_format(d.value);
+        d.object_ticklabel.text = tick_text
+        d.object_ticklabel.position.x = scale(d.value)
+        var n = parent_data.name // x, y or z
+        d.object_ticklabel.fillStyle = this.get_style('axes.' +n +'.ticklabel.color axes.ticklabel.color axes.' +n +'.color axes.color')
+        d.object_ticklabel.visible = this.get_style('axes.' +n +'.ticklabel.visible axes.' +n +'.visible axes.visible')
+        //d.object_ticklabel.fillStyle = this.model.get("style")[parent_data.name + 'axis.color']
+    },
+    _d3_remove_axis_tick: function(node, d, i) {
+        //console.log("remove tick", d, i)
+        d.object_ticklabel.text = "" // TODO: removing and adding new tick marks will result in just many empty text sprites
     },
     update_scatters: function() {
         var scatters = this.model.get('scatters');
@@ -952,7 +1026,75 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
     },
     _real_update: function() {
         //this.controls_device.update()
+        this.control_trackball.handleResize()
+        this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
+        this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
         this._update_requested = false
+
+        this.renderer.setClearColor(this.get_style_color('background-color'))
+        this.x_axis.visible = this.get_style('axes.x.visible axes.visible')
+        this.y_axis.visible = this.get_style('axes.y.visible axes.visible')
+        this.z_axis.visible = this.get_style('axes.z.visible axes.visible')
+        this.axes_material.color = this.get_style_color('axes.color')
+        this.xaxes_material.color = this.get_style_color('axes.x.color axes.color')
+        this.yaxes_material.color = this.get_style_color('axes.y.color axes.color')
+        this.zaxes_material.color = this.get_style_color('axes.z.color axes.color')
+
+        this.axes_data[0].fillStyle = this.get_style('axes.x.color axes.color')
+        this.axes_data[1].fillStyle = this.get_style('axes.y.color axes.color')
+        this.axes_data[2].fillStyle = this.get_style('axes.z.color axes.color')
+
+        this.axes_data[0].label = this.model.get("xlabel")
+        this.axes_data[1].label = this.model.get("ylabel")
+        this.axes_data[2].label = this.model.get("zlabel")
+
+        this.wire_box.visible = this.get_style('box.visible')
+
+        d3.select(this.el_axes).selectAll(".ipyvol-axis")
+                .data(this.axes_data)
+                .each(bind_d3(this._d3_update_axis, this))
+                .enter()
+                .append("div")
+                .attr("class", "ipyvol-axis")
+                .each(bind_d3(this._d3_add_axis, this));
+
+        var that = this;
+        this.ticks = 5
+
+
+        this.last_tick_selection = d3.select(this.el_axes).selectAll(".ipyvol-axis").data(this.axes_data).selectAll(".ipyvol-tick").data(
+            function(d, i, node) {
+                var child_data = d.ticks
+                if(child_data) {
+                    child_data = d.ticks = child_data.slice()
+                    var ticks = d.scale.ticks(that.ticks)
+                    while(child_data.length < ticks.length) // ticks may return a larger array, so grow child data
+                        child_data.push({})
+                    while(child_data.length > ticks.length) // ticks may return a smaller array, so pop child data
+                        child_data.pop()
+                    _.each(ticks, function(tick, i) {
+                        child_data[i].value = tick;
+                    });
+                    return child_data
+                } else {
+                    var scale = d.scale;
+                    var ticks = scale.ticks(that.ticks)
+                    var child_data = _.map(ticks, function(value) { return {value: value}});
+                    d.ticks = child_data;
+                    return child_data;
+                }
+            })
+        this.last_tick_selection
+            .each(bind_d3(this._d3_update_axis_tick, this))
+            .enter()
+            .append("div")
+            .attr("class", "ipyvol-tick")
+            .each(bind_d3(this._d3_add_axis_tick, this))
+        this.last_tick_selection
+            .exit()
+            .remove()
+            .each(bind_d3(this._d3_remove_axis_tick, this))
+
         var transitions_todo = []
         for(var i = 0; i < this.transitions.length; i++) {
             var t = this.transitions[i];
@@ -960,7 +1102,6 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
                 transitions_todo.push(t)
             t.update()
         }
-
 
         this.renderer.clear()
         if(!this.model.get("stereo")) {
@@ -986,29 +1127,40 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             this.renderer.setScissorTest( false );
             this.renderer.setViewport( 0, 0, size.width, size.height );
         }
+        if(this.model.get('screen_capture_enabled')) {
+            var data = this.renderer.domElement.toDataURL(this.model.get('screen_capture_mime_type'));
+            this.model.set("screen_capture_data", data)
+            this.model.save()
+        }
         this.transitions = transitions_todo;
         if(this.transitions.length > 0) {
             this.update()
         }
     },
     get_style_color: function(name) {
-        return new THREE.Color(this.model.get("style")[name])
+        style = this.get_style(name)
+        if(style) {
+            return new THREE.Color(style)
+        } else {
+            console.error("could not find color for", name)
+        }
+    },
+    get_style: function(name) {
+        var value = [null]
+        _.each(name.split(" "), function(property) {
+            var value_found = _.reduce(property.split("."), function(object, property) {
+                if(object != null && object[property] != undefined)
+                    return object[property]
+                else
+                    return null
+            }, this.model.get("style"), this)
+            if(value_found != null && value[0] == null)
+                value[0] = value_found
+        }, this)
+
+        return value[0]
     },
     _render_eye: function(camera) {
-        this.renderer.setClearColor(this.get_style_color('figure.facecolor'))
-        this.axes_material.color = this.get_style_color('axes.color')
-        this.xaxes_material.color = this.get_style_color('xaxis.color')
-        this.yaxes_material.color = this.get_style_color('yaxis.color')
-        this.zaxes_material.color = this.get_style_color('zaxis.color')
-
-        this.axis_x_label.fillStyle = this.model.get("style")['xaxis.color']
-        this.axis_y_label.fillStyle = this.model.get("style")['yaxis.color']
-        this.axis_z_label.fillStyle = this.model.get("style")['zaxis.color']
-
-        this.axis_x_label.text = this.model.get("xlabel")
-        this.axis_y_label.text = this.model.get("ylabel")
-        this.axis_z_label.text = this.model.get("zlabel")
-
         if(this.model.get("data")) {
             this.camera.updateMatrixWorld();
             // render the back coordinates
@@ -1048,8 +1200,8 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             this.scene_opaque.overrideMaterial = null;
             this.renderer.autoClear = false;
             this.renderer.clearTarget(this.volr_texture, true, true, true)
-            this.renderer.render(this.scene_opaque, camera, this.volr_texture);
             this.renderer.render(this.scene_scatter, camera, this.volr_texture);
+            this.renderer.render(this.scene_opaque, camera, this.volr_texture);
             this.renderer.autoClear = true;
 
             // last pass, render the volume
@@ -1073,8 +1225,8 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             }, this)
             this.renderer.autoClear = false;
             this.renderer.clear()
-            this.renderer.render(this.scene_opaque, camera);
             this.renderer.render(this.scene_scatter, camera);
+            this.renderer.render(this.scene_opaque, camera);
             this.renderer.autoClear = true;
          }
 
@@ -1187,7 +1339,11 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             specular_coefficient: 0.5,
             specular_exponent: 5,
             stereo: false,
+            screen_capture_enabled: false,
+            screen_capture_mime_type: 'image/png',
+            screen_capture_data: null,
             fullscreen: false,
+            camera_control: 'trackball',
             width: 500,
             height: 400,
             downscale: 1,
@@ -1198,6 +1354,7 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             zlim: [0., 1.],
             animation: 1000,
             animation_exponent: 0.5,
+            style: styles['light']
         })
     }
 }, {
