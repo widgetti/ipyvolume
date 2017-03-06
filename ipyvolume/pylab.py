@@ -1,6 +1,7 @@
 _last_figure = None
 import ipywidgets
 from IPython.display import display
+import IPython
 from . import volume
 import ipyvolume.embed
 import os
@@ -164,6 +165,35 @@ def show():
 	"""Display (like in IPython.display.dispay(...) the current figure"""
 	gcf() # make sure we have something..
 	display(gcc())
+
+def animate_glyphs(scatter, sequence_length=None, add=True, interval=200):
+	"""Animate scatter or quiver by adding a slider and play button.
+
+	:param scatter: scatter or quiver object
+	:param sequence_length: If sequence_length is None we try try our best to figure out, in case we do it badly, you can tell us what it should be
+	:param add: if True, add the widgets to the container, else return a HBox with the slider and play button
+	:param interval: interval in msec between each frame
+	:return:
+	"""
+	if sequence_length is None:
+		# get all non-None arrays
+		values = [getattr(scatter, name) for name in "x y z vx vy vz".split()]
+		values = [k for k in values if k is not None]
+		# sort them such that the higest dim is first
+		values.sort(key=lambda key: -len(key.shape))
+		sequence_length = values[0].shape[0] # assume this defines the sequence length
+	fig = gcf()
+	fig.animation = interval
+	fig.animation_exponent = 1.
+	play = ipywidgets.Play(min=0, max=sequence_length, interval=interval, value=0, step=1)
+	slider = ipywidgets.IntSlider(min=0, max=play.max)
+	ipywidgets.jslink((play, 'value'), (slider, 'value'))
+	ipywidgets.jslink((slider, 'value'), (scatter, 'sequence_index'))
+	control = ipywidgets.HBox([play, slider])
+	if add:
+		current.container.children += (control,)
+	else:
+		return control
 
 def gcc():
 	"""Return the current container, that is the widget holding the figure and all the control widgets, buttons etc."""
