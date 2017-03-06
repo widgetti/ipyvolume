@@ -26,6 +26,74 @@ shaders["volr_vertex"] = require('../glsl/volr-vertex.glsl');
 shaders["screen_fragment"] = require('../glsl/screen-fragment.glsl');
 shaders["screen_vertex"] = require('../glsl/screen-vertex.glsl');
 
+function to_rgb(color) {
+    color = new THREE.Color(color)
+    return [color.r, color.g, color.b]
+}
+
+function get_value_index_color(variable, index, max_count){
+    //Return a function that take the glyph_index as an argument and return the color
+    // It can deals with these 6 cases: which are threated in the same order
+    // shape is 0 dim, and it's a string, interpret as color
+    // shape is 1 dim, items are strings, seperate color for each item
+    // shape is 2 dim, items are strings, sequence of the above
+    // shape is 1 dim, items are floats, it should be of length 3 -> rgb values
+    // shape is 2 dim, items are float, it should be of shape (len(x), 3) -> rgb values
+    // shape is 3 dim, items are float, it should be (sequence_length, len(x), 3) -> rgb values
+
+
+    if (typeof variable == "string") {
+        //OD string
+        color =  to_rgb(variable)
+        console.log("color",color)
+        return function(glyph_index){
+            return color
+        }
+    }
+    else if (typeof variable[0] == "string"){
+        //1D string
+        var tmp_color = new Array(max_count);
+        return function(glyph_index){
+            return to_rgb(variable[glyph_index])
+        }
+    }
+    else if (typeof variable[0][0] == "string"){
+        //2D string
+        if (typeof index == "undefined")
+            checked_index = 0
+        else
+            checked_index = Math.min(index,variable.length -1)
+
+        return function(glyph_index){
+            return  to_rgb(variable[checked_index][glyph_index])
+        }
+    }
+    else if (_.isNumber(variable[0])){
+        // 1d Numeric
+        return function(glyph_index){
+            return variable
+        }
+    }
+    else if(_.isNumber(variable[0][0])){
+        // 2d Numeric
+        return function(glyph_index){
+            return variable[glyph_index]
+        }
+    }
+    else if(_.isNumber(variable[0][0][0])){
+        // 3d numeric
+        if (typeof index == "undefined")
+            checked_index = 0
+        else
+            checked_index = Math.min(index,variable.length -1)
+
+        return function(glyph_index){
+            return variable[checked_index][glyph_index]
+        }
+    }
+
+}
+
 var TransferFunctionView = widgets.DOMWidgetView.extend( {
     render: function() {
         this.img = document.createElement('img');
@@ -311,20 +379,15 @@ var ScatterView = widgets.WidgetView.extend( {
 
               if (this.model.get("color") ) {
                   color = this.model.get("color")
-                  if ( typeof color == "string" || typeof color[0] == "string" || typeof color[0][0] == "string") {
-                      if (!(typeof color == "string" || typeof color[0] == "string")){
-                      //check for 2d
-                          this.previous_values["color"] = this.model.get("color")[Math.min(pindex,color.length-1)]
-                          this.attributes_changed["color"] =["color"]
-                      }
+                  if (typeof color == "string" || typeof color[0] == "string" || _.isNumber(color[0]) || _.isNumber(color[0][0])) {
+                      //0D or 1D
                   }
                   else {
-                      if ( !(_.isNumber(color[0]) || _.isNumber(color[0][0]))){
                         this.previous_values["color"] = this.model.get("color")[Math.min(pindex,color.length-1)]
                         this.attributes_changed["color"] =["color"]
-                      }
                   }
               }
+
 
 
             }
@@ -502,73 +565,12 @@ var ScatterView = widgets.WidgetView.extend( {
         // colors
         var colors = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
         var colors_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
-        function to_rgb(color) {
-            color = new THREE.Color(color)
-            return [color.r, color.g, color.b]
-        }
 
-        function get_value_index_color(variable,index,max_count){
-            //Return a two D array (max_count,3)
-            //First find type and Dimension
+        Color = get_value_index_color(this.model.get("color"),index,max_count)
 
-            var vartype = 0;  //1 for string
-            if ( typeof variable == "string" || typeof variable[0] == "string" || typeof variable[0][0] == "string") {
-                vartype = 1;
-            }
-
-            if (vartype == 1) {
-                if ( typeof variable == "string") {
-                //OD
-                    color =  to_rgb(variable)
-                    return color
-                }
-                else {
-                    var tmp_color = new Array(max_count);
-                    if ( typeof variable[0] == "string") {
-                        // 1 D
-                        to_convert = variable
-                    }
-                    else if (typeof index != "undefined"  && typeof variable[0][0] == "string"){
-                        //Two D
-                        index1 = Math.min(index,variable.length - 1);
-                        to_convert = variable[index1]
-                    }
-
-                    for(var i = 0; i < max_count; i++) {
-                        tmp_color[i] = to_rgb(to_convert[i])
-                    }
-                    return tmp_color
-                }
-            }
-            else {
-                // if numeric we only need to change the value if there is and index
-
-                if (_.isNumber(variable[0]) || _.isNumber(variable[0][0]) ){
-                    return variable
-                }
-                if (typeof index != "undefined"  &&  _.isNumber(variable[0][0][0])){
-                    //console.log(variable[ind])
-                    return variable[Math.min(index,variable.length -1)]
-                }
-
-                return variable
-            }
-        }
-
-
-        var color = get_value_index_color(this.model.get("color"),index,max_count)
-        var color_d = 0;  //Dimension of color
-        if (typeof color[0][0] != "undefined"){
-            color_d = 1
-        }
-
-        var color_previous = "color" in this.previous_values ? get_value_index_color(this.previous_values["color"],this.previous_values["index"],max_count) : color;
-        if(!color_previous)
-            color_previous = color;
-        var color_previous_d = 0;  //Dimension of color_previous
-        if (typeof color_previous[0][0] != "undefined"){
-            color_previous_d = 1
-        }
+        Color_previous = Color;
+        if("color" in this.previous_values)
+            Color_previous = get_value_index_color(this.previous_values["color"],this.previous_values["index"],max_count)
 
         var color_selected = to_rgb(this.model.get("color_selected"))
         var color_selected_previous = "color_selected" in this.previous_values ? to_rgb(this.previous_values["color_selected"]) : color_selected;
@@ -576,23 +578,15 @@ var ScatterView = widgets.WidgetView.extend( {
             color_selected_previous = color_selected;
 
   	    for(var i = 0; i < max_count; i++) {
-            if (color_d == 0){
-                var cur_color = color;
-            }
-            else{
-  	            var cur_color = color[i];
-            }
+
+  	        var cur_color = Color(i);
 
   	        if(selected.indexOf(i) != -1)
   	            cur_color = color_selected
 
      	      colors.setXYZ(i, cur_color[0], cur_color[1], cur_color[2]);
-            if (color_previous_d == 0){
-  	            var cur_color_previous = color_previous;
-            }
-            else{
-                var cur_color_previous = color_previous[i];
-            }
+
+            var cur_color_previous = Color_previous(i);
 
   	        if(selected_previous.indexOf(i) != -1)
   	            cur_color_previous = color_selected_previous
