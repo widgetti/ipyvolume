@@ -30,6 +30,17 @@ shaders["volr_vertex"] = require('../glsl/volr-vertex.glsl');
 shaders["screen_fragment"] = require('../glsl/screen-fragment.glsl');
 shaders["screen_vertex"] = require('../glsl/screen-vertex.glsl');
 
+function binary_array_or_json(data, manager) {
+    if(data && data.data && data.data.buffer) {
+        console.log("binary array")
+        window.last_data = data
+        var ar = new Float64Array(data.data.buffer)
+        window.last_array = ar
+        return ar
+     } else {
+        return data; // we assume it was json data
+    }
+}
 function to_rgb(color) {
     color = new THREE.Color(color)
     return [color.r, color.g, color.b]
@@ -296,6 +307,7 @@ var ScatterView = widgets.WidgetView.extend( {
         this.renderer = this.options.parent;
         this.previous_values = {}
         this.attributes_changed = {}
+        window.last_scatter = this;
 
         console.log("create scatter")
 
@@ -1494,7 +1506,15 @@ var ScatterModel = widgets.WidgetModel.extend({
             color_selected: "white",
             geo: 'diamond'
         })
-    }
+    }}, {
+    serializers: _.extend({
+        x: { deserialize: binary_array_or_json },
+        y: { deserialize: binary_array_or_json },
+        z: { deserialize: binary_array_or_json },
+        vx: { deserialize: binary_array_or_json },
+        vy: { deserialize: binary_array_or_json },
+        vz: { deserialize: binary_array_or_json },
+    }, widgets.WidgetModel.serializers)
 });
 
 var WidgetManagerHackModel = widgets.WidgetModel.extend({

@@ -6,6 +6,8 @@ from io import BytesIO as StringIO
 from base64 import b64encode
 import warnings
 
+binary = False # set this to True for experimental binary transfer, requires:
+# https://github.com/ipython/ipywidgets/pull/1194
 
 def cube_to_png(grid, vmin, vmax, file):
 	image_width = 2048
@@ -76,12 +78,25 @@ def from_json(value, obj=None):
 def array_to_json(ar, obj=None):
 	return ar.tolist() if ar is not None else None
 
+def array_to_binary_or_json(ar, obj=None):
+	if binary:
+		if ar is not None:
+			ar = ar.astype(np.float64)
+			mv = memoryview(ar)
+			return {'data': mv, 'shape': ar.shape}
+		else:
+			return None
+	else:
+		return array_to_json(ar, obj=obj)
+
+
 def from_json_to_array(value, obj=None):
 	return np.array(value) if value else None
 
 array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
 array_rgba_png_serialization = dict(to_json=rgba_to_json, from_json=from_json)
 array_serialization = dict(to_json=array_to_json, from_json=from_json_to_array)
+array_binary_serialization = dict(to_json=array_to_binary_or_json, from_json=from_json_to_array)
 
 if __name__ == "__main__":
     import sys
