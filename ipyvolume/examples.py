@@ -41,7 +41,7 @@ def example_ylm(m=0, n=2, shape=128, limits=[-4, 4], **kwargs):
 	data = np.abs(scipy.special.sph_harm(m, n, theta, phi) ** 2) * radial
 	return ipyvolume.volshow(data=data.T, **kwargs)
 
-def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], **kwargs):
+def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], display=True, **kwargs):
 	__, __, __, r, theta, phi = xyz(shape=shape, limits=limits, spherical=True)
 	data = r * 0
 	data[(r < rmax) & (r >= rmin)] = 0.5
@@ -49,6 +49,9 @@ def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], **kwargs):
 		kwargs["data_min"] = 0
 	if "data_max" not in kwargs:
 		kwargs["data_max"] = 1
-	return ipyvolume.volshow(data=data.T, **kwargs)
+	if display:
+		return ipyvolume.quickvolshow(data=data.T, **kwargs)
+	else:
+		return data.T
 
 # http://graphics.stanford.edu/data/voldata/
