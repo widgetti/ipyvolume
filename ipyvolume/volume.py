@@ -49,7 +49,7 @@ class VolumeRendererThree(widgets.DOMWidget):
     _model_name = Unicode('VolumeRendererThreeModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
 
-    data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_png_serialization)
+    volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_png_serialization)
     data_min = traitlets.CFloat().tag(sync=True)
     data_max = traitlets.CFloat().tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
@@ -68,7 +68,7 @@ class VolumeRendererThree(widgets.DOMWidget):
     stereo = traitlets.Bool(False).tag(sync=True)
     screen_capture_enabled = traitlets.Bool(False).tag(sync=True)
     screen_capture_mime_type = traitlets.Unicode(default_value='image/png').tag(sync=True)
-    screen_capture_data = traitlets.Unicode(read_only=True).tag(sync=True)
+    screen_capture_data = traitlets.Unicode(default_value=None, allow_none=True).tag(sync=True)
     fullscreen = traitlets.Bool(False).tag(sync=True)
 
     camera_control = traitlets.Unicode(default_value='trackball').tag(sync=True)
