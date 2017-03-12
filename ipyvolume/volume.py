@@ -6,7 +6,7 @@ import traitlets
 from traittypes import Array
 import logging
 import numpy as np
-from .serialize import array_cube_png_serialization, array_serialization
+from .serialize import array_cube_png_serialization, array_serialization, array_binary_serialization
 from .transferfunction import *
 import warnings
 import ipyvolume
@@ -21,12 +21,12 @@ class Scatter(widgets.DOMWidget):
     _view_module = Unicode('ipyvolume').tag(sync=True)
     _model_name = Unicode('ScatterModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
-    x = Array(default_value=None).tag(sync=True, **array_serialization)
-    y = Array(default_value=None).tag(sync=True, **array_serialization)
-    z = Array(default_value=None).tag(sync=True, **array_serialization)
-    vx = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
-    vy = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
-    vz = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
+    x = Array(default_value=None).tag(sync=True, **array_binary_serialization)
+    y = Array(default_value=None).tag(sync=True, **array_binary_serialization)
+    z = Array(default_value=None).tag(sync=True, **array_binary_serialization)
+    vx = Array(default_value=None,allow_none=True).tag(sync=True, **array_binary_serialization)
+    vy = Array(default_value=None,allow_none=True).tag(sync=True, **array_binary_serialization)
+    vz = Array(default_value=None,allow_none=True).tag(sync=True, **array_binary_serialization)
     selected = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
     sequence_index = Integer(default_value=0).tag(sync=True)
     size = traitlets.Union([traitlets.Float().tag(sync=True),

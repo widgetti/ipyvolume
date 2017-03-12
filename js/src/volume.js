@@ -30,17 +30,88 @@ shaders["volr_vertex"] = require('../glsl/volr-vertex.glsl');
 shaders["screen_fragment"] = require('../glsl/screen-fragment.glsl');
 shaders["screen_vertex"] = require('../glsl/screen-vertex.glsl');
 
+function ascii_decode(buf) {
+        return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+
+function read_uint16_LE(buffer) {
+        var view = new DataView(buffer);
+        var val = view.getUint8(0);
+        val |= view.getUint8(1) << 8;
+        return val;
+}
+
+function numpy_buffer_to_array(buf) {
+    console.log("l",buf.slice(1,6) )
+
+    var magic = ascii_decode(buf.slice(0,6));
+    if (magic.slice(1,6) != 'NUMPY') {
+        throw new Error('unknown file type');
+    }
+
+    var version = new Uint8Array(buf.slice(6,8));
+    var headerLength = read_uint16_LE(buf.slice(8,10));
+    var headerStr = ascii_decode(buf.slice(10, 10+headerLength));
+    var offsetBytes = 10 + headerLength;
+      //rest = buf.slice(10+headerLength);  XXX -- This makes a copy!!! https://www.khronos.org/registry/typedarray/specs/latest/#5
+
+    var info =  JSON.parse(headerStr.toLowerCase().replace('(','[').replace(',),',']').replace('),',']').replace(/'/g,"\""));
+
+    // Intepret the bytes according to the specified dtype
+    var data;
+    if (info.descr === "|u1") {
+      data = new Uint8Array(buf, offsetBytes);
+    } else if (info.descr === "|i1") {
+      data = new Int8Array(buf, offsetBytes);
+    } else if (info.descr === "<u2") {
+      data = new Uint16Array(buf, offsetBytes);
+    } else if (info.descr === "<i2") {
+      data = new Int16Array(buf, offsetBytes);
+    } else if (info.descr === "<u4") {
+      data = new Uint32Array(buf, offsetBytes);
+    } else if (info.descr === "<i4") {
+      data = new Int32Array(buf, offsetBytes);
+    } else if (info.descr === "<f4") {
+      data = new Float32Array(buf, offsetBytes);
+    } else if (info.descr === "<f8") {
+      data = new Float64Array(buf, offsetBytes);
+    } else {
+      throw new Error('unknown numeric dtype')
+    }
+
+    var shape = info.shape;
+    if (shape.length == 2) {
+        var ndata = new Array(shape[0])
+        for(var i = 0; i< shape[0]; i++){
+            ndata[i] = data.slice(i*shape[1],(i+1)*shape[1])
+        }
+    } else {
+        var ndata = data
+    }
+    return ndata;
+
+}
+
 function binary_array_or_json(data, manager) {
-    if(data && data.data && data.data.buffer) {
-        console.log("binary array")
-        window.last_data = data
-        var ar = new Float64Array(data.data.buffer)
-        window.last_array = ar
-        return ar
-     } else {
-        return data; // we assume it was json data
+    if(data == null)
+        return null;
+    if(data && _.isArray(data) && !data.buffer) { // plain json, or list of buffers
+        if(!data[0].buffer) {
+            // plain json
+            if(_.isArray(data[0])) {
+                return _.map(data, function(array1d) { return new Float32Array(array1d)})
+            } else {
+                return [new Float32Array(data)]
+            }
+        } else {
+            var buffer_list = _.map(data, function(data) { return new Float32Array(data.buffer)});
+            return buffer_list
+        }
+    } else {
+        return numpy_buffer_to_array(data.buffer)
     }
 }
+
 function to_rgb(color) {
     color = new THREE.Color(color)
     return [color.r, color.g, color.b]
