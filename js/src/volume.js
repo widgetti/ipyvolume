@@ -80,13 +80,27 @@ function numpy_buffer_to_array(buf) {
     }
 
     var shape = info.shape;
+    console.log(shape)
     if (shape.length == 2) {
         var ndata = new Array(shape[0])
         for(var i = 0; i< shape[0]; i++){
             ndata[i] = data.slice(i*shape[1],(i+1)*shape[1])
         }
+        console.log(ndata[0][0])
+
+    } else if (shape.length == 3){
+        var ndata = new Array(shape[0])
+        var count = 0;
+        for(var i = 0; i< shape[0]; i++){
+            ndata[i] = new Array(shape[1])
+            for(var j = 0; j< shape[1]; j++){
+                ndata[i][j] = data.slice(count,count+shape[2])
+                count +=shape[2]
+            }
+        }
     } else {
         var ndata = data
+        console.log(data[0])
     }
     return ndata;
 
@@ -95,21 +109,21 @@ function numpy_buffer_to_array(buf) {
 function binary_array_or_json(data, manager) {
     if(data == null)
         return null;
-    if(data && _.isArray(data) && !data.buffer) { // plain json, or list of buffers
+    if (data.buffer)
+        return numpy_buffer_to_array(data.buffer)
+    if (data && !_.isArray(data))
+        return data //For color unicode
+    if (data && _.isArray(data) && !data.buffer) { // plain json, or list of buffers
         if(!data[0].buffer) {
-            // plain json
-            if(_.isArray(data[0])) {
-                return _.map(data, function(array1d) { return new Float32Array(array1d)})
-            } else {
-                return [new Float32Array(data)]
-            }
+            return data //Anykind of data
         } else {
             var buffer_list = _.map(data, function(data) { return new Float32Array(data.buffer)});
             return buffer_list
         }
-    } else {
-        return numpy_buffer_to_array(data.buffer)
-    }
+     }
+     //if we missed a case
+     return data
+
 }
 
 function to_rgb(color) {
@@ -1587,6 +1601,7 @@ var ScatterModel = widgets.WidgetModel.extend({
         x: { deserialize: binary_array_or_json },
         y: { deserialize: binary_array_or_json },
         z: { deserialize: binary_array_or_json },
+        color: { deserialize: binary_array_or_json },
         vx: { deserialize: binary_array_or_json },
         vy: { deserialize: binary_array_or_json },
         vz: { deserialize: binary_array_or_json },
