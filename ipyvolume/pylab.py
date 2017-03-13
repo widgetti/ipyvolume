@@ -186,7 +186,7 @@ def animate_glyphs(scatter, sequence_length=None, add=True, interval=200):
 	fig.animation = interval
 	fig.animation_exponent = 1.
 	play = ipywidgets.Play(min=0, max=sequence_length, interval=interval, value=0, step=1)
-	slider = ipywidgets.IntSlider(min=0, max=play.max)
+	slider = ipywidgets.IntSlider(min=0, max=play.max-1)
 	ipywidgets.jslink((play, 'value'), (slider, 'value'))
 	ipywidgets.jslink((slider, 'value'), (scatter, 'sequence_index'))
 	control = ipywidgets.HBox([play, slider])
