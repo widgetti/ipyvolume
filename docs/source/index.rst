@@ -124,7 +124,18 @@ Contents
     vr
 
 
+Changelog
+=========
 
+ * 0.3
+  * new
+   * axis with labels and ticklabels
+   * styling
+   * animation (credits also to https://github.com/jeammimi)
+   * binary transfers
+   * default camera control is trackball
+  * changed
+   * s and ss are now spelled out, size and size_selected
 
 
 Indices and tables
