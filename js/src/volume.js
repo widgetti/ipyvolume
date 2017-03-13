@@ -30,6 +30,88 @@ shaders["volr_vertex"] = require('../glsl/volr-vertex.glsl');
 shaders["screen_fragment"] = require('../glsl/screen-fragment.glsl');
 shaders["screen_vertex"] = require('../glsl/screen-vertex.glsl');
 
+function ascii_decode(buf) {
+        return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+
+function read_uint16_LE(buffer) {
+        var view = new DataView(buffer);
+        var val = view.getUint8(0);
+        val |= view.getUint8(1) << 8;
+        return val;
+}
+
+function numpy_buffer_to_array(buf) {
+    console.log("l",buf.slice(1,6) )
+
+    var magic = ascii_decode(buf.slice(0,6));
+    if (magic.slice(1,6) != 'NUMPY') {
+        throw new Error('unknown file type');
+    }
+
+    var version = new Uint8Array(buf.slice(6,8));
+    var headerLength = read_uint16_LE(buf.slice(8,10));
+    var headerStr = ascii_decode(buf.slice(10, 10+headerLength));
+    var offsetBytes = 10 + headerLength;
+      //rest = buf.slice(10+headerLength);  XXX -- This makes a copy!!! https://www.khronos.org/registry/typedarray/specs/latest/#5
+
+    var info =  JSON.parse(headerStr.toLowerCase().replace('(','[').replace(',),',']').replace('),',']').replace(/'/g,"\""));
+
+    // Intepret the bytes according to the specified dtype
+    var data;
+    if (info.descr === "|u1") {
+      data = new Uint8Array(buf, offsetBytes);
+    } else if (info.descr === "|i1") {
+      data = new Int8Array(buf, offsetBytes);
+    } else if (info.descr === "<u2") {
+      data = new Uint16Array(buf, offsetBytes);
+    } else if (info.descr === "<i2") {
+      data = new Int16Array(buf, offsetBytes);
+    } else if (info.descr === "<u4") {
+      data = new Uint32Array(buf, offsetBytes);
+    } else if (info.descr === "<i4") {
+      data = new Int32Array(buf, offsetBytes);
+    } else if (info.descr === "<f4") {
+      data = new Float32Array(buf, offsetBytes);
+    } else if (info.descr === "<f8") {
+      data = new Float64Array(buf, offsetBytes);
+    } else {
+      throw new Error('unknown numeric dtype')
+    }
+
+    var shape = info.shape;
+    if (shape.length == 2) {
+        var ndata = new Array(shape[0])
+        for(var i = 0; i< shape[0]; i++){
+            ndata[i] = data.slice(i*shape[1],(i+1)*shape[1])
+        }
+    } else {
+        var ndata = data
+    }
+    return ndata;
+
+}
+
+function binary_array_or_json(data, manager) {
+    if(data == null)
+        return null;
+    if(data && _.isArray(data) && !data.buffer) { // plain json, or list of buffers
+        if(!data[0].buffer) {
+            // plain json
+            if(_.isArray(data[0])) {
+                return _.map(data, function(array1d) { return new Float32Array(array1d)})
+            } else {
+                return [new Float32Array(data)]
+            }
+        } else {
+            var buffer_list = _.map(data, function(data) { return new Float32Array(data.buffer)});
+            return buffer_list
+        }
+    } else {
+        return numpy_buffer_to_array(data.buffer)
+    }
+}
+
 function to_rgb(color) {
     color = new THREE.Color(color)
     return [color.r, color.g, color.b]
@@ -296,6 +378,7 @@ var ScatterView = widgets.WidgetView.extend( {
         this.renderer = this.options.parent;
         this.previous_values = {}
         this.attributes_changed = {}
+        window.last_scatter = this;
 
         console.log("create scatter")
 
@@ -373,7 +456,6 @@ var ScatterView = widgets.WidgetView.extend( {
     add_to_scene: function() {
         console.log("add")
         console.log(this.mesh)
-        //console.log(this.mesh instanceof THREE.Object3D)
         this.renderer.scene_scatter.add(this.mesh)
     },
     remove_from_scene: function() {
@@ -858,14 +940,15 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         //*
         this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
 
-        this.model.on('change:xlabel change:ylabel change:zlabel change:screen_capture_enabled change:camera_control', this.update, this);
+        this.model.on('change:screen_capture_enabled', this._real_update, this);
+        this.model.on('change:xlabel change:ylabel change:zlabel change:camera_control', this.update, this);
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:downscale', this.update_size, this);
         this.model.on('change:stereo', this.update_size, this);
         this.model.on('change:angle1', this.update_scene, this);
         this.model.on('change:angle2', this.update_scene, this);
-        this.model.on('change:data', this.data_set, this);
+        this.model.on('change:volume_data', this.data_set, this);
 
         this.model.on('change:width', this.update_size, this);
         this.model.on('change:height', this.update_size, this);
@@ -1244,8 +1327,13 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         }
         if(this.model.get('screen_capture_enabled')) {
             var data = this.renderer.domElement.toDataURL(this.model.get('screen_capture_mime_type'));
-            this.model.set("screen_capture_data", data)
-            this.model.save()
+            console.info("captured screen data to screen_capture_data")
+            this.model.save({screen_capture_data: data}, {patch: true})
+        } else {
+            if(this.model.get("screen_capture_data") != null) {
+                console.log("clearing screen_capture_data")
+                this.model.save({screen_capture_data: null}, {patch: true})
+            }
         }
         this.transitions = transitions_todo;
         if(this.transitions.length > 0) {
@@ -1276,7 +1364,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         return value[0]
     },
     _render_eye: function(camera) {
-        if(this.model.get("data")) {
+        if(this.model.get("volume_data")) {
             this.camera.updateMatrixWorld();
             // render the back coordinates
             // render the back coordinates of the box
@@ -1363,7 +1451,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.renderer.setSize(width, height);
         if(this.model.get("fullscreen")) {
             this.renderer.setSize(window.innerWidth, window.innerHeight);
-            if(!this.model.get("data")) { // no volume data means full rendering
+            if(!this.model.get("volume_data")) { // no volume data means full rendering
                 console.log("do a fullscreen render")
                 render_width  = window.innerWidth
                 render_height = window.innerHeight
@@ -1393,7 +1481,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
             this.update()
     },
     data_set: function() {
-        this.volume = this.model.get("data")
+        this.volume = this.model.get("volume_data")
         if(!this.volume) {
             this.update_size()
             return;
@@ -1408,7 +1496,7 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
         this.box_material_volr.uniforms.volume_size.value = this.volume.image_shape
         this.box_material_volr.uniforms.volume_slice_size.value = this.volume.slice_shape
         this.box_material_volr.uniforms.volume.value = this.texture_volume
-        if(this.model.previous("data")) {
+        if(this.model.previous("volume_data")) {
             this.update()
         } else {
             this.update_size() // could need a resize, see update_size
@@ -1494,7 +1582,15 @@ var ScatterModel = widgets.WidgetModel.extend({
             color_selected: "white",
             geo: 'diamond'
         })
-    }
+    }}, {
+    serializers: _.extend({
+        x: { deserialize: binary_array_or_json },
+        y: { deserialize: binary_array_or_json },
+        z: { deserialize: binary_array_or_json },
+        vx: { deserialize: binary_array_or_json },
+        vy: { deserialize: binary_array_or_json },
+        vz: { deserialize: binary_array_or_json },
+    }, widgets.WidgetModel.serializers)
 });
 
 var WidgetManagerHackModel = widgets.WidgetModel.extend({

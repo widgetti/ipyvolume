@@ -2,10 +2,15 @@ import logging
 import numpy as np
 import math
 logger = logging.getLogger("ipyvolume")
-from io import BytesIO as StringIO
+try:
+	from io import BytesIO as StringIO # python3
+except:
+	from StringIO import StringIO # python2
 from base64 import b64encode
 import warnings
 
+performance = 0 # set to 0 for ascii, 1 for binary transer, 2 for new style binary transfer:
+# https://github.com/ipython/ipywidgets/pull/1194
 
 def cube_to_png(grid, vmin, vmax, file):
 	image_width = 2048
@@ -18,7 +23,8 @@ def cube_to_png(grid, vmin, vmax, file):
 	grid_normalized = (grid*1.0 - vmin) / (vmax - vmin)
 	grid_normalized[~np.isfinite(grid_normalized)] = 0
 	gradient = np.gradient(grid_normalized)
-	gradient = gradient / np.sqrt(gradient[0]**2 + gradient[1]**2 + gradient[2]**2)
+	with np.errstate(divide='ignore'):
+		gradient = gradient / np.sqrt(gradient[0]**2 + gradient[1]**2 + gradient[2]**2)
 	# intensity_normalized = (np.log(self.data3d + 1.) - np.log(mi)) / (np.log(ma) - np.log(mi));
 	import PIL.Image
 	for y2d in range(rows):
@@ -75,12 +81,49 @@ def from_json(value, obj=None):
 def array_to_json(ar, obj=None):
 	return ar.tolist() if ar is not None else None
 
+def array_to_binary_or_json(ar, obj=None):
+	if ar is None:
+		return None
+	elif performance == 0:
+		return array_to_json(ar, obj=obj)
+	elif performance == 1:
+		ar = np.array(ar, dtype=np.float32) # this mode only support 'regular' arrays
+		#known_type = ["|u1", "|i1", "<u2", "<i2", "<u4", "<i4", "<f4", "<f8"]
+		#if ar.dtype in known_type and len(ar.shape) <= 2:
+		iobyte = StringIO()
+		np.save(iobyte, ar)
+		return iobyte.getvalue()
+		#else:
+		#	return ar.tolist()
+	elif performance == 2:
+		if ar is not None:
+			#ar = ar.astype(np.float64)
+			#mv = memoryview(ar)
+			#return []{'data': mv, 'shape': ar.shape}
+			if isinstance(ar, (list, tuple, np.ndarray)): # ok, at least 1d
+				if isinstance(ar[0], (list, tuple, np.ndarray)): # ok, 2d
+					return [memoryview(ar[k].astype(np.float32)) for k in range(len(ar))]
+				else:
+					return [memoryview(ar.astype(np.float32))]
+			else:
+				raise ValueError("Expected a sequence, got %r", ar)
+		else:
+			return None
+
+
+last_values = []
+
 def from_json_to_array(value, obj=None):
-	return np.array(value) if value else None
+	last_values.append(value)
+	if performance == 0:
+		return value
+	else:
+		return np.frombuffer(value, dtype=np.float32) if value else None
 
 array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
 array_rgba_png_serialization = dict(to_json=rgba_to_json, from_json=from_json)
 array_serialization = dict(to_json=array_to_json, from_json=from_json_to_array)
+array_binary_serialization = dict(to_json=array_to_binary_or_json, from_json=from_json_to_array)
 
 if __name__ == "__main__":
     import sys

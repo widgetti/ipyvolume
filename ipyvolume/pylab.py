@@ -8,6 +8,7 @@ import os
 import numpy as np
 import shutil
 from . import utils
+import time
 
 def _docsubst(f):
 	"""Perform docstring substitutions"""
@@ -32,7 +33,7 @@ def clear():
 	current.container = None
 	current.figure = None
 
-def figure(key=None, width=400, height=500, lighting=True, controls=True, debug=False):
+def figure(key=None, width=400, height=500, lighting=True, controls=True, debug=False, **kwargs):
 	"""Create a new figure (if no key is given) or return the figure associated with key
 
 	:param key: Python object that identifies this figure
@@ -47,7 +48,7 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, debug=
 		current.figure = current.figures[key]
 		current.container = current.containers[key]
 	else:
-		current.figure = volume.VolumeRendererThree(data=None, width=width, height=height)
+		current.figure = volume.VolumeRendererThree(volume_data=None, width=width, height=height, **kwargs)
 		current.container = ipywidgets.VBox()
 		current.container.children = [current.figure]
 		if key is not None:
@@ -161,10 +162,12 @@ def quiver(x, y, z, u, v, w, size=default_size*10, size_selected=default_size_se
 	return scatter
 
 
-def show():
-	"""Display (like in IPython.display.dispay(...) the current figure"""
-	gcf() # make sure we have something..
-	display(gcc())
+def show(extra_widgets=[]):
+    """Display (like in IPython.display.dispay(...) the current figure"""
+    gcf() # make sure we have something..
+    display(gcc())
+    for widget in extra_widgets:
+        display(widget)
 
 def animate_glyphs(scatter, sequence_length=None, add=True, interval=200):
 	"""Animate scatter or quiver by adding a slider and play button.
@@ -276,7 +279,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
 	vol.tf = tf
 	vol.data_min = data_min
 	vol.data_max = data_max
-	vol.data = data
+	vol.volume_data = data
 	vol.stereo = stereo
 	vol.ambient_coefficient = ambient_coefficient
 	vol.diffuse_coefficient = diffuse_coefficient
@@ -313,16 +316,33 @@ def save(filename, copy_js=True):
 		src = os.path.join(dir_name_src, "index.js")
 		shutil.copy(src, dst)
 
-def savefig(filename):
+def savefig(filename, timeout_seconds=10):
     """Save the current figure to an image (png or jpeg) to a file"""
     # TODO: might be useful to save to a file object
     __, ext = os.path.splitext(filename)
     fig = gcf()
-    fig.screen_capture_mimetype = "image/" + ext[1:] # skip .
+    fig.screen_capture_mime_type = "image/" + ext[1:] # skip .
     previous_value = fig.screen_capture_enabled
     try:
-        fig.screen_capture_enabled = True # this will trigger a redraw
+        #fig.screen_capture_data = None
+        assert fig.screen_capture_enabled, "Please enabled screen capturing first"
+        if 0: # this path doesn't work atm, lets keep it for future dev
+            t0 = time.time()
+            timeout = False
+            ipython = IPython.get_ipython()
+            while not timeout:
+                data = fig.screen_capture_data
+                if data is not None and len(data) > 0:
+                    break
+                timeout = (time.time() - t0) > timeout_seconds
+                ipython.kernel.do_one_iteration()
+            if timeout:
+                raise ValueError("timed out, no image data returned")
         data = fig.screen_capture_data
+        if len(data) == 0:
+            raise ValueError("image data turned up empty, bug?")
+        if not data.startswith('data:image'):
+            raise ValueError("image data didn't give expected result, bug?")
         # skip a header like 'data:image/png;base64,'
         data = data[data.find(",")+1:]
         import base64
