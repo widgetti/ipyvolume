@@ -102,7 +102,7 @@ function binary_array_or_json(data, manager) {
             if(_.isArray(data[0])) {
                 arrays = _.map(data, function(array1d) { return new Float32Array(array1d)})
             } else {
-                arrays = [new Float32Array(data)]
+                arrays = new Float32Array(data)
             }
         } else {
             arrays = _.map(data, function(data) { return new Float32Array(data.buffer)});
@@ -1565,6 +1565,9 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             xlim: [0., 1.],
             ylim: [0., 1.],
             zlim: [0., 1.],
+            xlabel: 'x',
+            ylabel: 'y',
+            zlabel: 'z',
             animation: 1000,
             animation_exponent: 0.5,
             style: styles['light']
@@ -1590,7 +1593,8 @@ var ScatterModel = widgets.WidgetModel.extend({
             size_selected: 0.02,
             color: "red",
             color_selected: "white",
-            geo: 'diamond'
+            geo: 'diamond',
+            sequence_index: 0
         })
     }}, {
     serializers: _.extend({
