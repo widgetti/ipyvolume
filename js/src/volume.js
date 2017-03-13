@@ -102,7 +102,7 @@ function binary_array_or_json(data, manager) {
             if(_.isArray(data[0])) {
                 arrays = _.map(data, function(array1d) { return new Float32Array(array1d)})
             } else {
-                arrays [new Float32Array(data)]
+                arrays = [new Float32Array(data)]
             }
         } else {
             arrays = _.map(data, function(data) { return new Float32Array(data.buffer)});
