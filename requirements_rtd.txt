@@ -1,5 +1,5 @@
 jupyter_sphinx
-ipyvolume==0.2.3
+ipyvolume==0.3.0
 traittypes
 traitlets
 ipywidgets>=6.0.0b5
