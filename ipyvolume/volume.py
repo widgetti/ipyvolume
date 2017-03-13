@@ -213,7 +213,7 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
-    v = VolumeRendererThree(data=data, data_min=data_min, data_max=data_max, stereo=stereo,
+    v = VolumeRendererThree(volume_data=data, data_min=data_min, data_max=data_max, stereo=stereo,
                             width=width, height=height,
                             ambient_coefficient=ambient_coefficient,
                             diffuse_coefficient=diffuse_coefficient,
