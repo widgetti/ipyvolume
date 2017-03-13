@@ -95,21 +95,31 @@ function numpy_buffer_to_array(buf) {
 function binary_array_or_json(data, manager) {
     if(data == null)
         return null;
+    var arrays = null;
     if(data && _.isArray(data) && !data.buffer) { // plain json, or list of buffers
         if(!data[0].buffer) {
             // plain json
             if(_.isArray(data[0])) {
-                return _.map(data, function(array1d) { return new Float32Array(array1d)})
+                arrays = _.map(data, function(array1d) { return new Float32Array(array1d)})
             } else {
-                return [new Float32Array(data)]
+                arrays [new Float32Array(data)]
             }
         } else {
-            var buffer_list = _.map(data, function(data) { return new Float32Array(data.buffer)});
+            arrays = _.map(data, function(data) { return new Float32Array(data.buffer)});
             return buffer_list
         }
     } else {
-        return numpy_buffer_to_array(data.buffer)
+        arrays = numpy_buffer_to_array(data.buffer)
     }
+    arrays.original_data = data;
+    return arrays;
+}
+
+function serialize_binary_array_or_json(obj, manager) {
+    if(obj)
+        return obj.original_data; // ftm we just feed back the original data, we don't modify currently
+   else
+       return null;
 }
 
 function to_rgb(color) {
@@ -1584,14 +1594,15 @@ var ScatterModel = widgets.WidgetModel.extend({
         })
     }}, {
     serializers: _.extend({
-        x: { deserialize: binary_array_or_json },
-        y: { deserialize: binary_array_or_json },
-        z: { deserialize: binary_array_or_json },
-        vx: { deserialize: binary_array_or_json },
-        vy: { deserialize: binary_array_or_json },
-        vz: { deserialize: binary_array_or_json },
+        x: { deserialize: binary_array_or_json,  serialize: serialize_binary_array_or_json },
+        y: { deserialize: binary_array_or_json,  serialize: serialize_binary_array_or_json },
+        z: { deserialize: binary_array_or_json,  serialize: serialize_binary_array_or_json },
+        vx: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+        vy: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+        vz: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
     }, widgets.WidgetModel.serializers)
 });
+
 
 var WidgetManagerHackModel = widgets.WidgetModel.extend({
     defaults: function() {

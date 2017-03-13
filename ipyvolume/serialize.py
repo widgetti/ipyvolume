@@ -111,14 +111,19 @@ def array_to_binary_or_json(ar, obj=None):
 			return None
 
 
-last_values = []
-
 def from_json_to_array(value, obj=None):
-	last_values.append(value)
 	if performance == 0:
 		return value
 	else:
 		return np.frombuffer(value, dtype=np.float32) if value else None
+
+last_value_to_array = None
+def create_array_binary_serialization(attrname):
+	def from_json_to_array(value, obj=None):
+		global last_value_to_array
+		last_value_to_array = value
+		return getattr(obj, attrname) # ignore what we got send back, it is not supposed to be changing
+	return dict(to_json=array_to_binary_or_json, from_json=from_json_to_array)
 
 array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
 array_rgba_png_serialization = dict(to_json=rgba_to_json, from_json=from_json)
