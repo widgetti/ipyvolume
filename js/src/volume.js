@@ -80,13 +80,11 @@ function numpy_buffer_to_array(buf) {
     }
 
     var shape = info.shape;
-    console.log(shape)
     if (shape.length == 2) {
         var ndata = new Array(shape[0])
         for(var i = 0; i< shape[0]; i++){
             ndata[i] = data.slice(i*shape[1],(i+1)*shape[1])
         }
-        console.log(ndata[0][0])
 
     } else if (shape.length == 3){
         var ndata = new Array(shape[0])
@@ -100,7 +98,6 @@ function numpy_buffer_to_array(buf) {
         }
     } else {
         var ndata = data
-        console.log(data[0])
     }
     return ndata;
 
