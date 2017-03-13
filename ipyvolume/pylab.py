@@ -306,12 +306,14 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
 
 	return vol
 
-def save(filename, copy_js=True):
+def save(filename, copy_js=True, makedirs=True):
 	"""Save the figure/visualization as html file, and optionally copy the .js file to the same directory """
+	dir_name_dst = os.path.dirname(os.path.abspath(filename))
+	dir_name_src = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static")
+	if not os.path.exists(dir_name_dst) and makedirs:
+		os.makedirs(dir_name_dst)
 	ipyvolume.embed.embed_html(filename, current.container)
 	if copy_js:
-		dir_name_dst = os.path.dirname(os.path.abspath(filename))
-		dir_name_src = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static")
 		dst = os.path.join(dir_name_dst, "ipyvolume.js")
 		src = os.path.join(dir_name_src, "index.js")
 		shutil.copy(src, dst)
