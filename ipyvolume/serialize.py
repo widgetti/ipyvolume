@@ -91,7 +91,7 @@ def array_to_binary_or_json(ar, obj=None):
 		if ar.dtype in known_type and len(ar.shape) <= 3:
 			#ar = np.array(ar, dtype=np.float32) # this mode only support 'regular' arrays
 			iobyte = StringIO()
-			np.save(iobyte, ar)
+			np.save(iobyte, np.copy(ar,order='C')) #The copy is to ensure the C order
 			return iobyte.getvalue()
 		else:
 			return array_to_json(ar)

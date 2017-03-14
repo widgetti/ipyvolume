@@ -551,7 +551,7 @@ var ScatterView = widgets.WidgetView.extend( {
     },
     create_mesh: function() {
         console.log("previous values: ")
-        console.log(this.previous_values)
+        //console.log(this.previous_values)
         var geo = this.model.get("geo")
         console.log(geo)
         if(!geo)
