@@ -17,6 +17,8 @@ Ipyvolume currenty can
  * Render in the Jupyter notebook, or create a standalone html page (or snippet to embed in your page).
  * Render in stereo, for virtual reality with Google Cardboard.
  * Animate in d3 style, for instance if the x coordinates or color of a scatter plots changes.
+ * Animations / sequences, all scatter/quiver plot properties can be a list of arrays, which can represent time snapshots.
+ * Stylable (although still basic)
  * Integrates with
   * [ipywidgets](https://github.com/ipython/ipywidgets) for adding gui controls (sliders, button etc), see an [example at the documentation homepage](http://ipyvolume.readthedocs.io/en/latest/index.html#built-on-ipywidgets)
   * [bokeh](//bokeh.pydata.org)  by [linking the selection](http://ipyvolume.readthedocs.io/en/latest/bokeh.html)
@@ -27,7 +29,6 @@ Ipyvolume will probably, but not yet:
  * Do isosurface rendering.
  * Do selections using mouse or touch.
  * Show a custom popup on hovering over a glyph.
- * Be stylable.
 
 # Documentation
 
@@ -35,7 +36,13 @@ Documentation is generated at readthedocs: [![Documentation](https://readthedocs
 
 # Screencast demos
 
-## Volume rendering 
+## Animation
+
+![screencast](https://www.astro.rug.nl/~breddels/ipyvolume/animate_crop.gif)
+
+(see more at [the documenation](ipyvolume.readthedocs.io/en/latest/animation.html)
+
+## Volume rendering
 
 ![screencast](https://raw.githubusercontent.com/maartenbreddels/ipyvolume/master/misc/screencast.gif)
 
