@@ -38,9 +38,9 @@ Documentation is generated at readthedocs: [![Documentation](https://readthedocs
 
 ## Animation
 
-![screencast](https://www.astro.rug.nl/~breddels/ipyvolume/animate_crop.gif)
+![screencast](https://cloud.githubusercontent.com/assets/1765949/23901444/8d4f26f8-08bd-11e7-81e6-cedad0a8471c.gif)
 
-(see more at [the documenation](ipyvolume.readthedocs.io/en/latest/animation.html)
+(see more at [the documentation](ipyvolume.readthedocs.io/en/latest/animation.html))
 
 ## Volume rendering
 
