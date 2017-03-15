@@ -12,15 +12,20 @@ osname = dict(darwin="osx", linux="linux", windows="windows")[platform.system().
 
 
 class Dataset(object):
-	def __init__(self, name, density=True):
+	def __init__(self, name, density=True, numpy=False):
 		self.name = name
 		self.density = density
+		self.numpy = numpy
 		if density:
 			self.url = "https://github.com/maartenbreddels/ipyvolume/raw/master/datasets/%s.npy.bz2" % name
 			self.path = os.path.join(data_dir, name+".npy.bz2")
 		else:
-			self.url = "https://github.com/maartenbreddels/ipyvolume/raw/master/datasets/%s.csv.gz" % name
-			self.path = os.path.join(data_dir, name+".csv.gz")
+			if numpy:
+				self.url = "https://github.com/maartenbreddels/ipyvolume/raw/master/datasets/%s.npy.bz2" % name
+				self.path = os.path.join(data_dir, name+".npy.bz2")
+			else:
+				self.url = "https://github.com/maartenbreddels/ipyvolume/raw/master/datasets/%s.csv.gz" % name
+				self.path = os.path.join(data_dir, name+".csv.gz")
 
 	def download(self, force=False):
 		if not os.path.exists(self.path) or force:
@@ -40,11 +45,15 @@ class Dataset(object):
 				f = bz2.BZ2File(self.path)
 				self.data = np.load(f)
 			else:
-				f = gzip.GzipFile(self.path)
-				header = f.readline().decode("utf-8")[1:].strip()
-				data = np.loadtxt(f, delimiter=",", unpack=False)
-				for i, name in enumerate(header.split(",")):
-					setattr(self, name, data[i])
+				if self.numpy:
+					with bz2.BZ2File(self.path) as f:
+						self.data = np.load(f)
+				else:
+					f = gzip.GzipFile(self.path)
+					header = f.readline().decode("utf-8")[1:].strip()
+					data = np.loadtxt(f, delimiter=",", unpack=False)
+					for i, name in enumerate(header.split(",")):
+						setattr(self, name, data[i])
 		else:
 			raise Exception("file not found and/or download failed")
 		return self
@@ -60,5 +69,6 @@ hdz2000    = Dataset("hdz2000")
 aquariusA2 = Dataset("aquarius-A2")
 egpbosLCDM  = Dataset("egpbos-LCDM")
 zeldovich  = Dataset("zeldovich", density=False)
+animated_stream = Dataset("stream-animation", density=False, numpy=True)
 
 # low poly cat from: https://sketchfab.com/models/1e7143dfafd04ff4891efcb06949a0b4#

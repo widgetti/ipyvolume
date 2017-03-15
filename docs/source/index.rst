@@ -43,7 +43,7 @@ Simple scatter plots are also supported.
     import ipyvolume
     import numpy as np
     x, y, z = np.random.random((3, 10000))
-    ipyvolume.quickscatter(x, y, z, s=0.01, marker="sphere")
+    ipyvolume.quickscatter(x, y, z, size=1, marker="sphere")
 
 Quiver plot
 ------------
@@ -55,7 +55,7 @@ Quiver plots are also supported, showing a vector at each point.
     import ipyvolume
     import numpy as np
     x, y, z, u, v, w = np.random.random((6, 1000))*2-1
-    quiver = ipyvolume.quickquiver(x, y, z, u, v, w, s=0.05)
+    quiver = ipyvolume.quickquiver(x, y, z, u, v, w, size=5)
 
 Built on Ipywidgets
 -------------------
@@ -70,11 +70,11 @@ Since ipyvolume is built on `ipywidgets <http://ipywidgets.readthedocs.io/>`_, w
     x, y, z, u, v, w = np.random.random((6, 1000))*2-1
     selected = np.random.randint(0, 1000, 100)
     p3.figure()
-    quiver = p3.quiver(x, y, z, u, v, w, s=0.05, ss=0.1, selected=selected)
+    quiver = p3.quiver(x, y, z, u, v, w, size=5, size_selected=8, selected=selected)
 
     from ipywidgets import FloatSlider, ColorPicker, VBox, jslink
-    size = FloatSlider(min=0, max=0.3, step=0.001)
-    size_selected = FloatSlider(min=0, max=0.3, step=0.001)
+    size = FloatSlider(min=0, max=30, step=0.1)
+    size_selected = FloatSlider(min=0, max=30, step=0.1)
     color = ColorPicker()
     color_selected = ColorPicker()
     jslink((quiver, 'size'), (size, 'value'))
@@ -119,11 +119,23 @@ Contents
 
     install
     examples
+    animation
     api
     vr
 
 
+Changelog
+=========
 
+ * 0.3
+  * new
+   * axis with labels and ticklabels
+   * styling
+   * animation (credits also to https://github.com/jeammimi)
+   * binary transfers
+   * default camera control is trackball
+  * changed
+   * s and ss are now spelled out, size and size_selected
 
 
 Indices and tables

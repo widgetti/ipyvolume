@@ -42,7 +42,6 @@ function read_uint16_LE(buffer) {
 }
 
 function numpy_buffer_to_array(buf) {
-    console.log("l",buf.slice(1,6) )
 
     var magic = ascii_decode(buf.slice(0,6));
     if (magic.slice(1,6) != 'NUMPY') {
@@ -80,6 +79,7 @@ function numpy_buffer_to_array(buf) {
     }
 
     var shape = info.shape;
+    console.log(shape)
     if (shape.length == 2) {
         var ndata = new Array(shape[0])
         for(var i = 0; i< shape[0]; i++){
@@ -106,21 +106,39 @@ function numpy_buffer_to_array(buf) {
 function binary_array_or_json(data, manager) {
     if(data == null)
         return null;
-    if (data.buffer)
-        return numpy_buffer_to_array(data.buffer)
-    if (data && !_.isArray(data))
-        return data //For color unicode
-    if (data && _.isArray(data) && !data.buffer) { // plain json, or list of buffers
+
+    var arrays = null;
+
+    if (data.buffer){
+        arrays =  numpy_buffer_to_array(data.buffer)
+        arrays.original_data = data;
+    }
+
+    else if (data && !_.isArray(data)){
+        arrays =  data //For color unicode
+    }
+    else if (data && _.isArray(data) && !data.buffer) { // plain json, or list of buffers
         if(!data[0].buffer) {
-            return data //Anykind of data
+            arrays = data //Anykind of data
         } else {
-            var buffer_list = _.map(data, function(data) { return new Float32Array(data.buffer)});
-            return buffer_list
+            arrays = _.map(data, function(array1d) { return new Float32Array(array1d)})
+            arrays.original_data = data;
         }
      }
-     //if we missed a case
-     return data
 
+    return arrays;
+}
+
+function serialize_binary_array_or_json(obj, manager) {
+    if(obj){
+        //here to avaid unecessary copy, if the obj is the original data we don't keep it
+        if (obj.original_data)
+            return obj.original_data; // ftm we just feed back the original data, we don't modify currently
+        else
+            return obj
+    }
+    else
+        return null;
 }
 
 function to_rgb(color) {
@@ -1566,6 +1584,9 @@ var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
             xlim: [0., 1.],
             ylim: [0., 1.],
             zlim: [0., 1.],
+            xlabel: 'x',
+            ylabel: 'y',
+            zlabel: 'z',
             animation: 1000,
             animation_exponent: 0.5,
             style: styles['light']
@@ -1591,19 +1612,22 @@ var ScatterModel = widgets.WidgetModel.extend({
             size_selected: 0.02,
             color: "red",
             color_selected: "white",
-            geo: 'diamond'
+            geo: 'diamond',
+            sequence_index: 0
         })
     }}, {
     serializers: _.extend({
-        x: { deserialize: binary_array_or_json },
-        y: { deserialize: binary_array_or_json },
-        z: { deserialize: binary_array_or_json },
-        color: { deserialize: binary_array_or_json },
-        vx: { deserialize: binary_array_or_json },
-        vy: { deserialize: binary_array_or_json },
-        vz: { deserialize: binary_array_or_json },
+        x: { deserialize: binary_array_or_json,  serialize: serialize_binary_array_or_json },
+        y: { deserialize: binary_array_or_json,  serialize: serialize_binary_array_or_json },
+        z: { deserialize: binary_array_or_json,  serialize: serialize_binary_array_or_json },
+        vx: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+        vy: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+        vz: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+        color: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+
     }, widgets.WidgetModel.serializers)
 });
+
 
 var WidgetManagerHackModel = widgets.WidgetModel.extend({
     defaults: function() {

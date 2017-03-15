@@ -6,7 +6,8 @@ import traitlets
 from traittypes import Array
 import logging
 import numpy as np
-from .serialize import array_cube_png_serialization, array_serialization, array_binary_serialization
+from .serialize import array_cube_png_serialization, array_serialization, array_binary_serialization, \
+    create_array_binary_serialization
 from .transferfunction import *
 import warnings
 import ipyvolume
@@ -21,12 +22,12 @@ class Scatter(widgets.DOMWidget):
     _view_module = Unicode('ipyvolume').tag(sync=True)
     _model_name = Unicode('ScatterModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
-    x = Array(default_value=None).tag(sync=True, **array_binary_serialization)
-    y = Array(default_value=None).tag(sync=True, **array_binary_serialization)
-    z = Array(default_value=None).tag(sync=True, **array_binary_serialization)
-    vx = Array(default_value=None,allow_none=True).tag(sync=True, **array_binary_serialization)
-    vy = Array(default_value=None,allow_none=True).tag(sync=True, **array_binary_serialization)
-    vz = Array(default_value=None,allow_none=True).tag(sync=True, **array_binary_serialization)
+    x = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('x'))
+    y = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('y'))
+    z = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('z'))
+    vx = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('vx'))
+    vy = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('vy'))
+    vz = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('vz'))
     selected = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
     sequence_index = Integer(default_value=0).tag(sync=True)
     size = traitlets.Union([traitlets.Float().tag(sync=True),
@@ -212,7 +213,7 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
-    v = VolumeRendererThree(data=data, data_min=data_min, data_max=data_max, stereo=stereo,
+    v = VolumeRendererThree(volume_data=data, data_min=data_min, data_max=data_max, stereo=stereo,
                             width=width, height=height,
                             ambient_coefficient=ambient_coefficient,
                             diffuse_coefficient=diffuse_coefficient,
