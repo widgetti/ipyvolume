@@ -42,7 +42,6 @@ function read_uint16_LE(buffer) {
 }
 
 function numpy_buffer_to_array(buf) {
-    console.log("l",buf.slice(1,6) )
 
     var magic = ascii_decode(buf.slice(0,6));
     if (magic.slice(1,6) != 'NUMPY') {
@@ -80,10 +79,22 @@ function numpy_buffer_to_array(buf) {
     }
 
     var shape = info.shape;
+    console.log(shape)
     if (shape.length == 2) {
         var ndata = new Array(shape[0])
         for(var i = 0; i< shape[0]; i++){
             ndata[i] = data.slice(i*shape[1],(i+1)*shape[1])
+        }
+
+    } else if (shape.length == 3){
+        var ndata = new Array(shape[0])
+        var count = 0;
+        for(var i = 0; i< shape[0]; i++){
+            ndata[i] = new Array(shape[1])
+            for(var j = 0; j< shape[1]; j++){
+                ndata[i][j] = data.slice(count,count+shape[2])
+                count +=shape[2]
+            }
         }
     } else {
         var ndata = data
@@ -95,31 +106,39 @@ function numpy_buffer_to_array(buf) {
 function binary_array_or_json(data, manager) {
     if(data == null)
         return null;
+
     var arrays = null;
-    if(data && _.isArray(data) && !data.buffer) { // plain json, or list of buffers
-        if(!data[0].buffer) {
-            // plain json
-            if(_.isArray(data[0])) {
-                arrays = _.map(data, function(array1d) { return new Float32Array(array1d)})
-            } else {
-                arrays = new Float32Array(data)
-            }
-        } else {
-            arrays = _.map(data, function(data) { return new Float32Array(data.buffer)});
-            return buffer_list
-        }
-    } else {
-        arrays = numpy_buffer_to_array(data.buffer)
+
+    if (data.buffer){
+        arrays =  numpy_buffer_to_array(data.buffer)
+        arrays.original_data = data;
     }
-    arrays.original_data = data;
+
+    else if (data && !_.isArray(data)){
+        arrays =  data //For color unicode
+    }
+    else if (data && _.isArray(data) && !data.buffer) { // plain json, or list of buffers
+        if(!data[0].buffer) {
+            arrays = data //Anykind of data
+        } else {
+            arrays = _.map(data, function(array1d) { return new Float32Array(array1d)})
+            arrays.original_data = data;
+        }
+     }
+
     return arrays;
 }
 
 function serialize_binary_array_or_json(obj, manager) {
-    if(obj)
-        return obj.original_data; // ftm we just feed back the original data, we don't modify currently
-   else
-       return null;
+    if(obj){
+        //here to avaid unecessary copy, if the obj is the original data we don't keep it
+        if (obj.original_data)
+            return obj.original_data; // ftm we just feed back the original data, we don't modify currently
+        else
+            return obj
+    }
+    else
+        return null;
 }
 
 function to_rgb(color) {
@@ -550,7 +569,7 @@ var ScatterView = widgets.WidgetView.extend( {
     },
     create_mesh: function() {
         console.log("previous values: ")
-        console.log(this.previous_values)
+        //console.log(this.previous_values)
         var geo = this.model.get("geo")
         console.log(geo)
         if(!geo)
@@ -1604,6 +1623,8 @@ var ScatterModel = widgets.WidgetModel.extend({
         vx: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
         vy: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
         vz: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+        color: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+
     }, widgets.WidgetModel.serializers)
 });
 
