@@ -30,8 +30,8 @@ class Scatter(widgets.DOMWidget):
     vz = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('vz'))
     selected = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
     sequence_index = Integer(default_value=0).tag(sync=True)
-    size = traitlets.Union([traitlets.Float().tag(sync=True),
-                           Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)],
+    size = traitlets.Union([Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization),
+                            traitlets.Float().tag(sync=True)],
                            default_value=0.1).tag(sync=True)
     size_selected = traitlets.Float(0.02).tag(sync=True)
     color = traitlets.Union([Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('color')),
