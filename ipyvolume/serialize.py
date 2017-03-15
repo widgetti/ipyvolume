@@ -89,9 +89,13 @@ def array_to_binary_or_json(ar, obj=None):
 	elif performance == 1:
 		known_type = ["|u1", "|i1", "<u2", "<i2", "<u4", "<i4", "<f4", "<f8"]
 		if ar.dtype in known_type and len(ar.shape) <= 3:
+			#print(ar.flags)
 			#ar = np.array(ar, dtype=np.float32) # this mode only support 'regular' arrays
 			iobyte = StringIO()
-			np.save(iobyte, np.copy(ar,order='C')) #The copy is to ensure the C order
+			if ar.flags["C_CONTIGUOUS"]:
+				np.save(iobyte, ar)
+			else:
+				np.save(iobyte, np.ascontiguousarray(ar)) #The copy is to ensure the C order
 			return iobyte.getvalue()
 		else:
 			return array_to_json(ar)

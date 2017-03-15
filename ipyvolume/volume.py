@@ -35,7 +35,7 @@ class Scatter(widgets.DOMWidget):
                            default_value=0.1).tag(sync=True)
     size_selected = traitlets.Float(0.02).tag(sync=True)
     color = traitlets.Union([Unicode().tag(sync=True),
-                             Array(default_value=None,allow_none=True).tag(sync=True, **array_binary_serialization)],
+                             Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('color'))],
                              default_value="red").tag(sync=True)
     color_selected = traitlets.Unicode(default_value="white").tag(sync=True)
     geo = traitlets.Unicode('diamond').tag(sync=True)
