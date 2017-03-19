@@ -108,9 +108,9 @@ function Values(names, names_vec3, getter, sequence_index) {
         this.length = other.length;
     }
     this.select = function(selected) {
-        var sizes = this.array['size']
+        var sizes = this.array['size'] = this.array['size'].slice() // copy since we will modify
         var size_selected = this.array['size_selected']
-        var color = this.array_vec3['color']
+        var color = this.array_vec3['color'] = this.array_vec3['color'].slice() // copy since we will modify
         var color_selected = this.array_vec3['color_selected']
         // this assumes, and requires that color_selected is an array, maybe a bit inefficient
         _.each(selected, function(index) {
