@@ -4,6 +4,8 @@ import ipyvolume.examples
 import ipyvolume.datasets
 import numpy as np
 import os
+import pytest
+
 if not os.path.exists("tmp"):
     os.makedirs("tmp")
 
@@ -117,6 +119,27 @@ def test_quick():
     x, y, z, u, v, w = np.random.random((6, 100))
     ipyvolume.quickscatter(x, y, z)
     ipyvolume.quickquiver(x, y, z, u, v, w)
+
+@pytest.mark.parametrize("performance", [0,1])
+def test_widgets_state(performance):
+    try:
+        _remove_buffers = None
+        try:
+            from ipywidgets.widgets.widget import _remove_buffers
+        except:
+            pass
+        ipyvolume.serialize.performance = performance
+        x, y, z = np.random.random((3, 100))
+        p3.figure()
+        scatter = p3.scatter(x, y, z)
+        state = scatter.get_state()
+        if _remove_buffers:
+            _remove_buffers(state)
+        else:
+            scatter._split_state_buffers(state)
+    finally:
+        ipyvolume.serialize.performance = 0
+
 
 # just cover and call
 ipyvolume.examples.ball()
