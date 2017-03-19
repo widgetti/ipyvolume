@@ -1,5 +1,6 @@
 var _ = require('underscore')
 var utils = require('./utils.js')
+var THREE = require('three')
 
 function ascii_decode(buf) {
         return String.fromCharCode.apply(null, new Uint8Array(buf));
