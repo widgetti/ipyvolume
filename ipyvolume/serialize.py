@@ -140,11 +140,14 @@ def from_json_to_array(value, obj=None):
 		return np.frombuffer(value, dtype=np.float32) if value else None
 
 last_value_to_array = None
-def create_array_binary_serialization(attrname):
+def create_array_binary_serialization(attrname, update_from_js=False):
 	def from_json_to_array(value, obj=None):
 		global last_value_to_array
 		last_value_to_array = value
-		return getattr(obj, attrname) # ignore what we got send back, it is not supposed to be changing
+		if update_from_js: # for some values we may want updates from the js side
+			return np.array(value)
+		else: # otherwise we probably get updates due to a bug in ipywidgets
+			return getattr(obj, attrname) # ignore what we got send back, it is not supposed to be changing
 	return dict(to_json=array_to_binary_or_json, from_json=from_json_to_array)
 
 array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
