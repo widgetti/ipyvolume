@@ -130,7 +130,7 @@ function deserialize_color_or_json(data, manager) {
         return data
     } else
     if(_.isArray(data) && !data.buffer) { // plain json, or list of buffers
-        var dimension = get_array_dimension(data)
+        var dimension = utils.get_array_dimension(data)
         if(dimension == 1 && typeof data[0] == "string") {
             arrays = string_array_to_rgb(data)
         } else

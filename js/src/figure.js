@@ -43,17 +43,6 @@ function to_rgb(color) {
     return [color.r, color.g, color.b]
 }
 
-function get_array_dimension(array) {
-    var dimension = 0;
-    while(typeof array[0] != "undefined") {
-        array = array[0];
-        dimension += 1;
-    }
-    return dimension
-}
-
-
-
 // similar to _.bind, except it
 // puts this as first argument to f, followed be other arguments, and make context f's this
 function bind_d3(f, context) {
