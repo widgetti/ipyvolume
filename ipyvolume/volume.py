@@ -28,16 +28,20 @@ class Scatter(widgets.DOMWidget):
     vx = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('vx'))
     vy = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('vy'))
     vz = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('vz'))
-    selected = Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)
+    selected = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('selection', update_from_js=True))
     sequence_index = Integer(default_value=0).tag(sync=True)
     size = traitlets.Union([traitlets.Float().tag(sync=True),
-                           Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)],
-                           default_value=0.1).tag(sync=True)
-    size_selected = traitlets.Float(0.02).tag(sync=True)
+                           Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('size'))],
+                           default_value=5).tag(sync=True)
+    size_selected = traitlets.Union([traitlets.Float().tag(sync=True),
+                           Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('size_selected'))],
+                           default_value=7).tag(sync=True)
     color = traitlets.Union([Unicode().tag(sync=True),
-                             Array(default_value=None,allow_none=True).tag(sync=True, **array_serialization)],
+                             Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('color'))],
                              default_value="red").tag(sync=True)
-    color_selected = traitlets.Unicode(default_value="white").tag(sync=True)
+    color_selected = traitlets.Union([Unicode().tag(sync=True),
+                             Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('color_selected'))],
+                             default_value="green").tag(sync=True)
     geo = traitlets.Unicode('diamond').tag(sync=True)
 
 
@@ -130,8 +134,8 @@ def _volume_widets(v, lighting=False):
     )
 
 def volshow(*args, **kwargs):
-    """Deprecated: please use ipyvolume.quickvol or use the ipyvolume.pylab interface"""
-    warnings.warn("Please use ipyvolume.quickvol or use the ipyvolume.pylab interface", DeprecationWarning, stacklevel=2)
+    """Deprecated: please use ipyvolume.quickvolshow or use the ipyvolume.pylab interface"""
+    warnings.warn("Please use ipyvolume.quickvolshow or use the ipyvolume.pylab interface", DeprecationWarning, stacklevel=2)
     return quickvolshow(*args, **kwargs)
 
 def quickquiver(x, y, z, u, v, w, **kwargs):
