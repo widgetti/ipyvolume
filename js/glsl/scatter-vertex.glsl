@@ -23,21 +23,31 @@ varying vec3 vertex_position;
 
 attribute vec3 position;
 
-attribute vec3 position_offset;
-attribute vec3 position_offset_previous;
+attribute float x;
+attribute float x_previous;
+attribute float y;
+attribute float y_previous;
+attribute float z;
+attribute float z_previous;
 
 attribute vec3 color;
 attribute vec3 color_previous;
 
-attribute vec3 vector;
-attribute vec3 vector_previous;
+attribute vec3 v;
+attribute vec3 v_previous;
 
-attribute float scale;
-attribute float scale_previous;
+
+attribute float size;
+attribute float size_previous;
 
 
 
 void main(void) {
+    vec3 vector = v;
+    vec3 vector_previous = v_previous;
+    vec3 position_offset = vec3(x, y, z);
+    vec3 position_offset_previous = vec3(x_previous, y_previous, z_previous);
+
     // assume the vector points to the y axis
     vec3 vector_current = mix(normalize(vector_previous), normalize(vector), vec3(animation_time_vx, animation_time_vy, animation_time_vz))
            * mix(length(vector_previous), length(vector), (animation_time_vx+ animation_time_vy+ animation_time_vz)/3.);
@@ -55,10 +65,11 @@ void main(void) {
     //vec3 z = vec3(0, 0, 1);
     //mat3 move_to_vector = mat3(z, y, x);
     vec3 origin = vec3(xlim.x, ylim.x, zlim.x);
-    vec3 size = vec3(xlim.y, ylim.y, zlim.y) - origin;
-    vec3 pos = (move_to_vector * (position*mix(scale_previous, scale, animation_time_size)))
+    vec3 size_viewport = vec3(xlim.y, ylim.y, zlim.y) - origin;
+    float s = mix(size_previous/100., size/100., animation_time_size);
+    vec3 pos = (move_to_vector * (position*s))
         + (mix(position_offset_previous, position_offset, vec3(animation_time_x, animation_time_y, animation_time_z))
-                - origin) / size - 0.5;
+                - origin) / size_viewport - 0.5;
     //vec3 pos = (pos_object ) / size;// - 0.5;
     gl_Position = projectionMatrix *
                 modelViewMatrix *

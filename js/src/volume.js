@@ -17,6 +17,13 @@ require("./three/TrackballControls.js")
 require("./three/DeviceOrientationControls.js")
 require("./three/StereoEffect.js")
 require("./three/THREEx.FullScreen.js")
+isTypedArray = require('is-typedarray')
+ndarray = require('ndarray')
+
+function is_ndarray(obj) {
+    // not sure how to approach this, this will do for the moment
+    return (typeof obj.shape != "undefined") && (typeof obj.data != "undefined")
+}
 
 var shaders = {}
 shaders["cube_fragment"] = require('../glsl/cube-fragment.glsl');
@@ -30,6 +37,183 @@ shaders["volr_vertex"] = require('../glsl/volr-vertex.glsl');
 shaders["screen_fragment"] = require('../glsl/screen-fragment.glsl');
 shaders["screen_vertex"] = require('../glsl/screen-vertex.glsl');
 
+/* Manages a list of scalar and arrays for use with WebGL instanced rendering
+*/
+
+function Values(names, names_vec3, getter, sequence_index) {
+    var defaults = {vx: 0, vy: 1, vz: 0, x: 0, y: 0, z: 0, size:0}
+    this.length = Infinity;
+    this.scalar = {}
+    this.scalar_vec3 = {}
+    this.array = {}
+    this.array_vec3 = {}
+    this.values = {}
+
+    _.each(names, function(name) {
+        var value = getter(name, sequence_index, defaults[name]);
+        if(is_typedarray(value)) {
+            if(name != 'selected') // hardcoded.. hmm bad
+                this.length = Math.min(this.length, value.length)
+            this.array[name] = value
+        } else {
+            this.scalar[name] = value
+        }
+        this.values[name] = value;
+    }, this)
+    _.each(names_vec3, function(name) {
+        var value = getter(name, sequence_index, defaults[name]);
+        if(is_typedarray(value) && value.length > 3) { // single value is interpreted as scalar
+            this.array_vec3[name] = value
+            this.length = Math.min(this.length, value.length/3)
+        } else {
+            this.scalar_vec3[name] = value
+        }
+        this.values[name] = value;
+    }, this);
+    this.trim = function(new_length) {
+        this.array = _.mapObject(this.array, function(array) {
+            return array.length == new_length ? array : array.slice(0, new_length)
+        })
+        this.array_vec3 = _.mapObject(this.array_vec3, function(array_vec3) {
+            return array_vec3.length == new_length*3 ? array_vec3 : array_vec3.slice(0, new_length*3)
+        })
+        this.length = new_length;
+    }
+    this.ensure_array = function(name) {
+        var names = _.isArray(name) ? name : [name];
+        _.each(names, function(name) {
+            if(typeof this.scalar[name] != 'undefined') {
+                var array = this.array[name] = new Float32Array(this.length);
+                array.fill(this.scalar[name])
+                delete this.scalar[name]
+                delete this.values[name]
+            }
+            var value_vec3 = this.scalar_vec3[name]
+            if(typeof value_vec3 != 'undefined') {
+                var array = this.array_vec3[name] = new Float32Array(this.length*3);
+                for(var i = 0; i < this.length; i++) {
+                    array[i*3+0] = value_vec3[0]
+                    array[i*3+1] = value_vec3[1]
+                    array[i*3+2] = value_vec3[2]
+                }
+                delete this.scalar_vec3[name]
+                delete this.values[name]
+            }
+        }, this)
+    }
+    this.grow = function(new_length) {
+        this.array = _.mapObject(this.array, function(array) {
+            var new_array = new array.constructor(new_length)
+            new_array.set(array)
+            return new_array;
+        })
+        this.array_vec3 = _.mapObject(array_vec3, function(array_vec3) {
+            var new_array = new array_vec3.constructor(new_length*3)
+            new_array.set(array_vec3)
+            return new_array;
+        })
+        this.length = length;
+    }
+    this.pad = function(other) {
+        this.array = _.mapObject(this.array, function(array, name) {
+            var new_array = new array.constructor(other.length)
+            if(typeof other.array[name] == "undefined") { // then other must be a scalar
+                new_array.fill(other.scalar[name], this.length)
+            } else {
+                new_array.set(other.array[name].slice(this.length), this.length)
+            }
+            new_array.set(array)
+            return new_array;
+        })
+        this.array_vec3 = _.mapObject(this.array_vec3, function(array_vec3, name) {
+            var new_array = new array_vec3.constructor(other.length*3)
+            if(typeof other.array_vec3[name] == "undefined") { // then other must be a scalar
+                var other_scalar = other.scalar_vec3[name];
+                for(var i = this.length; i < other.length; i++) {
+                    new_array[i*3+0] = other_scalar[0]
+                    new_array[i*3+1] = other_scalar[1]
+                    new_array[i*3+2] = other_scalar[2]
+                }
+            } else {
+                new_array.set(other.array_vec3[name].slice(this.length*3), this.length*3)
+            }
+            new_array.set(array_vec3)
+            return new_array;
+        })
+        this.length = other.length;
+    }
+    this.select = function(selected) {
+        var sizes = this.array['size']
+        var size_selected = this.array['size_selected']
+        var color = this.array_vec3['color']
+        var color_selected = this.array_vec3['color_selected']
+        // this assumes, and requires that color_selected is an array, maybe a bit inefficient
+        _.each(selected, function(index) {
+            if(index < this.length) {
+                sizes[index] = size_selected[index];
+                color[index*3+0] = color_selected[index*3+0]
+                color[index*3+1] = color_selected[index*3+1]
+                color[index*3+2] = color_selected[index*3+2]
+            }
+        }, this)
+    }
+    this.merge_to_vec3 = function(names, new_name) {
+        var element_length = names.length;
+        var array = new Float32Array(this.length * element_length); // Float32Array should be replaced by a good common value
+        _.each(names, function(name, index) {
+            this.ensure_array(name)
+            var array1d = this.array[name]
+            for(var i = 0; i < this.length; i++) {
+                array[i*element_length + index] = array1d[i];
+            }
+            delete this.array[name];
+            delete this.values[name]
+        }, this)
+        this.array_vec3[new_name] = array
+    }
+    this.pop = function(names) {
+        var names = _.isArray(name) ? name : [name];
+        _.each(names, function(name) {
+            _.each([this.scalar, this.scalar_vec3, this.array, this.array_vec3], function(storage) {
+                if(typeof storage[name] != 'undefined') {
+                    delete storage[name]
+                }
+            })
+        }, this);
+    }
+    this.add_attributes = function(geometry, postfix) {
+        var postfix = postfix || '';
+        // set all attributes
+        _.each(this.array, function(array, name) {
+            if(name.indexOf("selected") == -1) { // selected attributes should not be send to the shader
+                var attr = new THREE.InstancedBufferAttribute(array, 1, 1);
+                geometry.addAttribute(name+postfix, attr);
+            }
+        }, this)
+        _.each(this.array_vec3, function(array, name) {
+            if(name.indexOf("selected") == -1) { // selected attributes should not be send to the shader
+                var attr = new THREE.InstancedBufferAttribute(array, 3, 1);
+                attr.normalized = name.indexOf("color") == -1 ? false : true; // color should be normalized
+                geometry.addAttribute(name+postfix, attr);
+            }
+        }, this)
+        _.each(this.scalar, function(scalar, name) {
+            if(name.indexOf("selected") == -1) { // selected attributes should not be send to the shader
+                var attr = new THREE.InstancedBufferAttribute(new Float32Array([scalar]), 1, this.length);
+                geometry.addAttribute(name+postfix, attr);
+            }
+        }, this)
+        _.each(this.scalar_vec3, function(scalar_vec3, name) {
+            if(name.indexOf("selected") == -1) { // selected attributes should not be send to the shader
+                var attr = new THREE.InstancedBufferAttribute(scalar_vec3, 3, this.length);
+                attr.normalized = name.indexOf("color") == -1 ? false : true; // color should be normalized
+                geometry.addAttribute(name+postfix, attr);
+            }
+        }, this)
+    }
+}
+
+
 function ascii_decode(buf) {
         return String.fromCharCode.apply(null, new Uint8Array(buf));
 }
@@ -41,9 +225,7 @@ function read_uint16_LE(buffer) {
         return val;
 }
 
-function numpy_buffer_to_array(buf) {
-    console.log("l",buf.slice(1,6) )
-
+function numpy_buffer_to_ndarray(buf) {
     var magic = ascii_decode(buf.slice(0,6));
     if (magic.slice(1,6) != 'NUMPY') {
         throw new Error('unknown file type');
@@ -79,47 +261,138 @@ function numpy_buffer_to_array(buf) {
       throw new Error('unknown numeric dtype')
     }
 
-    var shape = info.shape;
-    if (shape.length == 2) {
-        var ndata = new Array(shape[0])
-        for(var i = 0; i< shape[0]; i++){
-            ndata[i] = data.slice(i*shape[1],(i+1)*shape[1])
-        }
-    } else {
-        var ndata = data
-    }
-    return ndata;
+    return ndarray(data, info.shape);
 
 }
+
 
 function binary_array_or_json(data, manager) {
     if(data == null)
         return null;
     var arrays = null;
-    if(data && _.isArray(data) && !data.buffer) { // plain json, or list of buffers
+    if(_.isNumber(data)) {
+        return data;
+    } else
+    if(_.isArray(data) && !data.buffer) { // plain json, or list of buffers
+        if(data.length == 0) {
+            arrays = []
+        } else
         if(!data[0].buffer) {
             // plain json
             if(_.isArray(data[0])) {
                 arrays = _.map(data, function(array1d) { return new Float32Array(array1d)})
             } else {
-                arrays = new Float32Array(data)
+                arrays = [new Float32Array(data)]
             }
         } else {
             arrays = _.map(data, function(data) { return new Float32Array(data.buffer)});
-            return buffer_list
         }
     } else {
-        arrays = numpy_buffer_to_array(data.buffer)
+        nd = numpy_buffer_to_ndarray(data.buffer)
+        if (nd.shape.length == 2) {
+            arrays = []
+            for(var i = 0; i < nd.shape[0]; i++) {
+                var ar = nd.data.slice(i*nd.stride[0], (i+1)*nd.stride[0])
+                arrays.push(ar)
+            }
+        } else { // assume 1d... ?
+            arrays = [nd.data];
+        }
     }
     arrays.original_data = data;
     return arrays;
 }
 
+function binary_color_array_or_json(data, manager) {
+    if(data == null)
+        return null;
+    var arrays = null;
+
+    // It can deals with these 6 cases: which are threated in the same order
+    // shape is 0 dim, and it's a string, interpret as color
+    // shape is 1 dim, items are strings, seperate color for each item
+    // shape is 2 dim, items are strings, sequence of the above
+    // shape is 1 dim, items are floats, it should be of length 3 -> rgb values
+    // shape is 2 dim, items are float, it should be of shape (len(x), 3) -> rgb values
+    // shape is 3 dim, items are float, it should be (sequence_length, len(x), 3) -> rgb values
+    function string_array_to_rgb(string_array) {
+        var rgbs = new Float32Array(string_array.length * 3);
+        for(var i = 0; i < string_array.length; i++) {
+            var color = new THREE.Color(string_array[i]);
+            rgbs[i*3+0] = color.r;
+            rgbs[i*3+1] = color.g;
+            rgbs[i*3+2] = color.b;
+        }
+        return rgbs;
+    }
+    function rgb_array_to_rgb(rgb_array) {
+        var rgbs = new Float32Array(rgb_array.length * 3);
+        for(var i = 0; i < rgb_array.length; i++) {
+            rgbs[i*3+0] = rgb_array[i][0];
+            rgbs[i*3+1] = rgb_array[i][1];
+            rgbs[i*3+2] = rgb_array[i][2];
+        }
+        return rgbs;
+    }
+
+    if (typeof data == "string") { // single color
+        var color = new THREE.Color(data)
+        arrays = new Float32Array([color.r, color.g, color.b]) // no sequence, scalar
+    } else
+    if(is_typedarray(data)) {
+        return data
+    } else
+    if(_.isArray(data) && !data.buffer) { // plain json, or list of buffers
+        var dimension = get_array_dimension(data)
+        if(dimension == 1 && typeof data[0] == "string") {
+            arrays = string_array_to_rgb(data)
+        } else
+        if(dimension == 2 && is_typedarray(data[0])) { // similar to dimension is 3 and _isNumber(data[0][0][0])
+            arrays = data
+        } else
+        if(dimension == 2 && typeof data[0][0] == "string") {
+            arrays = _.map(data, string_array_to_rgb)
+        } else {
+        if(dimension == 1 && _.isNumber(data[0])) {
+            if(data.length != 3)
+                console.error("color expected to be of length 3", data)
+            arrays = new Float32Array([data[0], data[1], data[2]]) // no sequence, scalar
+        } else
+        if(dimension == 2 && _.isNumber(data[0][0])) {
+            arrays = rgb_array_to_rgb(data)
+        } else
+        if(dimension == 3 && _.isNumber(data[0][0][0])) {
+            arrays = _.map(data, rgb_array_to_rgb)
+        } else {
+            console.log("unhandled case for color")}
+        }
+    } else {
+        var nd = numpy_buffer_to_ndarray(data.buffer)
+        if(nd.shape.length == 3) { // convert to flattend list of arrays
+            arrays = []
+            for(var i = 0; i < nd.shape[0]; i++) {
+                var ar = nd.data.slice(i*nd.stride[0], (i+1)*nd.stride[0])
+                arrays.push(ar)
+            }
+        } else { // assume 2d... ?
+            arrays = [nd.data];
+        }
+    }
+    arrays.original_data = data;
+    return arrays;
+}
+
+
 function serialize_binary_array_or_json(obj, manager) {
-    if(obj)
-        return obj.original_data; // ftm we just feed back the original data, we don't modify currently
-   else
+    if(_.isNumber(obj)) return obj; // return numbers directly
+    if(obj != null) {
+        if(typeof obj.original_data == "undefined") // if someone modified the data from javascript land, we don't have this
+            return obj
+        else
+            return obj.original_data; // ftm we just feed back the original data, we don't modify currently
+    } else {
        return null;
+    }
 }
 
 function to_rgb(color) {
@@ -136,91 +409,12 @@ function get_array_dimension(array) {
     return dimension
 }
 
-function get_value_size(variable, sequence_index, default_function) {
-    if(typeof variable == "undefined") {
-        return default_function
-    } else {
-        var dimension = get_array_dimension(variable)
-        if(dimension == 0) {
-            return function(glyph_index) {
-                return variable
-            }
-        }
-        else if(dimension == 1) {
-            return function(glyph_index) {
-                return variable[glyph_index]
-            }
-        }
-        else if(dimension == 2) {
-            return function(glyph_index) {
-                return variable[sequence_index][glyph_index]
-            }
-        } else {
-            console.error("unknown array for size:", variable, 'with dimension', dimension)
-        }
-    }
+function is_typedarray(obj) {
+    return isTypedArray(obj)
 }
 
-
-function get_value_index_color(variable, index, max_count){
-    //Return a function that take the glyph_index as an argument and return the color
-    // It can deals with these 6 cases: which are threated in the same order
-    // shape is 0 dim, and it's a string, interpret as color
-    // shape is 1 dim, items are strings, seperate color for each item
-    // shape is 2 dim, items are strings, sequence of the above
-    // shape is 1 dim, items are floats, it should be of length 3 -> rgb values
-    // shape is 2 dim, items are float, it should be of shape (len(x), 3) -> rgb values
-    // shape is 3 dim, items are float, it should be (sequence_length, len(x), 3) -> rgb values
-
-
-    if (typeof variable == "string") {
-        //OD string
-        color =  to_rgb(variable)
-        return function(glyph_index){
-            return color
-        }
-    }
-    else if (typeof variable[0] == "string"){
-        //1D string
-        return function(glyph_index){
-            return to_rgb(variable[glyph_index])
-        }
-    }
-    else if (typeof variable[0][0] == "string"){
-        //2D string
-        if (typeof index == "undefined")
-            checked_index = 0
-        else
-            checked_index = Math.min(index,variable.length -1)
-
-        return function(glyph_index){
-            return  to_rgb(variable[checked_index][glyph_index])
-        }
-    }
-    else if (_.isNumber(variable[0])){
-        // 1d Numeric
-        return function(glyph_index){
-            return variable
-        }
-    }
-    else if(_.isNumber(variable[0][0])){
-        // 2d Numeric
-        return function(glyph_index){
-            return variable[glyph_index]
-        }
-    }
-    else if(_.isNumber(variable[0][0][0])){
-        // 3d numeric
-        if (typeof index == "undefined")
-            checked_index = 0
-        else
-            checked_index = Math.min(index,variable.length -1)
-
-        return function(glyph_index){
-            return variable[checked_index][glyph_index]
-        }
-    }
-
+function is_array_buffer(obj) {
+    return ArrayBuffer.isView(obj)
 }
 
 var TransferFunctionView = widgets.DOMWidgetView.extend( {
@@ -456,7 +650,7 @@ var ScatterView = widgets.WidgetView.extend( {
         this.create_mesh()
         this.add_to_scene()
         this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
-        this.model.on("change:geo", this.update, this)
+        this.model.on("change:geo", this.update_, this)
     },
     set_limits: function(limits) {
         _.mapObject(limits, function(value, key) {
@@ -475,270 +669,157 @@ var ScatterView = widgets.WidgetView.extend( {
         _.mapObject(this.model.changedAttributes(), function(val, key){
             console.log("changed " +key)
             this.previous_values[key] = this.model.previous(key)
+            // attributes_changed keys will say what needs to be animated, it's values are the properties in
+            // this.previous_values that need to be removed when the animation is done
             // we treat changes in _selected attributes the same
             var key_animation = key.replace("_selected", "")
-            if (key_animation == "sequence_index"){
-              pindex = this.model.previous("sequence_index")
-
-              if (this.model.get("x") && typeof this.model.get("x")[0][0] != "undefined" ) {
-                this.previous_values["x"] = this.model.get("x")[pindex]
-                this.attributes_changed["x"] =["x"]
-              }
-              if (this.model.get("y") && typeof this.model.get("y")[0][0] != "undefined" ) {
-                this.previous_values["y"] = this.model.get("y")[pindex]
-                this.attributes_changed["y"] =["y"]
-              }
-              if (this.model.get("z") && typeof this.model.get("z")[0][0] != "undefined" ) {
-                this.previous_values["z"] = this.model.get("z")[pindex]
-                this.attributes_changed["z"] =["z"]
-              }
-              if (this.model.get("vx") && typeof this.model.get("vx")[0][0] != "undefined" ) {
-                this.previous_values["vx"] = this.model.get("vx")[pindex]
-                this.attributes_changed["vx"] =["vx"]
-              }
-              if (this.model.get("vy") && typeof this.model.get("vy")[0][0] != "undefined" ) {
-                this.previous_values["vy"] = this.model.get("vy")[pindex]
-                this.attributes_changed["vy"] =["vy"]
-              }
-              if (this.model.get("vz") && typeof this.model.get("vz")[0][0] != "undefined" ) {
-                this.previous_values["vz"] = this.model.get("vz")[pindex]
-                this.attributes_changed["vz"] =["vz"]
-              }
-              if (this.model.get("size") && typeof this.model.get("size")[0] != "undefined" && typeof this.model.get("size")[0][0] != "undefined" ) {
-                this.previous_values["size"] = this.model.get("size")[pindex]
-                this.attributes_changed["size"] =["size"]
-              }
-
-              if (this.model.get("color") ) {
-                  color = this.model.get("color")
-                  if (typeof color == "string" || typeof color[0] == "string" || _.isNumber(color[0]) || _.isNumber(color[0][0])) {
-                      //0D or 1D
-                  }
-                  else {
-                        this.previous_values["color"] = this.model.get("color")[Math.min(pindex,color.length-1)]
-                        this.attributes_changed["color"] =["color"]
-                  }
-              }
-
-
-
+            if (key_animation == "sequence_index") {
+                var animated_by_sequence = ['x', 'y', 'z', 'vx', 'vy', 'vz', 'size', 'color']
+                _.each(animated_by_sequence, function(name) {
+                    if(_.isArray(this.model.get(name))) {
+                        this.attributes_changed[name] = [name, 'sequence_index']
+                    }
+                }, this)
             }
-	    else if(key_animation == "geo") {
+    	    else if(key_animation == "geo") {
                 // direct change, no animation
             }
-	    else if(key_animation == "selected") { // and no explicit animation on this one
+	        else if(key_animation == "selected") { // and no explicit animation on this one
                 this.attributes_changed["color"] = [key]
                 this.attributes_changed["size"] = []
             } else {
                 this.attributes_changed[key_animation] = [key]
                 // animate the size as well on x y z changes
-                if(["x", "y", "z", "vx", "vy", "vz","sequence_index"].indexOf(key) != -1) {
+                if(["x", "y", "z", "vx", "vy", "vz", 'color'].indexOf(key_animation) != -1) {
                     //console.log("adding size to list of changed attributes")
                     this.attributes_changed["size"] = []
                 }
 
             }
         }, this)
-        this.update()
+        this.update_()
     },
-    update: function() {
+    update_: function() {
         console.log("update scatter")
         this.remove_from_scene()
         this.create_mesh()
         this.add_to_scene()
         this.renderer.update()
     },
+    _get_value: function(value, index, default_value) {
+        var default_value = default_value;
+        if(!value)
+            return default_value
+        // it is either an array of typed arrays, or a list of numbers coming from the javascript world
+        if(_.isArray(value) && !_.isNumber(value[0]))
+            return value[index % value.length]
+        else
+            return value
+    },
+    get_current: function(name, index, default_value) {
+        return this._get_value(this.model.get(name), index, default_value)
+    },
+    get_previous: function(name, index, default_value) {
+        return this._get_value(this.previous_values[name] || this.model.get(name), index, default_value)
+    },
+    _get_value_vec3: function(value, index, default_value) {
+        var default_value = default_value;
+        if(!value)
+            return default_value
+        if(_.isArray(value))
+            return value[index % value.length]
+        else
+            return value
+    },
+    get_current_vec3: function(name, index, default_value) {
+        return this._get_value_vec3(this.model.get(name), index, default_value)
+    },
+    get_previous_vec3: function(name, index, default_value) {
+        return this._get_value_vec3(this.previous_values[name] || this.model.get(name), index, default_value)
+    },
     create_mesh: function() {
         console.log("previous values: ")
         console.log(this.previous_values)
+        console.log("attributes changed: ")
+        console.log(this.attributes_changed)
         var geo = this.model.get("geo")
         console.log(geo)
+
         if(!geo)
             geo = "diamond"
         var buffer_geo = new THREE.BufferGeometry().fromGeometry(this.geos[geo]);
         var instanced_geo = new THREE.InstancedBufferGeometry();
 
         var vertices = buffer_geo.attributes.position.clone();
-        instanced_geo.addAttribute( 'position', vertices );
+        instanced_geo.addAttribute('position', vertices);
 
-        var index = this.model.get("sequence_index");
+        var sequence_index = this.model.get("sequence_index");
+        var sequence_index_previous = this.previous_values["sequence_index"]
+        if(typeof sequence_index_previous == "undefined")
+            sequence_index_previous = sequence_index;
 
-        function get_value_index(variable, index){
-            if ( !variable){
-              // if undefined
-              return variable
-            }
-            if (typeof index != "undefined"  && typeof variable[0][0] != "undefined") {
-              // if two D
-              index1 = Math.min(index,variable.length - 1);
-              return variable[index1]
-            }
-            //1D
-            return variable
+        var scalar_names = ['x', 'y', 'z', 'vx', 'vy', 'vz', 'size', 'size_selected'];
+        var vector3_names = ['color', 'color_selected']
+        var current  = new Values(scalar_names, vector3_names, _.bind(this.get_current, this), sequence_index)
+        var previous = new Values(scalar_names, vector3_names, _.bind(this.get_previous, this), sequence_index_previous)
+
+        var length = Math.max(current.length, previous.length)
+        if(length == 0) {
+            console.error("no single member is an array, not supported (yet?)")
         }
 
-        var x = get_value_index(this.model.get("x"),index);
-        var y = get_value_index(this.model.get("y"),index);
-        var z = get_value_index(this.model.get("z"),index);
-        var vx = get_value_index(this.model.get("vx"),index);
-        var vy = get_value_index(this.model.get("vy"),index);
-        var vz = get_value_index(this.model.get("vz"),index);
 
-        //var has_previous_xyz = this.previous_values["x"] && this.previous_values["y"] && this.previous_values["z"]
-        var count = Math.min(x.length, y.length, z.length);
-        var vcount = 0
-        if(vx && vy && vz) {
-            vcount = Math.min(vx.length, vy.length, vz.length)
-            count = Math.min(count, vcount)
+        current.trim(current.length); // make sure all arrays are of equal length
+        previous.trim(previous.length)
+        var previous_length = previous.length;
+        var current_length = current.length;
+        if(this.model.get("selected") || this.previous_values["selected"]) {
+            // upgrade size and size_previous to an array if they were not already
+            current.ensure_array(['size', 'size_selected', 'color', 'color_selected'])
+            previous.ensure_array(['size', 'size_selected', 'color', 'color_selected'])
+            var selected = this.get_current('selected', sequence_index, []);
+            current.select(selected)
+            var selected = this.get_previous('selected', sequence_index_previous, []);
+            previous.select(selected)
         }
-        vx = vx || [];
-        vy = vy || [];
-        vz = vz || [];
-
-        var count_previous = count;
-        console.log("count: " +count)
-        if(this.previous_values["x"])
-            count_previous = Math.min(this.previous_values["x"].length, count_previous)
-        if(this.previous_values["y"])
-            count_previous = Math.min(this.previous_values["y"].length, count_previous)
-        if(this.previous_values["z"])
-            count_previous = Math.min(this.previous_values["z"].length, count_previous)
-        console.log("count_previous: " +count_previous)
-        var max_count = Math.max(count, count_previous);
-        console.log("max_count: " +max_count)
-        //previous offsets
-        var x_previous = this.previous_values["x"] || x;
-        var y_previous = this.previous_values["y"] || y;
-        var z_previous = this.previous_values["z"] || z;
-        var vcount_previous = vcount;
-        console.log("vcount: " +vcount)
-        if(this.previous_values["vx"])
-            count_previous = Math.min(this.previous_values["vx"].length, vcount_previous)
-        if(this.previous_values["vy"])
-            count_previous = Math.min(this.previous_values["vy"].length, vcount_previous)
-        if(this.previous_values["vz"])
-            count_previous = Math.min(this.previous_values["vz"].length, vcount_previous)
-        console.log("vcount_previous: " +vcount_previous)
-        var vmax_count = Math.max(vcount, vcount_previous);
-        console.log("vmax_count: " +vmax_count)
-
-        //previous offsets
-        var vx_previous = this.previous_values["vx"] || vx;
-        var vy_previous = this.previous_values["vy"] || vy;
-        var vz_previous = this.previous_values["vz"] || vz;
-
-
-        // offsets
-        var offsets = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
-        var offsets_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
-	    for(var i = 0; i < max_count; i++) {
-	        if(i < count)
-	            offsets.setXYZ(i, x[i], y[i], z[i]);
-	        else
-	            offsets.setXYZ(i, x_previous[i], y_previous[i], z_previous[i]);
-	        if(i < count_previous)
-	            offsets_previous.setXYZ(i, x_previous[i], y_previous[i], z_previous[i]);
-	        else
-	            offsets_previous.setXYZ(i, x[i], y[i], z[i]);
-	    }
-        instanced_geo.addAttribute( 'position_offset', offsets );
-        instanced_geo.addAttribute( 'position_offset_previous', offsets_previous );
-
-        // vectors
-        var vector = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
-        var vector_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
-        for(var i = 0; i < max_count; i++) {
-            if(i < vcount)
-                vector.setXYZ(i, vx[i], vy[i], vz[i]);
-            else
-                vector.setXYZ(i, 0, 1, 0);
-            if(i < vcount_previous)
-                vector_previous.setXYZ(i, vx_previous[i], vy_previous[i], vz_previous[i]);
-            else
-                vector_previous.setXYZ(i, 0, 1, 0);
+        // if we have a change in length, we use size to fade in/out particles, so make sure they are arrays
+        if(current.length != previous.length) {
+            current.ensure_array('size')
+            previous.ensure_array('size')
         }
-        instanced_geo.addAttribute( 'vector', vector );
-        instanced_geo.addAttribute( 'vector_previous', vector_previous );
+        if(current.length > previous.length) { // grow..
+            previous.pad(current)
+            previous.array['size'].fill(0, previous_length); // this will make them smoothly fade in
+        } else if(current.length < previous.length) { // shrink..
+            current.pad(previous)
+            current.array['size'].fill(0, current_length); // this will make them smoothly fade out
+        }
+        // we are only guaranteed to have 16 attributes for the shader, so better merge some into single vectors
+        current.merge_to_vec3(['vx', 'vy', 'vz'], 'v')
+        previous.merge_to_vec3(['vx', 'vy', 'vz'], 'v')
 
-        var selected = this.model.get("selected") || []
-        var selected_previous = "selected" in this.previous_values ? this.previous_values["selected"] : selected;
-        if(!selected_previous)
-            selected_previous = []
+        // we don't want to send these to the shader, these are handled at the js side
+        current.pop(['size_selected', 'color_selected'])
+        previous.pop(['size_selected', 'color_selected'])
 
-        var scales = new THREE.InstancedBufferAttribute(new Float32Array( max_count ), 1, 1);
-        var scales_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count ), 1, 1);
-        var size = get_value_size(this.model.get("size"), index)
-        var size_previous = get_value_size(this.previous_values["size"], index, size)
-        var size_selected = get_value_size(this.model.get("size_selected"), index)
-        var size_selected_previous = get_value_size(this.previous_values["size_selected"], index, size_selected);
+        // add atrributes to the geometry, this makes the available to the shader
+        current.add_attributes(instanced_geo)
+        previous.add_attributes(instanced_geo, '_previous')
 
-	    for(var i = 0; i < max_count; i++) {
-	        var cur_size = size(i);
-	        var cur_size_previous = size_previous(i);
-	        if(selected.indexOf(i) != -1)
-	            cur_size = size_selected(i)
-	        if(selected_previous.indexOf(i) != -1)
-	            cur_size_previous = size_selected_previous(i)
-	        if(i < count)
-    	        scales.setX(i, cur_size/100.); // sizes are in percentages, but in viewport it's normalized
-    	    else
-    	        scales.setX(i, 0.);
-	        if(i < count_previous)
-    	        scales_previous.setX(i, cur_size_previous/100.);
-    	    else
-    	        scales_previous.setX(i, 0.);
-	    }
-        instanced_geo.addAttribute( 'scale', scales);
-        instanced_geo.addAttribute( 'scale_previous', scales_previous);
-
-        // colors
-        var colors = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
-        var colors_previous = new THREE.InstancedBufferAttribute(new Float32Array( max_count * 3 ), 3, 1);
-
-        Color = get_value_index_color(this.model.get("color"),index,max_count)
-
-        Color_previous = Color;
-        if("color" in this.previous_values)
-            Color_previous = get_value_index_color(this.previous_values["color"],this.previous_values["index"],max_count)
-
-        var color_selected = to_rgb(this.model.get("color_selected"))
-        var color_selected_previous = "color_selected" in this.previous_values ? to_rgb(this.previous_values["color_selected"]) : color_selected;
-        if(!color_selected_previous)
-            color_selected_previous = color_selected;
-
-  	    for(var i = 0; i < max_count; i++) {
-
-  	        var cur_color = Color(i);
-
-  	        if(selected.indexOf(i) != -1)
-  	            cur_color = color_selected
-
-     	      colors.setXYZ(i, cur_color[0], cur_color[1], cur_color[2]);
-
-            var cur_color_previous = Color_previous(i);
-
-  	        if(selected_previous.indexOf(i) != -1)
-  	            cur_color_previous = color_selected_previous
-     	      colors_previous.setXYZ(i, cur_color_previous[0], cur_color_previous[1], cur_color_previous[2]);
-  	    }
-
-
-        instanced_geo.addAttribute( 'color', colors );
-        instanced_geo.addAttribute( 'color_previous', colors_previous );
-	    this.mesh = new THREE.Mesh( instanced_geo, this.material );
+	    this.mesh = new THREE.Mesh(instanced_geo, this.material );
 	    this.mesh.material_rgb = this.material_rgb
 	    this.mesh.material_normal = this.material
 
         _.mapObject(this.attributes_changed, function(changed_properties, key){
             var property = "animation_time_" + key
+            console.log("animating", key)
             var done = function done() {
                 _.each(changed_properties, function clear(prop) {
-                    delete this.previous_values[prop]
+                    delete this.previous_values[prop] // may happen multiple times, that is ok
                 }, this)
             }
-            this.renderer.transition(this.material    .uniforms[property], "value", done, this)
-            // no need anymore, uniforms of rgb has a reference too material's
-            //this.renderer.transition(this.material_rgb.uniforms[property], "value", done, this)
+            // uniforms of material_rgb has a reference to these same object
+            this.renderer.transition(this.material.uniforms[property], "value", done, this)
         }, this)
         this.attributes_changed = {}
     }
@@ -1604,6 +1685,12 @@ var ScatterModel = widgets.WidgetModel.extend({
         vx: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
         vy: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
         vz: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+        selected: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+        size: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+        size_selected: { deserialize: binary_array_or_json, serialize: serialize_binary_array_or_json },
+        color: { deserialize: binary_color_array_or_json, serialize: serialize_binary_array_or_json },
+        color_selected: { deserialize: binary_color_array_or_json, serialize: serialize_binary_array_or_json },
+        color_selected: { deserialize: binary_color_array_or_json, serialize: serialize_binary_array_or_json },
     }, widgets.WidgetModel.serializers)
 });
 
