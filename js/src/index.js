@@ -9,5 +9,5 @@ __webpack_public_path__ = document.querySelector('body').getAttribute('data-base
 
 var _ = require('underscore')
 // Export widget models and views, and the npm package version number.
-module.exports = _.extend({}, require('./volume.js'), require('./tf.js'), require('./scatter.js'));
+module.exports = _.extend({}, require('./figure.js'), require('./tf.js'), require('./scatter.js'));
 module.exports['version'] = require('../package.json').version;
