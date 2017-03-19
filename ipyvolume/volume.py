@@ -47,11 +47,11 @@ class Scatter(widgets.DOMWidget):
 
 
 @widgets.register('ipyvolume.VolumeRendererThree')
-class VolumeRendererThree(widgets.DOMWidget):
+class Figure(widgets.DOMWidget):
     """Widget class representing a volume (rendering) using three.js"""
-    _view_name = Unicode('VolumeRendererThreeView').tag(sync=True)
+    _view_name = Unicode('FigureView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
-    _model_name = Unicode('VolumeRendererThreeModel').tag(sync=True)
+    _model_name = Unicode('FigureModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
 
     volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_png_serialization)
@@ -217,7 +217,7 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
-    v = VolumeRendererThree(volume_data=data, data_min=data_min, data_max=data_max, stereo=stereo,
+    v = Figure(volume_data=data, data_min=data_min, data_max=data_max, stereo=stereo,
                             width=width, height=height,
                             ambient_coefficient=ambient_coefficient,
                             diffuse_coefficient=diffuse_coefficient,

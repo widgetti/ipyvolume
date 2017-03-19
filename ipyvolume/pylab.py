@@ -48,7 +48,7 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, debug=
 		current.figure = current.figures[key]
 		current.container = current.containers[key]
 	else:
-		current.figure = volume.VolumeRendererThree(volume_data=None, width=width, height=height, **kwargs)
+		current.figure = volume.Figure(volume_data=None, width=width, height=height, **kwargs)
 		current.container = ipywidgets.VBox()
 		current.container.children = [current.figure]
 		if key is not None:

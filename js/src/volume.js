@@ -63,7 +63,7 @@ function bind_d3(f, context) {
     }
 }
 
-var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
+var FigureView = widgets.DOMWidgetView.extend( {
     render: function() {
         this.transitions = []
         this._update_requested = false
@@ -845,11 +845,11 @@ var VolumeRendererThreeView = widgets.DOMWidgetView.extend( {
     }
 });
 
-var VolumeRendererThreeModel = widgets.DOMWidgetModel.extend({
+var FigureModel = widgets.DOMWidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
-            _model_name : 'VolumeRendererThreeModel',
-            _view_name : 'VolumeRendererThreeView',
+            _model_name : 'FigureModel',
+            _view_name : 'FigureView',
             _model_module : 'ipyvolume',
             _view_module : 'ipyvolume',
             _model_module_version: semver_range,
@@ -909,8 +909,8 @@ var WidgetManagerHackModel = widgets.WidgetModel.extend({
 });
     return {
         WidgetManagerHackModel: WidgetManagerHackModel,
-        VolumeRendererThreeView: VolumeRendererThreeView,
-        VolumeRendererThreeModel: VolumeRendererThreeModel,
+        FigureModel: FigureModel,
+        FigureView: FigureView,
     };
 
 
