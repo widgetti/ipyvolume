@@ -1,6 +1,8 @@
 import logging
 import numpy as np
 import math
+from ipython_genutils.py3compat import string_types, PY3
+
 logger = logging.getLogger("ipyvolume")
 try:
 	from io import BytesIO as StringIO # python3
@@ -84,17 +86,37 @@ def array_to_json(ar, obj=None):
 def array_to_binary_or_json(ar, obj=None):
 	if ar is None:
 		return None
-	elif performance == 0:
+	element = ar
+	try:
+		while True:
+			element = element[0]
+	except:
+		pass
+	if isinstance(element, string_types):
+		return array_to_json(ar)
+
+	def js_safe_array(ar):
+		if ar.dtype.kind not in ['u', 'i', 'f']: # ints and floats
+			raise ValueError("unsupported dtype: %s" % (ar.dtype))
+		if ar.dtype == np.float64:  # WebGL does not support float64, case it here
+			ar = ar.astype(np.float32)
+		if ar.dtype == np.int64:  # JS does not support int64
+			ar = ar.astype(np.int32)
+		return ar
+
+	if performance == 0:
 		return array_to_json(ar, obj=obj)
 	elif performance == 1:
-		ar = np.array(ar, dtype=np.float32) # this mode only support 'regular' arrays
-		#known_type = ["|u1", "|i1", "<u2", "<i2", "<u4", "<i4", "<f4", "<f8"]
-		#if ar.dtype in known_type and len(ar.shape) <= 2:
-		iobyte = StringIO()
-		np.save(iobyte, ar)
-		return iobyte.getvalue()
-		#else:
-		#	return ar.tolist()
+		ar = np.array(ar) # this mode only support 'regular' arrays
+		if ar.dtype.kind in ['u', 'i', 'f']: # ints and floats
+			ar = js_safe_array(ar)
+			iobyte = StringIO()
+			if not ar.flags["C_CONTIGUOUS"]: # make sure it's contiguous
+				ar = np.ascontiguousarray(ar)
+			np.save(iobyte, ar)
+			return iobyte.getvalue()
+		else:
+			return array_to_json(ar)
 	elif performance == 2:
 		if ar is not None:
 			#ar = ar.astype(np.float64)
@@ -102,9 +124,9 @@ def array_to_binary_or_json(ar, obj=None):
 			#return []{'data': mv, 'shape': ar.shape}
 			if isinstance(ar, (list, tuple, np.ndarray)): # ok, at least 1d
 				if isinstance(ar[0], (list, tuple, np.ndarray)): # ok, 2d
-					return [memoryview(ar[k].astype(np.float32)) for k in range(len(ar))]
+					return [memoryview(js_safe_array(ar)) for k in range(len(ar))]
 				else:
-					return [memoryview(ar.astype(np.float32))]
+					return [memoryview(js_safe_array(ar))]
 			else:
 				raise ValueError("Expected a sequence, got %r", ar)
 		else:
