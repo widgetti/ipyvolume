@@ -16,7 +16,6 @@ require("./three/TrackballControls.js")
 require("./three/DeviceOrientationControls.js")
 require("./three/StereoEffect.js")
 require("./three/THREEx.FullScreen.js")
-isTypedArray = require('is-typedarray')
 ndarray = require('ndarray')
 
 function is_ndarray(obj) {
