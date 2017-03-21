@@ -1,5 +1,6 @@
 import json
 import ipywidgets
+import numpy as np
 
 template = """<!DOCTYPE html>
 <html lang="en">
@@ -28,6 +29,15 @@ widget_view_template = """<script type="application/vnd.jupyter.widget-view+json
 }}
 </script>"""
 
+key_to_json = ["x","y","z","vx","vy","vz","selected","color","color_selected","size","size_selected"]
+
+def to_json(value):
+
+    if type(value) == bytes:
+        return np.load(value)
+    if type(value) == np.ndarray:
+        return value.tolist()
+    return value
 
 def get_state(widget, store=None, drop_defaults=False):
     if store is None:
@@ -41,6 +51,11 @@ def get_state(widget, store=None, drop_defaults=False):
     }
     for key, value in state.items():
         value = getattr(widget, key)
+
+        if key in key_to_json:
+            value = to_json(value)
+            store[widget.model_id]["state"][key] = value
+
         if isinstance(value, ipywidgets.Widget):
             get_state(value, store, drop_defaults=drop_defaults)
         elif isinstance(value, (list, tuple)):
