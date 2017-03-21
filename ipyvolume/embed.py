@@ -97,16 +97,18 @@ def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolu
         # collect the state of all relevant widgets
         state = {}
         previous = 0 + ipyvolume.serialize.performance
-        ipyvolume.serialize.performance = 0
-        if all:
-            state = ipywidgets.Widget.get_manager_state(drop_defaults=drop_defaults)["state"]
-        for widget in widgets:
-            if not all:
-                get_state(widget, state, drop_defaults=drop_defaults)
-        # it may be that other widgets refer to the collected widgets, such as layouts, include those as well
-        while add_referring_widgets(state):
-            pass
-        ipyvolume.serialize.performance = previous
+        try:
+            ipyvolume.serialize.performance = 0
+            if all:
+                state = ipywidgets.Widget.get_manager_state(drop_defaults=drop_defaults)["state"]
+            for widget in widgets:
+                if not all:
+                    get_state(widget, state, drop_defaults=drop_defaults)
+            # it may be that other widgets refer to the collected widgets, such as layouts, include those as well
+            while add_referring_widgets(state):
+                pass
+        finally:
+            ipyvolume.serialize.performance = previous
 
         values = dict(extra_script_head="", body_pre="", body_post="")
         values.update(kwargs)
