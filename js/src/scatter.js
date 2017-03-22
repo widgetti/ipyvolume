@@ -100,6 +100,7 @@ var ScatterView = widgets.WidgetView.extend( {
     on_change: function(attribute) {
         _.mapObject(this.model.changedAttributes(), function(val, key){
             console.log("changed " +key)
+            console.log(this.model.get("x"),this.model.get("xx"))
             this.previous_values[key] = this.model.previous(key)
             // attributes_changed keys will say what needs to be animated, it's values are the properties in
             // this.previous_values that need to be removed when the animation is done
@@ -257,6 +258,16 @@ var ScatterView = widgets.WidgetView.extend( {
     }
 });
 
+var Data = Backbone.Model.extend();
+   var ValueCollection = Backbone.Collection.extend({
+       model: Data,
+       url: "data.json",
+       parse: function (response) {
+           return response.data
+       }
+   });
+
+
 var ScatterModel = widgets.WidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.WidgetModel.prototype.defaults(), {
@@ -273,7 +284,29 @@ var ScatterModel = widgets.WidgetModel.extend({
             geo: 'diamond',
             sequence_index: 0
         })
-    }}, {
+    },
+    initialize : function(options) {
+          console.log("Initialize")
+          ScatterModel.__super__.initialize.apply(this, arguments);
+
+          var loading = new ValueCollection ()
+          //debugger;
+          loading.fetch()
+           this.listenToOnce(loading, "sync", function(){
+               var data = loading.toJSON()[0]
+               console.log(this.get("x"))
+               var new_x = Array()
+               for(var i=0; i < data.x.length; i++) {
+                  new_x[i] = Float32Array.from(data.x[i])
+               }
+               this.set({x:  new_x})
+               console.log(this.get("x"))
+
+               console.log("syinc")
+           })
+           this.set({loading:loading})
+      }
+  }, {
     serializers: _.extend({
         x: serialize.array_or_json,
         y: serialize.array_or_json,
