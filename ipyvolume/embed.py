@@ -88,7 +88,7 @@ def add_referring_widgets(states, drop_defaults=False):
 
                                 #get_state(value, store, drop_defaults=drop_defaults)
     return found_new
-def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolume embed example", template=template, **kwargs):
+def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolume embed example", template=template, inside=False, **kwargs):
     try:
         widgets[0]
     except (IndexError, TypeError):
@@ -109,6 +109,31 @@ def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolu
                 pass
         finally:
             ipyvolume.serialize.performance = previous
+
+        # get the module that we will store in other file:
+        for k in state.keys():
+            if "IPY_MODEL" in state[k]["state"].get("layout", "") and  \
+               "ScatterView" in state[k]["state"].get("_view_name", ""):
+                if state[k]["state"]["embed"] is None or inside:
+                    # Do nothing
+                    continue
+
+                if state[k]["state"]["embed"] == "":
+                    # Generate automaticaly a "unique" name for the json
+                    filename = "data_" + state[k]["state"]["layout"].split("_")[-1] + ".json"
+                    state[k]["state"]["embed"] = filename
+                else:
+                    # or give it the name defined by user
+                    filename = state[k]["state"]["embed"]
+
+                # Get the data
+                data = ["x","y","z","vx","vy","vz","color","sequence_index"]
+                json_data = {"data": {}}
+                for key in data:
+                    json_data["data"][key] = state[k]["state"].pop(key)
+
+                with open(filename, "w") as json_f:
+                    json_f.write(json.dumps(json_data))
 
         values = dict(extra_script_head="", body_pre="", body_post="")
         values.update(kwargs)
