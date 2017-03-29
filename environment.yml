@@ -4,5 +4,4 @@ channels:
 dependencies:
  - ipyvolume
  - scipy
- - pip:
-   - ipywidgets>=6.0.0.b5
+ - ipywidgets>=6.0.0
