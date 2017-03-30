@@ -257,6 +257,16 @@ var ScatterView = widgets.WidgetView.extend( {
     }
 });
 
+var Data = Backbone.Model.extend();
+ var ValueCollection = Backbone.Collection.extend({
+     model: Data,
+     url: "data.json",
+     parse: function (response) {
+         return response.data
+     }
+ });
+
+
 var ScatterModel = widgets.WidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.WidgetModel.prototype.defaults(), {
@@ -273,7 +283,48 @@ var ScatterModel = widgets.WidgetModel.extend({
             geo: 'diamond',
             sequence_index: 0
         })
-    }}, {
+    },
+    initialize : function(options) {
+           console.log("Initialize")
+           ScatterModel.__super__.initialize.apply(this, arguments);
+
+           var loading = new ValueCollection ()
+           //loading.fetch()
+           if ( !( _.isEmpty(this.get("embed")) || typeof this.get("embed") == "undefined")){
+              loading.url = this.get("embed")
+              //Provide default value to start the rendering meanwhile
+              this.set("x",serialize.deserialize_array_or_json([[0,0,1],[0,0,1]]))
+              this.set("y",serialize.deserialize_array_or_json([[1,0,0],[0,0,1]]))
+              this.set("z",serialize.deserialize_array_or_json([[0,0,0],[0,0,0]]))
+
+              loading.fetch( )
+            }
+           this.listenToOnce(loading, "sync", function(){
+              var data = loading.toJSON()[0]
+              //console.log(data, data["x"])
+              to_load = ["x","y","z","vx","vy","vz","color","sequence_index"]
+
+              _.each(to_load , function(attribute){
+                    console.log(attribute)
+                     if (typeof data[attribute] != "undefined"){
+                         //Get the different types
+                        var loadedValue
+                        if (attribute == "color")
+                            loadedValue = serialize.deserialize_color_or_json(data[attribute])
+                        else
+                            loadedValue = serialize.deserialize_array_or_json(data[attribute])
+
+                         console.log(loadedValue)
+                         this.set({[attribute]: loadedValue})
+                    }
+               },this)
+               //console.log(this.get("x"))
+
+               //console.log("syinc")
+           })
+           this.set({loading:loading})
+      }
+  }, {
     serializers: _.extend({
         x: serialize.array_or_json,
         y: serialize.array_or_json,

@@ -22,6 +22,7 @@ class Scatter(widgets.DOMWidget):
     _view_module = Unicode('ipyvolume').tag(sync=True)
     _model_name = Unicode('ScatterModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
+    embed = Unicode('', allow_none=True).tag(sync=True)
     x = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('x'))
     y = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('y'))
     z = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('z'))
