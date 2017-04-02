@@ -150,6 +150,15 @@ def create_array_binary_serialization(attrname, update_from_js=False):
 			return getattr(obj, attrname) # ignore what we got send back, it is not supposed to be changing
 	return dict(to_json=array_to_binary_or_json, from_json=from_json_to_array)
 
+def create_array_cube_png_serialization(attrname, update_from_js=False):
+	def fixed(value, obj=None):
+		if update_from_js: # for some values we may want updates from the js side
+			return from_json(value)
+		else: # otherwise we probably get updates due to a bug in ipywidgets
+			return getattr(obj, attrname) # ignore what we got send back, it is not supposed to be changing
+	return dict(to_json=cube_to_json, from_json=fixed)
+
+
 array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
 array_rgba_png_serialization = dict(to_json=rgba_to_json, from_json=from_json)
 array_serialization = dict(to_json=array_to_json, from_json=from_json_to_array)

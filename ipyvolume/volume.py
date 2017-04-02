@@ -7,7 +7,7 @@ from traittypes import Array
 import logging
 import numpy as np
 from .serialize import array_cube_png_serialization, array_serialization, array_binary_serialization, \
-    create_array_binary_serialization
+    create_array_binary_serialization, create_array_cube_png_serialization
 from .transferfunction import *
 import warnings
 import ipyvolume
@@ -54,7 +54,7 @@ class Figure(widgets.DOMWidget):
     _model_name = Unicode('FigureModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
 
-    volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_png_serialization)
+    volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **create_array_cube_png_serialization('volume_data'))
     data_min = traitlets.CFloat().tag(sync=True)
     data_max = traitlets.CFloat().tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
