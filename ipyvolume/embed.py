@@ -1,6 +1,10 @@
 import json
 import ipywidgets
+<<<<<<< HEAD
 import os
+=======
+import ipyvolume
+>>>>>>> 6af7ed66dface6a97761ab638646fb68452d727e
 
 template = """<!DOCTYPE html>
 <html lang="en">
@@ -125,14 +129,20 @@ def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolu
     with open(filename, "w") as f:
         # collect the state of all relevant widgets
         state = {}
-        if all:
-            state = ipywidgets.Widget.get_manager_state(drop_defaults=drop_defaults)["state"]
-        for widget in widgets:
-            if not all:
-                get_state(widget, state, drop_defaults=drop_defaults)
-        # it may be that other widgets refer to the collected widgets, such as layouts, include those as well
-        while add_referring_widgets(state):
-            pass
+        previous = 0 + ipyvolume.serialize.performance
+        try:
+            ipyvolume.serialize.performance = 0
+            if all:
+                state = ipywidgets.Widget.get_manager_state(drop_defaults=drop_defaults)["state"]
+            for widget in widgets:
+                if not all:
+                    get_state(widget, state, drop_defaults=drop_defaults)
+            # it may be that other widgets refer to the collected widgets, such as layouts, include those as well
+            while add_referring_widgets(state):
+                pass
+        finally:
+            ipyvolume.serialize.performance = previous
+
         values = dict(extra_script_head="", body_pre="", body_post="")
         values.update(kwargs)
         widget_views = ""
@@ -150,4 +160,3 @@ def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolu
                            widget_views=widget_views))
         html_code = template.format(**values)
         f.write(html_code)
-
