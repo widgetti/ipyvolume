@@ -1,10 +1,7 @@
+import os
 import json
 import ipywidgets
-<<<<<<< HEAD
-import os
-=======
 import ipyvolume
->>>>>>> 6af7ed66dface6a97761ab638646fb68452d727e
 
 template = """<!DOCTYPE html>
 <html lang="en">
@@ -131,6 +128,8 @@ def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolu
         state = {}
         previous = 0 + ipyvolume.serialize.performance
         try:
+            # we cannot serialize binary buffers yet into the json format, so go back to json
+            # style, and afterwards set it back
             ipyvolume.serialize.performance = 0
             if all:
                 state = ipywidgets.Widget.get_manager_state(drop_defaults=drop_defaults)["state"]
