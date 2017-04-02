@@ -269,13 +269,13 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
 	:param controls: add controls for lighting and transfer function or not
 	:return:
 	"""
+	vol = gcf()
 	if tf is None:
-		tf = transfer_function(level, opacity, level_width, controls=controls)
+		tf = vol.tf or transfer_function(level, opacity, level_width, controls=controls)
 	if data_min is None:
 		data_min = np.nanmin(data)
 	if data_max is None:
 		data_max = np.nanmax(data)
-	vol = gcf()
 	vol.tf = tf
 	vol.data_min = data_min
 	vol.data_max = data_max
