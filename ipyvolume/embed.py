@@ -1,5 +1,6 @@
 import json
 import ipywidgets
+import os
 
 template = """<!DOCTYPE html>
 <html lang="en">
@@ -27,6 +28,35 @@ widget_view_template = """<script type="application/vnd.jupyter.widget-view+json
     "model_id": "{model_id}"
 }}
 </script>"""
+
+
+template_external = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{title}</title>
+{extra_script_head}
+</head>
+<body>
+{body_pre}
+
+<script src="https://unpkg.com/jupyter-js-widgets@~2.0.20/dist/embed.js"></script>
+<script type="javascript">
+widget_data = {json_data}
+</script>
+{widget_views}
+
+{body_post}
+</body>
+</html>
+"""
+
+widget_view_template_external = """<script type="javascript">
+widget_views = {{
+    "model_id": "{model_id}"
+}}
+</script>"""
+
 
 
 def get_state(widget, store=None, drop_defaults=False):
@@ -87,7 +117,7 @@ def add_referring_widgets(states, drop_defaults=False):
 
                                 #get_state(value, store, drop_defaults=drop_defaults)
     return found_new
-def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolume embed example", template=template, **kwargs):
+def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolume embed example", external_json=False, template=template, widget_view_template=widget_view_template, **kwargs):
     try:
         widgets[0]
     except (IndexError, TypeError):
@@ -108,8 +138,16 @@ def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolu
         widget_views = ""
         for widget in widgets:
             widget_views += widget_view_template.format(**dict(model_id=widget.model_id))
-        values.update(dict(title=title,
-                      json_data=json.dumps(dict(version_major=1, version_minor=0, state=state)),
+        json_data = dict(version_major=1, version_minor=0, state=state)
+        if external_json:
+            filename_base = os.path.splitext(filename)[0]
+            with open(filename_base+".json", "w") as fjson:
+                json.dump(json_data, fjson)
+            values.update(dict(title=title, widget_views=widget_views))
+        else:
+            values.update(dict(title=title,
+                      json_data=json.dumps(json_data),
                            widget_views=widget_views))
         html_code = template.format(**values)
         f.write(html_code)
+
