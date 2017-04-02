@@ -27,6 +27,10 @@ function Values(names, names_vec3, getter, sequence_index) {
     }, this)
     _.each(names_vec3, function(name) {
         var value = getter(name, sequence_index, defaults[name]);
+        if(name.indexOf('color') != -1  && typeof value == "string") { // special case to support controlling color from a widget
+            var color = new THREE.Color(value)
+            value = new Float32Array([color.r, color.g, color.b]) // no sequence, scalar
+        }
         if(utils.is_typedarray(value) && value.length > 3) { // single value is interpreted as scalar
             this.array_vec3[name] = value
             this.length = Math.min(this.length, value.length/3)

@@ -124,8 +124,9 @@ function deserialize_color_or_json(data, manager) {
     }
 
     if (typeof data == "string") { // single color
-        var color = new THREE.Color(data)
-        arrays = new Float32Array([color.r, color.g, color.b]) // no sequence, scalar
+        //var color = new THREE.Color(data)
+        //arrays = new Float32Array([color.r, color.g, color.b]) // no sequence, scalar
+        arrays = data; // special case, if we keep it a string, we can control it via colorppicker
     } else
     if(utils.is_typedarray(data)) {
         return data
