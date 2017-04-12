@@ -15,6 +15,7 @@ import ipyvolume
 logger = logging.getLogger("ipyvolume")
 
 _last_volume_renderer = None
+semver_range_frontend = "~" + ipyvolume.__version__
 
 @widgets.register('ipyvolume.Scatter')
 class Scatter(widgets.DOMWidget):
@@ -22,6 +23,8 @@ class Scatter(widgets.DOMWidget):
     _view_module = Unicode('ipyvolume').tag(sync=True)
     _model_name = Unicode('ScatterModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
     x = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('x'))
     y = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('y'))
     z = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('z'))
@@ -53,6 +56,8 @@ class Figure(widgets.DOMWidget):
     _view_module = Unicode('ipyvolume').tag(sync=True)
     _model_name = Unicode('FigureModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
     volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **create_array_cube_png_serialization('volume_data'))
     data_min = traitlets.CFloat().tag(sync=True)
