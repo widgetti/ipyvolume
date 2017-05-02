@@ -46,6 +46,7 @@ class Scatter(widgets.DOMWidget):
                              Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('color_selected'))],
                              default_value="green").tag(sync=True)
     geo = traitlets.Unicode('diamond').tag(sync=True)
+    connected = traitlets.CBool(default_value=False).tag(sync=True)
 
 
 

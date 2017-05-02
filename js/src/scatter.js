@@ -79,10 +79,23 @@ var ScatterView = widgets.WidgetView.extend( {
             vertexShader: "#define USE_RGB\n"+require('../glsl/scatter-vertex.glsl'),
             fragmentShader: "#define USE_RGB\n"+require('../glsl/scatter-fragment.glsl')
             })
+
+        this.line_material = new THREE.RawShaderMaterial({
+            uniforms: this.material.uniforms,
+            vertexShader:   "#define AS_LINE\n"+require('../glsl/scatter-vertex.glsl'),
+            fragmentShader: "#define AS_LINE\n"+require('../glsl/scatter-fragment.glsl')
+            })
+
+        this.line_material_rgb = new THREE.RawShaderMaterial({
+            uniforms: this.material.uniforms,
+            vertexShader:   "#define AS_LINE\n#define USE_RGB\n"+require('../glsl/scatter-vertex.glsl'),
+            fragmentShader: "#define AS_LINE\n#define USE_RGB\n"+require('../glsl/scatter-fragment.glsl')
+            })
+
         this.create_mesh()
         this.add_to_scene()
         this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
-        this.model.on("change:geo", this.update_, this)
+        this.model.on("change:geo change:connected", this.update_, this)
     },
     set_limits: function(limits) {
         _.mapObject(limits, function(value, key) {
@@ -91,11 +104,18 @@ var ScatterView = widgets.WidgetView.extend( {
     },
     add_to_scene: function() {
         console.log("add")
-        console.log(this.mesh)
         this.renderer.scene_scatter.add(this.mesh)
+        console.log(this.mesh, this.line_segments)
+        if(this.line_segments) {
+            console.log('add line segments')
+            this.renderer.scene_scatter.add(this.line_segments)
+        }
     },
     remove_from_scene: function() {
         this.renderer.scene_scatter.remove(this.mesh)
+        if(this.line_segments) {
+            this.renderer.scene_scatter.remove(this.line_segments)
+        }
     },
     on_change: function(attribute) {
         _.mapObject(this.model.changedAttributes(), function(val, key){
@@ -242,6 +262,38 @@ var ScatterView = widgets.WidgetView.extend( {
 	    this.mesh.material_rgb = this.material_rgb
 	    this.mesh.material_normal = this.material
 
+
+        if(this.model.get('connected')) {
+            var geometry = new THREE.BufferGeometry();
+
+            current.merge_to_vec3(['x', 'y', 'z'], 'vertices')
+            previous.merge_to_vec3(['x', 'y', 'z'], 'vertices')
+            geometry.addAttribute('position', new THREE.BufferAttribute(current.array_vec3['vertices'], 3))
+            geometry.addAttribute('position_previous', new THREE.BufferAttribute(previous.array_vec3['vertices'], 3))
+
+            current.ensure_array(['color'])
+            previous.ensure_array(['color'])
+            geometry.addAttribute('color', new THREE.BufferAttribute(current.array_vec3['color'], 3))
+            geometry.addAttribute('color_previous', new THREE.BufferAttribute(previous.array_vec3['color'], 3))
+            //material = new THREE.LineBasicMaterial( {  linewidth: 1, vertexColors: THREE.VertexColors } );
+
+            /*var geometry = new THREE.Geometry();
+            var vs = current.array_vec3['vertices'];
+            //this.material.uniforms[key].value = value
+            for ( i = 0; i < vs.length/3; i ++ ) {
+                var vertex1 = new THREE.Vector3();
+                vertex1.x = vs[i*3+0];
+                vertex1.y = vs[i*3+1];
+                vertex1.z = vs[i*3+2];
+                geometry.vertices.push( vertex1 );
+
+            }*/
+            this.line_segments = new THREE.Line(geometry, this.line_material);
+            console.log('create line segments')
+        } else {
+            this.line_segments = null;
+        }
+
         _.mapObject(this.attributes_changed, function(changed_properties, key){
             var property = "animation_time_" + key
             console.log("animating", key)
@@ -271,7 +323,8 @@ var ScatterModel = widgets.WidgetModel.extend({
             color: "red",
             color_selected: "white",
             geo: 'diamond',
-            sequence_index: 0
+            sequence_index: 0,
+            connected: false,
         })
     }}, {
     serializers: _.extend({

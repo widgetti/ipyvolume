@@ -20,9 +20,13 @@ uniform vec2 zlim;
 
 varying vec3 vertex_color;
 varying vec3 vertex_position;
+varying vec2 vertex_uv;
 
 attribute vec3 position;
 
+#ifdef AS_LINE
+attribute vec3 position_previous;
+#else
 attribute float x;
 attribute float x_previous;
 attribute float y;
@@ -30,19 +34,24 @@ attribute float y_previous;
 attribute float z;
 attribute float z_previous;
 
-attribute vec3 color;
-attribute vec3 color_previous;
-
 attribute vec3 v;
 attribute vec3 v_previous;
 
 
 attribute float size;
 attribute float size_previous;
+#endif
+
+attribute vec3 color;
+attribute vec3 color_previous;
 
 
 
 void main(void) {
+    vec3 origin = vec3(xlim.x, ylim.x, zlim.x);
+    vec3 size_viewport = vec3(xlim.y, ylim.y, zlim.y) - origin;
+
+#ifndef AS_LINE
     vec3 vector = v;
     vec3 vector_previous = v_previous;
     vec3 position_offset = vec3(x, y, z);
@@ -64,18 +73,21 @@ void main(void) {
     //vec3 y = vec3(0, 1, 0);
     //vec3 z = vec3(0, 0, 1);
     //mat3 move_to_vector = mat3(z, y, x);
-    vec3 origin = vec3(xlim.x, ylim.x, zlim.x);
-    vec3 size_viewport = vec3(xlim.y, ylim.y, zlim.y) - origin;
     float s = mix(size_previous/100., size/100., animation_time_size);
     vec3 pos = (move_to_vector * (position*s))
         + (mix(position_offset_previous, position_offset, vec3(animation_time_x, animation_time_y, animation_time_z))
                 - origin) / size_viewport - 0.5;
     //vec3 pos = (pos_object ) / size;// - 0.5;
+#else
+    vec3 pos = (mix(position_previous, position, vec3(animation_time_x, animation_time_y, animation_time_z))
+                - origin) / size_viewport - 0.5;
+#endif
     gl_Position = projectionMatrix *
                 modelViewMatrix *
                 vec4(pos,1.0);
     vec3 positionEye = ( modelViewMatrix * vec4( pos, 1.0 ) ).xyz;
     vertex_position = positionEye;
+    vertex_uv = position.xy;
 
 
 
