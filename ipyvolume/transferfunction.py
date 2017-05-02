@@ -23,12 +23,12 @@ if 0:
 
 	array_serialization = dict(to_json=array_to_json, from_json=array_from_json)
 
-@widgets.register('ipyvolume.transferfunction.TransferFunction')
+@widgets.register
 class TransferFunction(widgets.DOMWidget):
 	_view_name = Unicode('TransferFunctionView').tag(sync=True)
 	_view_module = Unicode('ipyvolume').tag(sync=True)
 	style = Unicode("height: 32px; width: 100%;").tag(sync=True)
-	rgba = Array().tag(sync=True, **array_serialization)
+	rgba = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
 
 
 class TransferFunctionJsBumps(TransferFunction):

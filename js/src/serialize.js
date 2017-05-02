@@ -53,14 +53,37 @@ function numpy_buffer_to_ndarray(buf) {
 
 }
 
+// see https://github.com/jovyan/pythreejs/pull/80/files
+// should go to a seperate package/module
+var typesToArray = {
+    int8: Int8Array,
+    int16: Int16Array,
+    int32: Int32Array,
+    uint8: Uint8Array,
+    uint16: Uint16Array,
+    uint32: Uint32Array,
+    float32: Float32Array,
+    float64: Float64Array
+}
+
+function deserialize_typed_array(data, manager) {
+    var type = typesToArray[data.dtype];
+    return new type(data.buffer.buffer) ; //
+
+}
 
 function deserialize_array_or_json(data, manager) {
     if(data == null)
         return null;
     var arrays = null;
-    if(_.isNumber(data)) {
+    if(_.isNumber(data)) { // plain number
         return data;
-    } else
+    } else { // should be an array of buffer+dtype+shape
+        arrays = _.map(data, function(data) { return deserialize_typed_array(data, manager)})
+    }
+    arrays.original_data = data;
+    return arrays;
+
     if(_.isArray(data) && !data.buffer) { // plain json, or list of buffers
         if(data.length == 0) {
             arrays = []
@@ -127,7 +150,23 @@ function deserialize_color_or_json(data, manager) {
         //var color = new THREE.Color(data)
         //arrays = new Float32Array([color.r, color.g, color.b]) // no sequence, scalar
         arrays = data; // special case, if we keep it a string, we can control it via colorppicker
-    } else
+    } else {
+        if(typeof data[0].dtype !== "undefined") { // we have a list of ndarrays
+            arrays = _.map(data, function(data) { return deserialize_typed_array(data, manager)})
+        } else {
+            // must be a plain list of string, or list of list
+            if(dimension == 1 && typeof data[0] == "string") {
+                arrays = string_array_to_rgb(data)
+            } else
+            if(dimension == 2 && typeof data[0][0] == "string") {
+                arrays = _.map(data, string_array_to_rgb)
+            } else {
+                console.error("don't understand color type")
+            }
+        }
+    }
+    arrays.original_data = data;
+    return arrays;
     if(utils.is_typedarray(data)) {
         return data
     } else
@@ -135,6 +174,9 @@ function deserialize_color_or_json(data, manager) {
         var dimension = utils.get_array_dimension(data)
         if(dimension == 1 && typeof data[0] == "string") {
             arrays = string_array_to_rgb(data)
+        } else
+        if(dimension == 1 && data[0].buffer) { // array of buffers
+            arrays = _.map(data, function(data) { return new Float32Array(data.buffer)});
         } else
         if(dimension == 2 && utils.is_typedarray(data[0])) { // similar to dimension is 3 and _isNumber(data[0][0][0])
             arrays = data

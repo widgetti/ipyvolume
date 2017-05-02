@@ -6,8 +6,7 @@ import traitlets
 from traittypes import Array
 import logging
 import numpy as np
-from .serialize import array_cube_png_serialization, array_serialization, array_binary_serialization, \
-    create_array_binary_serialization, create_array_cube_png_serialization
+from .serialize import array_cube_png_serialization, array_serialization, color_serialization
 from .transferfunction import *
 import warnings
 import ipyvolume
@@ -17,7 +16,7 @@ logger = logging.getLogger("ipyvolume")
 _last_volume_renderer = None
 semver_range_frontend = "~" + ipyvolume.__version__
 
-@widgets.register('ipyvolume.Scatter')
+@widgets.register
 class Scatter(widgets.DOMWidget):
     _view_name = Unicode('ScatterView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
@@ -25,32 +24,30 @@ class Scatter(widgets.DOMWidget):
     _model_module = Unicode('ipyvolume').tag(sync=True)
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    x = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('x'))
-    y = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('y'))
-    z = Array(default_value=None).tag(sync=True, **create_array_binary_serialization('z'))
-    vx = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('vx'))
-    vy = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('vy'))
-    vz = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('vz'))
-    selected = Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('selection', update_from_js=True))
+    x = Array(default_value=None).tag(sync=True, **array_serialization)
+    y = Array(default_value=None).tag(sync=True, **array_serialization)
+    z = Array(default_value=None).tag(sync=True, **array_serialization)
+    vx = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+    vy = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+    vz = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+    selected = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
     sequence_index = Integer(default_value=0).tag(sync=True)
-    size = traitlets.Union([traitlets.Float().tag(sync=True),
-                           Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('size'))],
+    size = traitlets.Union([Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization),
+                           traitlets.Float().tag(sync=True)],
                            default_value=5).tag(sync=True)
-    size_selected = traitlets.Union([traitlets.Float().tag(sync=True),
-                           Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('size_selected'))],
-                           default_value=7).tag(sync=True)
-    color = traitlets.Union([Unicode().tag(sync=True),
-                             Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('color'))],
-                             default_value="red").tag(sync=True)
-    color_selected = traitlets.Union([Unicode().tag(sync=True),
-                             Array(default_value=None,allow_none=True).tag(sync=True, **create_array_binary_serialization('color_selected'))],
-                             default_value="green").tag(sync=True)
+    size_selected = traitlets.Union([Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization),
+                                    traitlets.Float().tag(sync=True)],
+                                    default_value=7).tag(sync=True)
+    color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
+    color_selected = traitlets.Union([Array(default_value=None, allow_none=True).tag(sync=True, **color_serialization),
+                                     Unicode().tag(sync=True)],
+                                     default_value="green").tag(sync=True)
     geo = traitlets.Unicode('diamond').tag(sync=True)
     connected = traitlets.CBool(default_value=False).tag(sync=True)
 
 
 
-@widgets.register('ipyvolume.VolumeRendererThree')
+@widgets.register
 class Figure(widgets.DOMWidget):
     """Widget class representing a volume (rendering) using three.js"""
     _view_name = Unicode('FigureView').tag(sync=True)
@@ -60,7 +57,7 @@ class Figure(widgets.DOMWidget):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **create_array_cube_png_serialization('volume_data'))
+    volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_png_serialization)
     data_min = traitlets.CFloat().tag(sync=True)
     data_max = traitlets.CFloat().tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)

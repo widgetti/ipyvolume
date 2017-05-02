@@ -11,9 +11,6 @@ except:
 from base64 import b64encode
 import warnings
 
-performance = 0 # set to 0 for ascii, 1 for binary transer, 2 for new style binary transfer:
-# https://github.com/ipython/ipywidgets/pull/1194
-
 def cube_to_png(grid, vmin, vmax, file):
 	image_width = 2048
 	slices = grid.shape[0]
@@ -83,61 +80,48 @@ def from_json(value, obj=None):
 def array_to_json(ar, obj=None):
 	return ar.tolist() if ar is not None else None
 
+
+def array_to_binary(ar, obj=None, force_contiguous=True):
+	if ar.dtype.kind not in ['u', 'i', 'f']:  # ints and floats
+		raise ValueError("unsupported dtype: %s" % (ar.dtype))
+	if ar.dtype == np.float64:  # WebGL does not support float64, case it here
+		ar = ar.astype(np.float32)
+	if ar.dtype == np.int64:  # JS does not support int64
+		ar = ar.astype(np.int32)
+	if force_contiguous and not ar.flags["C_CONTIGUOUS"]:  # make sure it's contiguous
+		ar = np.ascontiguousarray(ar)
+	return {'buffer':memoryview(ar), 'dtype':str(ar.dtype), 'shape':ar.shape}
+
+
 def array_to_binary_or_json(ar, obj=None):
 	if ar is None:
 		return None
 	element = ar
+	dimension = 0
 	try:
 		while True:
 			element = element[0]
+			dimension += 1
+	except:
+		pass
+	try:
+		element = element.item() # for instance get back the value from array(1)
 	except:
 		pass
 	if isinstance(element, string_types):
 		return array_to_json(ar)
-
-	def js_safe_array(ar):
-		if ar.dtype.kind not in ['u', 'i', 'f']: # ints and floats
-			raise ValueError("unsupported dtype: %s" % (ar.dtype))
-		if ar.dtype == np.float64:  # WebGL does not support float64, case it here
-			ar = ar.astype(np.float32)
-		if ar.dtype == np.int64:  # JS does not support int64
-			ar = ar.astype(np.int32)
-		return ar
-
-	if performance == 0:
-		return array_to_json(ar, obj=obj)
-	elif performance == 1:
-		ar = np.array(ar) # this mode only support 'regular' arrays
-		if ar.dtype.kind in ['u', 'i', 'f']: # ints and floats
-			ar = js_safe_array(ar)
-			iobyte = StringIO()
-			if not ar.flags["C_CONTIGUOUS"]: # make sure it's contiguous
-				ar = np.ascontiguousarray(ar)
-			np.save(iobyte, ar)
-			return iobyte.getvalue()
+	if dimension == 0: # scalars are passed as is (json)
+		return element
+	if isinstance(ar, (list, tuple, np.ndarray)): # ok, at least 1d
+		if isinstance(ar[0], (list, tuple, np.ndarray)): # ok, 2d
+			return [array_to_binary(ar[k]) for k in range(len(ar))]
 		else:
-			return array_to_json(ar)
-	elif performance == 2:
-		if ar is not None:
-			#ar = ar.astype(np.float64)
-			#mv = memoryview(ar)
-			#return []{'data': mv, 'shape': ar.shape}
-			if isinstance(ar, (list, tuple, np.ndarray)): # ok, at least 1d
-				if isinstance(ar[0], (list, tuple, np.ndarray)): # ok, 2d
-					return [memoryview(js_safe_array(ar)) for k in range(len(ar))]
-				else:
-					return [memoryview(js_safe_array(ar))]
-			else:
-				raise ValueError("Expected a sequence, got %r", ar)
-		else:
-			return None
-
+			return [array_to_binary(ar)]
+	else:
+		raise ValueError("Expected a sequence, got %r", ar)
 
 def from_json_to_array(value, obj=None):
-	if performance == 0:
-		return value
-	else:
-		return np.frombuffer(value, dtype=np.float32) if value else None
+	return np.frombuffer(value, dtype=np.float32) if value else None
 
 last_value_to_array = None
 def create_array_binary_serialization(attrname, update_from_js=False):
@@ -158,11 +142,37 @@ def create_array_cube_png_serialization(attrname, update_from_js=False):
 			return getattr(obj, attrname) # ignore what we got send back, it is not supposed to be changing
 	return dict(to_json=cube_to_json, from_json=fixed)
 
+def color_to_binary_or_json(ar, obj=None):
+	if ar is None:
+		return None
+	element = ar
+	dimension = 0
+	try:
+		while True:
+			element = element[0]
+			dimension += 1
+	except:
+		pass
+	try:
+		element = element.item() # for instance get back the str from array('foo')
+	except:
+		pass
+	if isinstance(element, string_types):
+		return array_to_json(ar)
+	if dimension == 0:  # scalars are passed as is (json)
+		return ar
+	if dimension == 3:
+		return [array_to_binary(ar[k]) for k in range(len(ar))]
+	else:
+		return [array_to_binary(ar)]
+
+color_serialization = dict(to_json=color_to_binary_or_json, from_json=None)
+array_serialization = dict(to_json=array_to_binary_or_json, from_json=None)
 
 array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
 array_rgba_png_serialization = dict(to_json=rgba_to_json, from_json=from_json)
-array_serialization = dict(to_json=array_to_json, from_json=from_json_to_array)
-array_binary_serialization = dict(to_json=array_to_binary_or_json, from_json=from_json_to_array)
+#array_binary_serialization = dict(to_json=array_to_binary_or_json, from_json=from_json_to_array)
+
 
 if __name__ == "__main__":
     import sys
