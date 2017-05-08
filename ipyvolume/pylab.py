@@ -9,6 +9,7 @@ import numpy as np
 import shutil
 from . import utils
 import time
+from . import examples
 
 def _docsubst(f):
 	"""Perform docstring substitutions"""
@@ -21,6 +22,7 @@ _doc_snippets["size"] = "float representing the size of the glyph in percentage 
 _doc_snippets["marker"] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere'"
 _doc_snippets["x"] = "1d numpy array with x positions"
 _doc_snippets["u"] = "1d numpy array indicating the x direction"
+_doc_snippets["x2d"] = "2d numpy array with x positions"
 
 class current:
 	figure = None
@@ -108,10 +110,124 @@ def xyzlim(vmin, vmax):
 	ylim(vmin, vmax)
 	zlim(vmin, vmax)
 
+def squarelim():
+	fig = gcf()
+	xmin, xmax = fig.xlim
+	ymin, ymax = fig.xlim
+	zmin, zmax = fig.xlim
+	width = max([abs(xmax - xmin), abs(ymax - ymin), abs(zmax - zmin)])
+	xc = (xmin + xmax)/2
+	yc = (ymin + ymax)/2
+	zc = (zmin + zmax)/2
+	xlim(xc - width/2, xc + width/2)
+	ylim(yc - width/2, yc + width/2)
+	zlim(zc - width/2, zc + width/2)
+
+
 default_color = "red"
 default_color_selected = "white"
 default_size = 2
 default_size_selected = default_size*1.3
+
+@_docsubst
+def plot_trisurf(x, y, z, triangles, color=default_color):
+	"""Draws a polygon/triangle mesh defined by a coordinate and triangle indices
+	
+	:param x: {x}
+	:param y: 
+	:param z: 
+	:param triangles: ndarray with indices, defining the triangles, with shape (N, 3)
+	:param color: {color}
+	:return: 
+	"""
+	fig = gcf()
+	triangles = triangles.astype(dtype=np.uint32)
+	mesh = volume.Mesh(x=x, y=y, z=z, triangles=triangles, color=color)
+	fig.meshes = fig.meshes + [mesh]
+	return mesh
+
+@_docsubst
+def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
+	"""Draws a 2d surface in 3d, defines by the 2d ordered arrays x,y,z
+	
+	:param x: {x2d}
+	:param y: 
+	:param z: 
+	:param color: {color2d}
+	:param wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
+	:param wrapy: simular for the y coordinate
+	:return: 
+	"""
+	fig = gcf()
+	#assert len(x.shape) == 2
+	#assert len(y.shape) == 2
+	#assert len(z.shape) == 2
+	# if isinstance(color, np.ndarray):
+	# 	assert len(color.shape) == 3
+	# 	assert color.shape[:2] == x.shape
+	# 	color = color.reshape(-1)
+
+	def dim(x):
+		d = 0
+		el = x
+		while True:
+			try:
+				el = el[0]
+				d += 1
+			except:
+				break
+		return d
+	if dim(x) == 2:
+		nx, ny = shape = x.shape
+	else:
+		nx, ny = shape = x[0].shape
+	def reshape(ar):
+		if dim(ar) == 3:
+			return [k.reshape(-1) for k in ar]
+		else:
+			return ar.reshape(-1)
+	def reshape_color(ar):
+		if dim(ar) == 4:
+			return [k.reshape(-1,3) for k in ar]
+		else:
+			return ar.reshape(-1,3)
+	if isinstance(color, np.ndarray):
+		#if dim(color) == 4:
+		#	color = color.reshape((color.shape[0], -1, color.shape[-1]))
+		color = reshape_color(color)
+		#print(color.shape)
+
+	x = reshape(x)
+	y = reshape(y)
+	z = reshape(z)
+	_grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
+	mx = nx if wrapx else nx-1
+	my = ny if wrapy else ny-1
+	triangles = np.zeros( ((mx) * (my)*2, 3), dtype=np.uint32)
+	triangles = np.zeros( ((mx) * (my)*2, 3), dtype=np.uint32)
+	def index_from2d(i, j):
+		return nx * (i%nx)  + (j%ny)
+	"""
+	^ ydir
+	|
+	2 3
+	0 1  ---> x dir
+	"""
+
+	for i in range(mx):
+		for j in range(my):
+			p0 = index_from2d(i, j)
+			p1 = index_from2d(i+1, j)
+			p2 = index_from2d(i, j+1)
+			p3 = index_from2d(i+1, j+1)
+			triangle_index  = (i*mx) + j
+			triangles[triangle_index*2+0,:] = [p0, p1, p3]
+			triangles[triangle_index*2+1,:] = [p0, p3, p2]
+			#print(i, j, p0, p1, p2, p3)
+	mesh = volume.Mesh(x=x, y=y, z=z, triangles=triangles, color=color)
+	fig.meshes = fig.meshes + [mesh]
+	return mesh
+
 
 @_docsubst
 def scatter(x, y, z, color=default_color, size=default_size, size_selected=default_size_selected, color_selected=default_color_selected, marker="diamond", selection=None, **kwargs):
@@ -169,10 +285,15 @@ def show(extra_widgets=[]):
     for widget in extra_widgets:
         display(widget)
 
-def animate_glyphs(scatter, sequence_length=None, add=True, interval=200):
-	"""Animate scatter or quiver by adding a slider and play button.
+def animate_glyphs(*args, **kwargs):
+	"""Deprecated: please use animation_control"""
+	warnings.warn("Please use animation_control(...)", DeprecationWarning, stacklevel=2)
+	animation_control(*args, **kwargs)
 
-	:param scatter: scatter or quiver object
+def animation_control(object, sequence_length=None, add=True, interval=200):
+	"""Animate scatter, quiver or mesh by adding a slider and play button.
+
+	:param object: scatter, quiver, or mesh object (having an sequence_index property)
 	:param sequence_length: If sequence_length is None we try try our best to figure out, in case we do it badly, you can tell us what it should be
 	:param add: if True, add the widgets to the container, else return a HBox with the slider and play button
 	:param interval: interval in msec between each frame
@@ -180,7 +301,7 @@ def animate_glyphs(scatter, sequence_length=None, add=True, interval=200):
 	"""
 	if sequence_length is None:
 		# get all non-None arrays
-		values = [getattr(scatter, name) for name in "x y z vx vy vz".split()]
+		values = [getattr(object, name) for name in "x y z vx vy vz".split() if hasattr(object, name)]
 		values = [k for k in values if k is not None]
 		# sort them such that the higest dim is first
 		values.sort(key=lambda key: -len(key.shape))
@@ -188,10 +309,10 @@ def animate_glyphs(scatter, sequence_length=None, add=True, interval=200):
 	fig = gcf()
 	fig.animation = interval
 	fig.animation_exponent = 1.
-	play = ipywidgets.Play(min=0, max=sequence_length, interval=interval, value=0, step=1)
-	slider = ipywidgets.IntSlider(min=0, max=play.max-1)
+	play = ipywidgets.Play(min=0, max=sequence_length-1, interval=interval, value=0, step=1)
+	slider = ipywidgets.IntSlider(min=0, max=play.max)
 	ipywidgets.jslink((play, 'value'), (slider, 'value'))
-	ipywidgets.jslink((slider, 'value'), (scatter, 'sequence_index'))
+	ipywidgets.jslink((slider, 'value'), (object, 'sequence_index'))
 	control = ipywidgets.HBox([play, slider])
 	if add:
 		current.container.children += (control,)
