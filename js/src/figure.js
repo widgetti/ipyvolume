@@ -8,6 +8,7 @@ var axis_names = ['x', 'y', 'z']
 var styles = require('../data/style.json')
 
 var scatter = require('./scatter.js')
+var mesh = require('./mesh.js')
 //
 window.THREE = THREE;
 //window.THREEx = {};
@@ -275,6 +276,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         THREEx.FullScreen.addFullScreenChangeListener(_.bind(this.on_fullscreen_change, this))
         this.update()
 
+        this.meshes = []
         this.scatters = [] /*new widgets.ViewList(_.bind(function add(model) {
                 console.log("adding")
                 console.log(model)
@@ -304,6 +306,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         )*/
          this.model.on('change:scatters', this.update_scatters, this)
          this.update_scatters()
+         this.model.on('change:meshes', this.update_meshes, this)
+         this.update_meshes()
 
 
         function onWindowResize(){
@@ -418,6 +422,22 @@ var FigureView = widgets.DOMWidgetView.extend( {
             }, this)
          } else {
             scatter_views = []
+         }
+    },
+    update_meshes: function() {
+        var meshes = this.model.get('meshes');
+        console.log("update meshes")
+        console.log(meshes)
+        if(meshes) {
+            //this.meshes.update(meshes);
+            this.mesh_views = _.map(meshes, function(model) {
+                var options = {parent: this}
+                var mesh_view = new mesh.MeshView({options: options, model: model})
+                mesh_view.render()
+                return mesh_view
+            }, this)
+         } else {
+            mesh_views = []
          }
     },
     transition: function(obj, prop, on_done, context) {
@@ -687,6 +707,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 scatter.mesh.material = scatter.mesh.material_rgb
                 scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
             }, this)
+            _.each(this.mesh_views, function(mesh) {
+                mesh.mesh.material = mesh.mesh.material_rgb
+                mesh.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
+            }, this)
             this.renderer.autoClear = false;
             this.scene_opaque.overrideMaterial = this.box_material;
             this.renderer.render(this.scene_scatter, camera, this.back_texture);
@@ -696,6 +720,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
             // restore materials
             _.each(this.scatter_views, function(scatter) {
                 scatter.mesh.material = scatter.mesh.material_normal
+            }, this)
+            _.each(this.mesh_views, function(mesh) {
+                mesh.mesh.material = mesh.mesh.material_normal
             }, this)
 
 
@@ -732,6 +759,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
             _.each(this.scatter_views, function(scatter) {
                 scatter.mesh.material = scatter.mesh.material_normal
                 scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
+            }, this)
+            _.each(this.mesh_views, function(mesh) {
+                mesh.mesh.material = mesh.mesh.material_normal
+                mesh.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
             }, this)
             this.renderer.autoClear = false;
             this.renderer.clear()
@@ -858,6 +889,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             height: 400,
             downscale: 1,
             scatters: null,
+            meshes: null,
             show: "Volume",
             xlim: [0., 1.],
             ylim: [0., 1.],
@@ -874,6 +906,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
     serializers: _.extend({
         tf: { deserialize: widgets.unpack_models },
         scatters: { deserialize: widgets.unpack_models },
+        meshes: { deserialize: widgets.unpack_models },
     }, widgets.DOMWidgetModel.serializers)
 });
 

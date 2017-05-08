@@ -6,7 +6,7 @@ import traitlets
 from traittypes import Array
 import logging
 import numpy as np
-from .serialize import array_cube_png_serialization, array_serialization, color_serialization
+from .serialize import array_cube_png_serialization, array_serialization, array_sequence_serialization, color_serialization
 from .transferfunction import *
 import warnings
 import ipyvolume
@@ -17,6 +17,31 @@ _last_volume_renderer = None
 semver_range_frontend = "~" + ipyvolume.__version__
 
 @widgets.register
+class Mesh(widgets.DOMWidget):
+    _view_name = Unicode('MeshView').tag(sync=True)
+    _view_module = Unicode('ipyvolume').tag(sync=True)
+    _model_name = Unicode('MeshModel').tag(sync=True)
+    _model_module = Unicode('ipyvolume').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    x = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
+    y = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
+    z = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
+    u = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    v = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    triangles =  Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+    wires =  Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+
+#    selected = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    sequence_index = Integer(default_value=0).tag(sync=True)
+    color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
+#    color_selected = traitlets.Union([Array(default_value=None, allow_none=True).tag(sync=True, **color_serialization),
+#                                     Unicode().tag(sync=True)],
+#                                     default_value="green").tag(sync=True)
+#    geo = traitlets.Unicode('diamond').tag(sync=True)
+    wire = traitlets.CBool(default_value=False).tag(sync=True)
+
+@widgets.register
 class Scatter(widgets.DOMWidget):
     _view_name = Unicode('ScatterView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
@@ -24,18 +49,18 @@ class Scatter(widgets.DOMWidget):
     _model_module = Unicode('ipyvolume').tag(sync=True)
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    x = Array(default_value=None).tag(sync=True, **array_serialization)
-    y = Array(default_value=None).tag(sync=True, **array_serialization)
-    z = Array(default_value=None).tag(sync=True, **array_serialization)
-    vx = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
-    vy = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
-    vz = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
-    selected = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+    x = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
+    y = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
+    z = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
+    vx = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    vy = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    vz = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    selected = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     sequence_index = Integer(default_value=0).tag(sync=True)
-    size = traitlets.Union([Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization),
+    size = traitlets.Union([Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization),
                            traitlets.Float().tag(sync=True)],
                            default_value=5).tag(sync=True)
-    size_selected = traitlets.Union([Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization),
+    size_selected = traitlets.Union([Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization),
                                     traitlets.Float().tag(sync=True)],
                                     default_value=7).tag(sync=True)
     color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
@@ -65,6 +90,7 @@ class Figure(widgets.DOMWidget):
     angle2 = traitlets.Float(0.2).tag(sync=True)
 
     scatters = traitlets.List(traitlets.Instance(Scatter), [], allow_none=False).tag(sync=True, **ipywidgets.widget_serialization)
+    meshes = traitlets.List(traitlets.Instance(Mesh), [], allow_none=False).tag(sync=True, **ipywidgets.widget_serialization)
 
     animation = traitlets.Float(1000.0).tag(sync=True)
     animation_exponent = traitlets.Float(.5).tag(sync=True)

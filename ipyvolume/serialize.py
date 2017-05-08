@@ -93,7 +93,7 @@ def array_to_binary(ar, obj=None, force_contiguous=True):
 	return {'buffer':memoryview(ar), 'dtype':str(ar.dtype), 'shape':ar.shape}
 
 
-def array_to_binary_or_json(ar, obj=None):
+def array_sequence_to_binary_or_json(ar, obj=None):
 	if ar is None:
 		return None
 	element = ar
@@ -119,6 +119,27 @@ def array_to_binary_or_json(ar, obj=None):
 			return [array_to_binary(ar)]
 	else:
 		raise ValueError("Expected a sequence, got %r", ar)
+
+def array_to_binary_or_json(ar, obj=None):
+	if ar is None:
+		return None
+	element = ar
+	dimension = 0
+	try:
+		while True:
+			element = element[0]
+			dimension += 1
+	except:
+		pass
+	try:
+		element = element.item() # for instance get back the value from array(1)
+	except:
+		pass
+	if isinstance(element, string_types):
+		return array_to_json(ar)
+	if dimension == 0: # scalars are passed as is (json)
+		return element
+	return [array_to_binary(ar)]
 
 def from_json_to_array(value, obj=None):
 	return np.frombuffer(value, dtype=np.float32) if value else None
@@ -167,6 +188,7 @@ def color_to_binary_or_json(ar, obj=None):
 		return [array_to_binary(ar)]
 
 color_serialization = dict(to_json=color_to_binary_or_json, from_json=None)
+array_sequence_serialization = dict(to_json=array_sequence_to_binary_or_json, from_json=None)
 array_serialization = dict(to_json=array_to_binary_or_json, from_json=None)
 
 array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
