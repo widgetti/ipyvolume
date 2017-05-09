@@ -30,7 +30,7 @@ class Mesh(widgets.DOMWidget):
     u = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     v = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     triangles =  Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
-    wires =  Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    lines =  Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
 
 #    selected = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     sequence_index = Integer(default_value=0).tag(sync=True)

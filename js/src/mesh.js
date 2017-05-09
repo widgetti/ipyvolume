@@ -14,6 +14,7 @@ var MeshView = widgets.WidgetView.extend( {
         this.previous_values = {}
         this.attributes_changed = {}
         window.last_mesh = this;
+        this.meshes = []
 
         console.log("create mesh")
 
@@ -29,14 +30,20 @@ var MeshView = widgets.WidgetView.extend( {
             },
             side:THREE.DoubleSide,
             vertexShader: require('../glsl/mesh-vertex.glsl'),
-            fragmentShader: require('../glsl/mesh-fragment.glsl')
-            })
+            fragmentShader: require('../glsl/mesh-fragment.glsl'),
+            polygonOffset: true,
+            polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
+            polygonOffsetUnits: 1
+                })
 
         this.material_rgb = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
             vertexShader: "#define USE_RGB\n"+require('../glsl/mesh-vertex.glsl'),
             fragmentShader: "#define USE_RGB\n"+require('../glsl/mesh-fragment.glsl'),
-            side:THREE.DoubleSide
+            side:THREE.DoubleSide,
+            polygonOffset: true,
+            polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
+            polygonOffsetUnits: 1
             })
 
         this.line_material = new THREE.RawShaderMaterial({
@@ -63,18 +70,14 @@ var MeshView = widgets.WidgetView.extend( {
     },
     add_to_scene: function() {
         console.log("add")
-        this.renderer.scene_scatter.add(this.mesh)
-        console.log(this.mesh, this.line_segments)
-        if(this.line_segments) {
-            console.log('add line segments')
-            this.renderer.scene_scatter.add(this.line_segments)
-        }
+        _.each(this.meshes, function(mesh) {
+            this.renderer.scene_scatter.add(mesh)
+        }, this)
     },
     remove_from_scene: function() {
-        this.renderer.scene_scatter.remove(this.mesh)
-        if(this.line_segments) {
-            this.renderer.scene_scatter.remove(this.line_segments)
-        }
+        _.each(this.meshes, function(mesh) {
+            this.renderer.scene_scatter.remove(mesh)
+        }, this)
     },
     on_change: function(attribute) {
         _.mapObject(this.model.changedAttributes(), function(val, key){
@@ -153,6 +156,7 @@ var MeshView = widgets.WidgetView.extend( {
         console.log(this.previous_values)
         console.log("attributes changed: ")
         console.log(this.attributes_changed)
+        this.meshes = []
 
         var sequence_index = this.model.get("sequence_index");
         var sequence_index_previous = this.previous_values["sequence_index"]
@@ -203,22 +207,48 @@ var MeshView = widgets.WidgetView.extend( {
         //previous.pop(['size_selected', 'color_selected'])
 
 
-        var geometry = new THREE.BufferGeometry();
         current.merge_to_vec3(['x', 'y', 'z'], 'vertices')
         previous.merge_to_vec3(['x', 'y', 'z'], 'vertices')
-        geometry.addAttribute('position', new THREE.BufferAttribute(current.array_vec3['vertices'], 3))
-        geometry.addAttribute('position_previous', new THREE.BufferAttribute(previous.array_vec3['vertices'], 3))
-        var index = this.model.get('triangles')[0]
-        geometry.setIndex(new THREE.BufferAttribute(index, 1))
-
         current.ensure_array(['color'])
         previous.ensure_array(['color'])
-        geometry.addAttribute('color', new THREE.BufferAttribute(current.array_vec3['color'], 3))
-        geometry.addAttribute('color_previous', new THREE.BufferAttribute(previous.array_vec3['color'], 3))
+        var triangles = this.model.get('triangles')
+        if(triangles) {
+            var geometry = new THREE.BufferGeometry();
+            geometry.addAttribute('position', new THREE.BufferAttribute(current.array_vec3['vertices'], 3))
+            geometry.addAttribute('position_previous', new THREE.BufferAttribute(previous.array_vec3['vertices'], 3))
+            geometry.addAttribute('color', new THREE.BufferAttribute(current.array_vec3['color'], 3))
+            geometry.addAttribute('color_previous', new THREE.BufferAttribute(previous.array_vec3['color'], 3))
+            geometry.setIndex(new THREE.BufferAttribute(triangles[0], 1))
 
-	    this.mesh = new THREE.Mesh(geometry, this.material );
-	    this.mesh.material_rgb = this.material_rgb
-	    this.mesh.material_normal = this.material
+            this.surface_mesh = new THREE.Mesh(geometry, this.material );
+            this.surface_mesh.material_rgb = this.material_rgb
+            this.surface_mesh.material_normal = this.material
+            this.meshes.push(this.surface_mesh)
+        }
+
+	    var lines = this.model.get('lines')
+	    if(lines) {
+            var geometry = new THREE.BufferGeometry();
+
+            geometry.addAttribute('position', new THREE.BufferAttribute(current.array_vec3['vertices'], 3))
+            geometry.addAttribute('position_previous', new THREE.BufferAttribute(previous.array_vec3['vertices'], 3))
+            var color = new THREE.BufferAttribute(current.array_vec3['color'], 3)
+            color.normalized = true;
+            geometry.addAttribute('color', color)
+            var color_previous = new THREE.BufferAttribute(previous.array_vec3['color'], 3)
+            color_previous.normalized = true;
+            geometry.addAttribute('color_previous', color_previous)
+            geometry.setIndex(new THREE.BufferAttribute(lines[0], 1))
+
+            this.line_segments = new THREE.LineSegments(geometry, this.line_material);
+            //TODO: check lines with volume rendering, also in scatter
+            this.line_segments.material_rgb = this.line_material_rgb
+            this.line_segments.material_normal = this.line_material
+            console.log('create line segments')
+            this.meshes.push(this.line_segments)
+        } else {
+            this.line_segments = null;
+        }
 
 
         _.mapObject(this.attributes_changed, function(changed_properties, key){
@@ -255,7 +285,7 @@ var MeshModel = widgets.WidgetModel.extend({
         y: serialize.array_or_json,
         z: serialize.array_or_json,
         triangles: serialize.array_or_json,
-        wires: serialize.array_or_json,
+        lines: serialize.array_or_json,
         color: serialize.color_or_json,
     }, widgets.WidgetModel.serializers)
 });

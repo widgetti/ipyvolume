@@ -10,6 +10,7 @@ import shutil
 from . import utils
 import time
 from . import examples
+import warnings
 
 def _docsubst(f):
 	"""Perform docstring substitutions"""
@@ -17,7 +18,8 @@ def _docsubst(f):
 	return f
 
 _doc_snippets = {}
-_doc_snippets["color"] = "string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0)"
+_doc_snippets["color"] = "string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (N, 3)"
+_doc_snippets["color2d"] = "string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (2, N, 3)"
 _doc_snippets["size"] = "float representing the size of the glyph in percentage of the viewport, where 100 is the full size of the viewport"
 _doc_snippets["marker"] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere'"
 _doc_snippets["x"] = "1d numpy array with x positions"
@@ -133,16 +135,32 @@ default_size_selected = default_size*1.3
 def plot_trisurf(x, y, z, triangles, color=default_color):
 	"""Draws a polygon/triangle mesh defined by a coordinate and triangle indices
 	
+	Example:
+	
+	The following plots a rectangle in the z==2 plane, consisting of 2 triangles
+	
+	plot_trisurf([0, 0, 3., 3.], [0, 4., 0, 4.], 2, triangles=[[0, 2, 3], [0, 3, 1]])
+
+	Note that the z value is constant, and thus not a list/array. For guidance, the triangles
+	refer to the vertices in this manner:
+	
+	^ ydir
+	|
+	2 3
+	0 1  ---> x dir
+	
+
 	:param x: {x}
 	:param y: 
 	:param z: 
-	:param triangles: ndarray with indices, defining the triangles, with shape (N, 3)
+	:param triangles: ndarray with indices referring to the vertices, defining the triangles, with shape (N, 3)
 	:param color: {color}
 	:return: 
 	"""
 	fig = gcf()
-	triangles = triangles.astype(dtype=np.uint32)
+	triangles = np.array(triangles).astype(dtype=np.uint32)
 	mesh = volume.Mesh(x=x, y=y, z=z, triangles=triangles, color=color)
+	_grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
 	fig.meshes = fig.meshes + [mesh]
 	return mesh
 
@@ -158,6 +176,25 @@ def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
 	:param wrapy: simular for the y coordinate
 	:return: 
 	"""
+	return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=False)
+
+
+@_docsubst
+def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False):
+	"""Draws a 2d wireframe in 3d, defines by the 2d ordered arrays x,y,z
+
+	:param x: {x2d}
+	:param y: 
+	:param z: 
+	:param color: {color2d}
+	:param wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
+	:param wrapy: simular for the y coordinate
+	:return: 
+	"""
+	return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=True, surface=False)
+
+
+def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False):
 	fig = gcf()
 	#assert len(x.shape) == 2
 	#assert len(y.shape) == 2
@@ -204,7 +241,7 @@ def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
 	mx = nx if wrapx else nx-1
 	my = ny if wrapy else ny-1
 	triangles = np.zeros( ((mx) * (my)*2, 3), dtype=np.uint32)
-	triangles = np.zeros( ((mx) * (my)*2, 3), dtype=np.uint32)
+	lines = np.zeros( ((mx) * (my)*4, 2), dtype=np.uint32)
 	def index_from2d(i, j):
 		return nx * (i%nx)  + (j%ny)
 	"""
@@ -223,8 +260,12 @@ def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
 			triangle_index  = (i*mx) + j
 			triangles[triangle_index*2+0,:] = [p0, p1, p3]
 			triangles[triangle_index*2+1,:] = [p0, p3, p2]
+			lines[triangle_index*4+0,:] = [p0, p1]
+			lines[triangle_index*4+1,:] = [p0, p2]
+			lines[triangle_index*4+2,:] = [p2, p3]
+			lines[triangle_index*4+3,:] = [p1, p3]
 			#print(i, j, p0, p1, p2, p3)
-	mesh = volume.Mesh(x=x, y=y, z=z, triangles=triangles, color=color)
+	mesh = volume.Mesh(x=x, y=y, z=z, triangles=triangles if surface else None, color=color, lines=lines if wireframe else None)
 	fig.meshes = fig.meshes + [mesh]
 	return mesh
 

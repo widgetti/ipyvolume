@@ -708,8 +708,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
             }, this)
             _.each(this.mesh_views, function(mesh) {
-                mesh.mesh.material = mesh.mesh.material_rgb
                 mesh.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
+                _.each(mesh.meshes, function(mesh) {
+                    mesh.mesh.material = mesh.material_rgb
+                }, this);
             }, this)
             this.renderer.autoClear = false;
             this.scene_opaque.overrideMaterial = this.box_material;
@@ -722,7 +724,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 scatter.mesh.material = scatter.mesh.material_normal
             }, this)
             _.each(this.mesh_views, function(mesh) {
-                mesh.mesh.material = mesh.mesh.material_normal
+                _.each(mesh.meshes, function(mesh) {
+                    mesh.material = mesh.mesh.material_normal
+                }, this);
             }, this)
 
 
@@ -761,8 +765,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
             }, this)
             _.each(this.mesh_views, function(mesh) {
-                mesh.mesh.material = mesh.mesh.material_normal
                 mesh.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
+                _.each(mesh.meshes, function(mesh) {
+                    mesh.material = mesh.material_normal
+                }, this);
             }, this)
             this.renderer.autoClear = false;
             this.renderer.clear()
