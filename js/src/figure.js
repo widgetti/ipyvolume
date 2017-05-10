@@ -326,6 +326,15 @@ var FigureView = widgets.DOMWidgetView.extend( {
         //navigator.wakeLock.request("display")
         return
     },
+    custom_msg: function(content) {
+        console.log('content', content)
+        if(content.msg == 'screenshot') {
+            this._real_update()
+            var data = this.renderer.domElement.toDataURL(this.model.get('screen_capture_mime_type'));
+            console.info("captured screen data to screen_capture_data")
+            this.send({event: 'screenshot', data: data});
+        }
+    },
     _d3_add_axis: function(node, d, i) {
         //console.log("add axis", d, i)
         var axis = new THREE.Object3D()
@@ -586,6 +595,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
         this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
         this._update_requested = false
+
+
 
         this.renderer.setClearColor(this.get_style_color('background-color'))
         this.x_axis.visible = this.get_style('axes.x.visible axes.visible')

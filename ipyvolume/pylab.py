@@ -485,29 +485,50 @@ def save(filename, copy_js=True, makedirs=True, **kwargs):
 		src = os.path.join(dir_name_src, "index.js")
 		shutil.copy(src, dst)
 
-def savefig(filename, timeout_seconds=10):
+def savefig(filename, timeout_seconds=10, wait=True):
     """Save the current figure to an image (png or jpeg) to a file"""
     # TODO: might be useful to save to a file object
     __, ext = os.path.splitext(filename)
     fig = gcf()
     fig.screen_capture_mime_type = "image/" + ext[1:] # skip .
-    previous_value = fig.screen_capture_enabled
-    try:
+    #previous_value = fig.screen_capture_enabled
+    #try:
+    if 1:
         #fig.screen_capture_data = None
-        assert fig.screen_capture_enabled, "Please enabled screen capturing first"
-        if 0: # this path doesn't work atm, lets keep it for future dev
-            t0 = time.time()
-            timeout = False
-            ipython = IPython.get_ipython()
-            while not timeout:
-                data = fig.screen_capture_data
-                if data is not None and len(data) > 0:
-                    break
-                timeout = (time.time() - t0) > timeout_seconds
-                ipython.kernel.do_one_iteration()
-            if timeout:
-                raise ValueError("timed out, no image data returned")
-        data = fig.screen_capture_data
+        #assert fig.screen_capture_enabled, "Please enabled screen capturing first"
+        if wait: # this path doesn't work atm, lets keep it for future dev
+            output = ipywidgets.Output()
+            display(output)
+            # use lists to avoid globals
+            done = [False]
+            data = [None]
+            def screenshot_handler(image_data):
+                with output:
+                    #print("data")
+                    #print(data)
+                    done[0] = True
+                    data[0] = image_data
+
+            fig.on_screenshot(screenshot_handler)
+            try:
+                fig.screenshot()
+                t0 = time.time()
+                timeout = False
+                ipython = IPython.get_ipython()
+                while (not done[0]) and not timeout:
+                    ipython.kernel.do_one_iteration()
+                    with output:
+                        time.sleep(0.05)
+                        timeout = (time.time() - t0) > timeout_seconds
+                with output:
+                    if timeout and not done[0]:
+                        raise ValueError("timed out, no image data returned")
+            finally:
+                with output:
+                    fig.on_screenshot(screenshot_handler, remove=True)
+            data = data[0]
+        else:
+            data = fig.screen_capture_data
         if len(data) == 0:
             raise ValueError("image data turned up empty, bug?")
         if not data.startswith('data:image'):
@@ -517,8 +538,8 @@ def savefig(filename, timeout_seconds=10):
         import base64
         with open(filename, "wb") as f:
             f.write(base64.b64decode(data))
-    finally:
-        fig.screen_capture_enabled = previous_value
+    #finally:
+    #    fig.screen_capture_enabled = previous_value
     return filename
 
 def xlabel(label):
