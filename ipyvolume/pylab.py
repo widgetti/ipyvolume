@@ -106,8 +106,10 @@ def zlim(zmin, zmax):
 	"""Set limits of zaxis"""
 	fig = gcf()
 	fig.zlim = [zmin, zmax]
-def xyzlim(vmin, vmax):
-	"""Set limits or all axis the same"""
+def xyzlim(vmin, vmax=None):
+	"""Set limits or all axis the same, if vmax not given, use [-vmin, vmax]"""
+	if vmax is None:
+		vmin, vmax = -vmin, vmin
 	xlim(vmin, vmax)
 	ylim(vmin, vmax)
 	zlim(vmin, vmax)
