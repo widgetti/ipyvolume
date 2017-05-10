@@ -254,7 +254,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:downscale', this.update_size, this);
         this.model.on('change:stereo', this.update_size, this);
-        this.model.on('change:angle1 change:angle2 change:angle3', this.update_current_control, this);
+        this.model.on('change:anglex change:angley change:anglez', this.update_current_control, this);
         this.model.on('change:angle_order', this.update_current_control, this)
         this.model.on('change:volume_data', this.data_set, this);
 
@@ -557,12 +557,12 @@ var FigureView = widgets.DOMWidgetView.extend( {
     update_angles: function() {
         console.log("camera", this.camera.rotation)
         var rotation = new THREE.Euler().setFromQuaternion(this.camera.quaternion, this.model.get('angle_order'));
-        this.model.set({angle1: rotation.x, angle2: rotation.y, angle3: rotation.z})
+        this.model.set({anglex: rotation.x, angley: rotation.y, anglez: rotation.z})
         this.model.save_changes()
         this.update()
     },
     update_current_control: function() {
-        var euler = new THREE.Euler(this.model.get('angle1'), this.model.get('angle2'), this.model.get('angle3'), this.model.get('angle_order'))
+        var euler = new THREE.Euler(this.model.get('anglex'), this.model.get('angley'), this.model.get('anglez'), this.model.get('angle_order'))
         console.log("updating camera", euler)
         var q = new THREE.Quaternion().setFromEuler(euler)
         //this.camera.quaternion = q
@@ -921,9 +921,9 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             _view_module : 'ipyvolume',
             _model_module_version: semver_range,
              _view_module_version: semver_range,
-            angle1: 0.0,
-            angle2: 0.2,
-            angle2: 0.0,
+            anglex: 0.0,
+            angley: 0.0,
+            anglez: 0.0,
             angle_order: 'XYZ',
             ambient_coefficient: 0.5,
             diffuse_coefficient: 0.8,

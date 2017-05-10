@@ -88,9 +88,9 @@ class Figure(widgets.DOMWidget):
     data_min = traitlets.CFloat().tag(sync=True)
     data_max = traitlets.CFloat().tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
-    angle1 = traitlets.Float(0.0).tag(sync=True)
-    angle2 = traitlets.Float(0.2).tag(sync=True)
-    angle3 = traitlets.Float(0.0).tag(sync=True)
+    anglex = traitlets.Float(0.0).tag(sync=True)
+    angley = traitlets.Float(0.0).tag(sync=True)
+    anglez = traitlets.Float(0.0).tag(sync=True)
     angle_order = Unicode(default_value="XYZ").tag(sync=True)
 
     scatters = traitlets.List(traitlets.Instance(Scatter), [], allow_none=False).tag(sync=True, **ipywidgets.widget_serialization)
