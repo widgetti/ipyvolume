@@ -487,7 +487,59 @@ def save(filename, copy_js=True, makedirs=True, **kwargs):
 		src = os.path.join(dir_name_src, "index.js")
 		shutil.copy(src, dst)
 
-def savefig(filename, timeout_seconds=10, wait=True):
+def _change_y_angle(fig, frame, fraction):
+    fig.angle2 = fraction * np.pi * 2
+
+def movie(f="movie.mp4", function=_change_y_angle, fps=30, frames=30, endpoint=False,\
+          cmd_template_ffmpeg="ffmpeg -y -r {fps} -i {tempdir}/frame-%5d.png -vcodec h264 -pix_fmt yuv420p {filename}",
+          cmd_template_gif="convert -delay {delay} {loop} {tempdir}/frame-*.png {filename}",
+          gif_loop=0):
+    """Create a movie (mp4/gif) out of many frames
+    
+    Example:
+    def set_angles(fig, i, fraction):
+        fig.angley = fraction*np.pi*2
+    # 4 second movie, that rotates around the y axis
+    p3.movie('test2.gif', set_angles, fps=20, frames=20*4, endpoint=False)
+    
+    :param f: filename out output movie (e.g. 'movie.mp4' or 'movie.gif')
+    :param function: function called before each frame with arguments (figure, framenr, fraction)
+    :param fps: frames per seconds
+    :param frames: total number of frames
+    :param endpoint: if fraction goes from [0, 1] (inclusive) or [0, 1) (endpoint=False is useful for loops/rotatations)
+    :param cmd_template_ffmpeg: template command when running ffmpeg (non-gif ending filenames)
+    :param cmd_template_gif: template command when running imagemagick's convert (if filename ends in .gif)
+    :param gif_loop: None for no loop, otherwise the framenumber to go after the end
+    :return: the temp dir where the frames are stored
+    """
+    movie_filename = f
+    import tempfile
+    tempdir = tempfile.mkdtemp()
+    output = ipywidgets.Output()
+    display(output)
+    fig = gcf()
+    for i in range(frames):
+        with output:
+            fraction = i / (frames -1. if endpoint else frames)
+            function(fig, i, fraction)
+            frame_filename = os.path.join(tempdir, "frame-%05d.png" % i)
+            savefig(frame_filename, output_widget=output)
+    with output:
+        if movie_filename.endswith(".gif"):
+            if gif_loop is None:
+                loop = ""
+            else:
+                loop = "-loop %d" % gif_loop
+            delay = 100/fps
+            cmd = cmd_template_gif.format(delay=delay, loop=loop, tempdir=tempdir, filename=movie_filename)
+        else:
+            cmd = cmd_template_ffmpeg.format(fps=fps, tempdir=tempdir, filename=movie_filename)
+        print(cmd)
+        os.system(cmd)
+    return tempdir
+
+
+def savefig(filename, timeout_seconds=10, wait=True, output_widget=None):
     """Save the current figure to an image (png or jpeg) to a file"""
     # TODO: might be useful to save to a file object
     __, ext = os.path.splitext(filename)
@@ -499,13 +551,14 @@ def savefig(filename, timeout_seconds=10, wait=True):
         #fig.screen_capture_data = None
         #assert fig.screen_capture_enabled, "Please enabled screen capturing first"
         if wait: # this path doesn't work atm, lets keep it for future dev
-            output = ipywidgets.Output()
-            display(output)
+            if output_widget is None:
+                output_widget = ipywidgets.Output()
+                display(output_widget)
             # use lists to avoid globals
             done = [False]
             data = [None]
             def screenshot_handler(image_data):
-                with output:
+                with output_widget:
                     #print("data")
                     #print(data)
                     done[0] = True
@@ -519,14 +572,14 @@ def savefig(filename, timeout_seconds=10, wait=True):
                 ipython = IPython.get_ipython()
                 while (not done[0]) and not timeout:
                     ipython.kernel.do_one_iteration()
-                    with output:
+                    with output_widget:
                         time.sleep(0.05)
                         timeout = (time.time() - t0) > timeout_seconds
-                with output:
+                with output_widget:
                     if timeout and not done[0]:
                         raise ValueError("timed out, no image data returned")
             finally:
-                with output:
+                with output_widget:
                     fig.on_screenshot(screenshot_handler, remove=True)
             data = data[0]
         else:
