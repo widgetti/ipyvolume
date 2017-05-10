@@ -72,7 +72,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         const VIEW_ANGLE = 45;
         const aspect = width / height;
-        const NEAR = 0.1;
+        const NEAR = 0.01;
         const FAR = 10000;
         this.camera = new THREE.PerspectiveCamera(
             VIEW_ANGLE,
@@ -254,8 +254,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:downscale', this.update_size, this);
         this.model.on('change:stereo', this.update_size, this);
-        this.model.on('change:angle1', this.update_scene, this);
-        this.model.on('change:angle2', this.update_scene, this);
+        this.model.on('change:angle1 change:angle2 change:angle3', this.update_current_control, this);
+        this.model.on('change:angle_order', this.update_current_control, this)
         this.model.on('change:volume_data', this.data_set, this);
 
         this.model.on('change:width', this.update_size, this);
@@ -268,7 +268,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:specular_exponent', this.update_light, this);
 
         this.model.on('change:tf', this.tf_set, this)
+        this.listenTo(this.model, 'msg:custom', _.bind(this.custom_msg, this));
 
+        this.control_trackball.addEventListener( 'end', _.bind(this.update_angles, this) );
+        this.control_orbit.addEventListener( 'end', _.bind(this.update_angles, this) );
         this.control_trackball.addEventListener( 'change', _.bind(this.update, this) );
         this.control_orbit.addEventListener( 'change', _.bind(this.update, this) );
 
@@ -541,6 +544,34 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 THREEx.FullScreen.cancel();
             this.update_size()
         }
+    },
+    update_angles: function() {
+        console.log("camera", this.camera.rotation)
+        var rotation = new THREE.Euler().setFromQuaternion(this.camera.quaternion, this.model.get('angle_order'));
+        this.model.set({angle1: rotation.x, angle2: rotation.y, angle3: rotation.z})
+        this.model.save_changes()
+        this.update()
+    },
+    update_current_control: function() {
+        var euler = new THREE.Euler(this.model.get('angle1'), this.model.get('angle2'), this.model.get('angle3'), this.model.get('angle_order'))
+        console.log("updating camera", euler)
+        var q = new THREE.Quaternion().setFromEuler(euler)
+        //this.camera.quaternion = q
+        var target = new THREE.Vector3()
+        var distance = this.camera.position.length()
+        var eye = new THREE.Vector3(0, 0, 1);
+        var up = new THREE.Vector3(0, 1, 0);
+        eye.applyQuaternion(q)
+        eye.multiplyScalar(distance)
+        this.camera.position.copy(eye)
+        this.camera.up = up
+        this.camera.up.applyQuaternion(q)
+        this.camera.lookAt(target);
+        this.control_trackball.position0 = this.camera.position.clone()
+        this.control_trackball.up0 = this.camera.up.clone()
+        this.control_trackball.reset()
+        console.log("updating camera", q, this.camera, eye, distance, up, this.camera.position)
+        this.update()
     },
     update: function() {
         // requestAnimationFrame stacks, so make sure multiple update calls only lead to 1 _real_update call
@@ -879,8 +910,10 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             _view_module : 'ipyvolume',
             _model_module_version: semver_range,
              _view_module_version: semver_range,
-            angle1: 0.1,
+            angle1: 0.0,
             angle2: 0.2,
+            angle2: 0.0,
+            angle_order: 'XYZ',
             ambient_coefficient: 0.5,
             diffuse_coefficient: 0.8,
             specular_coefficient: 0.5,
