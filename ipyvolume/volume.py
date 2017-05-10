@@ -1,12 +1,13 @@
 import ipywidgets as widgets
 import ipywidgets
-
+from .traittypes import Image
 from traitlets import Unicode, Integer
 import traitlets
 from traittypes import Array
 import logging
 import numpy as np
-from .serialize import array_cube_png_serialization, array_serialization, array_sequence_serialization, color_serialization
+from .serialize import array_cube_png_serialization, array_serialization, array_sequence_serialization,\
+    color_serialization, image_serialization
 from .transferfunction import *
 import warnings
 import ipyvolume
@@ -31,6 +32,7 @@ class Mesh(widgets.DOMWidget):
     v = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     triangles =  Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
     lines =  Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+    texture = Image(default_value=None, allow_none=True).tag(sync=True, **image_serialization)
 
 #    selected = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     sequence_index = Integer(default_value=0).tag(sync=True)

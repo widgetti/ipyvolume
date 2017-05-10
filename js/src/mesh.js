@@ -15,8 +15,14 @@ var MeshView = widgets.WidgetView.extend( {
         this.attributes_changed = {}
         window.last_mesh = this;
         this.meshes = []
-
-        console.log("create mesh")
+        this.texture_loader = new THREE.TextureLoader()
+        if(this.model.get('texture')) {
+            this.texture = this.texture_loader.load(this.model.get('texture'), _.bind(function() {
+                this.update_()
+            }, this));
+            this.texture.wrapS = THREE.RepeatWrapping;
+            this.texture.wrapT = THREE.RepeatWrapping;
+        }
 
         this.material = new THREE.RawShaderMaterial({
             uniforms: {
@@ -26,7 +32,10 @@ var MeshView = widgets.WidgetView.extend( {
                 animation_time_x : { type: "f", value: 1. },
                 animation_time_y : { type: "f", value: 1. },
                 animation_time_z : { type: "f", value: 1. },
+                animation_time_u : { type: "f", value: 1. },
+                animation_time_v : { type: "f", value: 1. },
                 animation_time_color : { type: "f", value: 1. },
+                texture: { type: 't', value: null },
             },
             side:THREE.DoubleSide,
             vertexShader: require('../glsl/mesh-vertex.glsl'),
@@ -35,6 +44,16 @@ var MeshView = widgets.WidgetView.extend( {
             polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
             polygonOffsetUnits: 1
                 })
+
+        this.material_texture = new THREE.RawShaderMaterial({
+            uniforms: this.material.uniforms,
+            vertexShader: "#define USE_TEXTURE\n"+require('../glsl/mesh-vertex.glsl'),
+            fragmentShader: "#define USE_TEXTURE\n"+require('../glsl/mesh-fragment.glsl'),
+            side:THREE.DoubleSide,
+            polygonOffset: true,
+            polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
+            polygonOffsetUnits: 1
+            })
 
         this.material_rgb = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
@@ -60,7 +79,7 @@ var MeshView = widgets.WidgetView.extend( {
 
         this.create_mesh()
         this.add_to_scene()
-        this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
+        this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u",   this.on_change, this)
         this.model.on("change:geo change:connected", this.update_, this)
     },
     set_limits: function(limits) {
@@ -69,7 +88,6 @@ var MeshView = widgets.WidgetView.extend( {
         }, this)
     },
     add_to_scene: function() {
-        console.log("add")
         _.each(this.meshes, function(mesh) {
             this.renderer.scene_scatter.add(mesh)
         }, this)
@@ -88,7 +106,7 @@ var MeshView = widgets.WidgetView.extend( {
             // we treat changes in _selected attributes the same
             var key_animation = key.replace("_selected", "")
             if (key_animation == "sequence_index") {
-                var animated_by_sequence = ['x', 'y', 'z', 'vx', 'vy', 'vz', 'size', 'color']
+                var animated_by_sequence = ['x', 'y', 'z', 'u', 'v', 'color']
                 _.each(animated_by_sequence, function(name) {
                     if(_.isArray(this.model.get(name))) {
                         this.attributes_changed[name] = [name, 'sequence_index']
@@ -100,13 +118,12 @@ var MeshView = widgets.WidgetView.extend( {
             }
 	        else if(key_animation == "selected") { // and no explicit animation on this one
                 this.attributes_changed["color"] = [key]
-                this.attributes_changed["size"] = []
             } else {
                 this.attributes_changed[key_animation] = [key]
                 // animate the size as well on x y z changes
-                if(["x", "y", "z", "vx", "vy", "vz", 'color'].indexOf(key_animation) != -1) {
+                if(["x", "y", "z", "u", "v", 'color'].indexOf(key_animation) != -1) {
                     //console.log("adding size to list of changed attributes")
-                    this.attributes_changed["size"] = []
+                    //this.attributes_changed["size"] = []
                 }
 
             }
@@ -114,7 +131,6 @@ var MeshView = widgets.WidgetView.extend( {
         this.update_()
     },
     update_: function() {
-        console.log("update mesh")
         this.remove_from_scene()
         this.create_mesh()
         this.add_to_scene()
@@ -163,7 +179,7 @@ var MeshView = widgets.WidgetView.extend( {
         if(typeof sequence_index_previous == "undefined")
             sequence_index_previous = sequence_index;
 
-        var scalar_names = ['x', 'y', 'z'];
+        var scalar_names = ['x', 'y', 'z', 'u', 'v'];
         var vector3_names = ['color']
         var current  = new values.Values(scalar_names, vector3_names, _.bind(this.get_current, this), sequence_index)
         var previous = new values.Values(scalar_names, vector3_names, _.bind(this.get_previous, this), sequence_index_previous)
@@ -219,10 +235,25 @@ var MeshView = widgets.WidgetView.extend( {
             geometry.addAttribute('color', new THREE.BufferAttribute(current.array_vec3['color'], 3))
             geometry.addAttribute('color_previous', new THREE.BufferAttribute(previous.array_vec3['color'], 3))
             geometry.setIndex(new THREE.BufferAttribute(triangles[0], 1))
+            var texture = this.model.get('texture');
+            var u = current.array['u']
+            var v = current.array['v']
+            if(texture && u && v) {
+                material = this.material_texture
+                material.uniforms['texture'].value = this.texture
+                geometry.addAttribute('u', new THREE.BufferAttribute(u, 1))
+                geometry.addAttribute('v', new THREE.BufferAttribute(v, 1))
+                var u_previous = previous.array['u']
+                var v_previous = previous.array['v']
+                geometry.addAttribute('u_previous', new THREE.BufferAttribute(u_previous, 1))
+                geometry.addAttribute('v_previous', new THREE.BufferAttribute(v_previous, 1))
+            } else {
+                material = this.material
+            }
 
-            this.surface_mesh = new THREE.Mesh(geometry, this.material );
+            this.surface_mesh = new THREE.Mesh(geometry, material);
             this.surface_mesh.material_rgb = this.material_rgb
-            this.surface_mesh.material_normal = this.material
+            this.surface_mesh.material_normal = material
             this.meshes.push(this.surface_mesh)
         }
 
@@ -284,6 +315,8 @@ var MeshModel = widgets.WidgetModel.extend({
         x: serialize.array_or_json,
         y: serialize.array_or_json,
         z: serialize.array_or_json,
+        u: serialize.array_or_json,
+        v: serialize.array_or_json,
         triangles: serialize.array_or_json,
         lines: serialize.array_or_json,
         color: serialize.color_or_json,

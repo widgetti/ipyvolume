@@ -11,6 +11,17 @@ except:
 from base64 import b64encode
 import warnings
 
+def image_to_url(image, widget):
+	if image is None:
+		return None
+	f = StringIO()
+	with warnings.catch_warnings():
+		warnings.simplefilter("ignore")
+		image.save(f, "png")
+	image_url = "data:image/png;base64," + b64encode(f.getvalue()).decode("ascii")
+	return image_url
+
+
 def cube_to_png(grid, vmin, vmax, file):
 	image_width = 2048
 	slices = grid.shape[0]
@@ -194,6 +205,7 @@ array_serialization = dict(to_json=array_to_binary_or_json, from_json=None)
 array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
 array_rgba_png_serialization = dict(to_json=rgba_to_json, from_json=from_json)
 #array_binary_serialization = dict(to_json=array_to_binary_or_json, from_json=from_json_to_array)
+image_serialization = dict(to_json=image_to_url, from_json=None)
 
 
 if __name__ == "__main__":

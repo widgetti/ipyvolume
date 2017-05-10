@@ -8,10 +8,8 @@ uniform mat4 projectionMatrix;
 uniform float animation_time_x;
 uniform float animation_time_y;
 uniform float animation_time_z;
-uniform float animation_time_vx;
-uniform float animation_time_vy;
-uniform float animation_time_vz;
-uniform float animation_time_size;
+uniform float animation_time_u;
+uniform float animation_time_v;
 uniform float animation_time_color;
 
 uniform vec2 xlim;
@@ -20,10 +18,17 @@ uniform vec2 zlim;
 
 varying vec3 vertex_color;
 varying vec3 vertex_position;
-varying vec2 vertex_uv;
 
 attribute vec3 position;
 attribute vec3 position_previous;
+
+#ifdef USE_TEXTURE
+attribute float u;
+attribute float v;
+attribute float u_previous;
+attribute float v_previous;
+varying vec2 vertex_uv;
+#endif
 
 attribute vec3 color;
 attribute vec3 color_previous;
@@ -41,7 +46,9 @@ void main(void) {
                 vec4(pos,1.0);
     vec3 positionEye = ( modelViewMatrix * vec4( pos, 1.0 ) ).xyz;
     vertex_position = positionEye;
-    vertex_uv = position.xy;
+#ifdef USE_TEXTURE
+    vertex_uv = vec2(mix(u_previous, u, animation_time_u), mix(v_previous, v, animation_time_v));
+#endif
 
 #ifdef USE_RGB
     vertex_color = vec3(pos + vec3(0.5, 0.5, 0.5));

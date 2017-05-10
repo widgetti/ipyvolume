@@ -194,7 +194,7 @@ def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False):
 	return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=True, surface=False)
 
 
-def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False):
+def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None, texture=None):
 	fig = gcf()
 	#assert len(x.shape) == 2
 	#assert len(y.shape) == 2
@@ -237,6 +237,10 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
 	x = reshape(x)
 	y = reshape(y)
 	z = reshape(z)
+	if u is not None:
+		u = reshape(u)
+	if v is not None:
+		v = reshape(v)
 	_grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
 	mx = nx if wrapx else nx-1
 	my = ny if wrapy else ny-1
@@ -265,7 +269,8 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
 			lines[triangle_index*4+2,:] = [p2, p3]
 			lines[triangle_index*4+3,:] = [p1, p3]
 			#print(i, j, p0, p1, p2, p3)
-	mesh = volume.Mesh(x=x, y=y, z=z, triangles=triangles if surface else None, color=color, lines=lines if wireframe else None)
+	mesh = volume.Mesh(x=x, y=y, z=z, triangles=triangles if surface else None, color=color, lines=lines if wireframe else None,
+					   u=u, v=v, texture=texture)
 	fig.meshes = fig.meshes + [mesh]
 	return mesh
 
