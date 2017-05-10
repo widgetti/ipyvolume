@@ -109,13 +109,11 @@ demo = create("demo", \
 })
 
 minimal = {
-		'background-color': 'white',
         'box' : {
             'visible': False,
         },
         'axes': {
             'visible': False,
-            'color': 'black'
         }
 }
 
