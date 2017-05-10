@@ -99,7 +99,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.box_mesh.matrixAutoUpdate = true
 
         this.box_geo_edges = new THREE.EdgesGeometry( this.box_geo )
-        this.box_material_wire = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
+        this.box_material_wire = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 1. } );
         this.box_mesh_wire = new THREE.LineSegments(this.box_geo, this.box_material)
 
         var make_line = function(x1, y1, z1, x2, y2, z2, material) {
@@ -112,7 +112,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var make_axis = function(x, y, z, material) {
             return make_line(-0.5, -0.5, -0.5 ,  -0.5+x, -0.5+y, -0.5+z, material)
         }
-        var linewidth = 2;
+        var linewidth = 1;
         this.axes_material = new THREE.LineBasicMaterial({color: "cyan", linewidth: linewidth});
         this.xaxes_material = new THREE.LineBasicMaterial({color: "red", linewidth: linewidth});
         this.yaxes_material = new THREE.LineBasicMaterial({color: "green", linewidth: linewidth});
