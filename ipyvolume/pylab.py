@@ -613,10 +613,22 @@ def zlabel(label):
 	fig.zlabel = label
 
 def xyzlabel(labelx, labely, labelz):
-	"""Set all labels at once"""
-	xlabel(labelx)
-	ylabel(labely)
-	zlabel(labelz)
+    """Set all labels at once"""
+    xlabel(labelx)
+    ylabel(labely)
+    zlabel(labelz)
+
+def view(azimuth, elevation):
+    """Sets camera angles
+    
+    :param azimuth: rotation around the axis pointing up in degrees
+    :param elevation: rotation where +90 means 'up', -90 means 'down', in degrees
+    :return: 
+    """
+    fig = gcf()
+    fig.anglex = np.radians(elevation)
+    fig.angley = np.radians(azimuth)
+
 
 
 # mimic matplotlib namesace
