@@ -116,6 +116,14 @@ minimal = {
             'visible': False,
         }
 }
+nobox = create("nobox", {
+        'box' : {
+            'visible': False,
+        },
+    'axes': {
+        'visible': True,
+    }
+})
 
 if __name__ == "__main__":
     import os
