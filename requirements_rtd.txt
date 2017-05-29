@@ -2,7 +2,7 @@ jupyter_sphinx
 ipyvolume==0.3.2
 traittypes
 traitlets
-ipywidgets>=6.0.0b5
+ipywidgets<7
 Pillow
 scipy
 nbsphinx
