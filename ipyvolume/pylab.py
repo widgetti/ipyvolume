@@ -45,7 +45,7 @@ def clear():
     current.figure = None
 
 
-def figure(key=None, width=400, height=500, lighting=True, controls=True, debug=False, **kwargs):
+def figure(key=None, width=400, height=500, lighting=True, controls=True, controls_vr=False, debug=False, **kwargs):
     """Create a new figure (if no key is given) or return the figure associated with key
 
     :param key: Python object that identifies this figure
@@ -53,6 +53,7 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, debug=
     :param height:  .. height ..
     :param lighting: use lighting or not
     :param controls: show controls or not
+    :param controls_vr: show controls for VR or not
     :param debug: show debug buttons or not
     :return:
     """
@@ -73,6 +74,10 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, debug=
             l1 = ipywidgets.jslink((current.figure, 'stereo'), (stereo, 'value'))
             l2 = ipywidgets.jslink((current.figure, 'fullscreen'), (fullscreen, 'value'))
             current.container.children += (ipywidgets.HBox([stereo, fullscreen]),)
+        if controls_vr:
+            eye_separation = ipywidgets.FloatSlider(value=current.figure.eye_separation, min=-10, max=10, icon='eye')
+            ipywidgets.jslink((eye_separation, 'value'), (current.figure, 'eye_separation'))
+            current.container.children += (eye_separation,)
         if debug:
             show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front"])
             current.container.children += (show,)

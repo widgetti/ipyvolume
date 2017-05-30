@@ -85,6 +85,7 @@ class Figure(widgets.DOMWidget):
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
     volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_png_serialization)
+    eye_separation = traitlets.CFloat(6.4).tag(sync=True)
     data_min = traitlets.CFloat().tag(sync=True)
     data_max = traitlets.CFloat().tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)

@@ -31,7 +31,7 @@
     "underscore": "^1.8.3",
     "gl-matrix": "^2.0.0",
     "jquery": "^3.1.1",
-    "three": "^0.84.0",
+    "three": "^0.85.0",
     "three-text2d": "~0.3.2",
     "d3": "~4.6.0",
     "is-typedarray": "~1.0.0",

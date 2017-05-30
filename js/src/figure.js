@@ -257,6 +257,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:anglex change:angley change:anglez', this.update_current_control, this);
         this.model.on('change:angle_order', this.update_current_control, this)
         this.model.on('change:volume_data', this.data_set, this);
+        this.model.on('change:eye_separation', this.update, this)
 
         this.model.on('change:width', this.update_size, this);
         this.model.on('change:height', this.update_size, this);
@@ -676,6 +677,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         } else {
             var size = this.renderer.getSize();
             if (this.camera.parent === null ) this.camera.updateMatrixWorld();
+            this.camera_stereo.eyeSep = this.model.get('eye_separation')/100;
             this.camera_stereo.update(this.camera)
 
             // left eye
@@ -924,6 +926,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             anglex: 0.0,
             angley: 0.0,
             anglez: 0.0,
+            eye_separation: 6.4,
             angle_order: 'XYZ',
             ambient_coefficient: 0.5,
             diffuse_coefficient: 0.8,
