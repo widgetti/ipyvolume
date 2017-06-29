@@ -463,6 +463,34 @@ def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_wi
         current.container.children = (tf.control(),) + current.container.children
     return tf
 
+def plot_isosurface(data, level=None, color=default_color, wireframe=True, surface=True, controls=True):
+    from skimage import measure
+    if level is None:
+        level = np.median(data)
+    verts, triangles = measure.marching_cubes(data, level)#, spacing=(0.1, 0.1, 0.1))
+    x, y, z = verts.T
+    mesh = plot_trisurf(x, y, z, triangles=triangles, color=color)
+    if controls:
+        vmin, vmax = np.percentile(data, 1),  np.percentile(data, 99)
+        level_slider = ipywidgets.FloatSlider(value=level, min=vmin, max=vmax, icon='eye')
+        recompute_button = ipywidgets.Button(description='update')
+        controls = ipywidgets.HBox(children=[level_slider, recompute_button])
+        current.container.children += (controls,)
+        def recompute(*_ignore):
+            level = level_slider.value
+            recompute_button.description = "updating..."
+            verts, triangles = measure.marching_cubes(data, level)  # , spacing=(0.1, 0.1, 0.1))
+            x, y, z = verts.T
+            with mesh.hold_sync():
+                mesh.x = x
+                mesh.y = y
+                mesh.z = z
+                mesh.triangles = triangles.astype(dtype=np.uint32)
+                recompute_button.description = "update"
+
+        recompute_button.on_click(recompute)
+    return mesh
+
 
 def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=False,
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
