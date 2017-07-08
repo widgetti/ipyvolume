@@ -46,8 +46,8 @@ var TransferFunctionJsBumpsModel  = TransferFunctionModel.extend({
             widths: [0.1, 0.1, 0.1]
         })
     },
-    initialize: function() {
-        TransferFunctionJsBumpsModel.__super__.initialize.apply(this, arguments);
+    constructor : function () {
+        TransferFunctionModel.prototype.constructor.apply(this, arguments);
         this.on("change:levels", this.recalculate_rgba, this);
         this.on("change:opacities", this.recalculate_rgba, this);
         this.on("change:widths", this.recalculate_rgba, this);
@@ -103,8 +103,8 @@ var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
             width3: 0.1
         })
     },
-    initialize: function() {
-        TransferFunctionWidgetJs3Model.__super__.initialize.apply(this, arguments);
+    constructor : function () {
+        TransferFunctionModel.prototype.constructor.apply(this, arguments);
         this.on("change:level1", this.recalculate_rgba, this);
         this.on("change:level2", this.recalculate_rgba, this);
         this.on("change:level3", this.recalculate_rgba, this);
