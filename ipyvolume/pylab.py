@@ -159,34 +159,34 @@ default_size_selected = default_size * 1.3
 
 
 @_docsubst
-def plot_trisurf(x, y, z, triangles, color=default_color):
+def plot_trisurf(x, y, z, triangles, color=default_color, u=None, v=None, texture=None):
     """Draws a polygon/triangle mesh defined by a coordinate and triangle indices
-    
+
     Example:
-    
+
     The following plots a rectangle in the z==2 plane, consisting of 2 triangles
-    
+
     plot_trisurf([0, 0, 3., 3.], [0, 4., 0, 4.], 2, triangles=[[0, 2, 3], [0, 3, 1]])
 
     Note that the z value is constant, and thus not a list/array. For guidance, the triangles
     refer to the vertices in this manner:
-    
+
     ^ ydir
     |
     2 3
     0 1  ---> x dir
-    
+
 
     :param x: {x}
-    :param y: 
-    :param z: 
+    :param y:
+    :param z:
     :param triangles: ndarray with indices referring to the vertices, defining the triangles, with shape (N, 3)
     :param color: {color}
-    :return: 
+    :return:
     """
     fig = gcf()
     triangles = np.array(triangles).astype(dtype=np.uint32)
-    mesh = volume.Mesh(x=x, y=y, z=z, triangles=triangles, color=color)
+    mesh = volume.Mesh(x=x, y=y, z=z, triangles=triangles, color=color, u=u, v=v, texture=texture)
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
     fig.meshes = fig.meshes + [mesh]
     return mesh
@@ -195,14 +195,14 @@ def plot_trisurf(x, y, z, triangles, color=default_color):
 @_docsubst
 def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
     """Draws a 2d surface in 3d, defines by the 2d ordered arrays x,y,z
-    
+
     :param x: {x2d}
-    :param y: 
-    :param z: 
+    :param y:
+    :param z:
     :param color: {color2d}
     :param wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
     :param wrapy: simular for the y coordinate
-    :return: 
+    :return:
     """
     return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=False)
 
@@ -212,12 +212,12 @@ def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False):
     """Draws a 2d wireframe in 3d, defines by the 2d ordered arrays x,y,z
 
     :param x: {x2d}
-    :param y: 
-    :param z: 
+    :param y:
+    :param z:
     :param color: {color2d}
     :param wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
     :param wrapy: simular for the y coordinate
-    :return: 
+    :return:
     """
     return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=True, surface=False)
 
@@ -572,7 +572,7 @@ def save(filename, copy_js=True, makedirs=True, **kwargs):
 
 
 def _change_y_angle(fig, frame, fraction):
-    fig.angle2 = fraction * np.pi * 2
+    fig.angley = fraction * np.pi * 2
 
 
 def movie(f="movie.mp4", function=_change_y_angle, fps=30, frames=30, endpoint=False, \
@@ -580,13 +580,13 @@ def movie(f="movie.mp4", function=_change_y_angle, fps=30, frames=30, endpoint=F
           cmd_template_gif="convert -delay {delay} {loop} {tempdir}/frame-*.png {filename}",
           gif_loop=0):
     """Create a movie (mp4/gif) out of many frames
-    
+
     Example:
     def set_angles(fig, i, fraction):
         fig.angley = fraction*np.pi*2
     # 4 second movie, that rotates around the y axis
     p3.movie('test2.gif', set_angles, fps=20, frames=20*4, endpoint=False)
-    
+
     :param f: filename out output movie (e.g. 'movie.mp4' or 'movie.gif')
     :param function: function called before each frame with arguments (figure, framenr, fraction)
     :param fps: frames per seconds
@@ -710,10 +710,10 @@ def xyzlabel(labelx, labely, labelz):
 
 def view(azimuth, elevation):
     """Sets camera angles
-    
+
     :param azimuth: rotation around the axis pointing up in degrees
     :param elevation: rotation where +90 means 'up', -90 means 'down', in degrees
-    :return: 
+    :return:
     """
     fig = gcf()
     fig.anglex = np.radians(elevation)
@@ -796,5 +796,6 @@ class style:
                 # otherwise assume it's a dict
                 pass
             totalstyle = utils.dict_deep_update(totalstyle, style)
+
         fig = gcf()
         fig.style = totalstyle
