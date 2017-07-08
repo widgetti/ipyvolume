@@ -60,8 +60,7 @@ Quiver plots are also supported, showing a vector at each point.
 Mesh plot
 ------------
 
-
-And surface/mesh plots.
+And surface/mesh plots, showing surfaces or wireframes.
 
 .. ipywidgets-display::
 	import ipyvolume.pylab as p3
