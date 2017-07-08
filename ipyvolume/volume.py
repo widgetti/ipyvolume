@@ -148,7 +148,6 @@ class Figure(widgets.DOMWidget):
         self._screenshot_handlers.register_callback(callback, remove=remove)
 
     def _handle_custom_msg(self, content, buffers):
-        print("msg", content)
         if content.get('event', '') == 'screenshot':
             self._screenshot_handlers(content['data'])
 
