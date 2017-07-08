@@ -182,13 +182,51 @@ var MeshView = widgets.WidgetView.extend( {
         console.log(this.attributes_changed)
         this.meshes = []
 
-        var sequence_index = this.model.get("sequence_index");
-        var sequence_index_previous = this.previous_values["sequence_index"]
-        if(typeof sequence_index_previous == "undefined")
-            sequence_index_previous = sequence_index;
+        var sequence_index = sequence_index_original = this.model.get("sequence_index");
+        var sequence_index_previous = sequence_index_previous_original = sequence_index;
+        if(typeof this.previous_values["sequence_index"] != "undefined") {
+            sequence_index_previous = sequence_index_previous_original = this.previous_values["sequence_index"]
+        }
+        var time_offset, time_delta;
+        if(sequence_index >= sequence_index_previous) {
+            time_offset = sequence_index_previous - Math.floor(sequence_index_previous)
+            time_delta = sequence_index - sequence_index_previous
+            sequence_index = Math.ceil(sequence_index);
+            sequence_index_previous = Math.floor(sequence_index_previous);
+            // if we are at integer sequence frame, we can simply interpolate
+            if((sequence_index_previous != sequence_index_previous_original) || (sequence_index != sequence_index_original)) {
+                // but when we are not, we should interpolate from the nearest sequence frame to get a proper animation
+                if((sequence_index - sequence_index_previous) > 1) {
+                    sequence_index_previous = sequence_index - 1;
+                    time_delta = sequence_index_original - sequence_index_previous
+                    time_offset = 0;
+                }
+            }
+        } else {
+            time_offset = Math.ceil(sequence_index_previous)-sequence_index_previous
+            time_delta = sequence_index_previous-sequence_index
+            sequence_index = Math.floor(sequence_index);
+            sequence_index_previous = Math.ceil(sequence_index_previous);
+            if((sequence_index_previous != sequence_index_previous_original) || (sequence_index != sequence_index_original)) {
+                if((sequence_index_previous - sequence_index) > 1) {
+                    sequence_index_previous = sequence_index + 1;
+                    time_offset = 0;
+                    time_delta = sequence_index_previous-sequence_index_original
+                }
+            }
+        }/**/
+        if(time_delta > 1) { // we're going over a 'keyframe' border
+            time_delta = time_delta % 1
+            if(time_delta == 0) // special case
+                time_delta = 1
+        }/**/
+				if(time_delta == 0) // occurs when we don't change keyframes, but just a property
+					time_delta = 1
+        //console.log('>>>', sequence_index, sequence_index_previous, time_offset, time_delta)
 
         var scalar_names = ['x', 'y', 'z', 'u', 'v'];
         var vector3_names = ['color']
+
         var current  = new values.Values(scalar_names, vector3_names, _.bind(this.get_current, this), sequence_index)
         var previous = new values.Values(scalar_names, vector3_names, _.bind(this.get_previous, this), sequence_index_previous)
 
@@ -229,6 +267,12 @@ var MeshView = widgets.WidgetView.extend( {
         // we don't want to send these to the shader, these are handled at the js side
         //current.pop(['size_selected', 'color_selected'])
         //previous.pop(['size_selected', 'color_selected'])
+
+        if(current.length > previous.length) { // grow..
+            previous.pad(current)
+        } else if(current.length < previous.length) { // shrink..
+            current.pad(previous)
+        }
 
 
         current.merge_to_vec3(['x', 'y', 'z'], 'vertices')

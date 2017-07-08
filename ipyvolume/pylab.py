@@ -408,7 +408,7 @@ def animation_control(object, sequence_length=None, add=True, interval=200):
     fig.animation = interval
     fig.animation_exponent = 1.
     play = ipywidgets.Play(min=0, max=sequence_length - 1, interval=interval, value=0, step=1)
-    slider = ipywidgets.IntSlider(min=0, max=play.max)
+    slider = ipywidgets.FloatSlider(min=0, max=play.max, step=1)
     ipywidgets.jslink((play, 'value'), (slider, 'value'))
     for object in objects:
         ipywidgets.jslink((slider, 'value'), (object, 'sequence_index'))
