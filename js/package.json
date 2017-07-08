@@ -27,7 +27,7 @@
     "raw-loader": "^0.5.1"
   },
   "dependencies": {
-    "jupyter-js-widgets": "^2.0.19",
+    "@jupyter-widgets/base": "^0.5.1",
     "underscore": "^1.8.3",
     "gl-matrix": "^2.0.0",
     "jquery": "^3.1.1",

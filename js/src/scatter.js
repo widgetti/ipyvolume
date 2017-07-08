@@ -1,5 +1,5 @@
 var _ = require('underscore')
-var widgets = require('jupyter-js-widgets');
+var widgets = require('@jupyter-widgets/base');
 var THREE = require('three')
 var serialize = require('./serialize.js')
 var values = require('./values.js')

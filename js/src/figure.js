@@ -1,4 +1,4 @@
-define(["jupyter-js-widgets", "underscore", "three", "three-text2d", "gl-matrix", "d3"] ,
+define(["@jupyter-widgets/base", "underscore", "three", "three-text2d", "gl-matrix", "d3"] ,
         function(widgets, _, THREE, THREEtext2d, glm, d3) {
 
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~

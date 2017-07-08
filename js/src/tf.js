@@ -1,5 +1,5 @@
 // var exports = module.exports = {};
-var widgets = require('jupyter-js-widgets');
+var widgets = require('@jupyter-widgets/base');
 var _ = require('underscore')
 
 var semver_range = require('./utils.js').semver_range;
