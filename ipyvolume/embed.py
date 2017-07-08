@@ -122,9 +122,11 @@ def add_referring_widgets(states, drop_defaults=False):
                     states[widget.model_id] = widget._get_embed_state(drop_defaults=drop_defaults)
                     found_new = True
     return found_new
+import ipywidgets.embed
+
 def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolume embed example", external_json=False,
                indent=2,
-               template=template, template_options={"embed_url":"https://unpkg.com/jupyter-js-widgets@~3.0.0-alpha.0/dist/embed.js"},
+               template=template, template_options={"embed_url":ipywidgets.embed.DEFAULT_EMBED_SCRIPT_URL},
                widget_view_template=widget_view_template, **kwargs):
     try:
         widgets[0]
