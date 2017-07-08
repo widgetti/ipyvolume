@@ -32,7 +32,12 @@ class Mesh(widgets.DOMWidget):
     v = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     triangles =  Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
     lines =  Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
-    texture = Image(default_value=None, allow_none=True).tag(sync=True, **image_serialization)
+    texture = traitlets.Union([
+        Unicode(),
+        traitlets.List(Unicode, [], allow_none=True),
+        Image(default_value=None, allow_none=True).tag(**image_serialization),
+        traitlets.List(Image(default_value=None, allow_none=True)).tag(**image_serialization)
+    ]).tag(sync=True)
 
 #    selected = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     sequence_index = Integer(default_value=0).tag(sync=True)

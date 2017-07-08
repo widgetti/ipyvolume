@@ -40,7 +40,9 @@ var MeshView = widgets.WidgetView.extend( {
                 animation_time_u : { type: "f", value: 1. },
                 animation_time_v : { type: "f", value: 1. },
                 animation_time_color : { type: "f", value: 1. },
+                animation_time_texture : { type: "f", value: 1. },
                 texture: { type: 't', value: null },
+                texture_previous: { type: 't', value: null },
             },
             side:THREE.DoubleSide,
             vertexShader: require('../glsl/mesh-vertex.glsl'),
@@ -104,7 +106,7 @@ var MeshView = widgets.WidgetView.extend( {
     },
     on_change: function(attribute) {
         _.mapObject(this.model.changedAttributes(), function(val, key){
-            console.log("changed " +key)
+            //console.log("changed " +key)
             this.previous_values[key] = this.model.previous(key)
             // attributes_changed keys will say what needs to be animated, it's values are the properties in
             // this.previous_values that need to be removed when the animation is done
@@ -113,10 +115,11 @@ var MeshView = widgets.WidgetView.extend( {
             if (key_animation == "sequence_index") {
                 var animated_by_sequence = ['x', 'y', 'z', 'u', 'v', 'color']
                 _.each(animated_by_sequence, function(name) {
-                    if(_.isArray(this.model.get(name))) {
+                    if(_.isArray(this.model.get(name)) && this.model.get(name).length > 1) {
                         this.attributes_changed[name] = [name, 'sequence_index']
                     }
                 }, this)
+                    this.attributes_changed['texture'] = ['texture', 'sequence_index']
             }
     	    else if(key_animation == "triangles") {
                 // direct change, no animation
@@ -245,7 +248,8 @@ var MeshView = widgets.WidgetView.extend( {
             var v = current.array['v']
             if(texture && u && v) {
                 material = this.material_texture
-                material.uniforms['texture'].value = this.texture
+                material.uniforms['texture'].value = this.textures[sequence_index];
+                material.uniforms['texture_previous'].value = this.textures[sequence_index_previous];
                 geometry.addAttribute('u', new THREE.BufferAttribute(u, 1))
                 geometry.addAttribute('v', new THREE.BufferAttribute(v, 1))
                 var u_previous = previous.array['u']
@@ -289,14 +293,17 @@ var MeshView = widgets.WidgetView.extend( {
 
         _.mapObject(this.attributes_changed, function(changed_properties, key){
             var property = "animation_time_" + key
-            console.log("animating", key)
+            //console.log("animating", key)
             var done = function done() {
                 _.each(changed_properties, function clear(prop) {
                     delete this.previous_values[prop] // may happen multiple times, that is ok
                 }, this)
             }
             // uniforms of material_rgb has a reference to these same object
-            this.renderer.transition(this.material.uniforms[property], "value", done, this)
+            //this.renderer.transition(this.material.uniforms[property], "value", done, this)
+            this.renderer.transition(function(value) {
+                this.material.uniforms[property]['value'] = time_offset + time_delta * value;
+            }, done, this);
         }, this)
         this.attributes_changed = {}
     }

@@ -14,12 +14,18 @@ import warnings
 def image_to_url(image, widget):
 	if image is None:
 		return None
-	f = StringIO()
-	with warnings.catch_warnings():
-		warnings.simplefilter("ignore")
-		image.save(f, "png")
-	image_url = "data:image/png;base64," + b64encode(f.getvalue()).decode("ascii")
-	return image_url
+	if not isinstance(image, (list, tuple)):
+		images = [image]
+	else:
+		images = image
+	def encode(image):
+		f = StringIO()
+		with warnings.catch_warnings():
+			warnings.simplefilter("ignore")
+			image.save(f, "png")
+		image_url = "data:image/png;base64," + b64encode(f.getvalue()).decode("ascii")
+		return image_url
+	return [encode(image) for image in images]
 
 
 def cube_to_png(grid, vmin, vmax, file):
