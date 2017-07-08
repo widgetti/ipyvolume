@@ -7,6 +7,9 @@ from .serialize import array_rgba_png_serialization, array_serialization
 N = 1024
 x = np.linspace(0, 1, N, endpoint=True)
 
+import ipyvolume._version
+semver_range_frontend = "~" + ipyvolume._version.__version_js__
+
 
 if 0:
 	def array_from_json(value, obj=None):
@@ -29,6 +32,8 @@ class TransferFunction(widgets.DOMWidget):
 	_view_module = Unicode('ipyvolume').tag(sync=True)
 	style = Unicode("height: 32px; width: 100%;").tag(sync=True)
 	rgba = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+	_view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+	_model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
 
 class TransferFunctionJsBumps(TransferFunction):
@@ -155,4 +160,3 @@ class TransferFunctionWidget3(TransferFunction):
 		return ipywidgets.VBox(
 			[ipywidgets.HBox([ipywidgets.Label(value="levels:"), l1, l2, l3]), ipywidgets.HBox([ipywidgets.Label(value="opacities:"), o1, o2, o3])]
 		)
-

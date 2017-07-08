@@ -15,7 +15,8 @@ import ipyvolume
 logger = logging.getLogger("ipyvolume")
 
 _last_volume_renderer = None
-semver_range_frontend = "~" + ipyvolume.__version__
+import ipyvolume._version
+semver_range_frontend = "~" + ipyvolume._version.__version_js__
 
 @widgets.register
 class Mesh(widgets.DOMWidget):
