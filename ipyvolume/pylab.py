@@ -141,8 +141,8 @@ def xyzlim(vmin, vmax=None):
 def squarelim():
     fig = gcf()
     xmin, xmax = fig.xlim
-    ymin, ymax = fig.xlim
-    zmin, zmax = fig.xlim
+    ymin, ymax = fig.ylim
+    zmin, zmax = fig.zlim
     width = max([abs(xmax - xmin), abs(ymax - ymin), abs(zmax - zmin)])
     xc = (xmin + xmax) / 2
     yc = (ymin + ymax) / 2
