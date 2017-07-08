@@ -66,7 +66,8 @@ To install use pip (as non-admin):
 
 Or with anaconda/conda:
  
-    $ pip install ipywidgets~=6.0.0b5
+    $ pip install ipywidgets
+    $ # or pip install ipywidgets~=7.0.0b1 # for github master
     $ conda install -c conda-forge ipyvolume
 
 For a development installation (requires npm),
