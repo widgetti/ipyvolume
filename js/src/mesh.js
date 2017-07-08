@@ -16,12 +16,17 @@ var MeshView = widgets.WidgetView.extend( {
         window.last_mesh = this;
         this.meshes = []
         this.texture_loader = new THREE.TextureLoader()
+        this.textures = null;
         if(this.model.get('texture')) {
-            this.texture = this.texture_loader.load(this.model.get('texture'), _.bind(function() {
-                this.update_()
-            }, this));
-            this.texture.wrapS = THREE.RepeatWrapping;
-            this.texture.wrapT = THREE.RepeatWrapping;
+            this.textures = _.map(this.model.get('texture'), function(texture_url) {
+                console.log('loading texture', texture_url)
+                return this.texture_loader.load(texture_url, _.bind(function(texture) {
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    console.log('loaded texture', texture, this)
+                    this.update_()
+                }, this));
+            }, this)
         }
 
         this.material = new THREE.RawShaderMaterial({
