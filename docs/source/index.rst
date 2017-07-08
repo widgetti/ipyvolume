@@ -65,8 +65,11 @@ And surface/mesh plots, showing surfaces or wireframes.
 .. ipywidgets-display::
 	import ipyvolume.pylab as p3
 	x, y, z, u, v = p3.examples.klein_bottle(draw=False)
+	p3.figure()
 	m = p3.plot_mesh(x, y, z, wireframe=False)
+	p3.squarelim()
 	p3.show()
+
 
 Built on Ipywidgets
 -------------------
