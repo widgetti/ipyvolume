@@ -3,7 +3,7 @@ git+https://github.com/maartenbreddels/jupyter-sphinx@ipywidgets7v
 ipyvolume==0.3.2
 traittypes
 traitlets
-ipywidgets>=7.0.0b9
+ipywidgets>=7.0.0a9
 Pillow
 scipy
 nbsphinx
