@@ -57,6 +57,18 @@ Quiver plots are also supported, showing a vector at each point.
     x, y, z, u, v, w = np.random.random((6, 1000))*2-1
     quiver = ipyvolume.quickquiver(x, y, z, u, v, w, size=5)
 
+Mesh plot
+------------
+
+
+And surface/mesh plots.
+
+.. ipywidgets-display::
+	import ipyvolume.pylab as p3
+	x, y, z, u, v = p3.examples.klein_bottle(draw=False)
+	m = p3.plot_mesh(x, y, z, wireframe=False)
+	p3.show()
+
 Built on Ipywidgets
 -------------------
 
@@ -144,5 +156,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-
