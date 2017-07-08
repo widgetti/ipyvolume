@@ -303,7 +303,10 @@ var ScatterView = widgets.WidgetView.extend( {
                 }, this)
             }
             // uniforms of material_rgb has a reference to these same object
-            this.renderer.transition(this.material.uniforms[property], "value", done, this)
+            var set = function(value) {
+                this.material.uniforms[property]['value'] = value
+            }
+            this.renderer.transition(set, done, this)
         }, this)
         this.attributes_changed = {}
     }
