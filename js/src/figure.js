@@ -453,10 +453,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
             mesh_views = []
          }
     },
-    transition: function(obj, prop, on_done, context) {
+    transition: function(f, on_done, context) {
         var that = this;
-        var object = obj;
-        var property = prop;
         var Transition = function() {
             //this.objects = []
             this.time_start = (new Date()).getTime();
@@ -480,7 +478,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
                 var u = Math.min(1, dt);
                 u = Math.pow(u, that.model.get("animation_exponent"))
-                object[property] = u;
+                f.apply(context, [u]);
                 if(dt >= 1 && !this.called_on_done) {
                     this.called_on_done = true
                     on_done.apply(context)
