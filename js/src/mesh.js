@@ -86,7 +86,7 @@ var MeshView = widgets.WidgetView.extend( {
 
         this.create_mesh()
         this.add_to_scene()
-        this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u",   this.on_change, this)
+        this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles",   this.on_change, this)
         this.model.on("change:geo change:connected", this.update_, this)
     },
     set_limits: function(limits) {
@@ -237,12 +237,13 @@ var MeshView = widgets.WidgetView.extend( {
         previous.ensure_array(['color'])
         var triangles = this.model.get('triangles')
         if(triangles) {
+            triangles = triangles[0]
             var geometry = new THREE.BufferGeometry();
             geometry.addAttribute('position', new THREE.BufferAttribute(current.array_vec3['vertices'], 3))
             geometry.addAttribute('position_previous', new THREE.BufferAttribute(previous.array_vec3['vertices'], 3))
             geometry.addAttribute('color', new THREE.BufferAttribute(current.array_vec3['color'], 3))
             geometry.addAttribute('color_previous', new THREE.BufferAttribute(previous.array_vec3['color'], 3))
-            geometry.setIndex(new THREE.BufferAttribute(triangles[0], 1))
+            geometry.setIndex(new THREE.BufferAttribute(triangles, 1))
             var texture = this.model.get('texture');
             var u = current.array['u']
             var v = current.array['v']
