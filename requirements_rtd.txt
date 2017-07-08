@@ -1,4 +1,5 @@
-jupyter_sphinx
+#jupyter_sphinx
+git+https://github.com/maartenbreddels/jupyter-sphinx@ipywidgets7
 ipyvolume==0.3.2
 traittypes
 traitlets
