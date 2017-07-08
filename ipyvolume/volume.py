@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import ipywidgets as widgets
 import ipywidgets
-from .traittypes import Image
+from traittypes import Array
+from ipyvolume.traittypes import Image
 from traitlets import Unicode, Integer
 import traitlets
-from traittypes import Array
 import logging
 import numpy as np
 from .serialize import array_cube_png_serialization, array_serialization, array_sequence_serialization,\

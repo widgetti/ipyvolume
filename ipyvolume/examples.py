@@ -1,6 +1,5 @@
 import numpy as np
 import ipyvolume
-import ipyvolume.pylab as p3
 from numpy import cos, sin, sqrt, pi
 
 try:
@@ -45,6 +44,7 @@ def example_ylm(m=0, n=2, shape=128, limits=[-4, 4], **kwargs):
 	return ipyvolume.volshow(data=data.T, **kwargs)
 
 def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], draw=True, show=True, **kwargs):
+	import ipyvolume.pylab as p3
 	__, __, __, r, theta, phi = xyz(shape=shape, limits=limits, spherical=True)
 	data = r * 0
 	data[(r < rmax) & (r >= rmin)] = 0.5
@@ -64,6 +64,7 @@ def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], draw=True, show=True, **kwar
 # http://graphics.stanford.edu/data/voldata/
 
 def klein_bottle(draw=True, show=True, figure8=False, endpoint=True):
+	import ipyvolume.pylab as p3
 	# http://paulbourke.net/geometry/klein/
 	u = np.linspace(0, 2 * pi, num=40, endpoint=endpoint)
 	v = np.linspace(0, 2 * pi, num=40, endpoint=endpoint)

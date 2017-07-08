@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 _last_figure = None
 import ipywidgets
 from IPython.display import display

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import ipywidgets as widgets
 from traitlets import Unicode, validate
 from traittypes import Array
