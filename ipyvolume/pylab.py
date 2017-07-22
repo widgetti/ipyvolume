@@ -12,6 +12,12 @@ from . import utils
 import time
 from . import examples
 import warnings
+import PIL.Image
+try:
+    from io import BytesIO as StringIO
+except:
+    from cStringIO import StringIO
+import base64
 
 
 def _docsubst(f):
@@ -625,64 +631,56 @@ def movie(f="movie.mp4", function=_change_y_angle, fps=30, frames=30, endpoint=F
     return tempdir
 
 
+def _screenshot_data(timeout_seconds=10, output_widget=None, format="png"):
+    fig = gcf()
+    if output_widget is None:
+        output_widget = ipywidgets.Output()
+        display(output_widget)
+    # use lists to avoid globals
+    done = [False]
+    data = [None]
+
+    def screenshot_handler(image_data):
+        with output_widget:
+            # print("data")
+            # print(data)
+            done[0] = True
+            data[0] = image_data
+
+    fig.on_screenshot(screenshot_handler)
+    try:
+        fig.screenshot()
+        t0 = time.time()
+        timeout = False
+        ipython = IPython.get_ipython()
+        while (not done[0]) and not timeout:
+            ipython.kernel.do_one_iteration()
+            with output_widget:
+                time.sleep(0.05)
+                timeout = (time.time() - t0) > timeout_seconds
+        with output_widget:
+            if timeout and not done[0]:
+                raise ValueError("timed out, no image data returned")
+    finally:
+        with output_widget:
+            fig.on_screenshot(screenshot_handler, remove=True)
+    data = data[0]
+    data = data[data.find(",") + 1:]
+    return base64.b64decode(data)
+
+def screenshot(timeout_seconds=10, output_widget=None, format="png"):
+    data = _screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget, format=format)
+    f = StringIO(data)
+    return PIL.Image.open(f)
+
 def savefig(filename, timeout_seconds=10, wait=True, output_widget=None):
     """Save the current figure to an image (png or jpeg) to a file"""
     # TODO: might be useful to save to a file object
     __, ext = os.path.splitext(filename)
     fig = gcf()
-    fig.screen_capture_mime_type = "image/" + ext[1:]  # skip .
-    # previous_value = fig.screen_capture_enabled
-    # try:
-    if 1:
-        # fig.screen_capture_data = None
-        # assert fig.screen_capture_enabled, "Please enabled screen capturing first"
-        if wait:  # this path doesn't work atm, lets keep it for future dev
-            if output_widget is None:
-                output_widget = ipywidgets.Output()
-                display(output_widget)
-            # use lists to avoid globals
-            done = [False]
-            data = [None]
-
-            def screenshot_handler(image_data):
-                with output_widget:
-                    # print("data")
-                    # print(data)
-                    done[0] = True
-                    data[0] = image_data
-
-            fig.on_screenshot(screenshot_handler)
-            try:
-                fig.screenshot()
-                t0 = time.time()
-                timeout = False
-                ipython = IPython.get_ipython()
-                while (not done[0]) and not timeout:
-                    ipython.kernel.do_one_iteration()
-                    with output_widget:
-                        time.sleep(0.05)
-                        timeout = (time.time() - t0) > timeout_seconds
-                with output_widget:
-                    if timeout and not done[0]:
-                        raise ValueError("timed out, no image data returned")
-            finally:
-                with output_widget:
-                    fig.on_screenshot(screenshot_handler, remove=True)
-            data = data[0]
-        else:
-            data = fig.screen_capture_data
-        if len(data) == 0:
-            raise ValueError("image data turned up empty, bug?")
-        if not data.startswith('data:image'):
-            raise ValueError("image data didn't give expected result, bug?")
-        # skip a header like 'data:image/png;base64,'
-        data = data[data.find(",") + 1:]
-        import base64
-        with open(filename, "wb") as f:
-            f.write(base64.b64decode(data))
-    # finally:
-    #    fig.screen_capture_enabled = previous_value
-    return filename
+    format = ext[1:]
+    with open(filename, "wb") as f:
+        f.write(_screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget))
 
 
 def xlabel(label):
