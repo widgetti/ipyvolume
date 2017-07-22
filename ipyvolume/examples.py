@@ -63,31 +63,34 @@ def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], draw=True, show=True, **kwar
 
 # http://graphics.stanford.edu/data/voldata/
 
-def klein_bottle(draw=True, show=True, figure8=False, endpoint=True):
-	import ipyvolume.pylab as p3
-	# http://paulbourke.net/geometry/klein/
-	u = np.linspace(0, 2 * pi, num=40, endpoint=endpoint)
-	v = np.linspace(0, 2 * pi, num=40, endpoint=endpoint)
-	u, v = np.meshgrid(u, v)
-	if figure8:
-		#u -= np.pi
-		#v -= np.pi
-		a = 2
-		s = 5
-		x = s * (a + cos(u / 2) * sin(v) - sin(u / 2) * sin(2 * v)/2) * cos(u)
-		y = s * (a + cos(u / 2) * sin(v) - sin(u / 2) * sin(2 * v)/2) * sin(u)
-		z = s * (sin(u / 2) * sin(v) + cos(u / 2) * sin(2 * v)/2)
-	else:
-		r = 4 * (1 - cos(u) / 2)
-		x = 6 * cos(u) * (1 + sin(u)) \
-			+ r * cos(u) * cos(v) * (u < pi) \
-			+ r * cos(v + pi) * (u >= pi)
-		y = 16 * sin(u) + r * sin(u) * cos(v) * (u < pi)
-		z = r * sin(v)
-	if draw:
-		mesh = p3.plot_surface(x, y, np.array([z]), wrapx=not endpoint, wrapy=not endpoint)
-		if show:
-			p3.show()
-		return mesh
-	else:
-		return x, y, z, u, v
+def klein_bottle(draw=True, show=True, figure8=False, endpoint=True, uv=False, wireframe=False):
+    import ipyvolume.pylab as p3
+    # http://paulbourke.net/geometry/klein/
+    u = np.linspace(0, 2 * pi, num=40, endpoint=endpoint)
+    v = np.linspace(0, 2 * pi, num=40, endpoint=endpoint)
+    u, v = np.meshgrid(u, v)
+    if figure8:
+        #u -= np.pi
+        #v -= np.pi
+        a = 2
+        s = 5
+        x = s * (a + cos(u / 2) * sin(v) - sin(u / 2) * sin(2 * v)/2) * cos(u)
+        y = s * (a + cos(u / 2) * sin(v) - sin(u / 2) * sin(2 * v)/2) * sin(u)
+        z = s * (sin(u / 2) * sin(v) + cos(u / 2) * sin(2 * v)/2)
+    else:
+        r = 4 * (1 - cos(u) / 2)
+        x = 6 * cos(u) * (1 + sin(u)) \
+            + r * cos(u) * cos(v) * (u < pi) \
+            + r * cos(v + pi) * (u >= pi)
+        y = 16 * sin(u) + r * sin(u) * cos(v) * (u < pi)
+        z = r * sin(v)
+    if draw:
+        if uv:
+            mesh = p3.plot_mesh(x, y, np.array([z]), wrapx=not endpoint, wrapy=not endpoint, u=u/(2*np.pi), v=v/(2*np.pi), wireframe=wireframe)
+        else:
+            mesh = p3.plot_mesh(x, y, np.array([z]), wrapx=not endpoint, wrapy=not endpoint, wireframe=wireframe)
+        if show:
+            p3.show()
+        return mesh
+    else:
+        return x, y, z, u, v
