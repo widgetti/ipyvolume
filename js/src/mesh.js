@@ -18,15 +18,7 @@ var MeshView = widgets.WidgetView.extend( {
         this.texture_loader = new THREE.TextureLoader()
         this.textures = null;
         if(this.model.get('texture')) {
-            this.textures = _.map(this.model.get('texture'), function(texture_url) {
-                console.log('loading texture', texture_url)
-                return this.texture_loader.load(texture_url, _.bind(function(texture) {
-                    texture.wrapS = THREE.RepeatWrapping;
-                    texture.wrapT = THREE.RepeatWrapping;
-                    console.log('loaded texture', texture, this)
-                    this.update_()
-                }, this));
-            }, this)
+            this._load_textures()
         }
 
         this.material = new THREE.RawShaderMaterial({
@@ -88,6 +80,18 @@ var MeshView = widgets.WidgetView.extend( {
         this.add_to_scene()
         this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles",   this.on_change, this)
         this.model.on("change:geo change:connected", this.update_, this)
+        this.model.on("change:texture", this._load_textures, this)
+    },
+    _load_textures: function() {
+        this.textures = _.map(this.model.get('texture'), function(texture_url) {
+            console.log('loading texture', texture_url)
+            return this.texture_loader.load(texture_url, _.bind(function(texture) {
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                console.log('loaded texture', texture, this)
+                this.update_()
+            }, this));
+        }, this)
     },
     set_limits: function(limits) {
         _.mapObject(limits, function(value, key) {
@@ -293,7 +297,8 @@ var MeshView = widgets.WidgetView.extend( {
             var v = current.array['v']
             if(texture && u && v) {
                 material = this.material_texture
-                material.uniforms['texture'].value = this.textures[sequence_index];
+                material.uniforms['texture'].value = this.textures[sequence_index]; // TODO/BUG: there could
+                // be a situation where texture property is modified, but this.textures isn't done yet..
                 material.uniforms['texture_previous'].value = this.textures[sequence_index_previous];
                 geometry.addAttribute('u', new THREE.BufferAttribute(u, 1))
                 geometry.addAttribute('v', new THREE.BufferAttribute(v, 1))
