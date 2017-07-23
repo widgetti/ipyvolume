@@ -330,10 +330,18 @@ var FigureView = widgets.DOMWidgetView.extend( {
     custom_msg: function(content) {
         console.log('content', content)
         if(content.msg == 'screenshot') {
-            this._real_update()
-            var data = this.renderer.domElement.toDataURL(this.model.get('screen_capture_mime_type'));
-            console.info("captured screen data to screen_capture_data")
-            this.send({event: 'screenshot', data: data});
+            resize = content.width && content.height
+            if(resize)
+                this.update_size(true, content.width, content.height)
+            try {
+                this._real_update()
+                var data = this.renderer.domElement.toDataURL(this.model.get('screen_capture_mime_type'));
+                console.info("captured screen data to screen_capture_data")
+                this.send({event: 'screenshot', data: data});
+            } finally {
+                if(resize)
+                    this.update_size(false)
+            }
         }
     },
     _d3_add_axis: function(node, d, i) {
@@ -828,10 +836,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.box_material_volr.uniforms.specular_exponent.value = this.model.get("specular_exponent")
         this.update()
     },
-    update_size: function(skip_update) {
+    update_size: function(skip_update, width, height) {
         console.log("update size")
-        var width = this.model.get("width");
-        var height = this.model.get("height");
+        var width = width || this.model.get("width");
+        var height = height || this.model.get("height");
         var render_width = width;
         var render_height = height;
         this.renderer.setSize(width, height);

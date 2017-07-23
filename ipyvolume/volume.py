@@ -143,8 +143,8 @@ class Figure(widgets.DOMWidget):
         self._screenshot_handlers = widgets.CallbackDispatcher()
         self.on_msg(self._handle_custom_msg)
 
-    def screenshot(self):
-        self.send({'msg':'screenshot'})
+    def screenshot(self, width=None, height=None):
+        self.send({'msg':'screenshot', 'width':width, 'height':height})
 
     def on_screenshot(self, callback, remove=False):
         self._screenshot_handlers.register_callback(callback, remove=remove)
