@@ -311,6 +311,9 @@ var MeshView = widgets.WidgetView.extend( {
             }
 
             this.surface_mesh = new THREE.Mesh(geometry, material);
+            // BUG? because of our custom shader threejs thinks our object if out
+            // of the frustum
+            this.surface_mesh.frustumCulled = false;
             this.surface_mesh.material_rgb = this.material_rgb
             this.surface_mesh.material_normal = material
             this.meshes.push(this.surface_mesh)
@@ -331,6 +334,7 @@ var MeshView = widgets.WidgetView.extend( {
             geometry.setIndex(new THREE.BufferAttribute(lines[0], 1))
 
             this.line_segments = new THREE.LineSegments(geometry, this.line_material);
+            this.line_segments.frustumCulled = false;
             //TODO: check lines with volume rendering, also in scatter
             this.line_segments.material_rgb = this.line_material_rgb
             this.line_segments.material_normal = this.line_material
