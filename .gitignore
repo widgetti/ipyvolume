@@ -87,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Webpack watch
+js/node_modules/
+# Javascript Builb
+static/
