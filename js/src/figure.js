@@ -200,7 +200,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.screen_mesh = new THREE.Mesh(this.screen_plane, this.screen_material );
         this.screen_scene.add(this.screen_mesh)
         this.screen_camera = new THREE.OrthographicCamera( 1 / - 2, 1 / 2, 1 / 2, 1 / - 2, -10000, 10000 );
-        this.screen_camera.position.z = 20;
+        this.screen_camera.position.z = 10;
 
         this.control_trackball = new THREE.TrackballControls( this.camera, this.renderer.domElement );
         this.control_orbit = new THREE.OrbitControls( this.camera, this.renderer.domElement );
