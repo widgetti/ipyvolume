@@ -268,7 +268,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:volume_data', this.data_set, this);
         this.model.on('change:eye_separation', this.update, this)
 
-        this.model.on('change:camera_fov', this.update_camera, this)
+        this.model.on('change:camera_fov', this.update_current_control, this)
 
         this.model.on('change:width', this.update_size, this);
         this.model.on('change:height', this.update_size, this);
@@ -579,17 +579,29 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.save_changes()
         this.update()
     },
+    getTanDeg: function(deg) {
+      var rad = deg * Math.PI/180;
+      return Math.tan(rad);
+    },
+    
     update_current_control: function() {
         var euler = new THREE.Euler(this.model.get('anglex'), this.model.get('angley'), this.model.get('anglez'), this.model.get('angle_order'))
         console.log("updating camera", euler)
         var q = new THREE.Quaternion().setFromEuler(euler)
         //this.camera.quaternion = q
+        
+        var oldfov = this.camera.fov
+        var newfov = this.model.get("camera_fov")
+        this.camera.setFov(newfov);
+        
         var target = new THREE.Vector3()
-        var distance = this.camera.position.length()
+        var distance = this.camera.position.length()        
+        var newdist = distance * this.getTanDeg(oldfov/2) / this.getTanDeg(newfov/2)
+        
         var eye = new THREE.Vector3(0, 0, 1);
         var up = new THREE.Vector3(0, 1, 0);
         eye.applyQuaternion(q)
-        eye.multiplyScalar(distance)
+        eye.multiplyScalar(newdist)
         this.camera.position.copy(eye)
         this.camera.up = up
         this.camera.up.applyQuaternion(q)
@@ -849,24 +861,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.update()
     },
     
-    getTanDeg: function(deg) {
-      var rad = deg * Math.PI/180;
-      return Math.tan(rad);
-    },
-    
-    update_camera: function() {
-        console.log("update camera")
-        var oldfov = this.camera.fov
-        var newfov = this.model.get("camera_fov")
-        this.camera.setFov(newfov);
-        // we want the view to be the same after the change
-        // so we move back or forward to maintain the same cone radius
-        var oldz = this.camera.position.z
-        var newz = oldz * this.getTanDeg(oldfov/2) / this.getTanDeg(newfov/2)
-        this.camera.position.z = newz
-        
-    },
-
     update_size: function(skip_update, width, height) {
         console.log("update size")
         var width = width || this.model.get("width");
