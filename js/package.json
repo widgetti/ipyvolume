@@ -19,12 +19,24 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
+    "@types/expect.js": "^0.3.29",
+    "@types/mocha": "^2.2.41",
     "json-loader": "^0.5.4",
     "karma-chrome-launcher": "^2.0.0",
+    "karma-typescript": "^2.0.3",
     "karma-mocha": "^1.3.0",
+    "karma-chai": "^0.1.0",
+    "karma-webpack": "^2.0.3",
+    "karma-sourcemap-loader": "^0.3.7",
     "url-loader": "^0.5.7",
     "webpack": "^1.12.14",
-    "raw-loader": "^0.5.1"
+    "raw-loader": "^0.5.1",
+    "mocha": "^3.3.0",
+    "chai": "^4.0.0",
+    "sinon": "^2.1.0",
+    "sinon-chai": "^2.11.0",
+    "typescript": "~2.3.1",
+    "ts-loader": "~2.2.2"
   },
   "dependencies": {
     "@jupyter-widgets/base": "^0.5.1",
