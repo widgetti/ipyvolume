@@ -17,6 +17,7 @@ require("./three/TrackballControls.js")
 require("./three/DeviceOrientationControls.js")
 require("./three/StereoEffect.js")
 require("./three/THREEx.FullScreen.js")
+require("./three/CombinedCamera.js")
 ndarray = require('ndarray')
 
 function is_ndarray(obj) {
@@ -70,16 +71,23 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.el_axes = document.createElement("div")
         this.el_mirror.appendChild(this.el_axes);
 
-        const VIEW_ANGLE = 45;
-        const aspect = width / height;
+        //const VIEW_ANGLE = this.model.get("camera_fov");
+        //const aspect = width / height;
         const NEAR = 0.01;
         const FAR = 10000;
-        this.camera = new THREE.PerspectiveCamera(
-            VIEW_ANGLE,
-            aspect,
+        const orthoNEAR = -500;
+        const orthoFAR = 1000;        
+        this.camera = new THREE.CombinedCamera(
+            window.innerWidth/2,
+            window.innerHeight/2,
+            this.model.get("camera_fov"),
+            //aspect,
             NEAR,
-            FAR
+            FAR,
+            orthoNEAR,
+            orthoFAR
         );
+        //this.camera.toOrthographic()
         this.camera_stereo = new THREE.StereoCamera()
         this.renderer.setSize(width, height);
 
@@ -142,7 +150,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.wire_box.add(make_line(-0.5, -0.5+1, -0.5, -0.5, -0.5+1, -0.5+1, this.axes_material))
         this.wire_box.add(make_line(-0.5+1, -0.5+1, -0.5, -0.5+1, -0.5+1, -0.5+1, this.axes_material))
 
-        this.camera.position.z = 2
+        // set a good intial z for any fov angle
+        this.camera.position.z = 2 * this.getTanDeg(45/2) / this.getTanDeg(this.model.get("camera_fov")/2)
 
 
         // d3 data
@@ -258,6 +267,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:angle_order', this.update_current_control, this)
         this.model.on('change:volume_data', this.data_set, this);
         this.model.on('change:eye_separation', this.update, this)
+
+        this.model.on('change:camera_fov', this.update_current_control, this)
 
         this.model.on('change:width', this.update_size, this);
         this.model.on('change:height', this.update_size, this);
@@ -568,17 +579,29 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.save_changes()
         this.update()
     },
+    getTanDeg: function(deg) {
+      var rad = deg * Math.PI/180;
+      return Math.tan(rad);
+    },
+    
     update_current_control: function() {
         var euler = new THREE.Euler(this.model.get('anglex'), this.model.get('angley'), this.model.get('anglez'), this.model.get('angle_order'))
         console.log("updating camera", euler)
         var q = new THREE.Quaternion().setFromEuler(euler)
         //this.camera.quaternion = q
+        
+        var oldfov = this.camera.fov
+        var newfov = this.model.get("camera_fov")
+        this.camera.setFov(newfov);
+        
         var target = new THREE.Vector3()
-        var distance = this.camera.position.length()
+        var distance = this.camera.position.length()        
+        var newdist = distance * this.getTanDeg(oldfov/2) / this.getTanDeg(newfov/2)
+        
         var eye = new THREE.Vector3(0, 0, 1);
         var up = new THREE.Vector3(0, 1, 0);
         eye.applyQuaternion(q)
-        eye.multiplyScalar(distance)
+        eye.multiplyScalar(newdist)
         this.camera.position.copy(eye)
         this.camera.up = up
         this.camera.up.applyQuaternion(q)
@@ -829,6 +852,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
 
     },
+
     update_light: function() {
         this.box_material_volr.uniforms.ambient_coefficient.value = this.model.get("ambient_coefficient")
         this.box_material_volr.uniforms.diffuse_coefficient.value = this.model.get("diffuse_coefficient")
@@ -836,6 +860,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.box_material_volr.uniforms.specular_exponent.value = this.model.get("specular_exponent")
         this.update()
     },
+    
     update_size: function(skip_update, width, height) {
         console.log("update size")
         var width = width || this.model.get("width");
@@ -944,6 +969,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             screen_capture_data: null,
             fullscreen: false,
             camera_control: 'trackball',
+            camera_fov: 45,
             width: 500,
             height: 400,
             downscale: 1,

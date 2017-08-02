@@ -118,6 +118,7 @@ class Figure(widgets.DOMWidget):
     fullscreen = traitlets.Bool(False).tag(sync=True)
 
     camera_control = traitlets.Unicode(default_value='trackball').tag(sync=True)
+    camera_fov = traitlets.CFloat(45,min=0.1,max=179.9).tag(sync=True)
 
     width = traitlets.CInt(500).tag(sync=True)
     height = traitlets.CInt(400).tag(sync=True)
