@@ -13,6 +13,7 @@ import time
 from . import examples
 import warnings
 import PIL.Image
+import traitlets
 try:
     from io import BytesIO as StringIO
 except:
@@ -88,7 +89,8 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, contro
         if debug:
             show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front"])
             current.container.children += (show,)
-            ipywidgets.jslink((current.figure, 'show'), (show, 'value'))
+            #ipywidgets.jslink((current.figure, 'show'), (show, 'value'))
+            traitlets.link((current.figure, 'show'), (show, 'value'))
     return current.figure
 
 
