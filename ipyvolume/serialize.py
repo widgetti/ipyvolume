@@ -39,7 +39,6 @@ def image_to_url(image, widget):
     		image.save(f, "png")
     	image_url = "data:image/png;base64," + b64encode(f.getvalue()).decode("ascii")
     	return image_url
-    print(flattened)
     return [encode(image) for image in flattened]
 
 
