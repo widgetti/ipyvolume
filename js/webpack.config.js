@@ -44,7 +44,7 @@ module.exports = [
         module: {
             loaders: loaders
         },
-        externals: ['jupyter-js-widgets']
+        externals: ['jupyter-js-widgets', 'three']
     },
     {// Embeddable ipyvolume bundle
      //
@@ -72,5 +72,17 @@ module.exports = [
             loaders: loaders
         },
         externals: ['jupyter-js-widgets']
-    }
+    },
+    {
+        entry: 'three',
+        output: {
+            filename: 'three.js',
+            path: '../ipyvolume/static',
+            libraryTarget: 'amd'
+        },
+        devtool: 'source-map',
+        module: {
+            loaders: loaders
+        }
+    },
 ];

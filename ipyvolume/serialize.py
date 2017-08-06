@@ -12,20 +12,34 @@ from base64 import b64encode
 import warnings
 
 def image_to_url(image, widget):
-	if image is None:
-		return None
-	if not isinstance(image, (list, tuple)):
-		images = [image]
-	else:
-		images = image
-	def encode(image):
-		f = StringIO()
-		with warnings.catch_warnings():
-			warnings.simplefilter("ignore")
-			image.save(f, "png")
-		image_url = "data:image/png;base64," + b64encode(f.getvalue()).decode("ascii")
-		return image_url
-	return [encode(image) for image in images]
+    if image is None:
+    	return None
+    if not isinstance(image, (list, tuple)):
+    	images = [image]
+    else:
+    	images = image
+    def flatten_frames(image):
+        frames = []
+        index = 0
+        while True:
+            try:
+                image.seek(index)
+            except EOFError:
+                break
+            frames.append(image.copy())
+            index += 1
+        return frames
+    flattened = []
+    for image in images:
+        flattened += flatten_frames(image)
+    def encode(image):
+    	f = StringIO()
+    	with warnings.catch_warnings():
+    		warnings.simplefilter("ignore")
+    		image.save(f, "png")
+    	image_url = "data:image/png;base64," + b64encode(f.getvalue()).decode("ascii")
+    	return image_url
+    return [encode(image) for image in flattened]
 
 
 def cube_to_png(grid, vmin, vmax, file):

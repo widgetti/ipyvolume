@@ -297,9 +297,10 @@ var MeshView = widgets.WidgetView.extend( {
             var v = current.array['v']
             if(texture && u && v) {
                 material = this.material_texture
-                material.uniforms['texture'].value = this.textures[sequence_index]; // TODO/BUG: there could
+                var sequence_index_texture = sequence_index;
+                material.uniforms['texture'].value = this.textures[sequence_index_texture % this.textures.length]; // TODO/BUG: there could
                 // be a situation where texture property is modified, but this.textures isn't done yet..
-                material.uniforms['texture_previous'].value = this.textures[sequence_index_previous];
+                material.uniforms['texture_previous'].value = this.textures[sequence_index_previous % this.textures.length];
                 geometry.addAttribute('u', new THREE.BufferAttribute(u, 1))
                 geometry.addAttribute('v', new THREE.BufferAttribute(v, 1))
                 var u_previous = previous.array['u']
@@ -311,6 +312,9 @@ var MeshView = widgets.WidgetView.extend( {
             }
 
             this.surface_mesh = new THREE.Mesh(geometry, material);
+            // BUG? because of our custom shader threejs thinks our object if out
+            // of the frustum
+            this.surface_mesh.frustumCulled = false;
             this.surface_mesh.material_rgb = this.material_rgb
             this.surface_mesh.material_normal = material
             this.meshes.push(this.surface_mesh)
@@ -331,6 +335,7 @@ var MeshView = widgets.WidgetView.extend( {
             geometry.setIndex(new THREE.BufferAttribute(lines[0], 1))
 
             this.line_segments = new THREE.LineSegments(geometry, this.line_material);
+            this.line_segments.frustumCulled = false;
             //TODO: check lines with volume rendering, also in scatter
             this.line_segments.material_rgb = this.line_material_rgb
             this.line_segments.material_normal = this.line_material
