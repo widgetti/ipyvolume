@@ -570,10 +570,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
 def save(filename, copy_js=True, makedirs=True, **kwargs):
     """Save the figure/visualization as html file, and optionally copy the .js file to the same directory """
     ipyvolume.embed.embed_html(filename, current.container, 
-                               makedirs=makedirs, **kwargs)
-    if copy_js:
-        ipyvolume.embed.save_js(dir_name_dst, makedirs=makedirs)
-
+                       makedirs=makedirs, copy_js=copy_js, **kwargs)
 
 def _change_y_angle(fig, frame, fraction):
     fig.angley = fraction * np.pi * 2
