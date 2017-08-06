@@ -151,10 +151,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.wire_box.add(make_line(-0.5+1, -0.5+1, -0.5, -0.5+1, -0.5+1, -0.5+1, this.axes_material))
 
         // set a good intial z for any fov angle
-<<<<<<< HEAD
         // see maartenbreddels/ipyvolume#40 for explanation
-=======
->>>>>>> maartenbreddels/master
         this.camera.position.z = 2 * this.getTanDeg(45/2) / this.getTanDeg(this.model.get("camera_fov")/2)
 
 
@@ -604,13 +601,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.camera.setFov(newfov);
         
         var target = new THREE.Vector3()
-<<<<<<< HEAD
         var distance = this.camera.position.length()  
         // change distance to account for new fov angle
         // see maartenbreddels/ipyvolume#40 for explanation     
-=======
-        var distance = this.camera.position.length()        
->>>>>>> maartenbreddels/master
         var newdist = distance * this.getTanDeg(oldfov/2) / this.getTanDeg(newfov/2)
         
         var eye = new THREE.Vector3(0, 0, 1);
