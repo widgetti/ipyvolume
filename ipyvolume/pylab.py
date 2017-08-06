@@ -7,7 +7,6 @@ from . import volume
 import ipyvolume.embed
 import os
 import numpy as np
-import shutil
 from . import utils
 import time
 from . import examples
