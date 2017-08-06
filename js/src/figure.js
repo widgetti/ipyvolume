@@ -337,6 +337,11 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         window.last_volume = this;
         //navigator.wakeLock.request("display")
+        
+        //ensure initial sync of view with figure model
+        this.update_current_control();
+        this.update_light();
+        
         return
     },
     custom_msg: function(content) {
