@@ -145,6 +145,14 @@ def embed_html(filename, widgets, makedirs=True, copy_js=True,
                indent=2,
                template=template, template_options={"embed_url":ipywidgets.embed.DEFAULT_EMBED_SCRIPT_URL},
                widget_view_template=widget_view_template, **kwargs):
+    """ output the the ipywidgets to a standalone html file
+    
+    :param filename: filepath to output to
+    :param widgets: list of ipywidget instances
+    :param makedirs: whether to make directories in the filename path, if they do not already exist
+    :param copy_js: whether to copy a local version of the ipyvolume javascript to the same folder
+    
+    """
     try:
         widgets[0]
     except (IndexError, TypeError):
