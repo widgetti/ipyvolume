@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 import ipywidgets
 import ipyvolume
 from base64 import standard_b64encode
@@ -124,7 +125,23 @@ def add_referring_widgets(states, drop_defaults=False):
     return found_new
 import ipywidgets.embed
 
-def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolume embed example", external_json=False,
+def save_js(dirname, makedirs=True):
+    """ output the ipyvolume javascript
+    
+    :param dirname: folderpath to output js file to
+    :param makedirs: whether to make the directories if they do not already exist
+    
+    """
+    dir_name_dst = os.path.abspath(dirname)
+    dir_name_src = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static")
+    if not os.path.exists(dir_name_dst) and makedirs:
+        os.makedirs(dir_name_dst)
+    dst = os.path.join(dir_name_dst, "ipyvolume.js")
+    src = os.path.join(dir_name_src, "index.js")
+    shutil.copy(src, dst)
+
+def embed_html(filename, widgets, makedirs=True, copy_js=True,
+               drop_defaults=False, all=False, title="ipyvolume embed example", external_json=False,
                indent=2,
                template=template, template_options={"embed_url":ipywidgets.embed.DEFAULT_EMBED_SCRIPT_URL},
                widget_view_template=widget_view_template, **kwargs):
@@ -132,6 +149,11 @@ def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolu
         widgets[0]
     except (IndexError, TypeError):
         widgets = [widgets]
+        
+    dir_name_dst = os.path.dirname(os.path.abspath(filename))
+    if not os.path.exists(dir_name_dst) and makedirs:
+        os.makedirs(dir_name_dst)
+        
     with open(filename, "w") as f:
         # collect the state of all relevant widgets
         state = {}
@@ -165,3 +187,8 @@ def embed_html(filename, widgets, drop_defaults=False, all=False, title="ipyvolu
                            widget_views=widget_views))
         html_code = template.format(**values)
         f.write(html_code)
+
+    if copy_js:
+        save_js(dir_name_dst, makedirs=makedirs)
+        
+    
