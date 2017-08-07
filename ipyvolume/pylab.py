@@ -7,7 +7,6 @@ from . import volume
 import ipyvolume.embed
 import os
 import numpy as np
-import shutil
 from . import utils
 import time
 from . import examples
@@ -569,16 +568,8 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
 
 def save(filename, copy_js=True, makedirs=True, **kwargs):
     """Save the figure/visualization as html file, and optionally copy the .js file to the same directory """
-    dir_name_dst = os.path.dirname(os.path.abspath(filename))
-    dir_name_src = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static")
-    if not os.path.exists(dir_name_dst) and makedirs:
-        os.makedirs(dir_name_dst)
-    ipyvolume.embed.embed_html(filename, current.container, **kwargs)
-    if copy_js:
-        dst = os.path.join(dir_name_dst, "ipyvolume.js")
-        src = os.path.join(dir_name_src, "index.js")
-        shutil.copy(src, dst)
-
+    ipyvolume.embed.embed_html(filename, current.container, 
+                       makedirs=makedirs, copy_js=copy_js, **kwargs)
 
 def _change_y_angle(fig, frame, fraction):
     fig.angley = fraction * np.pi * 2
