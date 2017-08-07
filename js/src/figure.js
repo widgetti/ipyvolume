@@ -61,6 +61,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var width = this.model.get("width");
         var height = this.model.get("height");
         this.renderer = new THREE.WebGLRenderer({antialias: true});
+        this.el.classList.add("jupyter-widgets");
         this.el.appendChild(this.renderer.domElement);
 
         // el_mirror is a 'mirror' dom tree that d3 needs
