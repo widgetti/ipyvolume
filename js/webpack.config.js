@@ -44,7 +44,7 @@ module.exports = [
         module: {
             loaders: loaders
         },
-        externals: ['jupyter-js-widgets', 'three']
+        externals: ['three', 'jupyter-js-widgets', '@jupyter-widgets/base', '@jupyter-widgets/controls']
     },
     {// Embeddable ipyvolume bundle
      //
@@ -71,7 +71,7 @@ module.exports = [
         module: {
             loaders: loaders
         },
-        externals: ['jupyter-js-widgets']
+        externals: ['jupyter-js-widgets', '@jupyter-widgets/base', '@jupyter-widgets/controls']
     },
     {
         entry: 'three',
