@@ -3,7 +3,7 @@ _last_figure = None
 import ipywidgets
 from IPython.display import display
 import IPython
-from . import volume
+import ipyvolume as ipv
 import ipyvolume.embed
 import os
 import numpy as np
@@ -68,7 +68,7 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, contro
         current.figure = current.figures[key]
         current.container = current.containers[key]
     else:
-        current.figure = volume.Figure(volume_data=None, width=width, height=height, **kwargs)
+        current.figure = ipv.Figure(volume_data=None, width=width, height=height, **kwargs)
         current.container = ipywidgets.VBox()
         current.container.children = [current.figure]
         if key is not None:
@@ -192,7 +192,7 @@ def plot_trisurf(x, y, z, triangles, color=default_color, u=None, v=None, textur
     """
     fig = gcf()
     triangles = np.array(triangles).astype(dtype=np.uint32)
-    mesh = volume.Mesh(x=x, y=y, z=z, triangles=triangles, color=color, u=u, v=v, texture=texture)
+    mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles, color=color, u=u, v=v, texture=texture)
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
     fig.meshes = fig.meshes + [mesh]
     return mesh
@@ -312,7 +312,7 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
             lines[triangle_index * 4 + 2, :] = [p2, p3]
             lines[triangle_index * 4 + 3, :] = [p1, p3]
     # print(i, j, p0, p1, p2, p3)
-    mesh = volume.Mesh(x=x, y=y, z=z, triangles=triangles if surface else None, color=color,
+    mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles if surface else None, color=color,
                        lines=lines if wireframe else None,
                        u=u, v=v, texture=texture)
     fig.meshes = fig.meshes + [mesh]
@@ -338,7 +338,7 @@ def scatter(x, y, z, color=default_color, size=default_size, size_selected=defau
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    scatter = volume.Scatter(x=x, y=y, z=z, color=color, size=size, color_selected=color_selected,
+    scatter = ipv.Scatter(x=x, y=y, z=z, color=color, size=size, color_selected=color_selected,
                              size_selected=size_selected, geo=marker, selection=selection, **kwargs)
     fig.scatters = fig.scatters + [scatter]
     return scatter
@@ -364,7 +364,7 @@ def quiver(x, y, z, u, v, w, size=default_size * 10, size_selected=default_size_
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    scatter = volume.Scatter(x=x, y=y, z=z, vx=u, vy=v, vz=w,
+    scatter = ipv.Scatter(x=x, y=y, z=z, vx=u, vy=v, vz=w,
                              color=color, size=size, color_selected=color_selected, size_selected=size_selected,
                              geo=marker, **kwargs)
     fig.scatters = fig.scatters + [scatter]
@@ -463,7 +463,7 @@ def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_wi
         tf_kwargs["level" + str(i)] = level[i - 1]
         tf_kwargs["opacity" + str(i)] = opacity[i - 1]
         tf_kwargs["width" + str(i)] = level_width[i - 1]
-    tf = volume.TransferFunctionWidgetJs3(**tf_kwargs)
+    tf = ipv.TransferFunctionWidgetJs3(**tf_kwargs)
     fig = gcf()
     if controls:
         current.container.children = (tf.control(),) + current.container.children
