@@ -792,6 +792,34 @@ class style:
         fig = gcf()
         fig.style = totalstyle
 
+def plot_square(where="back", texture=None, flip=False, color=None):
+    fig = gcf()
+    xmin, xmax = fig.xlim
+    ymin, ymax = fig.ylim
+    zmin, zmax = fig.ylim
+    if where == "back":
+        x = [xmin, xmax, xmax, xmin]
+        y = [ymin, ymin, ymax, ymax]
+        z = [zmin, zmin, zmin, zmin]
+    if where == "front":
+        x = [xmin, xmax, xmax, xmin][::-1]
+        y = [ymin, ymin, ymax, ymax]
+        z = [zmax, zmax, zmax, zmax]
+    if where == "left":
+        x = [xmin, xmin, xmin, zmin]
+        y = [ymin, ymin, ymax, ymax]
+        z = [zmin, zmax, zmax, zmin]
+    if where == "right":
+        x = [xmax, xmax, xmax, zmax]
+        y = [ymin, ymin, ymax, ymax]
+        z = [zmin, zmax, zmax, zmin][::-1]
+    triangles = [(0, 1, 2), (0, 2, 3)]
+    u = v = None
+    if texture is not None:
+        u = [0., 1., 1., 0.]
+        v = [0., 0., 1., 1.]
+    mesh = plot_trisurf(x, y, z, triangles, texture=texture, u=u, v=v)
+    return mesh
 def selector_lasso(output_widget=None):
     fig = gcf()
     if output_widget is None:
