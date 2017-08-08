@@ -10,6 +10,7 @@ var MediaStreamModel = widgets.DOMWidgetModel.extend({
         _view_module: 'media',
     }),
     initialize: function() {
+        MediaStreamModel.__super__.initialize.apply(this, arguments);
         // we don't have any stream
         this.stream = Promise.resolve(null)
     }
@@ -55,7 +56,7 @@ var VideoStreamModel = MediaStreamModel.extend({
         loop: true
     }),
     initialize: function() {
-        // Get the camera permissions
+        VideoStreamModel.__super__.initialize.apply(this, arguments);
         window.last_video = this
         this.video = document.createElement('video')
         this.source = document.createElement('source')
