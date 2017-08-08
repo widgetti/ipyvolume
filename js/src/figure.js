@@ -849,6 +849,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             var size = this.renderer.getSize();
             if (this.camera.parent === null ) this.camera.updateMatrixWorld();
             this.camera_stereo.eyeSep = this.model.get('eye_separation')/100;
+            this.camera.focus = this.camera.cameraP.focus
             this.camera_stereo.update(this.camera)
 
             // left eye
