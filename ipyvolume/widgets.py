@@ -166,7 +166,7 @@ class Figure(MediaStream):
     ylabel = traitlets.Unicode("y").tag(sync=True)
     zlabel = traitlets.Unicode("z").tag(sync=True)
 
-    style = traitlets.Dict(default_value=ipyvolume.style.default).tag(sync=True)
+    style = traitlets.Dict(default_value=ipyvolume.styles.default).tag(sync=True)
 
     render_continuous = traitlets.Bool(False).tag(sync=True)
 

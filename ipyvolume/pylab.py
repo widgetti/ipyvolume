@@ -771,11 +771,11 @@ class style:
             styles = [style]
         else:
             styles = style
-        totalstyle = utils.dict_deep_update({}, ipyvolume.style._defaults)
+        totalstyle = utils.dict_deep_update({}, ipyvolume.styles._defaults)
         for style in styles:
             if isinstance(style, six.string_types):
-                if hasattr(ipyvolume.style, style):
-                    style = getattr(ipyvolume.style, style)
+                if hasattr(ipyvolume.styles, style):
+                    style = getattr(ipyvolume.styles, style)
                 else:
                     # lets see if we can copy matplotlib's style
                     # we assume now it's a matplotlib style, get all properties that we understand
