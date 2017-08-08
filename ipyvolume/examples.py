@@ -63,7 +63,7 @@ def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], draw=True, show=True, **kwar
 
 # http://graphics.stanford.edu/data/voldata/
 
-def klein_bottle(draw=True, show=True, figure8=False, endpoint=True, uv=False, wireframe=False):
+def klein_bottle(draw=True, show=True, figure8=False, endpoint=True, uv=False, wireframe=False, texture=None):
     import ipyvolume.pylab as p3
     # http://paulbourke.net/geometry/klein/
     u = np.linspace(0, 2 * pi, num=40, endpoint=endpoint)
@@ -85,10 +85,12 @@ def klein_bottle(draw=True, show=True, figure8=False, endpoint=True, uv=False, w
         y = 16 * sin(u) + r * sin(u) * cos(v) * (u < pi)
         z = r * sin(v)
     if draw:
+        if texture:
+            uv = True
         if uv:
-            mesh = p3.plot_mesh(x, y, np.array([z]), wrapx=not endpoint, wrapy=not endpoint, u=u/(2*np.pi), v=v/(2*np.pi), wireframe=wireframe)
+            mesh = p3.plot_mesh(x, y, np.array([z]), wrapx=not endpoint, wrapy=not endpoint, u=u/(2*np.pi), v=v/(2*np.pi), wireframe=wireframe, texture=texture)
         else:
-            mesh = p3.plot_mesh(x, y, np.array([z]), wrapx=not endpoint, wrapy=not endpoint, wireframe=wireframe)
+            mesh = p3.plot_mesh(x, y, np.array([z]), wrapx=not endpoint, wrapy=not endpoint, wireframe=wireframe, texture=texture)
         if show:
             p3.show()
         return mesh
