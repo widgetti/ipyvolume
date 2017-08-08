@@ -112,10 +112,6 @@ class Figure(widgets.DOMWidget):
     specular_coefficient = traitlets.Float(0.5).tag(sync=True)
     specular_exponent = traitlets.Float(5).tag(sync=True)
     stereo = traitlets.Bool(False).tag(sync=True)
-    screen_capture_enabled = traitlets.Bool(False).tag(sync=True)
-    screen_capture_mime_type = traitlets.Unicode(default_value='image/png').tag(sync=True)
-    screen_capture_data = traitlets.Unicode(default_value=None, allow_none=True).tag(sync=True)
-    fullscreen = traitlets.Bool(False).tag(sync=True)
 
     camera_control = traitlets.Unicode(default_value='trackball').tag(sync=True)
     camera_fov = traitlets.CFloat(45,min=0.1,max=179.9).tag(sync=True)

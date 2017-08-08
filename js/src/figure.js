@@ -1,5 +1,11 @@
-define(["@jupyter-widgets/base", "underscore", "three", "three-text2d", "gl-matrix", "d3"] ,
-        function(widgets, _, THREE, THREEtext2d, glm, d3) {
+widgets = require("@jupyter-widgets/base")
+_ = require("underscore")
+THREE = require("three")
+THREEtext2d = require("three-text2d")
+glm = require("gl-matrix")
+d3 = require("d3")
+screenfull = require("screenfull")
+require('style!css!./style.css')
 
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
 // so that N.M.x is allowed (we don't care about x, but we assume 0.2.x is not compatible with 0.3.x
@@ -60,9 +66,61 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.update_counter = 0
         var width = this.model.get("width");
         var height = this.model.get("height");
+
+        this.toolbar_div = document.createElement('div')
+        this.el.appendChild(this.toolbar_div)
+
+        // set up fullscreen button
+        // this is per view, so it's not exposed on the python side
+        // which is ok, since it can only be triggered from a UI action
+        this.fullscreen_link = document.createElement('a')
+        this.fullscreen_link.className = 'ipyvolume-toolicon'
+        this.fullscreen_link.setAttribute('href', '#')
+        this.fullscreen_li = document.createElement('li')
+        this.fullscreen_li.className = 'fa fa-arrows-alt'
+        this.fullscreen_link.appendChild(this.fullscreen_li)
+        this.toolbar_div.appendChild(this.fullscreen_link)
+        this.fullscreen_link.onclick = _.bind(function() {
+            var el = this.renderer.domElement
+            var old_width = el.style.width
+            var old_height = el.style.height
+            var restore = _.bind(function() {
+                if(!screenfull.isFullscreen) {
+                    console.log('is not fullscreen')
+                    console.log('restore and detach')
+                    el.style.width = old_width;
+                    el.style.height = old_height
+                    screenfull.off('change', restore)
+                } else {
+                    console.log('is fullscreen')
+                    el.style.width = '100vw'
+                    el.style.height = '100vh'
+                }
+                this.update_size()
+            }, this)
+            screenfull.onchange(restore)
+            screenfull.request(el);
+        }, this);
+
+        this.stereo_link = document.createElement('a')
+        this.stereo_link.className = 'ipyvolume-toolicon'
+        this.stereo_link.setAttribute('href', '#')
+        this.stereo_li = document.createElement('li')
+        this.stereo_li.className = 'fa fa-eye'
+        this.stereo_link.appendChild(this.stereo_li)
+        this.toolbar_div.appendChild(this.stereo_link)
+        this.stereo_li.onclick = _.bind(function() {
+            this.model.set('stereo', !this.model.get('stereo'))
+            this.model.save_changes()
+        }, this)
+
+
+
+        // set up WebGL using threejs
         this.renderer = new THREE.WebGLRenderer({antialias: true});
         this.el.classList.add("jupyter-widgets");
         this.el.appendChild(this.renderer.domElement);
+        this.el.setAttribute('tabindex', '1') // make sure we can have focus
 
         // el_mirror is a 'mirror' dom tree that d3 needs
         // we use it to attach axes and tickmarks to the dom
@@ -77,7 +135,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         const NEAR = 0.01;
         const FAR = 10000;
         const orthoNEAR = -500;
-        const orthoFAR = 1000;        
+        const orthoFAR = 1000;
         this.camera = new THREE.CombinedCamera(
             window.innerWidth/2,
             window.innerHeight/2,
@@ -274,7 +332,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.model.on('change:width', this.update_size, this);
         this.model.on('change:height', this.update_size, this);
-        this.model.on('change:fullscreen', this.update_fullscreen, this);
 
         this.model.on('change:ambient_coefficient', this.update_light, this);
         this.model.on('change:diffuse_coefficient', this.update_light, this);
@@ -290,7 +347,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.control_orbit.addEventListener( 'change', _.bind(this.update, this) );
 
         this.renderer.domElement.addEventListener( 'resize', _.bind(this.on_canvas_resize, this), false );
-        THREEx.FullScreen.addFullScreenChangeListener(_.bind(this.on_fullscreen_change, this))
         this.update()
 
         this.meshes = []
@@ -338,7 +394,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         window.last_volume = this;
         //navigator.wakeLock.request("display")
-        
+
         //ensure initial sync of view with figure model
         this.update_current_control();
         this.update_light();
@@ -350,15 +406,15 @@ var FigureView = widgets.DOMWidgetView.extend( {
         if(content.msg == 'screenshot') {
             resize = content.width && content.height
             if(resize)
-                this.update_size(true, content.width, content.height)
+                this._update_size(true, content.width, content.height)
             try {
                 this._real_update()
-                var data = this.renderer.domElement.toDataURL(this.model.get('screen_capture_mime_type'));
+                var data = this.renderer.domElement.toDataURL(content.mime_type || 'image/png');
                 console.info("captured screen data to screen_capture_data")
                 this.send({event: 'screenshot', data: data});
             } finally {
                 if(resize)
-                    this.update_size(false)
+                    this._update_size(false)
             }
         }
     },
@@ -540,43 +596,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         console.log(event)
         var code = event.keyCode || event.which;
         if (event.keyCode == 27) {
-            console.log("exit fullscreen")
-            this.model.set("fullscreen", false)
         }
         if (event.key == 'f') {
-            console.log("toggle fullscreen")
-            this.model.set("fullscreen", !this.model.get("fullscreen"))
-        }
-    },
-    on_fullscreen_change: function() {
-        var elem = THREEx.FullScreen.element()
-        console.log("fullscreen event")
-        if(elem == this.renderer.domElement) {
-            console.log("fullscreen")
-            // TODO: we should actually reflect the fullscreen, since if it fails, we still have the fullscreen model var
-            // set to true
-            this.update_size()
-        } else {
-            if(this.model.get("fullscreen")) {
-                console.log("left fullscreen")
-                this.model.set("fullscreen", false)
-                this.model.save()
-            }
-        }
-    },
-    update_fullscreen: function() {
-        if(this.model.get("fullscreen")) {
-            console.log("request fullscreen for:")
-            console.log(this.renderer.domElement)
-            THREEx.FullScreen.request(this.renderer.domElement)
-        } else {
-            console.log("cancel fullscreen for:")
-            console.log(this.renderer.domElement)
-            // make sure we exit fullscreen
-            var elem = THREEx.FullScreen.element()
-            if(elem == this.renderer.domElement)
-                THREEx.FullScreen.cancel();
-            this.update_size()
         }
     },
     update_angles: function() {
@@ -734,16 +755,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.renderer.setScissorTest( false );
             this.renderer.setViewport( 0, 0, size.width, size.height );
         }
-        if(this.model.get('screen_capture_enabled')) {
-            var data = this.renderer.domElement.toDataURL(this.model.get('screen_capture_mime_type'));
-            console.info("captured screen data to screen_capture_data")
-            this.model.save({screen_capture_data: data}, {patch: true})
-        } else {
-            if(this.model.get("screen_capture_data") != null) {
-                console.log("clearing screen_capture_data")
-                this.model.save({screen_capture_data: null}, {patch: true})
-            }
-        }
         this.transitions = transitions_todo;
         if(this.transitions.length > 0) {
             this.update()
@@ -869,24 +880,31 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.box_material_volr.uniforms.specular_exponent.value = this.model.get("specular_exponent")
         this.update()
     },
-    
-    update_size: function(skip_update, width, height) {
+    update_size: function() {
+        this._update_size()
+    },
+    _update_size: function(skip_update, custom_width, custom_height) {
         console.log("update size")
-        var width = width || this.model.get("width");
-        var height = height || this.model.get("height");
+        var width;
+        var height;
+        var el = this.renderer.domElement
+        if(this.is_fullscreen()) {
+            width = custom_width || el.clientWidth
+            height = custom_height || el.clientHeight;
+        } else {
+            width = custom_width || this.model.get("width");
+            height = custom_height || this.model.get("height");
+        }
+
+        // the offscreen rendering can be of lower resolution
         var render_width = width;
         var render_height = height;
-        this.renderer.setSize(width, height);
-        if(this.model.get("fullscreen")) {
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
-            if(!this.model.get("volume_data")) { // no volume data means full rendering
-                console.log("do a fullscreen render")
-                render_width  = window.innerWidth
-                render_height = window.innerHeight
-            }
-        } else {
-            this.renderer.setSize(width, height);
+        if(this.is_fullscreen() && this.model.get("volume_data")) {
+            // fullscreen volume rendering is slow, respect width and height
+            render_width = custom_width || this.model.get("width");
+            render_height = custom_height || this.model.get("height");
         }
+        this.renderer.setSize(width, height, false);
 
         if(this.model.get("stereo")) {
             render_width /= 2;
@@ -897,7 +915,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var aspect = render_width / render_height;
         this.camera.aspect = aspect
         this.camera.updateProjectionMatrix();
-        console.log("render width: " +render_width)
+        console.log("render size: ", width, height, render_width, render_height)
         this.back_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
         this.front_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
         this.volr_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
@@ -951,6 +969,12 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.box_material_volr.uniforms.transfer_function.value = this.texture_tf
             this.update()
         }
+    },
+    fullscreen: function() {
+        screenfull.request(this.el)
+    },
+    is_fullscreen: function() {
+        return screenfull.element === this.renderer.domElement
     }
 });
 
@@ -973,10 +997,6 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             specular_coefficient: 0.5,
             specular_exponent: 5,
             stereo: false,
-            screen_capture_enabled: false,
-            screen_capture_mime_type: 'image/png',
-            screen_capture_data: null,
-            fullscreen: false,
             camera_control: 'trackball',
             camera_fov: 45,
             width: 500,
@@ -1022,14 +1042,12 @@ var WidgetManagerHackModel = widgets.WidgetModel.extend({
         window.jupyter_widgets = widgets
     }
 });
-    return {
-        WidgetManagerHackModel: WidgetManagerHackModel,
-        FigureModel: FigureModel,
-        FigureView: FigureView,
-    };
 
-
-})
+module.exports = {
+    WidgetManagerHackModel: WidgetManagerHackModel,
+    FigureModel: FigureModel,
+    FigureView: FigureView,
+};
 
 
 //////////////////

@@ -75,12 +75,10 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, contro
             current.figures[key] = current.figure
             current.containers[key] = current.container
         if controls:
-            stereo = ipywidgets.ToggleButton(value=current.figure.stereo, description='stereo', icon='eye')
-            fullscreen = ipywidgets.ToggleButton(value=current.figure.stereo, description='fullscreen',
-                                                 icon='arrows-alt')
-            l1 = ipywidgets.jslink((current.figure, 'stereo'), (stereo, 'value'))
-            l2 = ipywidgets.jslink((current.figure, 'fullscreen'), (fullscreen, 'value'))
-            current.container.children += (ipywidgets.HBox([stereo, fullscreen]),)
+            #stereo = ipywidgets.ToggleButton(value=current.figure.stereo, description='stereo', icon='eye')
+            #l1 = ipywidgets.jslink((current.figure, 'stereo'), (stereo, 'value'))
+            #current.container.children += (ipywidgets.HBox([stereo, ]),)
+            pass # stereo and fullscreen are now include in the js code (per view)
         if controls_vr:
             eye_separation = ipywidgets.FloatSlider(value=current.figure.eye_separation, min=-10, max=10, icon='eye')
             ipywidgets.jslink((eye_separation, 'value'), (current.figure, 'eye_separation'))
@@ -568,7 +566,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
 
 def save(filename, copy_js=True, makedirs=True, **kwargs):
     """Save the figure/visualization as html file, and optionally copy the .js file to the same directory """
-    ipyvolume.embed.embed_html(filename, current.container, 
+    ipyvolume.embed.embed_html(filename, current.container,
                        makedirs=makedirs, copy_js=copy_js, **kwargs)
 
 def _change_y_angle(fig, frame, fraction):

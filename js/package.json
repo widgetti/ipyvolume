@@ -40,13 +40,16 @@
   },
   "dependencies": {
     "@jupyter-widgets/base": "^0.5.1",
-    "underscore": "^1.8.3",
+    "css-loader": "^0.28.4",
+    "d3": "~4.6.0",
     "gl-matrix": "^2.0.0",
+    "is-typedarray": "~1.0.0",
     "jquery": "^3.1.1",
+    "ndarray": "~1.0.18",
+    "screenfull": "^3.3.1",
+    "style-loader": "^0.18.2",
     "three": "^0.85.0",
     "three-text2d": "~0.3.2",
-    "d3": "~4.6.0",
-    "is-typedarray": "~1.0.0",
-    "ndarray": "~1.0.18"
+    "underscore": "^1.8.3"
   }
 }
