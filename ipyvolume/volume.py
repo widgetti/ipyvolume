@@ -125,6 +125,9 @@ class Figure(widgets.DOMWidget):
     ylim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
     zlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
 
+    matrix_projection = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
+    matrix_world = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
+
     xlabel = traitlets.Unicode("x").tag(sync=True)
     ylabel = traitlets.Unicode("y").tag(sync=True)
     zlabel = traitlets.Unicode("z").tag(sync=True)
@@ -138,6 +141,7 @@ class Figure(widgets.DOMWidget):
     def __init__(self, **kwargs):
         super(Figure, self).__init__(**kwargs)
         self._screenshot_handlers = widgets.CallbackDispatcher()
+        self._lasso_handlers = widgets.CallbackDispatcher()
         self.on_msg(self._handle_custom_msg)
 
     def screenshot(self, width=None, height=None):
@@ -149,7 +153,20 @@ class Figure(widgets.DOMWidget):
     def _handle_custom_msg(self, content, buffers):
         if content.get('event', '') == 'screenshot':
             self._screenshot_handlers(content['data'])
+        if content.get('event', '') == 'lasso':
+            self._lasso_handlers(content['data'])
 
+    def on_lasso(self, callback, remove=False):
+        self._lasso_handlers.register_callback(callback, remove=remove)
+
+    def project(self, x, y, z):
+        W = np.matrix(self.matrix_world).reshape((4,4))     .T
+        P = np.matrix(self.matrix_projection).reshape((4,4)).T
+        M = np.dot(P, W)
+        vertices = np.array([x, y, z, np.ones(len(x))])#.T
+        p = np.array(np.dot(M, vertices))
+        p = p / p[3]
+        return p
 
 def _volume_widets(v, lighting=False):
     import ipywidgets

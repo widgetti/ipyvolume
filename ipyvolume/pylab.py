@@ -791,3 +791,25 @@ class style:
 
         fig = gcf()
         fig.style = totalstyle
+
+def selector_lasso(output_widget=None):
+    fig = gcf()
+    if output_widget is None:
+        output_widget = ipywidgets.Output()
+        display(output_widget)
+    def lasso(data, other=None, fig=fig):
+        with output_widget:
+            if data['device']:
+                import shapely.geometry
+                region = shapely.geometry.Polygon(data['device'])
+                for scatter in fig.scatters:
+                    xyz_projected = fig.project(scatter.x, scatter.y, scatter.z)
+                    points = xyz_projected.T[:,:2]
+                    selected = []
+                    for i, p in enumerate(points):
+                        #print(i, p)
+                        if region.contains(shapely.geometry.Point(p)):
+                            selected.append(i)
+                    if selected:
+                        scatter.selected = selected
+    fig.on_lasso(lasso)

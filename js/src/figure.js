@@ -262,6 +262,16 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.screen_camera = new THREE.OrthographicCamera( 1 / - 2, 1 / 2, 1 / 2, 1 / - 2, -10000, 10000 );
         this.screen_camera.position.z = 10;
 
+
+        // we rely here on these events listeners to be executed before those of the controls
+        // since we disable the controls, seems to work on chrome
+        this.renderer.domElement.addEventListener('mousedown', _.bind(this._mouse_down, this), false);
+        this.renderer.domElement.addEventListener('mousemove', _.bind(this._mouse_move, this), false);
+        window.addEventListener('mouseup', _.bind(this._mouse_up, this), false);
+        this.capture_mouse = false
+        this.mouse_trail = [] // list of x, y positions
+
+
         this.control_trackball = new THREE.TrackballControls( this.camera, this.renderer.domElement );
         this.control_orbit = new THREE.OrbitControls( this.camera, this.renderer.domElement );
         this.control_trackball.noPan = true;
@@ -317,10 +327,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         //*
         this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
 
-        this.model.on('change:screen_capture_enabled', this._real_update, this);
         this.model.on('change:xlabel change:ylabel change:zlabel change:camera_control', this.update, this);
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
+        this.model.on('change:xlim change:ylim change:zlim ', this._save_matrices, this);
         this.model.on('change:downscale', this.update_size, this);
         this.model.on('change:stereo', this.update_size, this);
         this.model.on('change:anglex change:angley change:anglez', this.update_current_control, this);
@@ -398,8 +408,75 @@ var FigureView = widgets.DOMWidgetView.extend( {
         //ensure initial sync of view with figure model
         this.update_current_control();
         this.update_light();
-        
-        return
+
+        this.el.addEventListener("keydown", _.bind(this._special_keys_down, this));
+        this.el.addEventListener("keyup", _.bind(this._special_keys_up, this));
+        this.el.addEventListener("mousedown", _.bind(this._special_keys_down, this));
+        this.el.addEventListener("keyup", _.bind(this._special_keys_up, this));
+    },
+    _mouse_down: function(e) {
+        console.log('mouse down', e)
+        window.last_event = e
+        if(e.ctrlKey) {
+            console.log('pressed ctrl and mouse down')
+            this.capture_mouse = true
+            this.control_trackball.enabled = false
+            this.control_orbit.enabled = false
+        }
+    },
+    _mouse_move: function(e) {
+        if (!e)
+        var e = event;
+        var mouseX, mouseY;
+        if (e.offsetX) {
+            mouseX = e.offsetX;
+            mouseY = e.offsetY;
+        }
+        else if (e.layerX) {
+            mouseX = e.layerX;
+            mouseY = e.layerY;
+        }
+        if(this.capture_mouse)
+            this.mouse_trail.push([mouseX, mouseY])
+    },
+    _mouse_up: function(e) {
+        if(this.capture_mouse) {
+            this.control_trackball.enabled = true
+            this.control_orbit.enabled = true
+            this.capture_mouse = false
+            console.log('mouse trail', this.mouse_trail)
+            var data = {}
+            var canvas = this.renderer.domElement
+            data['pixel'] = this.mouse_trail
+            // gl's normalized device coordinates, [-1, 1]
+            data['device'] = _.map(this.mouse_trail, function(xy) {
+                return [xy[0] / canvas.clientWidth * 2 - 1, 1 - xy[1] / canvas.clientHeight * 2]
+            }, this)
+            this.send({event: 'lasso', data: data});
+            // send event..
+            this.mouse_trail = []
+        }
+        if(e.ctrlKey) {
+            console.log('pressed ctrl')
+        }
+    },
+    _special_keys_down: function(e) {
+        var evtobj = window.event? event : e
+        if(evtobj.altKey) {
+            console.log('pressed alt')
+        }
+        if(evtobj.ctrlKey) {
+            console.log('pressed ctrl')
+        }
+    },
+    _special_keys_up: function(e) {
+        var evtobj = window.event? event : e
+        if(evtobj.altKey) {
+            console.log('released alt')
+        }
+        if(evtobj.ctrlKey) {
+            console.log('released ctrl')
+        }
     },
     custom_msg: function(content) {
         console.log('content', content)
@@ -605,29 +682,63 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var rotation = new THREE.Euler().setFromQuaternion(this.camera.quaternion, this.model.get('angle_order'));
         this.model.set({anglex: rotation.x, angley: rotation.y, anglez: rotation.z})
         this.model.save_changes()
+        this._save_matrices()
         this.update()
+    },
+    _get_scale_matrix: function() {
+        // go from [0, 1] to [-0.5, 0.5]
+        var matrix = new THREE.Matrix4()
+        matrix.makeTranslation(-0.5, -0.5, -0.5)
+
+        var matrix_scale = new THREE.Matrix4()
+        var x = this.model.get('xlim')
+        var y = this.model.get('ylim')
+        var z = this.model.get('zlim')
+        var sx = 1/(x[1] - x[0])
+        var sy = 1/(y[1] - y[0])
+        var sz = 1/(z[1] - z[0])
+        matrix_scale.makeScale(sx, sy, sz)
+        var translation = new THREE.Matrix4()
+        translation.makeTranslation(-x[0], -y[0], -z[0])
+        matrix.multiply(matrix_scale)
+        matrix.multiply(translation)
+        return matrix;
+    },
+    _get_view_matrix() {
+        // we don't really properly use the worldmatrix, rendering threejs's frustum culling
+        // useless, we maybe should change this
+        // https://github.com/mrdoob/three.js/issues/78#issuecomment-846917
+        var view_matrix = this.camera.matrixWorldInverse.clone()
+        view_matrix.multiply(this._get_scale_matrix().clone())
+        return view_matrix;
+    },
+    _save_matrices: function() {
+        this.model.set('matrix_projection', this.camera.projectionMatrix.elements.slice())
+        this.model.set('matrix_world', this._get_view_matrix().elements.slice())
+        console.log('setting matrices')
+        this.model.save_changes()
     },
     getTanDeg: function(deg) {
       var rad = deg * Math.PI/180;
       return Math.tan(rad);
     },
-    
+
     update_current_control: function() {
         var euler = new THREE.Euler(this.model.get('anglex'), this.model.get('angley'), this.model.get('anglez'), this.model.get('angle_order'))
-        console.log("updating camera", euler)
+        //console.log("updating camera", euler)
         var q = new THREE.Quaternion().setFromEuler(euler)
         //this.camera.quaternion = q
-        
+
         var oldfov = this.camera.fov
         var newfov = this.model.get("camera_fov")
         this.camera.setFov(newfov);
-        
+
         var target = new THREE.Vector3()
-        var distance = this.camera.position.length()  
+        var distance = this.camera.position.length()
         // change distance to account for new fov angle
-        // see maartenbreddels/ipyvolume#40 for explanation     
+        // see maartenbreddels/ipyvolume#40 for explanation
         var newdist = distance * this.getTanDeg(oldfov/2) / this.getTanDeg(newfov/2)
-        
+
         var eye = new THREE.Vector3(0, 0, 1);
         var up = new THREE.Vector3(0, 1, 0);
         eye.applyQuaternion(q)
@@ -639,7 +750,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.control_trackball.position0 = this.camera.position.clone()
         this.control_trackball.up0 = this.camera.up.clone()
         this.control_trackball.reset()
-        console.log("updating camera", q, this.camera, eye, distance, up, this.camera.position)
+        //console.log("updating camera", q, this.camera, eye, distance, up, this.camera.position)
+        this._save_matrices()
         this.update()
     },
     update: function() {
