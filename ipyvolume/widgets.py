@@ -192,13 +192,6 @@ def _volume_widets(v, lighting=False):
         v.diffuse_coefficient = 0
         v.specular_coefficient = 0
 
-    if 1:
-        stereo = widgets.ToggleButton(value=v.stereo, description='stereo', icon='eye')
-        fullscreen = widgets.ToggleButton(value=v.stereo, description='fullscreen', icon='arrows-alt')
-        ipywidgets.jslink((v, 'stereo'), (stereo, 'value'))
-        ipywidgets.jslink((v, 'fullscreen'), (fullscreen, 'value'))
-        widgets_bottom += [ipywidgets.HBox([stereo,fullscreen])]
-
     return ipywidgets.VBox(
         [v.tf.control(), v,
          ] + widgets_bottom# , ipywidgets.HBox([angle1, angle2])
