@@ -2,6 +2,8 @@ import logging
 import numpy as np
 import math
 from ipython_genutils.py3compat import string_types, PY3
+import ipyvolume as ipv
+import ipywidgets
 
 logger = logging.getLogger("ipyvolume")
 try:
@@ -40,6 +42,12 @@ def image_to_url(image, widget):
     	image_url = "data:image/png;base64," + b64encode(f.getvalue()).decode("ascii")
     	return image_url
     return [encode(image) for image in flattened]
+
+def texture_to_json(texture, widget):
+    if isinstance(texture, ipv.HasStream):
+        return ipywidgets.widget_serialization['to_json'](texture, widget)
+    else:
+        return image_to_url(texture, widget)
 
 
 def cube_to_png(grid, vmin, vmax, file):
@@ -226,6 +234,7 @@ array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
 array_rgba_png_serialization = dict(to_json=rgba_to_json, from_json=from_json)
 #array_binary_serialization = dict(to_json=array_to_binary_or_json, from_json=from_json_to_array)
 image_serialization = dict(to_json=image_to_url, from_json=None)
+texture_serialization = dict(to_json=texture_to_json, from_json=None)
 
 
 if __name__ == "__main__":

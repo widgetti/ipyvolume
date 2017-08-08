@@ -1,6 +1,7 @@
 var _ = require('underscore')
 var utils = require('./utils.js')
 var THREE = require('three')
+var widgets = require('@jupyter-widgets/base');
 
 function ascii_decode(buf) {
         return String.fromCharCode.apply(null, new Uint8Array(buf));
@@ -68,6 +69,15 @@ var typesToArray = {
 
 function deserialize_typed_array(data, manager) {
     var type = typesToArray[data.dtype];
+    if(data == null) {
+        console.log('data is null')
+    }
+    if(!data.buffer) {
+        console.log('data.buffer is null')
+    }
+    if(!data.buffer.buffer) {
+        console.log('data.buffer is null')
+    }
     return new type(data.buffer.buffer) ; //
 
 }
@@ -225,8 +235,22 @@ function serialize_array_or_json(obj, manager) {
        return null;
     }
 }
+function deserialize_texture(data, manager) {
+    console.log('deserialize texture', data)
+    if(typeof data == "string") {
+        if(data.startsWith('IPY_MODEL_')) {
+            return widgets.unpack_models(data, manager)
+        }
+    }
+    return data
+}
+function serialize_texture(data, manager) {
+    console.error('serialize texture not implemented', data)
+    return null
+}
 
 module.exports = {
+    texture: {deserialize:deserialize_texture, serialize: serialize_texture},
       serialize_array_or_json:   serialize_array_or_json,
     deserialize_array_or_json: deserialize_array_or_json,
     deserialize_color_or_json: deserialize_color_or_json,

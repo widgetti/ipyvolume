@@ -8,7 +8,7 @@ import traitlets
 import logging
 import numpy as np
 from .serialize import array_cube_png_serialization, array_serialization, array_sequence_serialization,\
-    color_serialization, image_serialization
+    color_serialization, image_serialization, texture_serialization
 from .transferfunction import *
 import warnings
 import ipyvolume
@@ -18,6 +18,39 @@ logger = logging.getLogger("ipyvolume")
 _last_volume_renderer = None
 import ipyvolume._version
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
+
+class HasStream:
+    pass # to indicate it has a .stream property on the JS side
+@widgets.register
+class MediaStream(widgets.DOMWidget, HasStream):
+    """Represents a media source."""
+
+    _model_module = Unicode('ipyvolume').tag(sync=True)
+    _view_module = Unicode('ipyvolume').tag(sync=True)
+    _view_name = Unicode('MediaStreamView').tag(sync=True)
+    _model_name = Unicode('MediaStreamModel').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+
+@widgets.register
+class VideoStream(MediaStream):
+    """Represents a media source by a video."""
+    _model_name = Unicode('VideoStreamModel').tag(sync=True)
+
+    url = Unicode('').tag(sync=True)
+    play = traitlets.Bool(True).tag(sync=True)
+    loop = traitlets.Bool(True).tag(sync=True)
+
+@widgets.register
+class CameraStream(MediaStream):
+    """Represents a media source by a camera/webcam."""
+    _model_name = Unicode('CameraStreamModel').tag(sync=True)
+
+    # Specify audio constraint and video constraint as a boolean or dict.
+    audio = traitlets.Bool(False).tag(sync=True)
+    video = traitlets.Bool(True).tag(sync=True)
+
+
 
 @widgets.register
 class Mesh(widgets.DOMWidget):
@@ -35,11 +68,12 @@ class Mesh(widgets.DOMWidget):
     triangles =  Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
     lines =  Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
     texture = traitlets.Union([
+        traitlets.Instance(MediaStream),
         Unicode(),
         traitlets.List(Unicode, [], allow_none=True),
-        Image(default_value=None, allow_none=True).tag(**image_serialization),
-        traitlets.List(Image(default_value=None, allow_none=True)).tag(**image_serialization)
-    ]).tag(sync=True)
+        Image(default_value=None, allow_none=True),
+        traitlets.List(Image(default_value=None, allow_none=True))
+    ]).tag(sync=True, **texture_serialization)
 
 #    selected = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     sequence_index = Integer(default_value=0).tag(sync=True)
@@ -82,7 +116,7 @@ class Scatter(widgets.DOMWidget):
 
 
 @widgets.register
-class Figure(widgets.DOMWidget):
+class Figure(MediaStream):
     """Widget class representing a volume (rendering) using three.js"""
     _view_name = Unicode('FigureView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
@@ -133,6 +167,8 @@ class Figure(widgets.DOMWidget):
     zlabel = traitlets.Unicode("z").tag(sync=True)
 
     style = traitlets.Dict(default_value=ipyvolume.style.default).tag(sync=True)
+
+    render_continuous = traitlets.Bool(False).tag(sync=True)
 
     #xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)

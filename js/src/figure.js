@@ -328,6 +328,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
 
         this.model.on('change:xlabel change:ylabel change:zlabel change:camera_control', this.update, this);
+        this.model.on('change:render_continuous', this.update, this)
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this._save_matrices, this);
@@ -413,6 +414,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.el.addEventListener("keyup", _.bind(this._special_keys_up, this));
         this.el.addEventListener("mousedown", _.bind(this._special_keys_down, this));
         this.el.addEventListener("keyup", _.bind(this._special_keys_up, this));
+        var stream = this.renderer.domElement.captureStream()
+        this.model.stream = Promise.resolve(stream)
+        window.last_figure_stream = (stream)
+        console.log('set this figure as last stream')
     },
     _mouse_down: function(e) {
         console.log('mouse down', e)
@@ -872,6 +877,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         if(this.transitions.length > 0) {
             this.update()
         }
+        if(this.model.get('render_continuous'))
+            this.update()
     },
     get_style_color: function(name) {
         style = this.get_style(name)
@@ -1126,7 +1133,8 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             zlabel: 'z',
             animation: 1000,
             animation_exponent: 0.5,
-            style: styles['light']
+            style: styles['light'],
+            render_continuous: false,
         })
     }
 }, {

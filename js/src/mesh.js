@@ -3,7 +3,7 @@ var widgets = require('@jupyter-widgets/base');
 var THREE = require('three')
 var serialize = require('./serialize.js')
 var values = require('./values.js')
-
+var media = require('./media.js')
 var semver_range = require('./utils.js').semver_range;
 
 var MeshView = widgets.WidgetView.extend( {
@@ -82,16 +82,35 @@ var MeshView = widgets.WidgetView.extend( {
         this.model.on("change:geo change:connected", this.update_, this)
         this.model.on("change:texture", this._load_textures, this)
     },
+
     _load_textures: function() {
-        this.textures = _.map(this.model.get('texture'), function(texture_url) {
-            console.log('loading texture', texture_url)
-            return this.texture_loader.load(texture_url, _.bind(function(texture) {
-                texture.wrapS = THREE.RepeatWrapping;
-                texture.wrapT = THREE.RepeatWrapping;
-                console.log('loaded texture', texture, this)
+        var texture = this.model.get('texture');
+        if(texture.stream) { // instanceof media.MediaStreamModel) {
+            this.textures = null
+            this.texture_video = document.createElement('video')
+            texture.stream.then(_.bind(function(stream) {
+                console.log('ok, setting video stream')
+                this.texture_video.src = window.URL.createObjectURL(stream);
+                var texture = new THREE.VideoTexture(this.texture_video)
+                //texture.wrapS = THREE.RepeatWrapping;
+                //texture.wrapT = THREE.RepeatWrapping;
+                texture.minFilter = THREE.LinearFilter;
+                //texture.wrapT = THREE.RepeatWrapping;
+                this.textures = [texture];
                 this.update_()
-            }, this));
-        }, this)
+            }, this))
+            console.log('texture stream')
+        } else {
+            this.textures = _.map(this.model.get('texture'), function(texture_url) {
+                console.log('loading texture', texture_url)
+                return this.texture_loader.load(texture_url, _.bind(function(texture) {
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    console.log('loaded texture', texture, this)
+                    this.update_()
+                }, this));
+            }, this)
+        }
     },
     set_limits: function(limits) {
         _.mapObject(limits, function(value, key) {
@@ -295,7 +314,8 @@ var MeshView = widgets.WidgetView.extend( {
             var texture = this.model.get('texture');
             var u = current.array['u']
             var v = current.array['v']
-            if(texture && u && v) {
+            if(texture && u && v && this.textures) {
+                console.log('textures', this.textures)
                 material = this.material_texture
                 var sequence_index_texture = sequence_index;
                 material.uniforms['texture'].value = this.textures[sequence_index_texture % this.textures.length]; // TODO/BUG: there could
@@ -387,6 +407,7 @@ var MeshModel = widgets.WidgetModel.extend({
         triangles: serialize.array_or_json,
         lines: serialize.array_or_json,
         color: serialize.color_or_json,
+        texture: serialize.texture,
     }, widgets.WidgetModel.serializers)
 });
 
