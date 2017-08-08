@@ -12,7 +12,7 @@ if (window.require) {
             }
         },
         paths: {
-            "three": ["../nbextensions/pythreejs/three", "../nbextensions/ipyvolume/three"]
+            "three": ["../nbextensions/ipyvolume/three"]
         }
     });
 }
