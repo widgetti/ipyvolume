@@ -45,11 +45,13 @@
     "gl-matrix": "^2.0.0",
     "is-typedarray": "~1.0.0",
     "jquery": "^3.1.1",
+    "mqtt": "^2.11.0",
     "ndarray": "~1.0.18",
     "screenfull": "^3.3.1",
     "style-loader": "^0.18.2",
     "three": "^0.85.0",
     "three-text2d": "~0.3.2",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "webrtc-adapter": "^4.2.2"
   }
 }
