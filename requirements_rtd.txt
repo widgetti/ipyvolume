@@ -8,3 +8,4 @@ scipy
 nbsphinx
 recommonmark
 matplotlib<2
+ipywebrtc

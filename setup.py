@@ -136,8 +136,8 @@ setup_args = {
         'numpy',
         'traittypes',
         'traitlets',
-        'Pillow'
-
+        'Pillow',
+        'ipywebrtc'
     ],
     'license': 'MIT',
     'packages': find_packages(),

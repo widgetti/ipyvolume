@@ -4,6 +4,7 @@ import math
 from ipython_genutils.py3compat import string_types, PY3
 import ipyvolume as ipv
 import ipywidgets
+import ipywebrtc
 
 logger = logging.getLogger("ipyvolume")
 try:
@@ -44,7 +45,7 @@ def image_to_url(image, widget):
     return [encode(image) for image in flattened]
 
 def texture_to_json(texture, widget):
-    if isinstance(texture, ipv.HasStream):
+    if isinstance(texture, ipywebrtc.HasStream):
         return ipywidgets.widget_serialization['to_json'](texture, widget)
     else:
         return image_to_url(texture, widget)

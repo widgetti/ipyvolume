@@ -3,7 +3,6 @@ var widgets = require('@jupyter-widgets/base');
 var THREE = require('three')
 var serialize = require('./serialize.js')
 var values = require('./values.js')
-var media = require('./media.js')
 var semver_range = require('./utils.js').semver_range;
 
 var MeshView = widgets.WidgetView.extend( {
