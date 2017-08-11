@@ -7,6 +7,11 @@ data_dir = os.path.expanduser("~/.ipyvolume/datasets")
 if not os.path.exists(data_dir):
 	os.makedirs(data_dir)
 
+try:
+    from urllib import urlretrieve
+except ImportError:
+    from urllib.request import urlretrieve
+
 
 osname = dict(darwin="osx", linux="linux", windows="windows")[platform.system().lower()]
 
@@ -35,8 +40,8 @@ class Dataset(object):
 				print("Download failed, exit code was: " +str(code) +" will try with curl")
 				code = os.system(self.download_command_curl())
 				if not os.path.exists(self.path):
-					print("Download failed again, exit code was: " +str(code) +" giving up")
-
+					print("Download failed again, exit code was: " +str(code) +" using urlretrieve")
+					self.download_urlretrieve()
 
 	def fetch(self):
 		self.download()
@@ -59,11 +64,13 @@ class Dataset(object):
 		return self
 
 	def download_command_wget(self):
-		return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url)
+		return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url+"w")
 
 	def download_command_curl(self):
-		return "cd %s; curl -O -L %s" % (data_dir, self.url)
+		return "cd %s; curl -O -L %s" % (data_dir, self.url+"w")
 
+	def download_urlretrieve(self):
+		urlretrieve(self.url, self.path)
 
 hdz2000    = Dataset("hdz2000")
 aquariusA2 = Dataset("aquarius-A2")
