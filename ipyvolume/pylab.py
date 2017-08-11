@@ -172,7 +172,7 @@ def plot_trisurf(x, y, z, triangles, color=default_color, u=None, v=None, textur
 
     The following plots a rectangle in the z==2 plane, consisting of 2 triangles
 
-    plot_trisurf([0, 0, 3., 3.], [0, 4., 0, 4.], 2, triangles=[[0, 2, 3], [0, 3, 1]])
+    >>> plot_trisurf([0, 0, 3., 3.], [0, 4., 0, 4.], 2, triangles=[[0, 2, 3], [0, 3, 1]])
 
     Note that the z value is constant, and thus not a list/array. For guidance, the triangles
     refer to the vertices in this manner:
@@ -182,11 +182,13 @@ def plot_trisurf(x, y, z, triangles, color=default_color, u=None, v=None, textur
     2 3
     0 1  ---> x dir
 
+    Note that if you want per face/triangle colors, you need to duplicate each vertex.
+
 
     :param x: {x}
     :param y:
     :param z:
-    :param triangles: ndarray with indices referring to the vertices, defining the triangles, with shape (N, 3)
+    :param triangles: ndarray with indices referring to the vertices, defining the triangles, with shape (M, 3)
     :param color: {color}
     :return:
     """
