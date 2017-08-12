@@ -51,6 +51,7 @@ class Mesh(widgets.DOMWidget):
 #                                     default_value="green").tag(sync=True)
 #    geo = traitlets.Unicode('diamond').tag(sync=True)
     wire = traitlets.CBool(default_value=False).tag(sync=True)
+    visible = traitlets.CBool(default_value=True).tag(sync=True)
 
 @widgets.register
 class Scatter(widgets.DOMWidget):

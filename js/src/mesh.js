@@ -40,7 +40,8 @@ var MeshView = widgets.WidgetView.extend( {
             fragmentShader: require('../glsl/mesh-fragment.glsl'),
             polygonOffset: true,
             polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
-            polygonOffsetUnits: 1
+            polygonOffsetUnits: 1,
+            visible: this.model.get("visible")
                 })
 
         this.material_texture = new THREE.RawShaderMaterial({
@@ -80,6 +81,12 @@ var MeshView = widgets.WidgetView.extend( {
         this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles",   this.on_change, this)
         this.model.on("change:geo change:connected", this.update_, this)
         this.model.on("change:texture", this._load_textures, this)
+        this.model.on("change:visible", this.update_visibility, this)
+    },
+    
+    update_visibility: function() {
+        this.material.visible = this.model.get("visible");
+        this.renderer.update()
     },
 
     _load_textures: function() {
@@ -395,6 +402,7 @@ var MeshModel = widgets.WidgetModel.extend({
             color: "red",
             sequence_index: 0,
             connected: false,
+            visible: true
         })
     }}, {
     serializers: _.extend({
