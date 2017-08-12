@@ -148,8 +148,8 @@ class Figure(ipywebrtc.MediaStream):
         self._lasso_handlers = widgets.CallbackDispatcher()
         self.on_msg(self._handle_custom_msg)
 
-    def screenshot(self, width=None, height=None):
-        self.send({'msg':'screenshot', 'width':width, 'height':height})
+    def screenshot(self, width=None, height=None, mime_type='image/png'):
+        self.send({'msg':'screenshot', 'width':width, 'height':height, 'mime_type':mime_type})
 
     def on_screenshot(self, callback, remove=False):
         self._screenshot_handlers.register_callback(callback, remove=remove)
