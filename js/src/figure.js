@@ -59,6 +59,64 @@ function bind_d3(f, context) {
     }
 }
 
+var download_image = function(data) {
+    var a = document.createElement('a')
+    a.download = 'ipyvolume.png'
+    a.href = data
+    // see https://stackoverflow.com/questions/18480474/how-to-save-an-image-from-canvas
+    if (document.createEvent) {
+        e = document.createEvent("MouseEvents");
+        e.initMouseEvent("click", true, true, window,
+                         0, 0, 0, 0, 0, false, false, false,
+                         false, 0, null);
+
+        a.dispatchEvent(e);
+    } else if (lnk.fireEvent) {
+        a.fireEvent("onclick");
+    }
+}
+function SelectText(element) {
+    var doc = document;
+    if (doc.body.createTextRange) {
+        var range = document.body.createTextRange();
+        range.moveToElementText(element);
+        range.select();
+    } else if (window.getSelection) {
+        var selection = window.getSelection();
+        var range = document.createRange();
+        range.selectNodeContents(element);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+}
+var copy_image_to_clipboard = function(data) {
+    // https://stackoverflow.com/questions/27863617/is-it-possible-to-copy-a-canvas-image-to-the-clipboard
+    var img = document.createElement('img');
+    img.contentEditable = true;
+    img.src = data
+
+    var div = document.createElement('div');
+    div.contentEditable = true;
+    div.appendChild(img);
+    document.body.appendChild(div);
+
+    // do copy
+    SelectText(img);
+    document.execCommand('Copy');
+    document.body.removeChild(div);
+}
+
+ToolIcon = function(className, parent) {
+    this.a = document.createElement('a')
+    this.a.className = 'ipyvolume-toolicon'
+    this.a.setAttribute('href', '#')
+    this.li = document.createElement('li')
+    this.li.className = 'fa ' + className
+    this.a.appendChild(this.li)
+    parent.appendChild(this.a)
+
+}
+
 var FigureView = widgets.DOMWidgetView.extend( {
     render: function() {
         this.transitions = []
@@ -73,14 +131,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // set up fullscreen button
         // this is per view, so it's not exposed on the python side
         // which is ok, since it can only be triggered from a UI action
-        this.fullscreen_link = document.createElement('a')
-        this.fullscreen_link.className = 'ipyvolume-toolicon'
-        this.fullscreen_link.setAttribute('href', '#')
-        this.fullscreen_li = document.createElement('li')
-        this.fullscreen_li.className = 'fa fa-arrows-alt'
-        this.fullscreen_link.appendChild(this.fullscreen_li)
-        this.toolbar_div.appendChild(this.fullscreen_link)
-        this.fullscreen_link.onclick = _.bind(function() {
+        this.fullscreen_icon = new ToolIcon('fa-arrows-alt', this.toolbar_div)
+        this.fullscreen_icon.a.onclick = _.bind(function() {
             var el = this.renderer.domElement
             var old_width = el.style.width
             var old_height = el.style.height
@@ -102,18 +154,28 @@ var FigureView = widgets.DOMWidgetView.extend( {
             screenfull.request(el);
         }, this);
 
-        this.stereo_link = document.createElement('a')
-        this.stereo_link.className = 'ipyvolume-toolicon'
-        this.stereo_link.setAttribute('href', '#')
-        this.stereo_li = document.createElement('li')
-        this.stereo_li.className = 'fa fa-eye'
-        this.stereo_link.appendChild(this.stereo_li)
-        this.toolbar_div.appendChild(this.stereo_link)
-        this.stereo_li.onclick = _.bind(function() {
+        this.stereo_icon = new ToolIcon('fa-eye', this.toolbar_div)
+        this.stereo_icon.a.onclick = _.bind(function() {
             this.model.set('stereo', !this.model.get('stereo'))
             this.model.save_changes()
         }, this)
 
+        this.screenshot_icon = new ToolIcon('fa-camera', this.toolbar_div)
+        this.screenshot_icon.a.title = 'Make screensot (hold shift to copy to clipboard)'
+        this.screenshot_icon.a.onclick = (event) =>  {
+            console.log(event.ctrlKey)
+            try {
+                var data = this.screenshot()
+                if(event.shiftKey) {
+                    copy_image_to_clipboard(data)
+                } else {
+                    download_image(data)
+                }
+            } finally { // make sure we don't open a new window when we hold shift
+                event.preventDefault()
+                return false;
+            }
+        }
 
 
         // set up WebGL using threejs
@@ -486,18 +548,22 @@ var FigureView = widgets.DOMWidgetView.extend( {
     custom_msg: function(content) {
         console.log('content', content)
         if(content.msg == 'screenshot') {
-            resize = content.width && content.height
+            var data = this.screenshot(undefined, content.width, content.height)
+            this.send({event: 'screenshot', data: data});
+        }
+    },
+    screenshot: function(mime_type, width, height) {
+        var resize = width && height
+        try {
             if(resize)
-                this._update_size(true, content.width, content.height)
-            try {
-                this._real_update()
-                var data = this.renderer.domElement.toDataURL(content.mime_type || 'image/png');
-                console.info("captured screen data to screen_capture_data")
-                this.send({event: 'screenshot', data: data});
-            } finally {
-                if(resize)
-                    this._update_size(false)
-            }
+                this._update_size(true, width, height)
+            this._real_update()
+            var data = this.renderer.domElement.toDataURL(mime_type || 'image/png');
+            console.info("captured screenshot")
+            return data
+        } finally {
+            if(resize)
+                this._update_size(false)
         }
     },
     _d3_add_axis: function(node, d, i) {
