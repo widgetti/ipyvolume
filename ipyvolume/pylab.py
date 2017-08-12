@@ -624,8 +624,11 @@ def movie(f="movie.mp4", function=_change_y_angle, fps=30, frames=30, endpoint=F
     return tempdir
 
 
-def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width=None, height=None):
-    fig = gcf()
+def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width=None, height=None, fig=None):
+    if fig is None:
+        fig = gcf()
+    else:
+        assert isinstance(fig, volume.Figure)
     if output_widget is None:
         output_widget = ipywidgets.Output()
         display(output_widget)
@@ -661,21 +664,21 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
     data = data[data.find(",") + 1:]
     return base64.b64decode(data)
 
-def screenshot(timeout_seconds=10, output_widget=None, format="png", width=None, height=None):
+def screenshot(timeout_seconds=10, output_widget=None, format="png", width=None, height=None,
+               fig=None):
     data = _screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget,
-        format=format, width=width, height=height)
+        format=format, width=width, height=height,fig=fig)
     f = StringIO(data)
     return PIL.Image.open(f)
 
-def savefig(filename, timeout_seconds=10, wait=True, output_widget=None, width=None, height=None):
+def savefig(filename, timeout_seconds=10, wait=True, output_widget=None, width=None, height=None,
+           fig=None):
     """Save the current figure to an image (png or jpeg) to a file"""
-    # TODO: might be useful to save to a file object
     __, ext = os.path.splitext(filename)
-    fig = gcf()
     format = ext[1:]
     with open(filename, "wb") as f:
         f.write(_screenshot_data(timeout_seconds=timeout_seconds,
-            output_widget=output_widget, width=width, height=height))
+            output_widget=output_widget, width=width, height=height,fig=fig))
 
 
 def xlabel(label):
