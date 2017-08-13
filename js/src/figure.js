@@ -160,7 +160,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.model.save_changes()
         }, this)
 
-        this.screenshot_icon = new ToolIcon('fa-camera', this.toolbar_div)
+        this.screenshot_icon = new ToolIcon('fa-picture-o', this.toolbar_div)
         this.screenshot_icon.a.title = 'Make screensot (hold shift to copy to clipboard)'
         this.screenshot_icon.a.onclick = (event) =>  {
             console.log(event.ctrlKey)
