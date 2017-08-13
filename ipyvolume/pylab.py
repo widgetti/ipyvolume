@@ -667,53 +667,51 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
 def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=10, output_widget=None):
     """ Save the figure to a PIL.Image object
     
-    Parameters
-    ----------
-    timeout_seconds: int
-        maximum time to wait for image data to return
-    output_widget: ipywidgets.Output
-        a widget to use as a context manager for capturing the data  
-    format: str
-        format of output data (png, jpeg or svg)
-    width: int
-        the width of the image in pixels
-    height: int
-        the height of the image in pixels
-    fig: ipyvolume.widgets.Figure or None
-        if None use the current figure
-    
+    :type width: int
+    :param width: the width of the image in pixels
+    :type height: int
+    :param height: the height of the image in pixels
+    :type format: str
+    :param format: format of output data (png, jpeg or svg)
+    :type fig: ipyvolume.widgets.Figure or None
+    :param fig: if None use the current figure
+    :type timeout_seconds: int
+    :param timeout_seconds: maximum time to wait for image data to return
+    :type output_widget: ipywidgets.Output
+    :param output_widget: a widget to use as a context manager for capturing the data  
+    :return:
+
     """
     assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
-    data = _screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget,
-        format=format, width=width, height=height, fig=fig)
+    data = _screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget, 
+    format=format, width=width, height=height, fig=fig)
     f = StringIO(data)
     return PIL.Image.open(f)
 
 def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, output_widget=None):
     """ Save the figure to an image file
     
-    Parameters
-    ----------
-    filename: str
-        must have extension .png, .jpeg or .svg
-    timeout_seconds: int
-        maximum time to wait for image data to return
-    output_widget: ipywidgets.Output
-        a widget to use as a context manager for capturing the data  
-    width: int
-        the width of the image in pixels
-    height: int
-        the height of the image in pixels
-    fig: ipyvolume.widgets.Figure or None
-        if None use the current figure    
-    
+    :type filename: str
+    :param filename: must have extension .png, .jpeg or .svg
+    :type width: int
+    :param width: the width of the image in pixels
+    :type height: int
+    :param height: the height of the image in pixels
+    :type fig: ipyvolume.widgets.Figure or None
+    :param fig: if None use the current figure    
+    :type timeout_seconds: int
+    :param timeout_seconds: maximum time to wait for image data to return
+    :type output_widget: ipywidgets.Output
+    :param output_widget: a widget to use as a context manager for capturing the data  
+    :return:
+
     """
     __, ext = os.path.splitext(filename)
     format = ext[1:]
     assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
     with open(filename, "wb") as f:
-        f.write(_screenshot_data(timeout_seconds=timeout_seconds,
-            format=format,output_widget=output_widget, width=width, height=height, fig=fig))
+        f.write(_screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget, 
+        format=format, width=width, height=height, fig=fig))
 
 
 def xlabel(label):
