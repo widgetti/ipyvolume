@@ -177,6 +177,30 @@ var FigureView = widgets.DOMWidgetView.extend( {
             }
         }
 
+        this.camera_control_icon = new ToolIcon('fa-arrow-up', this.toolbar_div)
+        this.camera_control_icon.a.title = 'Camera locked to \'up\' axis (orbit), instead of trackball mode'
+        this.camera_control_icon.a.onclick = () => {
+            var mode = this.model.get('camera_control')
+            if(mode == 'trackball') {
+                var mode = this.model.get('camera_control')
+                this.model.set('camera_control', 'orbit')
+                this.camera_control_icon.active(true)
+                console.log('orbit')
+            } else {
+                this.model.set('camera_control', 'trackball')
+                this.camera_control_icon.active(false)
+                console.log('trackball')
+            }
+            this.model.save_changes()
+        }
+        this.camera_control_icon.active(false)
+
+        this.select_icon = new ToolIcon('fa-pencil-square-o', this.toolbar_div)
+        this.select_icon.a.title = 'Select mode (auto when control key is pressed)'
+        this.select_icon.a.onclick = () => {
+        }
+        this.select_icon.active(false)
+
 
         // set up WebGL using threejs
         this.renderer = new THREE.WebGLRenderer({antialias: true});
