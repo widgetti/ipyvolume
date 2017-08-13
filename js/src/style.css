@@ -3,3 +3,11 @@
     text-align: center;
     padding: 2px 2px; /* Some top and bottom padding */
 }
+
+.fa-inactive {
+    opacity: 0.6;
+}
+.fa-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
