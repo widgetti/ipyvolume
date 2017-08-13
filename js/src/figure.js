@@ -114,7 +114,12 @@ ToolIcon = function(className, parent) {
     this.li.className = 'fa ' + className
     this.a.appendChild(this.li)
     parent.appendChild(this.a)
-
+    this.active = (state) => {
+        if(state)
+            this.li.classList.remove('fa-inactive')
+        else
+            this.li.classList.add('fa-inactive')
+    }
 }
 
 var FigureView = widgets.DOMWidgetView.extend( {
@@ -128,6 +133,15 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.toolbar_div = document.createElement('div')
         this.el.appendChild(this.toolbar_div)
 
+        var keydown = _.bind(this._special_keys_down, this);
+        var keyup = _.bind(this._special_keys_up, this)
+        document.addEventListener("keydown", keydown);
+        document.addEventListener("keyup", keyup);
+        this.once('remove', () => {
+            console.log('remove key listeners')
+            document.removeEventListener('keydown', keydown)
+            document.removeEventListener('keyup', keyup)
+        })
         // set up fullscreen button
         // this is per view, so it's not exposed on the python side
         // which is ok, since it can only be triggered from a UI action
@@ -197,7 +211,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.select_icon = new ToolIcon('fa-pencil-square-o', this.toolbar_div)
         this.select_icon.a.title = 'Select mode (auto when control key is pressed)'
-        this.select_icon.a.onclick = () => {
+        this.select_icon.athis.select_icon.a.onclick = () => {
         }
         this.select_icon.active(false)
 
@@ -496,14 +510,21 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.update_current_control();
         this.update_light();
 
-        this.el.addEventListener("keydown", _.bind(this._special_keys_down, this));
-        this.el.addEventListener("keyup", _.bind(this._special_keys_up, this));
-        this.el.addEventListener("mousedown", _.bind(this._special_keys_down, this));
-        this.el.addEventListener("keyup", _.bind(this._special_keys_up, this));
+        //this.el.addEventListener("mousedown", _.bind(this._special_keys_down, this));
+        //this.el.addEventListener("keyup", _.bind(this._special_keys_up, this));
         var stream = this.renderer.domElement.captureStream()
         this.model.stream = Promise.resolve(stream)
         window.last_figure_stream = (stream)
         console.log('set this figure as last stream')
+        // keep track over hover status manually
+        this.renderer.domElement.onmouseover = () => {
+            console.log('hover')
+            this.hover = true
+        }
+        this.renderer.domElement.onmouseleave = () => {
+            console.log('!hover')
+            this.hover = false
+        }
     },
     _mouse_down: function(e) {
         console.log('mouse down', e)
@@ -554,19 +575,24 @@ var FigureView = widgets.DOMWidgetView.extend( {
     _special_keys_down: function(e) {
         var evtobj = window.event? event : e
         if(evtobj.altKey) {
-            console.log('pressed alt')
+            console.log('pressed alt', this.hover)
         }
-        if(evtobj.ctrlKey) {
-            console.log('pressed ctrl')
+        if(evtobj.keyCode == 17) {  // ctrl
+            console.log('pressed ctrl', this.hover)
+            if(this.hover) {
+                this.select_icon.active(true)
+            }
         }
     },
     _special_keys_up: function(e) {
+        console.log('uppy', e, window.event)
         var evtobj = window.event? event : e
         if(evtobj.altKey) {
-            console.log('released alt')
+            console.log('released alt', this.hover)
         }
-        if(evtobj.ctrlKey) {
-            console.log('released ctrl')
+        if(evtobj.keyCode == 17) { // ctrl
+            console.log('released ctrl', this.hover)
+            this.select_icon.active(false)
         }
     },
     custom_msg: function(content) {
