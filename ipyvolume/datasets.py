@@ -64,10 +64,10 @@ class Dataset(object):
 		return self
 
 	def download_command_wget(self):
-		return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url+"w")
+		return "wget --progress=bar:force -c -P %s %s" % (data_dir, self.url)
 
 	def download_command_curl(self):
-		return "cd %s; curl -O -L %s" % (data_dir, self.url+"w")
+		return "cd %s; curl -O -L %s" % (data_dir, self.url)
 
 	def download_urlretrieve(self):
 		urlretrieve(self.url, self.path)

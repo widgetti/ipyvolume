@@ -624,8 +624,11 @@ def movie(f="movie.mp4", function=_change_y_angle, fps=30, frames=30, endpoint=F
     return tempdir
 
 
-def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width=None, height=None):
-    fig = gcf()
+def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width=None, height=None, fig=None):
+    if fig is None:
+        fig = gcf()
+    else:
+        assert isinstance(fig, volume.Figure)
     if output_widget is None:
         output_widget = ipywidgets.Output()
         display(output_widget)
@@ -642,7 +645,7 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
 
     fig.on_screenshot(screenshot_handler)
     try:
-        fig.screenshot(width=width, height=height)
+        fig.screenshot(width=width, height=height,mime_type="image/"+format)
         t0 = time.time()
         timeout = False
         ipython = IPython.get_ipython()
@@ -661,21 +664,54 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
     data = data[data.find(",") + 1:]
     return base64.b64decode(data)
 
-def screenshot(timeout_seconds=10, output_widget=None, format="png", width=None, height=None):
-    data = _screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget,
-        format=format, width=width, height=height)
+def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=10, output_widget=None):
+    """ Save the figure to a PIL.Image object
+    
+    :type width: int
+    :param width: the width of the image in pixels
+    :type height: int
+    :param height: the height of the image in pixels
+    :type format: str
+    :param format: format of output data (png, jpeg or svg)
+    :type fig: ipyvolume.widgets.Figure or None
+    :param fig: if None use the current figure
+    :type timeout_seconds: int
+    :param timeout_seconds: maximum time to wait for image data to return
+    :type output_widget: ipywidgets.Output
+    :param output_widget: a widget to use as a context manager for capturing the data  
+    :return:
+
+    """
+    assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
+    data = _screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget, 
+    format=format, width=width, height=height, fig=fig)
     f = StringIO(data)
     return PIL.Image.open(f)
 
-def savefig(filename, timeout_seconds=10, wait=True, output_widget=None, width=None, height=None):
-    """Save the current figure to an image (png or jpeg) to a file"""
-    # TODO: might be useful to save to a file object
+def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, output_widget=None):
+    """ Save the figure to an image file
+    
+    :type filename: str
+    :param filename: must have extension .png, .jpeg or .svg
+    :type width: int
+    :param width: the width of the image in pixels
+    :type height: int
+    :param height: the height of the image in pixels
+    :type fig: ipyvolume.widgets.Figure or None
+    :param fig: if None use the current figure    
+    :type timeout_seconds: int
+    :param timeout_seconds: maximum time to wait for image data to return
+    :type output_widget: ipywidgets.Output
+    :param output_widget: a widget to use as a context manager for capturing the data  
+    :return:
+
+    """
     __, ext = os.path.splitext(filename)
-    fig = gcf()
     format = ext[1:]
+    assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
     with open(filename, "wb") as f:
-        f.write(_screenshot_data(timeout_seconds=timeout_seconds,
-            output_widget=output_widget, width=width, height=height))
+        f.write(_screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget, 
+        format=format, width=width, height=height, fig=fig))
 
 
 def xlabel(label):
