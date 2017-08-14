@@ -175,6 +175,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.model.set('stereo', !this.model.get('stereo'))
             this.model.save_changes()
         }, this)
+        this.stereo_icon.active(this.model.get('stereo'))
+        this.model.on('change:stereo', () => {
+            this.stereo_icon.active(this.model.get('stereo'))
+        })
 
         this.screenshot_icon = new ToolIcon('fa-picture-o', this.toolbar_div)
         this.screenshot_icon.a.title = 'Make screensot (hold shift to copy to clipboard)'
