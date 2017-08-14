@@ -146,6 +146,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // this is per view, so it's not exposed on the python side
         // which is ok, since it can only be triggered from a UI action
         this.fullscreen_icon = new ToolIcon('fa-arrows-alt', this.toolbar_div)
+        this.fullscreen_icon.a.title = 'Fullscreen'
         this.fullscreen_icon.a.onclick = _.bind(function() {
             var el = this.renderer.domElement
             var old_width = el.style.width
@@ -169,6 +170,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }, this);
 
         this.stereo_icon = new ToolIcon('fa-eye', this.toolbar_div)
+        this.stereo_icon.a.title = 'Stereoscopic view'
         this.stereo_icon.a.onclick = _.bind(function() {
             this.model.set('stereo', !this.model.get('stereo'))
             this.model.save_changes()
