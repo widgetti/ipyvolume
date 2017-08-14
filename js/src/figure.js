@@ -217,10 +217,23 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.select_icon = new ToolIcon('fa-pencil-square-o', this.toolbar_div)
         this.select_icon.a.title = 'Select mode (auto when control key is pressed)'
-        this.select_icon.athis.select_icon.a.onclick = () => {
+        this.select_icon.a.onclick = () => {
         }
         this.select_icon.active(false)
 
+        this.reset_icon = new ToolIcon('fa-refresh', this.toolbar_div)
+        this.reset_icon.a.title = 'Reset view'
+        var initial_angle_x = this.model.get('anglex')
+        var initial_angle_y = this.model.get('angley')
+        var initial_angle_z = this.model.get('anglez')
+        var initial_fov = this.model.get("camera_fov")
+        this.reset_icon.a.onclick = () => {
+            this.model.set({anglex: initial_angle_x,
+                            angley: initial_angle_y,
+                            anglez: initial_angle_z,
+                            camera_fov: initial_fov})
+            this.model.save_changes()
+        }
 
         // set up WebGL using threejs
         this.renderer = new THREE.WebGLRenderer({antialias: true});
