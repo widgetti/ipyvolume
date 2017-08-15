@@ -165,7 +165,7 @@ default_size_selected = default_size * 1.3
 
 
 @_docsubst
-def plot_trisurf(x, y, z, triangles, color=default_color, u=None, v=None, texture=None):
+def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=None, v=None, texture=None):
     """Draws a polygon/triangle mesh defined by a coordinate and triangle indices
 
     Example:
@@ -189,12 +189,16 @@ def plot_trisurf(x, y, z, triangles, color=default_color, u=None, v=None, textur
     :param y:
     :param z:
     :param triangles: ndarray with indices referring to the vertices, defining the triangles, with shape (M, 3)
+    :param lines: ndarray with indices referring to the vertices, defining the lines, with shape (K, 2)
     :param color: {color}
     :return:
     """
     fig = gcf()
-    triangles = np.array(triangles).astype(dtype=np.uint32)
-    mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles, color=color, u=u, v=v, texture=texture)
+    if triangles is not None:
+        triangles = np.array(triangles).astype(dtype=np.uint32)
+    if lines is not None:
+        lines = np.array(lines).astype(dtype=np.uint32)
+    mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles, lines=lines, color=color, u=u, v=v, texture=texture)
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
     fig.meshes = fig.meshes + [mesh]
     return mesh
@@ -628,7 +632,7 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
     if fig is None:
         fig = gcf()
     else:
-        assert isinstance(fig, volume.Figure)
+        assert isinstance(fig, ipv.Figure)
     if output_widget is None:
         output_widget = ipywidgets.Output()
         display(output_widget)
