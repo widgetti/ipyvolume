@@ -8,9 +8,9 @@ if not os.path.exists(data_dir):
 	os.makedirs(data_dir)
 
 try:
-    from urllib import urlretrieve
+    from urllib import urlretrieve # py2
 except ImportError:
-    from urllib.request import urlretrieve
+    from urllib.request import urlretrieve # py3
 
 
 osname = dict(darwin="osx", linux="linux", windows="windows")[platform.system().lower()]
