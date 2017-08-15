@@ -479,7 +479,14 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     from skimage import measure
     if level is None:
         level = np.median(data)
-    verts, triangles = measure.marching_cubes(data, level)#, spacing=(0.1, 0.1, 0.1))
+    if hasattr(measure, 'marching_cubes_lewiner'):
+        values = measure.marching_cubes_lewiner(data, level)
+    else:
+        values = measure.marching_cubes(data, level)
+    values = measure.marching_cubes_lewiner(data, level)#, spacing=(0.1, 0.1, 0.1))
+    verts, triangles = values[:2] # version 0.13 returns 4 values, normals, values
+    # in the future we may want to support normals and the values (with colormap)
+    # and require skimage >= 0.13
     x, y, z = verts.T
     mesh = plot_trisurf(x, y, z, triangles=triangles, color=color)
     if controls:
