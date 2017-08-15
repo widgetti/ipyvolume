@@ -604,7 +604,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
     },
     _special_keys_up: function(e) {
-        console.log('uppy', e, window.event)
         var evtobj = window.event? event : e
         if(evtobj.altKey) {
             console.log('released alt', this.hover)
