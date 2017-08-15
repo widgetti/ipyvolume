@@ -189,7 +189,7 @@ def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=Non
     :param y:
     :param z:
     :param triangles: ndarray with indices referring to the vertices, defining the triangles, with shape (M, 3)
-    :param lines: ndarray with indices referring to the vertices, defining the lines, with shape (M, 2)
+    :param lines: ndarray with indices referring to the vertices, defining the lines, with shape (K, 2)
     :param color: {color}
     :return:
     """
