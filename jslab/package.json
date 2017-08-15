@@ -1,0 +1,24 @@
+{
+  "name": "jupyterlab-volume",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Maarten Breddels",
+  "license": "MIT",
+  "devDependencies": {
+    "json-loader": "^0.5.4",
+    "url-loader": "^0.5.7",
+    "webpack": "^1.12.14",
+    "raw-loader": "^0.5.1"
+  },
+  "dependencies": {
+    "@jupyter-widgets/jupyterlab-manager": "^0.25.10",
+    "ipyvolume": "~0.4.0-alpha.1"
+  },
+  "jupyterlab": {
+    "extension": true
+  }
+}

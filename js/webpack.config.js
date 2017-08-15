@@ -3,12 +3,9 @@ var version = require('./package.json').version;
 // Custom webpack loaders are generally the same for all webpack bundles, hence
 // stored in a separate local variable.
 var loaders = [
-    {test: /\.glsl$/, loader: 'raw-loader'},
+    { test: /\.css$/, loaders: ['style-loader', 'css-loader']},
     { test: /\.json$/, loader: 'json-loader' },
-    {
-    test: /\.png$/,
-    loader: 'url-loader?limit=10000000'
-}
+    {test: /\.png$/,loader: 'url-loader?limit=10000000'}
 ];
 
 

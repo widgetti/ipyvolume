@@ -5,7 +5,7 @@ THREEtext2d = require("three-text2d")
 glm = require("gl-matrix")
 d3 = require("d3")
 screenfull = require("screenfull")
-require('style!css!./style.css')
+require('./style.css')
 
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
 // so that N.M.x is allowed (we don't care about x, but we assume 0.2.x is not compatible with 0.3.x
@@ -32,16 +32,16 @@ function is_ndarray(obj) {
 }
 
 var shaders = {}
-shaders["cube_fragment"] = require('../glsl/cube-fragment.glsl');
-shaders["cube_vertex"] = require('../glsl/cube-vertex.glsl');
-shaders["box_fragment"] = require('../glsl/box-fragment.glsl');
-shaders["box_vertex"] = require('../glsl/box-vertex.glsl');
-shaders["texture_fragment"] = require('../glsl/texture-fragment.glsl');
-shaders["texture_vertex"] = require('../glsl/texture-vertex.glsl');
-shaders["volr_fragment"] = require('../glsl/volr-fragment.glsl');
-shaders["volr_vertex"] = require('../glsl/volr-vertex.glsl');
-shaders["screen_fragment"] = require('../glsl/screen-fragment.glsl');
-shaders["screen_vertex"] = require('../glsl/screen-vertex.glsl');
+shaders["cube_fragment"] = require('raw-loader!../glsl/cube-fragment.glsl');
+shaders["cube_vertex"] = require('raw-loader!../glsl/cube-vertex.glsl');
+shaders["box_fragment"] = require('raw-loader!../glsl/box-fragment.glsl');
+shaders["box_vertex"] = require('raw-loader!../glsl/box-vertex.glsl');
+shaders["texture_fragment"] = require('raw-loader!../glsl/texture-fragment.glsl');
+shaders["texture_vertex"] = require('raw-loader!../glsl/texture-vertex.glsl');
+shaders["volr_fragment"] = require('raw-loader!../glsl/volr-fragment.glsl');
+shaders["volr_vertex"] = require('raw-loader!../glsl/volr-vertex.glsl');
+shaders["screen_fragment"] = require('raw-loader!../glsl/screen-fragment.glsl');
+shaders["screen_vertex"] = require('raw-loader!../glsl/screen-vertex.glsl');
 
 
 

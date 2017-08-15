@@ -70,26 +70,26 @@ var ScatterView = widgets.WidgetView.extend( {
                 animation_time_size : { type: "f", value: 1. },
                 animation_time_color : { type: "f", value: 1. },
             },
-            vertexShader: require('../glsl/scatter-vertex.glsl'),
-            fragmentShader: require('../glsl/scatter-fragment.glsl')
+            vertexShader: require('raw-loader!../glsl/scatter-vertex.glsl'),
+            fragmentShader: require('raw-loader!../glsl/scatter-fragment.glsl')
             })
 
         this.material_rgb = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
-            vertexShader: "#define USE_RGB\n"+require('../glsl/scatter-vertex.glsl'),
-            fragmentShader: "#define USE_RGB\n"+require('../glsl/scatter-fragment.glsl')
+            vertexShader: "#define USE_RGB\n"+require('raw-loader!../glsl/scatter-vertex.glsl'),
+            fragmentShader: "#define USE_RGB\n"+require('raw-loader!../glsl/scatter-fragment.glsl')
             })
 
         this.line_material = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
-            vertexShader:   "#define AS_LINE\n"+require('../glsl/scatter-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n"+require('../glsl/scatter-fragment.glsl')
+            vertexShader:   "#define AS_LINE\n"+require('raw-loader!../glsl/scatter-vertex.glsl'),
+            fragmentShader: "#define AS_LINE\n"+require('raw-loader!../glsl/scatter-fragment.glsl')
             })
 
         this.line_material_rgb = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
-            vertexShader:   "#define AS_LINE\n#define USE_RGB\n"+require('../glsl/scatter-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n#define USE_RGB\n"+require('../glsl/scatter-fragment.glsl')
+            vertexShader:   "#define AS_LINE\n#define USE_RGB\n"+require('raw-loader!../glsl/scatter-vertex.glsl'),
+            fragmentShader: "#define AS_LINE\n#define USE_RGB\n"+require('raw-loader!../glsl/scatter-fragment.glsl')
             })
 
         this.create_mesh()

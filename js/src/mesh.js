@@ -36,8 +36,8 @@ var MeshView = widgets.WidgetView.extend( {
                 texture_previous: { type: 't', value: null },
             },
             side:THREE.DoubleSide,
-            vertexShader: require('../glsl/mesh-vertex.glsl'),
-            fragmentShader: require('../glsl/mesh-fragment.glsl'),
+            vertexShader: require('raw-loader!../glsl/mesh-vertex.glsl'),
+            fragmentShader: require('raw-loader!../glsl/mesh-fragment.glsl'),
             polygonOffset: true,
             polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
             polygonOffsetUnits: 1
@@ -45,8 +45,8 @@ var MeshView = widgets.WidgetView.extend( {
 
         this.material_texture = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
-            vertexShader: "#define USE_TEXTURE\n"+require('../glsl/mesh-vertex.glsl'),
-            fragmentShader: "#define USE_TEXTURE\n"+require('../glsl/mesh-fragment.glsl'),
+            vertexShader: "#define USE_TEXTURE\n"+require('raw-loader!../glsl/mesh-vertex.glsl'),
+            fragmentShader: "#define USE_TEXTURE\n"+require('raw-loader!../glsl/mesh-fragment.glsl'),
             side:THREE.DoubleSide,
             polygonOffset: true,
             polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
@@ -55,8 +55,8 @@ var MeshView = widgets.WidgetView.extend( {
 
         this.material_rgb = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
-            vertexShader: "#define USE_RGB\n"+require('../glsl/mesh-vertex.glsl'),
-            fragmentShader: "#define USE_RGB\n"+require('../glsl/mesh-fragment.glsl'),
+            vertexShader: "#define USE_RGB\n"+require('raw-loader!../glsl/mesh-vertex.glsl'),
+            fragmentShader: "#define USE_RGB\n"+require('raw-loader!../glsl/mesh-fragment.glsl'),
             side:THREE.DoubleSide,
             polygonOffset: true,
             polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
@@ -65,14 +65,14 @@ var MeshView = widgets.WidgetView.extend( {
 
         this.line_material = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
-            vertexShader:   "#define AS_LINE\n"+require('../glsl/mesh-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n"+require('../glsl/mesh-fragment.glsl')
+            vertexShader:   "#define AS_LINE\n"+require('raw-loader!../glsl/mesh-vertex.glsl'),
+            fragmentShader: "#define AS_LINE\n"+require('raw-loader!../glsl/mesh-fragment.glsl')
             })
 
         this.line_material_rgb = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
-            vertexShader:   "#define AS_LINE\n#define USE_RGB\n"+require('../glsl/mesh-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n#define USE_RGB\n"+require('../glsl/mesh-fragment.glsl')
+            vertexShader:   "#define AS_LINE\n#define USE_RGB\n"+require('raw-loader!../glsl/mesh-vertex.glsl'),
+            fragmentShader: "#define AS_LINE\n#define USE_RGB\n"+require('raw-loader!../glsl/mesh-fragment.glsl')
             })
 
         this.create_mesh()
