@@ -45,15 +45,15 @@ class TransferFunctionJsBumps(TransferFunction):
 	widths = traitlets.List(traitlets.CFloat, default_value=[0.1, 0.1, 0.1]).tag(sync=True)
 
 
-	def control(self):
+	def control(self, max_opacity=0.2):
 		import ipywidgets
 		return ipywidgets.VBox()
 		l1 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level1)
 		l2 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level2)
 		l3 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level3)
-		o1 = ipywidgets.FloatSlider(min=0, max=.2, step=0.001, value=self.opacity1)
-		o2 = ipywidgets.FloatSlider(min=0, max=.2, step=0.001, value=self.opacity2)
-		o3 = ipywidgets.FloatSlider(min=0, max=.2, step=0.001, value=self.opacity2)
+		o1 = ipywidgets.FloatSlider(min=0, max=max_opacity, step=0.001, value=self.opacity1)
+		o2 = ipywidgets.FloatSlider(min=0, max=max_opacity, step=0.001, value=self.opacity2)
+		o3 = ipywidgets.FloatSlider(min=0, max=max_opacity, step=0.001, value=self.opacity2)
 		ipywidgets.jslink((self, 'level1'), (l1, 'value'))
 		ipywidgets.jslink((self, 'level2'), (l2, 'value'))
 		ipywidgets.jslink((self, 'level3'), (l3, 'value'))
@@ -80,14 +80,14 @@ class TransferFunctionWidgetJs3(TransferFunction):
 	width3 = traitlets.Float(0.1).tag(sync=True)
 
 
-	def control(self):
+	def control(self, max_opacity=0.2):
 		import ipywidgets
 		l1 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level1)
 		l2 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level2)
 		l3 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level3)
-		o1 = ipywidgets.FloatSlider(min=0, max=.2, step=0.001, value=self.opacity1)
-		o2 = ipywidgets.FloatSlider(min=0, max=.2, step=0.001, value=self.opacity2)
-		o3 = ipywidgets.FloatSlider(min=0, max=.2, step=0.001, value=self.opacity2)
+		o1 = ipywidgets.FloatSlider(min=0, max=max_opacity, step=0.001, value=self.opacity1)
+		o2 = ipywidgets.FloatSlider(min=0, max=max_opacity, step=0.001, value=self.opacity2)
+		o3 = ipywidgets.FloatSlider(min=0, max=max_opacity, step=0.001, value=self.opacity2)
 		ipywidgets.jslink((self, 'level1'), (l1, 'value'))
 		ipywidgets.jslink((self, 'level2'), (l2, 'value'))
 		ipywidgets.jslink((self, 'level3'), (l3, 'value'))
@@ -144,14 +144,14 @@ class TransferFunctionWidget3(TransferFunction):
 		self.rgba = rgba
 		#self._notify_trait("rgba", old_value, self.rgba)
 
-	def control(self):
+	def control(self, max_opacity=0.2):
 		import ipywidgets
 		l1 = ipywidgets.FloatSlider(min=0, max=1, value=self.level1)
 		l2 = ipywidgets.FloatSlider(min=0, max=1, value=self.level2)
 		l3 = ipywidgets.FloatSlider(min=0, max=1, value=self.level3)
-		o1 = ipywidgets.FloatSlider(min=0, max=0.2, step=0.001, value=self.opacity1)
-		o2 = ipywidgets.FloatSlider(min=0, max=0.2, step=0.001, value=self.opacity2)
-		o3 = ipywidgets.FloatSlider(min=0, max=0.2, step=0.001, value=self.opacity2)
+		o1 = ipywidgets.FloatSlider(min=0, max=max_opacity, step=0.001, value=self.opacity1)
+		o2 = ipywidgets.FloatSlider(min=0, max=max_opacity, step=0.001, value=self.opacity2)
+		o3 = ipywidgets.FloatSlider(min=0, max=max_opacity, step=0.001, value=self.opacity2)
 		ipywidgets.jslink((self, 'level1'), (l1, 'value'))
 		ipywidgets.jslink((self, 'level2'), (l2, 'value'))
 		ipywidgets.jslink((self, 'level3'), (l3, 'value'))

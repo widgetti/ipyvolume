@@ -437,7 +437,7 @@ def gcc():
     return current.container
 
 
-def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, controls=True):
+def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, controls=True, max_opacity=0.2):
     """Create a transfer function, see volshow"""
     tf_kwargs = {}
     # level, opacity and widths can be scalars
@@ -472,7 +472,7 @@ def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_wi
     tf = ipv.TransferFunctionWidgetJs3(**tf_kwargs)
     fig = gcf()
     if controls:
-        current.container.children = (tf.control(),) + current.container.children
+        current.container.children = (tf.control(max_opacity=max_opacity),) + current.container.children
     return tf
 
 def plot_isosurface(data, level=None, color=default_color, wireframe=True, surface=True, controls=True):
@@ -509,7 +509,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
             specular_coefficient=0.5, specular_exponent=5,
             downscale=1,
             level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1,
-            controls=True):
+            controls=True, max_opacity=0.2):
     """Visualize a 3d array using volume rendering.
 
     Currently only 1 volume can be rendered.
@@ -530,11 +530,12 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
     :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
     :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
     :param controls: add controls for lighting and transfer function or not
+    :param max_opacity: maximum opacity for transfer function controls
     :return:
     """
     vol = gcf()
     if tf is None:
-        tf = vol.tf or transfer_function(level, opacity, level_width, controls=controls)
+        tf = vol.tf or transfer_function(level, opacity, level_width, controls=controls, max_opacity=max_opacity)
     if data_min is None:
         data_min = np.nanmin(data)
     if data_max is None:
