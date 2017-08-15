@@ -4,7 +4,7 @@ API docs
 ipyvolume.volume
 ----------------
 
-.. automodule:: ipyvolume.volume
+.. automodule:: ipyvolume.widgets
     :members: quickvolshow, quickscatter, quickquiver, volshow, Volume
     :undoc-members:
     :show-inheritance:
