@@ -40,7 +40,8 @@ var MeshView = widgets.WidgetView.extend( {
             fragmentShader: require('../glsl/mesh-fragment.glsl'),
             polygonOffset: true,
             polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
-            polygonOffsetUnits: 1
+            polygonOffsetUnits: 1,
+            visible: this.model.get("visible") && this.model.get("visible_faces")
                 })
 
         this.material_texture = new THREE.RawShaderMaterial({
@@ -50,7 +51,8 @@ var MeshView = widgets.WidgetView.extend( {
             side:THREE.DoubleSide,
             polygonOffset: true,
             polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
-            polygonOffsetUnits: 1
+            polygonOffsetUnits: 1,
+            visible: this.model.get("visible") && this.model.get("visible_faces")
             })
 
         this.material_rgb = new THREE.RawShaderMaterial({
@@ -60,19 +62,22 @@ var MeshView = widgets.WidgetView.extend( {
             side:THREE.DoubleSide,
             polygonOffset: true,
             polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
-            polygonOffsetUnits: 1
+            polygonOffsetUnits: 1,
+            visible: this.model.get("visible") && this.model.get("visible_faces")
             })
 
         this.line_material = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
             vertexShader:   "#define AS_LINE\n"+require('../glsl/mesh-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n"+require('../glsl/mesh-fragment.glsl')
+            fragmentShader: "#define AS_LINE\n"+require('../glsl/mesh-fragment.glsl'),
+            visible: this.model.get("visible") && this.model.get("visible_lines")
             })
 
         this.line_material_rgb = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
             vertexShader:   "#define AS_LINE\n#define USE_RGB\n"+require('../glsl/mesh-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n#define USE_RGB\n"+require('../glsl/mesh-fragment.glsl')
+            fragmentShader: "#define AS_LINE\n#define USE_RGB\n"+require('../glsl/mesh-fragment.glsl'),
+            visible: this.model.get("visible") && this.model.get("visible_lines")
             })
 
         this.create_mesh()
@@ -80,6 +85,16 @@ var MeshView = widgets.WidgetView.extend( {
         this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles",   this.on_change, this)
         this.model.on("change:geo change:connected", this.update_, this)
         this.model.on("change:texture", this._load_textures, this)
+        this.model.on("change:visible change:visible_lines change:visible_faces", this.update_visibility, this)
+    },
+    
+    update_visibility: function () {
+        this.material.visible = this.model.get("visible") && this.model.get("visible_faces");
+        this.material_rgb.visible = this.model.get("visible") && this.model.get("visible_faces");
+        this.material_texture.visible = this.model.get("visible") && this.model.get("visible_faces");
+        this.line_material.visible = this.model.get("visible") && this.model.get("visible_lines");
+        this.line_material_rgb.visible = this.model.get("visible") && this.model.get("visible_lines");
+        this.renderer.update()
     },
 
     _load_textures: function() {
@@ -395,6 +410,9 @@ var MeshModel = widgets.WidgetModel.extend({
             color: "red",
             sequence_index: 0,
             connected: false,
+            visible: true,
+            visible_lines: true,
+            visible_faces: true
         })
     }}, {
     serializers: _.extend({
