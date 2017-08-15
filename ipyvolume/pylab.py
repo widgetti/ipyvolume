@@ -632,7 +632,7 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
     if fig is None:
         fig = gcf()
     else:
-        assert isinstance(fig, volume.Figure)
+        assert isinstance(fig, ipv.Figure)
     if output_widget is None:
         output_widget = ipywidgets.Output()
         display(output_widget)
