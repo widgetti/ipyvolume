@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@jupyter-widgets/jupyterlab-manager": "^0.25.10",
-    "ipyvolume": "~0.4.0-alpha.1"
+    "ipyvolume": "~0.4.0-alpha.3"
   },
   "jupyterlab": {
     "extension": true
