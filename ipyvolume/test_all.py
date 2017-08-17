@@ -141,6 +141,10 @@ def test_widgets_state(performance):
     finally:
         ipyvolume.serialize.performance = 0
 
+def test_embed_offline():
+    x, y, z = np.random.random((3, 100))
+    p3.scatter(x, y, z)
+    p3.save("tmp/ipyolume_scatter.html", offline=True)
 
 # just cover and call
 ipyvolume.examples.ball()
