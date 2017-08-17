@@ -77,7 +77,7 @@ def save_font_awesome(dirpath='font-awesome', url="http://fontawesome.io/assets/
 
     """
     parentdirname = os.path.dirname(dirpath)
-    print(print("Downloading %s to %s" % (url, os.path.abspath(dirpath))))
+    print("Downloading %s to %s" % (url, os.path.abspath(dirpath)))
     try:
         zip_folder = io.BytesIO(requests.get(url).content)
         unzip = zipfile.ZipFile(zip_folder)
