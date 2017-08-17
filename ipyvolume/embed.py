@@ -65,7 +65,7 @@ def save_requirejs(filepath='require.min.js', url="https://cdnjs.cloudflare.com/
     :type url: str
     """
     content = requests.get(url).content
-    with open(filepath, 'w') as f:
+    with io.open(filepath, 'w', encoding='utf8') as f:
         f.write(content.decode("utf8"))
 
 
@@ -100,7 +100,7 @@ def save_embed_js(filepath="embed-amd.js", url=wembed.DEFAULT_EMBED_REQUIREJS_UR
     if not url.endswith('.js'):
         url += '.js'
     content = requests.get(wembed.DEFAULT_EMBED_REQUIREJS_URL).content
-    with open(filepath, 'w') as f:
+    with io.open(filepath, 'w', encoding='utf8') as f:
         f.write(content.decode("utf8"))
 
 
