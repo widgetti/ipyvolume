@@ -77,7 +77,7 @@ def save_font_awesome(dirpath='font-awesome', url="http://fontawesome.io/assets/
 
     """
     parentdirname = os.path.dirname(dirpath)
-
+    print(print("Downloading %s to %s" % (url, os.path.abspath(dirpath))))
     try:
         zip_folder = io.BytesIO(requests.get(url).content)
         unzip = zipfile.ZipFile(zip_folder)
@@ -86,6 +86,8 @@ def save_font_awesome(dirpath='font-awesome', url="http://fontawesome.io/assets/
     except Exception as err:
         raise IOError('Could not save: {0}\n{1}'.format(url, err))
 
+    if os.path.exists(dirpath):
+        shutil.rmtree(dirpath)
     os.rename(os.path.join(parentdirname, top_level_name), dirpath)
 
 
