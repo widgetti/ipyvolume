@@ -1,132 +1,15 @@
 import os
-import json
+import io
+import requests
+import zipfile
 import shutil
-import ipywidgets
+from ipywidgets import embed as wembed
 import ipyvolume
-from base64 import standard_b64encode
-
-template = """<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{title}</title>
-{extra_script_head}
-</head>
-<body>
-{body_pre}
-
-<script src="{embed_url}"></script>
-<script type="application/vnd.jupyter.widget-state+json">
-{json_data}
-</script>
-{widget_views}
-
-{body_post}
-</body>
-</html>
-"""
-
-widget_view_template = """<script type="application/vnd.jupyter.widget-view+json">
-{{
-    "model_id": "{model_id}"
-}}
-</script>"""
 
 
-template_external = """<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{title}</title>
-{extra_script_head}
-</head>
-<body>
-{body_pre}
-
-<script src="https://unpkg.com/jupyter-js-widgets@~2.0.20/dist/embed.js"></script>
-<script type="javascript">
-widget_data = {json_data}
-</script>
-{widget_views}
-
-{body_post}
-</body>
-</html>
-"""
-
-widget_view_template_external = """<script type="javascript">
-widget_views = {{
-    "model_id": "{model_id}"
-}}
-</script>"""
-
-
-
-def get_widget_state(widget, drop_defaults=False):
-    model_state = widget.get_state(drop_defaults=drop_defaults)
-    model_state, buffer_paths, buffers = ipywidgets.widget._remove_buffers(model_state)
-    state = {
-        'model_name': widget._model_name,
-        'model_module': widget._model_module,
-        'model_module_version': widget._model_module_version,
-        'state': model_state
-    }
-    if len(buffers) > 0:
-        buffer_list = [{'encoding': 'base64', 'path': p, 'data': standard_b64encode(d).decode('ascii')} for p, d in zip(buffer_paths, buffers)]
-        state['buffers'] = buffer_list
-    return state
-
-def get_state(widget, store=None, drop_defaults=False):
-    if store is None:
-        store = dict()
-    state = widget.get_state(drop_defaults=drop_defaults)
-    store[widget.model_id] = widget._get_embed_state(drop_defaults=drop_defaults)
-    for key, value in state.items():
-        value = getattr(widget, key)
-        if isinstance(value, ipywidgets.Widget):
-            get_state(value, store, drop_defaults=drop_defaults)
-        elif isinstance(value, (list, tuple)):
-            for item in value:
-                if isinstance(item, ipywidgets.Widget):
-                    get_state(item, store, drop_defaults=drop_defaults)
-        elif isinstance(value, dict):
-            for item in value.values():
-                if isinstance(item, ipywidgets.Widget):
-                    get_state(item, store, drop_defaults=drop_defaults)
-    return store
-
-def add_referring_widgets(states, drop_defaults=False):
-    found_new = False
-    for widget_id, widget in ipywidgets.Widget.widgets.items(): # go over all widgets
-        #print("widget", widget, widget_id)
-        if widget_id not in states:
-            #print("check members")
-            widget_state = widget.get_state(drop_defaults=drop_defaults)
-            widget_state, buffer_paths, buffers = ipywidgets.widget._remove_buffers(widget_state)
-            widgets_found = []
-            for key, value in widget_state.items():
-                value = getattr(widget, key)
-                if isinstance(value, ipywidgets.Widget):
-                    widgets_found.append(value)
-                elif isinstance(value, (list, tuple)):
-                    for item in value:
-                        if isinstance(item, ipywidgets.Widget):
-                            widgets_found.append(item)
-                elif isinstance(value, dict):
-                    for item in value.values():
-                        if isinstance(item, ipywidgets.Widget):
-                            widgets_found.append(item)
-            #print("found", widgets_found)
-            for widgets_found in widgets_found:
-                if widgets_found.model_id in states:
-                    #print("we found that we needed to add ", widget_id, widget)
-                    states[widget.model_id] = widget._get_embed_state(drop_defaults=drop_defaults)
-                    found_new = True
-    return found_new
-import ipywidgets.embed
-
-def save_js(dirname, makedirs=True):
-    """ output the ipyvolume javascript
+# TODO this doesn't work now since iyvolume/static/index.js is for the notebook, js/dist/index.js for unpkg is required
+def save_ipyvolumejs(dirname, makedirs=True):
+    """ output the ipyvolume javascript to a local file
     
     :param dirname: folderpath to output js file to
     :param makedirs: whether to make the directories if they do not already exist
@@ -140,63 +23,110 @@ def save_js(dirname, makedirs=True):
     src = os.path.join(dir_name_src, "index.js")
     shutil.copy(src, dst)
 
-def embed_html(filename, widgets, makedirs=True, copy_js=True,
-               drop_defaults=False, all=False, title="ipyvolume embed example", external_json=False,
-               indent=2,
-               template=template, template_options={"embed_url":ipywidgets.embed.DEFAULT_EMBED_SCRIPT_URL},
-               widget_view_template=widget_view_template, **kwargs):
-    """ output the the ipywidgets to a standalone html file
-    
-    :param filename: filepath to output to
-    :param widgets: list of ipywidget instances
-    :param makedirs: whether to make directories in the filename path, if they do not already exist
-    :param copy_js: whether to copy a local version of the ipyvolume javascript to the same folder
-    
+
+def save_requirejs(filepath='require.min.js', url="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"):
+    """ download and save the require javascript to a local file
+
+    :type filepath: str
+    :type url: str
     """
+    content = requests.get(url).content
+    with open(filepath, 'w') as f:
+        f.write(content.decode("utf8"))
+
+
+def save_font_awesome(dirpath='font-awesome', url="http://fontawesome.io/assets/font-awesome-4.7.0.zip"):
+    """ download and save the font-awesome package to a local folder
+
+    :type dirpath: str
+    :type url: str
+
+    """
+    parentdirname = os.path.dirname(dirpath)
+
     try:
-        widgets[0]
-    except (IndexError, TypeError):
-        widgets = [widgets]
-        
-    dir_name_dst = os.path.dirname(os.path.abspath(filename))
+        zip_folder = io.BytesIO(requests.get(url).content)
+        unzip = zipfile.ZipFile(zip_folder)
+        top_level_name = unzip.namelist()[0]
+        unzip.extractall(parentdirname)
+    except Exception as err:
+        raise IOError('Could not save: {0}\n{1}'.format(url, err))
+
+    os.rename(os.path.join(parentdirname, top_level_name), dirpath)
+
+
+def save_embed_js(filepath="embed-amd.js", url=wembed.DEFAULT_EMBED_REQUIREJS_URL):
+    """ download and save the ipywidgets embedding javascript to a local file
+
+    :type filepath: str
+    :type url: str
+    """
+    if not url.endswith('.js'):
+        url += '.js'
+    content = requests.get(wembed.DEFAULT_EMBED_REQUIREJS_URL).content
+    with open(filepath, 'w') as f:
+        f.write(content.decode("utf8"))
+
+
+def embed_html(filepath, views, makedirs=True, title=u'IPyVolume Widget',
+                       offline=False, offline_req=True, offline_folder='',
+                       drop_defaults=False, template=None):
+    """ Write a minimal HTML file with widget views embedded.
+
+    :type filepath: str
+    :param filepath: The file to write the HTML output to.
+    :type views: widget or collection of widgets or None
+    :param views:The widgets to include views for. If None, all DOMWidgets are included (not just the displayed ones).
+    :param makedirs: whether to make directories in the filename path, if they do not already exist
+    :param title: title for the html page
+    :param offline: if True, use local urls for required js/css packages
+    :param offline_req: if True and offline=True, download all js/css required packages,
+    such that the html can be viewed with no internet connection
+    :param offline_folder: the folder to save required js/css packages to (relative to the filepath)
+    :type drop_defaults: bool
+    :param drop_defaults: Whether to drop default values from the widget states
+    :param template: template string for the html, must contain {title} and {snippet} place holders
+
+    """
+    dir_name_dst = os.path.dirname(os.path.abspath(filepath))
     if not os.path.exists(dir_name_dst) and makedirs:
         os.makedirs(dir_name_dst)
-        
-    with open(filename, "w") as f:
-        # collect the state of all relevant widgets
-        state = {}
-        if all:
-            state = ipywidgets.Widget.get_manager_state(drop_defaults=drop_defaults)["state"]
-        for widget in widgets:
-            if not all:
-                get_state(widget, state, drop_defaults=drop_defaults)
-        # it may be that other widgets refer to the collected widgets, such as layouts, include those as well
-        while add_referring_widgets(state):
-            pass
 
-        values = template_options.copy()
-        values.update(dict(extra_script_head="", body_pre="", body_post=""))
-        values.update(kwargs)
-        widget_views = ""
-        for widget in widgets:
-            widget_views += widget_view_template.format(**dict(model_id=widget.model_id))
-        # Rely on ipywidget to get the default values
-        json_data = ipywidgets.widgets.Widget.get_manager_state(widgets=[])
-        # but plug in our own state
-        json_data['state'] = state
-        if external_json:
-            filename_base = os.path.splitext(filename)[0]
-            with open(filename_base+".json", "w") as fjson:
-                json.dump(json_data, fjson)
-            values.update(dict(title=title, widget_views=widget_views))
-        else:
-            values.update(dict(title=title,
-                      json_data=json.dumps(json_data, indent=indent),
-                           widget_views=widget_views))
-        html_code = template.format(**values)
+    if not offline:
+        return wembed.embed_minimal_html(filepath, views, title=title,
+                                         template=template, requirejs=True, drop_defaults=drop_defaults)
+
+    if offline_req:
+        scripts_path = os.path.join(dir_name_dst, offline_folder)
+        if not os.path.exists(scripts_path):
+            os.makedirs(scripts_path)
+        # TODO embed-amd.js looks for ipyvolume.js in the local path of the html file, not it's own local path,
+        # so this can't be in the scripts path
+        save_ipyvolumejs(dir_name_dst)
+        save_requirejs(os.path.join(scripts_path, "require.min.js"))
+        save_embed_js(os.path.join(scripts_path, "embed-amd.js"))
+        save_font_awesome(os.path.join(scripts_path, "font-awesome"))
+
+    offline_folder = ''
+    if offline_folder:
+        offline_folder += '/'
+    snippet = wembed.embed_snippet(views, embed_url=offline_folder+"embed-amd.js",
+                                   requirejs=False, drop_defaults=drop_defaults)
+    offline_snippet = """
+    <link href="{offline_folder}font-awesome/css/font-awesome.min.css" rel="stylesheet">    
+    <script src="{offline_folder}require.min.js" crossorigin="anonymous"></script>
+    {snippet}
+    """.format(offline_folder=offline_folder, snippet=snippet)
+
+    values = {
+        'title': title,
+        'snippet': offline_snippet,
+    }
+
+    if template is None:
+        template = wembed.html_template
+
+    html_code = template.format(**values)
+
+    with open(filepath, "w") as f:
         f.write(html_code)
-
-    if copy_js:
-        save_js(dir_name_dst, makedirs=makedirs)
-        
-    

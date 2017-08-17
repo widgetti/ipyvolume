@@ -137,7 +137,8 @@ setup_args = {
         'traittypes',
         'traitlets',
         'Pillow',
-        'ipywebrtc'
+        'ipywebrtc',
+        'requests'
     ],
     'license': 'MIT',
     'packages': find_packages(),
