@@ -104,10 +104,11 @@ def test_bokeh():
     from bokeh.embed import components
 
     script, div = components(p)
+    template_options = dict(extra_script_head=script + CDN.render_js() + CDN.render_css(),
+                            body_pre="<h2>Do selections in 2d (bokeh)<h2>" + div + "<h2>And see the selection in ipyvolume<h2>")
     ipyvolume.embed.embed_html("tmp/bokeh.html",
-                               [p3.gcc(), ipyvolume.bokeh.wmh], all=True,
-                               extra_script_head=script + CDN.render_js() + CDN.render_css(),
-                               body_pre="<h2>Do selections in 2d (bokeh)<h2>" + div + "<h2>And see the selection in ipyvolume<h2>")
+                               [p3.gcc(), ipyvolume.bokeh.wmh], all_states=True,
+                               template_options=template_options)
 
 def test_quick():
     x, y, z = ipyvolume.examples.xyz()
