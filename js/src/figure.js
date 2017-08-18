@@ -545,6 +545,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.hover = false
         }
     },
+    setStyle: function() {
+        // ignore original style setting, our style != a style widget
+    },
     _mouse_down: function(e) {
         console.log('mouse down', e)
         window.last_event = e
