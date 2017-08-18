@@ -66,6 +66,7 @@ def save_embed_js(folderpath="", version=wembed.__html_manager_version__):
 
     :type folderpath: str
     :type version: str
+
     """
     url = u'https://unpkg.com/@jupyter-widgets/html-manager@{0:s}/dist/embed-amd.js'.format(version)
     filename = "embed-amd_v{0:s}.js".format(version[1:])
