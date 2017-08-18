@@ -163,10 +163,14 @@ def test_download():
     ipyvolume.utils.download_to_file(url, "tmp/test_download3.npy.bz2", resume=True)
 
 
-def test_embed_offline():
+def test_embed():
+    p3.clear()
     x, y, z = np.random.random((3, 100))
     p3.scatter(x, y, z)
-    p3.save("tmp/ipyolume_scatter.html", offline=True, scripts_path='tmp/script_folder')
+    p3.save("tmp/ipyolume_scatter_online.html", offline=False)
+    assert os.path.getsize("tmp/ipyolume_scatter_online.html") > 0
+    p3.save("tmp/ipyolume_scatter_offline.html", offline=True, scripts_path='js/subdir')
+    assert os.path.getsize("tmp/ipyolume_scatter_offline.html") > 0
 
 # just cover and call
 ipyvolume.examples.ball()

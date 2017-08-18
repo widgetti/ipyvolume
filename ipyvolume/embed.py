@@ -31,21 +31,23 @@ def save_ipyvolumejs(folderpath="", version=ipyvolume._version.__version_js__, d
 
     """
     url = "https://unpkg.com/ipyvolume@{version}/dist/index.js".format(version=version)
-    filename = 'ipyvolume.js'
-    filepath = os.path.join(folderpath, filename)
+    pyv_filename = 'ipyvolume_v{version}.js'.format(version=version)
+    pyv_filepath = os.path.join(folderpath, pyv_filename)
 
     devfile = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "..", "js", "dist", "index.js")
     if devmode and os.path.exists(devfile):
         if folderpath and not os.path.exists(folderpath):
             os.makedirs(folderpath)
-        shutil.copy(devfile, filepath)
+        shutil.copy(devfile, pyv_filepath)
     else:
-        download_to_file(url, filepath)
-    directory = os.path.dirname(filepath)
-    threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
-    shutil.copy(threejs, directory)
+        download_to_file(url, pyv_filepath)
 
-    return "ipyvolume.js"
+    three_filename = 'three_v{version}.js'.format(version=version)
+    three_filepath = os.path.join(folderpath, three_filename)
+    threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
+    shutil.copy(threejs, three_filepath)
+
+    return pyv_filename, three_filename
 
 
 def save_requirejs(folderpath="", version="2.3.4"):
@@ -105,7 +107,7 @@ def save_font_awesome(dirpath='', version="4.7.0"):
 
 
 def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_states=False,
-               offline=False, offline_req=True, scripts_path='scripts_folder',
+               offline=False, scripts_path='js',
                drop_defaults=False, template=html_template,
                template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
                devmode=False, cors=False):
@@ -118,9 +120,8 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
     :param makedirs: whether to make directories in the filename path, if they do not already exist
     :param title: title for the html page
     :param all_states: if True, the state of all widgets know to the widget manager is included, else only those in widgets
-    :param offline: if True, use local urls for required js/css packages
-    :param offline_req: if True and offline=True, download all js/css required packages,
-    such that the html can be viewed with no internet connection
+    :param offline: if True, use local urls for required js/css packages and download all js/css required packages
+    (if not already available), such that the html can be viewed with no internet connection
     :param scripts_path: the folder to save required js/css packages to (relative to the filepath)
     :type drop_defaults: bool
     :param drop_defaults: Whether to drop default values from the widget states
@@ -134,7 +135,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
     if not os.path.exists(dir_name_dst) and makedirs:
         os.makedirs(dir_name_dst)
 
-    template_opts = {"title": title, "extra_script_head": "", "body_pre": "", "body_post": ""}
+    template_opts = {"extra_script_head": "", "body_pre": "", "body_post": ""}
     template_opts.update(dict(template_options))
 
     if all_states:
@@ -143,46 +144,56 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
         state = wembed.dependency_state(widgets, drop_defaults=drop_defaults)
 
     if not offline:
-        # let ipywidgets deal with it
-        wembed.embed_minimal_html(filepath, widgets, state=state,
-                                                             requirejs=True, drop_defaults=drop_defaults)
+        # we have to get the snippet (rather than just call embed_minimal_html), because if the new template includes
+        # {} characters (such as in the bokeh example) then an error is raised when trying to format
+        snippet = wembed.embed_snippet(widgets, state=state, requirejs=True, drop_defaults=drop_defaults)
         directory = os.path.dirname(filepath)
         threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
         shutil.copy(threejs, directory)
     else:
-        if offline_req:
-            if not os.path.isabs(scripts_path):
-                scripts_path = os.path.join(os.path.dirname(filepath), scripts_path)
-            # ensure script path is above filepath
-            rel_script_path = os.path.relpath(scripts_path, os.path.dirname(filepath))
-            if rel_script_path.startswith(".."):
-                raise ValueError("The scripts_path must have the same root directory as the filepath")
-            elif rel_script_path=='.':
-                rel_script_path = ''
-            else:
-                rel_script_path += '/'
 
-            #TODO would like to have ipyvolume.js in scripts_path (using require.config?)
-            save_ipyvolumejs(dir_name_dst, devmode=devmode)
-            fname_require = save_requirejs(os.path.join(scripts_path))
-            fname_embed = save_embed_js(os.path.join(scripts_path))
-            fname_fontawe = save_font_awesome(os.path.join(scripts_path))
+        if not os.path.isabs(scripts_path):
+            scripts_path = os.path.join(os.path.dirname(filepath), scripts_path)
+        # ensure script path is above filepath
+        rel_script_path = os.path.relpath(scripts_path, os.path.dirname(filepath))
+        if rel_script_path.startswith(".."):
+            raise ValueError("The scripts_path must have the same root directory as the filepath")
+        elif rel_script_path=='.':
+            rel_script_path = ''
+        else:
+            rel_script_path += '/'
 
-        snippet = wembed.embed_snippet(widgets, embed_url=rel_script_path+fname_embed,
-                                       requirejs=False, drop_defaults=drop_defaults, state=state)
+        fname_pyv, fname_three = save_ipyvolumejs(scripts_path, devmode=devmode)
+        fname_require = save_requirejs(os.path.join(scripts_path))
+        fname_embed = save_embed_js(os.path.join(scripts_path))
+        fname_fontawe = save_font_awesome(os.path.join(scripts_path))
+
+        subsnippet = wembed.embed_snippet(widgets, embed_url=rel_script_path+fname_embed,
+                                          requirejs=False, drop_defaults=drop_defaults, state=state)
         if not cors:
             # DIRTY hack, we need to do this cleaner upstream
-            snippet = snippet.replace(' crossorigin="anonymous"', '')
+            subsnippet = subsnippet.replace(' crossorigin="anonymous"', '')
         cors_attribute = 'crossorigin="anonymous"'  if cors else ' '
-        offline_snippet = """
+        snippet = """
 <link href="{rel_script_path}{fname_fontawe}/css/font-awesome.min.css" rel="stylesheet">    
-<script src="{rel_script_path}{fname_require}"{cors}></script>
-{snippet}
-        """.format(rel_script_path=rel_script_path, fname_fontawe=fname_fontawe, fname_require=fname_require, snippet=snippet, cors=cors_attribute)
+<script src="{rel_script_path}{fname_require}"{cors} data-main='./{rel_script_path}' ></script>
+<script>
+    require.config({{
+      map: {{
+        '*': {{
+          'ipyvolume': '{fname_pyv}',
+          'three': '{fname_three}'
+        }}
+      }}}})
+</script>
+{subsnippet}
+        """.format(rel_script_path=rel_script_path, fname_fontawe=fname_fontawe, fname_require=fname_require,
+                   fname_pyv=os.path.splitext(fname_pyv)[0], fname_three=os.path.splitext(fname_three)[0],
+                   subsnippet=subsnippet, cors=cors_attribute)
 
-        template_opts['snippet'] = offline_snippet
+    template_opts['snippet'] = snippet
+    template_opts['title'] = title
+    html_code = template.format(**template_opts)
 
-        html_code = template.format(**template_opts)
-
-        with io.open(filepath, "w", encoding='utf8') as f:
-            f.write(html_code)
+    with io.open(filepath, "w", encoding='utf8') as f:
+        f.write(html_code)
