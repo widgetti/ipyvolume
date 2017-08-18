@@ -585,10 +585,30 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
     return vol
 
 
-def save(filename, makedirs=True, offline=False, offline_req=True, **kwargs):
-    """Save the figure/visualization as html file, and optionally copy the required .js files to the same directory """
-    ipyvolume.embed.embed_html(filename, current.container, makedirs=makedirs,
-                               offline=offline, offline_req=offline_req, **kwargs)
+def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
+         offline=False, offline_req=True, scripts_path='scripts_folder',
+         drop_defaults=False, template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
+         devmode=False):
+    """ save the current container to a minimal HTML file
+
+    :type filepath: str
+    :param filepath: The file to write the HTML output to.
+    :param makedirs: whether to make directories in the filename path, if they do not already exist
+    :param title: title for the html page
+    :param all_states: if True, the state of all widgets know to the widget manager is included, else only those in widgets
+    :param offline: if True, use local urls for required js/css packages
+    :param offline_req: if True and offline=True, download all js/css required packages,
+    such that the html can be viewed with no internet connection
+    :param scripts_path: the folder to save required js/css packages to (relative to the filepath)
+    :type drop_defaults: bool
+    :param drop_defaults: Whether to drop default values from the widget states
+    :param template_options: list or dict of additional template options
+    :param devmode: if True, attempt to get index.js from local js/dist folder
+
+    """
+    ipyvolume.embed.embed_html(filepath, current.container, makedirs=makedirs, title=title, all_states=all_states,
+                               offline=offline, offline_req=offline_req, scripts_path=scripts_path,
+                               drop_defaults=drop_defaults, template_options=template_options, devmode=devmode)
 
 
 def _change_y_angle(fig, frame, fraction):

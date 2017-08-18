@@ -2,12 +2,16 @@ from __future__ import absolute_import
 import ipyvolume.pylab as p3
 import ipyvolume.examples
 import ipyvolume.datasets
+import ipyvolume.utils
 import numpy as np
 import os
+import shutil
 import pytest
 
-if not os.path.exists("tmp"):
-    os.makedirs("tmp")
+# helpful to remove previous test results for development
+if os.path.exists("tmp"):
+    shutil.rmtree("tmp")
+os.makedirs("tmp")
 
 def test_figure():
     f1 = p3.figure()
@@ -141,10 +145,28 @@ def test_widgets_state(performance):
     finally:
         ipyvolume.serialize.performance = 0
 
+def test_download():
+    url = "https://github.com/maartenbreddels/ipyvolume/raw/master/datasets/hdz2000.npy.bz2"
+    ipyvolume.utils.download_to_file(url, "tmp/test_download.npy.bz2", chunk_size=None)
+    assert os.path.exists("tmp/test_download.npy.bz2")
+    ipyvolume.utils.download_to_file(url, "tmp/test_download2.npy.bz2", chunk_size=1000)
+    assert os.path.exists("tmp/test_download2.npy.bz2")
+    filesize = os.path.getsize("tmp/test_download.npy.bz2")
+    content, encoding = ipyvolume.utils.download_to_bytes(url, chunk_size=None)
+    assert len(content) == filesize
+    content, encoding = ipyvolume.utils.download_to_bytes(url, chunk_size=1000)
+    assert len(content) == filesize
+    byte_list = list(ipyvolume.utils.download_yield_bytes(url, chunk_size=1000))
+    # write the first chunk of the url to file then attempt to resume the download
+    with open("tmp/test_download3.npy.bz2", 'wb') as f:
+        f.write(byte_list[0])
+    ipyvolume.utils.download_to_file(url, "tmp/test_download3.npy.bz2", resume=True)
+
+
 def test_embed_offline():
     x, y, z = np.random.random((3, 100))
     p3.scatter(x, y, z)
-    p3.save("tmp/ipyolume_scatter.html", offline=True)
+    p3.save("tmp/ipyolume_scatter.html", offline=True, scripts_path='tmp/script_folder')
 
 # just cover and call
 ipyvolume.examples.ball()
