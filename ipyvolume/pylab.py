@@ -586,7 +586,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
 
 
 def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
-         offline=False, offline_req=True, scripts_path='scripts_folder',
+         offline=False, offline_req=True, scripts_path='js',
          drop_defaults=False, template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
          devmode=False):
     """ save the current container to a minimal HTML file
