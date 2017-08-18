@@ -41,6 +41,9 @@ def save_ipyvolumejs(folderpath="", version=ipyvolume._version.__version_js__, d
         shutil.copy(devfile, filepath)
     else:
         download_to_file(url, filepath)
+    directory = os.path.dirname(filepath)
+    threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
+    shutil.copy(threejs, directory)
 
     return "ipyvolume.js"
 
@@ -140,6 +143,9 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
     if not offline:
         template_opts['snippet'] = wembed.embed_minimal_html(filepath, widgets, state=state,
                                                              requirejs=True, drop_defaults=drop_defaults)
+        directory = os.path.dirname(filepath)
+        threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
+        shutil.copy(threejs, directory)
     else:
         if offline_req:
             # ensure script path is above filepath
