@@ -245,8 +245,7 @@ function deserialize_texture(data, manager) {
     return data
 }
 function serialize_texture(data, manager) {
-    console.error('serialize texture not implemented', data)
-    return null
+    return data;
 }
 
 module.exports = {
