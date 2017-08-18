@@ -149,6 +149,8 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
         shutil.copy(threejs, directory)
     else:
         if offline_req:
+            if not os.path.isabs(scripts_path):
+                scripts_path = os.path.join(os.path.dirname(filepath), scripts_path)
             # ensure script path is above filepath
             rel_script_path = os.path.relpath(scripts_path, os.path.dirname(filepath))
             if rel_script_path.startswith(".."):
