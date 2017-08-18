@@ -1057,10 +1057,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 scatter.mesh.material = scatter.mesh.material_rgb
                 scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
             }, this)
-            _.each(this.mesh_views, function(mesh) {
-                mesh.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
-                _.each(mesh.meshes, function(mesh) {
-                    mesh.mesh.material = mesh.material_rgb
+            _.each(this.mesh_views, function(mesh_view) {
+                mesh_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
+                _.each(mesh_view.meshes, function(mesh) {
+                    mesh.material = mesh.material_rgb
                 }, this);
             }, this)
             this.renderer.autoClear = false;
@@ -1073,9 +1073,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
             _.each(this.scatter_views, function(scatter) {
                 scatter.mesh.material = scatter.mesh.material_normal
             }, this)
-            _.each(this.mesh_views, function(mesh) {
-                _.each(mesh.meshes, function(mesh) {
-                    mesh.material = mesh.mesh.material_normal
+            _.each(this.mesh_views, function(mesh_view) {
+                _.each(mesh_view.meshes, function(mesh) {
+                    mesh.material = mesh.material_normal
                 }, this);
             }, this)
 
