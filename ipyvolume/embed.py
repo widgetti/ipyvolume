@@ -108,7 +108,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
                offline=False, offline_req=True, scripts_path='scripts_folder',
                drop_defaults=False, template=html_template,
                template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
-               devmode=False):
+               devmode=False, cors=False):
     """ Write a minimal HTML file with widget views embedded.
 
     :type filepath: str
@@ -127,6 +127,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
     :param template: template string for the html, must contain at least {title} and {snippet} place holders
     :param template_options: list or dict of additional template options
     :param devmode: if True, attempt to get index.js from local js/dist folder
+    :param cors: if True, sets crossorigin attribute to anonymous
 
     """
     dir_name_dst = os.path.dirname(os.path.abspath(filepath))
@@ -169,11 +170,15 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
 
         snippet = wembed.embed_snippet(widgets, embed_url=rel_script_path+fname_embed,
                                        requirejs=False, drop_defaults=drop_defaults, state=state)
+        if not cors:
+            # DIRTY hack, we need to do this cleaner upstream
+            snippet = snippet.replace(' crossorigin="anonymous"', '')
+        cors_attribute = 'crossorigin="anonymous"'  if cors else ' '
         offline_snippet = """
 <link href="{rel_script_path}{fname_fontawe}/css/font-awesome.min.css" rel="stylesheet">    
-<script src="{rel_script_path}{fname_require}" crossorigin="anonymous"></script>
+<script src="{rel_script_path}{fname_require}"{cors}></script>
 {snippet}
-        """.format(rel_script_path=rel_script_path, fname_fontawe=fname_fontawe, fname_require=fname_require, snippet=snippet)
+        """.format(rel_script_path=rel_script_path, fname_fontawe=fname_fontawe, fname_require=fname_require, snippet=snippet, cors=cors_attribute)
 
         template_opts['snippet'] = offline_snippet
 
