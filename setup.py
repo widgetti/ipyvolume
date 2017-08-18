@@ -70,7 +70,8 @@ class NPM(Command):
 
     targets = [
         os.path.join(here, 'ipyvolume', 'static', 'extension.js'),
-        os.path.join(here, 'ipyvolume', 'static', 'index.js')
+        os.path.join(here, 'ipyvolume', 'static', 'index.js'),
+        os.path.join(here, 'ipyvolume', 'static', 'three.js')
     ]
 
     def initialize_options(self):
@@ -128,6 +129,7 @@ setup_args = {
         ('share/jupyter/nbextensions/ipyvolume', [
             'ipyvolume/static/extension.js',
             'ipyvolume/static/index.js',
+            'ipyvolume/static/three.js',
             'ipyvolume/static/index.js.map',
         ]),
     ],
