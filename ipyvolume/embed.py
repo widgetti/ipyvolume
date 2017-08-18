@@ -141,7 +141,8 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
         state = wembed.dependency_state(widgets, drop_defaults=drop_defaults)
 
     if not offline:
-        template_opts['snippet'] = wembed.embed_minimal_html(filepath, widgets, state=state,
+        # let ipywidgets deal with it
+        wembed.embed_minimal_html(filepath, widgets, state=state,
                                                              requirejs=True, drop_defaults=drop_defaults)
         directory = os.path.dirname(filepath)
         threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
@@ -173,7 +174,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
 
         template_opts['snippet'] = offline_snippet
 
-    html_code = template.format(**template_opts)
+        html_code = template.format(**template_opts)
 
-    with io.open(filepath, "w", encoding='utf8') as f:
-        f.write(html_code)
+        with io.open(filepath, "w", encoding='utf8') as f:
+            f.write(html_code)
