@@ -236,7 +236,6 @@ function serialize_array_or_json(obj, manager) {
     }
 }
 function deserialize_texture(data, manager) {
-    console.log('deserialize texture', data)
     if(typeof data == "string") {
         if(data.startsWith('IPY_MODEL_')) {
             return widgets.unpack_models(data, manager)

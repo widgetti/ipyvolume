@@ -183,7 +183,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.screenshot_icon = new ToolIcon('fa-picture-o', this.toolbar_div)
         this.screenshot_icon.a.title = 'Make screensot (hold shift to copy to clipboard)'
         this.screenshot_icon.a.onclick = (event) =>  {
-            console.log(event.ctrlKey)
             try {
                 var data = this.screenshot()
                 if(event.shiftKey) {
@@ -205,11 +204,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 var mode = this.model.get('camera_control')
                 this.model.set('camera_control', 'orbit')
                 this.camera_control_icon.active(true)
-                console.log('orbit')
             } else {
                 this.model.set('camera_control', 'trackball')
                 this.camera_control_icon.active(false)
-                console.log('trackball')
             }
             this.model.save_changes()
         }
@@ -534,14 +531,14 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var stream = this.renderer.domElement.captureStream()
         this.model.stream = Promise.resolve(stream)
         window.last_figure_stream = (stream)
-        console.log('set this figure as last stream')
+        //console.log('set this figure as last stream')
         // keep track over hover status manually
         this.renderer.domElement.onmouseover = () => {
-            console.log('hover')
+            //console.log('hover')
             this.hover = true
         }
         this.renderer.domElement.onmouseleave = () => {
-            console.log('!hover')
+            //console.log('!hover')
             this.hover = false
         }
     },
@@ -549,7 +546,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // ignore original style setting, our style != a style widget
     },
     _mouse_down: function(e) {
-        console.log('mouse down', e)
+        //console.log('mouse down', e)
         window.last_event = e
         if(e.ctrlKey) {
             console.log('pressed ctrl and mouse down')
@@ -578,7 +575,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.control_trackball.enabled = true
             this.control_orbit.enabled = true
             this.capture_mouse = false
-            console.log('mouse trail', this.mouse_trail)
             var data = {}
             var canvas = this.renderer.domElement
             data['pixel'] = this.mouse_trail
@@ -590,17 +586,14 @@ var FigureView = widgets.DOMWidgetView.extend( {
             // send event..
             this.mouse_trail = []
         }
-        if(e.ctrlKey) {
-            console.log('pressed ctrl')
-        }
     },
     _special_keys_down: function(e) {
         var evtobj = window.event? event : e
         if(evtobj.altKey) {
-            console.log('pressed alt', this.hover)
+            //console.log('pressed alt', this.hover)
         }
         if(evtobj.keyCode == 17) {  // ctrl
-            console.log('pressed ctrl', this.hover)
+            //console.log('pressed ctrl', this.hover)
             if(this.hover) {
                 this.select_icon.active(true)
             }
@@ -609,15 +602,14 @@ var FigureView = widgets.DOMWidgetView.extend( {
     _special_keys_up: function(e) {
         var evtobj = window.event? event : e
         if(evtobj.altKey) {
-            console.log('released alt', this.hover)
+            //console.log('released alt', this.hover)
         }
         if(evtobj.keyCode == 17) { // ctrl
-            console.log('released ctrl', this.hover)
+            //console.log('released ctrl', this.hover)
             this.select_icon.active(false)
         }
     },
     custom_msg: function(content) {
-        console.log('content', content)
         if(content.msg == 'screenshot') {
             var data = this.screenshot(undefined, content.width, content.height)
             this.send({event: 'screenshot', data: data});
@@ -724,8 +716,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
     },
     update_scatters: function() {
         var scatters = this.model.get('scatters');
-        console.log("update scatters")
-        console.log(scatters)
         if(scatters) {
             //this.scatters.update(scatters);
             this.scatter_views = _.map(scatters, function(model) {
@@ -740,8 +730,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
     },
     update_meshes: function() {
         var meshes = this.model.get('meshes');
-        console.log("update meshes")
-        console.log(meshes)
         if(meshes) {
             //this.meshes.update(meshes);
             this.mesh_views = _.map(meshes, function(model) {
@@ -808,11 +796,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
     },
     on_canvas_resize: function(event) {
-        console.log(event)
+        //console.log(event)
     },
     keypress: function(event) {
-        console.log("key press")
-        console.log(event)
         var code = event.keyCode || event.which;
         if (event.keyCode == 27) {
         }
@@ -820,7 +806,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
     },
     update_angles: function() {
-        console.log("camera", this.camera.rotation)
+        //console.log("camera", this.camera.rotation)
         var rotation = new THREE.Euler().setFromQuaternion(this.camera.quaternion, this.model.get('angle_order'));
         this.model.set({anglex: rotation.x, angley: rotation.y, anglez: rotation.z})
         this.model.save_changes()
@@ -857,7 +843,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
     _save_matrices: function() {
         this.model.set('matrix_projection', this.camera.projectionMatrix.elements.slice())
         this.model.set('matrix_world', this._get_view_matrix().elements.slice())
-        console.log('setting matrices')
+        //console.log('setting matrices')
         this.model.save_changes()
     },
     getTanDeg: function(deg) {
@@ -1141,7 +1127,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this._update_size()
     },
     _update_size: function(skip_update, custom_width, custom_height) {
-        console.log("update size")
+        //console.log("update size")
         var width;
         var height;
         var el = this.renderer.domElement
@@ -1172,7 +1158,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var aspect = render_width / render_height;
         this.camera.aspect = aspect
         this.camera.updateProjectionMatrix();
-        console.log("render size: ", width, height, render_width, render_height)
+        //console.log("render size: ", width, height, render_width, render_height)
         this.back_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
         this.front_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
         this.volr_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});

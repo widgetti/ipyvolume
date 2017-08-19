@@ -7,8 +7,8 @@ var semver_range = require('./utils.js').semver_range;
 
 var MeshView = widgets.WidgetView.extend( {
     render: function() {
-        console.log("created mesh view, parent is")
-        console.log(this.options.parent)
+        //console.log("created mesh view, parent is")
+        //console.log(this.options.parent)
         this.renderer = this.options.parent;
         this.previous_values = {}
         this.attributes_changed = {}
@@ -213,10 +213,10 @@ var MeshView = widgets.WidgetView.extend( {
         return this._get_value_vec3(this.previous_values[name] || this.model.get(name), index, default_value)
     },
     create_mesh: function() {
-        console.log("previous values: ")
+        /*console.log("previous values: ")
         console.log(this.previous_values)
         console.log("attributes changed: ")
-        console.log(this.attributes_changed)
+        console.log(this.attributes_changed)*/
         this.meshes = []
 
         var sequence_index = sequence_index_original = this.model.get("sequence_index");
