@@ -134,7 +134,7 @@ setup_args = {
         ]),
     ],
     'install_requires': [
-        'ipywidgets>=7.0.0b7',
+        'ipywidgets>=7.0.0',
         'numpy',
         'traittypes',
         'traitlets',
