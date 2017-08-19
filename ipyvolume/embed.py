@@ -149,6 +149,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
         snippet = wembed.embed_snippet(widgets, state=state, requirejs=True, drop_defaults=drop_defaults)
         directory = os.path.dirname(filepath)
         threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
+        directory = directory or '.'
         shutil.copy(threejs, directory)
     else:
 
