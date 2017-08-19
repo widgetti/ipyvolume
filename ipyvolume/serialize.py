@@ -227,8 +227,10 @@ def color_to_binary_or_json(ar, obj=None):
 	else:
 		return [array_to_binary(ar)]
 
+def json_to_array(json, obj=None):
+	return np.array(json)
 color_serialization = dict(to_json=color_to_binary_or_json, from_json=None)
-array_sequence_serialization = dict(to_json=array_sequence_to_binary_or_json, from_json=None)
+array_sequence_serialization = dict(to_json=array_sequence_to_binary_or_json, from_json=json_to_array)
 array_serialization = dict(to_json=array_to_binary_or_json, from_json=None)
 
 array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
