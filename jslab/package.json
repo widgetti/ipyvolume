@@ -1,6 +1,6 @@
 {
   "name": "jupyterlab-volume",
-  "version": "0.1.0",
+  "version": "0.4.0-alpha.4",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -15,8 +15,8 @@
     "raw-loader": "^0.5.1"
   },
   "dependencies": {
-    "@jupyter-widgets/jupyterlab-manager": "^0.25.10",
-    "ipyvolume": "~0.4.0-alpha.3"
+    "@jupyter-widgets/jupyterlab-manager": "^0.26.0",
+    "ipyvolume": "~0.4.0-alpha.4"
   },
   "jupyterlab": {
     "extension": true
