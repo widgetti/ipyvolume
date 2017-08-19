@@ -1,10 +1,10 @@
-widgets = require("@jupyter-widgets/base")
-_ = require("underscore")
-THREE = require("three")
-THREEtext2d = require("three-text2d")
-glm = require("gl-matrix")
-d3 = require("d3")
-screenfull = require("screenfull")
+var widgets = require("@jupyter-widgets/base")
+var _ = require("underscore")
+var THREE = require("three")
+var THREEtext2d = require("three-text2d")
+var glm = require("gl-matrix")
+var d3 = require("d3")
+var screenfull = require("screenfull")
 require('./style.css')
 
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
