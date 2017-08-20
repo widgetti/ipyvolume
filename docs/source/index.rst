@@ -142,6 +142,28 @@ Contents
 Changelog
 =========
 
+ * 0.4
+   * plotting:
+    * lines
+    * wireframes
+    * meshes/surfaces
+    * isosurfaces
+    * texture (animated) support, gif image and MediaStream (movie, camera, canvas)
+   * camera control (angles from the python side), FoV 
+   * movie creation
+   * eye separation for VR
+   * better screenshot support (can be to a PIL Image), and higher resolution possible
+   * mouse lasso (a big rought), selections can be made from the Python side.
+   * icon bar for common operations (fullscreen, stereo, screenshot, reset etc)
+   * offline support for embedding/saving to html
+   * Jupyter lab support
+   * New contributors
+    * Chris Sewell
+    * Satrajit Ghosh
+    * Sylvain Corlay
+    * stonebig
+    * Matt McCormick
+    * Jean Michel Arbona
  * 0.3
   * new
    * axis with labels and ticklabels
