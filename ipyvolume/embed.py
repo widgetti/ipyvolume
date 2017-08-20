@@ -23,12 +23,17 @@ html_template = u"""<!DOCTYPE html>
 """
 
 
-def save_ipyvolumejs(target="", version=ipyvolume._version.__version_js__, devmode=False):
+def save_ipyvolumejs(target="", devmode=False,
+                     version=ipyvolume._version.__version_js__, version3js=__version_threejs__):
     """ output the ipyvolume javascript to a local file
     
     :type target: str
-    :type version: str
     :type devmode: bool
+    :param devmode: if True get index.js from js/dist directory
+    :type version: str
+    :param version: version number of ipyvolume
+    :type version3js: str
+    :param version3js: version number of threejs
 
     """
     url = "https://unpkg.com/ipyvolume@{version}/dist/index.js".format(version=version)
@@ -38,7 +43,7 @@ def save_ipyvolumejs(target="", version=ipyvolume._version.__version_js__, devmo
     devfile = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "..", "js", "dist", "index.js")
     if devmode:
         if not os.path.exists(devfile):
-            raise ValueError("using devmode, but %s is not found" % devfile)
+            raise IOError('devmode=True but cannot find : {}'.format(devfile))
         if target and not os.path.exists(target):
             os.makedirs(target)
         shutil.copy(devfile, pyv_filepath)
@@ -76,14 +81,16 @@ def save_embed_js(target="", version=wembed.__html_manager_version__):
 
     """
     url = u'https://unpkg.com/@jupyter-widgets/html-manager@{0:s}/dist/embed-amd.js'.format(version)
-    filename = "embed-amd_v{0:s}.js".format(version[1:])
+    if version.startswith('^'):
+        version = version[1:]
+    filename = "embed-amd_v{0:s}.js".format(version)
     filepath = os.path.join(target, filename)
 
     download_to_file(url, filepath)
     return filename
 
 
-# TODO: this is temporary, until https://github.com/jupyter-widgets/ipywidgets/issues/1650 is resolved
+# TODO this may be able to get directly taken from embed-amd.js in the future jupyter-widgets/ipywidgets#1650
 def save_font_awesome(dirpath='', version="4.7.0"):
     """ download and save the font-awesome package to a local directory
 
@@ -116,7 +123,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
                offline=False, scripts_path='js',
                drop_defaults=False, template=html_template,
                template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
-               devmode=False, cors=False):
+               devmode=False, offline_cors=False):
     """ Write a minimal HTML file with widget views embedded.
 
     :type filepath: str
@@ -134,7 +141,9 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
     :param template: template string for the html, must contain at least {title} and {snippet} place holders
     :param template_options: list or dict of additional template options
     :param devmode: if True, attempt to get index.js from local js/dist directory
-    :param cors: if True, sets crossorigin attribute to anonymous
+    :param devmode: if True, attempt to get index.js from local js/dist folder
+    :param offline_cors: if True, sets crossorigin attribute to anonymous, this allows for the return of error data
+    from js scripts but can block local loading of the scripts in some browsers
 
     """
     dir_name_dst = os.path.dirname(os.path.abspath(filepath))
@@ -174,10 +183,11 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
 
         subsnippet = wembed.embed_snippet(widgets, embed_url=rel_script_path+fname_embed,
                                           requirejs=False, drop_defaults=drop_defaults, state=state)
-        if not cors:
-            # DIRTY hack, we need to do this cleaner upstream
+        if not offline_cors:
+            # TODO DIRTY hack, we need to do this cleaner upstream
             subsnippet = subsnippet.replace(' crossorigin="anonymous"', '')
-        cors_attribute = 'crossorigin="anonymous"'  if cors else ' '
+
+        cors_attribute = 'crossorigin="anonymous"' if offline_cors else ' '
         snippet = """
 <link href="{rel_script_path}{fname_fontawe}/css/font-awesome.min.css" rel="stylesheet">    
 <script src="{rel_script_path}{fname_require}"{cors} data-main='./{rel_script_path}' ></script>

@@ -588,7 +588,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
 def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
          offline=False, scripts_path='js',
          drop_defaults=False, template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
-         devmode=False, cors=False):
+         devmode=False, offline_cors=False):
     """ save the current container to a minimal HTML file
 
     :type filepath: str
@@ -603,13 +603,13 @@ def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
     :param drop_defaults: Whether to drop default values from the widget states
     :param template_options: list or dict of additional template options
     :param devmode: if True, attempt to get index.js from local js/dist folder
-    :param cors: if True, sets crossorigin attribute of script tags to anonymous
+    :param offline_cors: if True, sets crossorigin attribute of script tags to anonymous
 
     """
     ipyvolume.embed.embed_html(filepath, current.container, makedirs=makedirs, title=title, all_states=all_states,
                                offline=offline, scripts_path=scripts_path,
                                drop_defaults=drop_defaults, template_options=template_options, devmode=devmode,
-                               cors=cors)
+                               offline_cors=offline_cors)
 
 
 def _change_y_angle(fig, frame, fraction):

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import ipyvolume
 import ipyvolume.pylab as p3
 import ipyvolume.examples
 import ipyvolume.datasets
@@ -6,7 +7,9 @@ import ipyvolume.utils
 import numpy as np
 import os
 import shutil
+import json
 import pytest
+
 
 # helpful to remove previous test results for development
 if os.path.exists("tmp"):
@@ -171,6 +174,15 @@ def test_embed():
     assert os.path.getsize("tmp/ipyolume_scatter_online.html") > 0
     p3.save("tmp/ipyolume_scatter_offline.html", offline=True, scripts_path='js/subdir')
     assert os.path.getsize("tmp/ipyolume_scatter_offline.html") > 0
+
+
+def test_threejs_version():
+    # a quick check, as a reminder to change if threejs version is updated
+    configpath = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "..", "js", "package.json")
+    with open(configpath) as f:
+        config = json.load(f)
+    assert config['dependencies']['three'] == ipyvolume.embed.THREEJS_version
+
 
 # just cover and call
 ipyvolume.examples.ball()
