@@ -585,10 +585,32 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
     return vol
 
 
-def save(filename, copy_js=True, makedirs=True, **kwargs):
-    """Save the figure/visualization as html file, and optionally copy the .js file to the same directory """
-    ipyvolume.embed.embed_html(filename, current.container,
-                       makedirs=makedirs, copy_js=copy_js, **kwargs)
+def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
+         offline=False, scripts_path='js',
+         drop_defaults=False, template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
+         devmode=False, offline_cors=False):
+    """ save the current container to a minimal HTML file
+
+    :type filepath: str
+    :param filepath: The file to write the HTML output to.
+    :param makedirs: whether to make directories in the filename path, if they do not already exist
+    :param title: title for the html page
+    :param all_states: if True, the state of all widgets know to the widget manager is included, else only those in widgets
+    :param offline: if True, use local urls for required js/css packages and download all js/css required packages
+    (if not already available), such that the html can be viewed with no internet connection
+    :param scripts_path: the folder to save required js/css packages to (relative to the filepath)
+    :type drop_defaults: bool
+    :param drop_defaults: Whether to drop default values from the widget states
+    :param template_options: list or dict of additional template options
+    :param devmode: if True, attempt to get index.js from local js/dist folder
+    :param offline_cors: if True, sets crossorigin attribute of script tags to anonymous
+
+    """
+    ipyvolume.embed.embed_html(filepath, current.container, makedirs=makedirs, title=title, all_states=all_states,
+                               offline=offline, scripts_path=scripts_path,
+                               drop_defaults=drop_defaults, template_options=template_options, devmode=devmode,
+                               offline_cors=offline_cors)
+
 
 def _change_y_angle(fig, frame, fraction):
     fig.angley = fraction * np.pi * 2
