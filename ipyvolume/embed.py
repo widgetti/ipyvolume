@@ -81,6 +81,7 @@ def save_embed_js(target="", version=wembed.__html_manager_version__):
     return filename
 
 
+# TODO: this is temporary, until https://github.com/jupyter-widgets/ipywidgets/issues/1650 is resolved
 def save_font_awesome(dirpath='', version="4.7.0"):
     """ download and save the font-awesome package to a local directory
 
