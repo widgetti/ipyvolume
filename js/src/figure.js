@@ -109,7 +109,7 @@ var copy_image_to_clipboard = function(data) {
 ToolIcon = function(className, parent) {
     this.a = document.createElement('a')
     this.a.className = 'ipyvolume-toolicon'
-    this.a.setAttribute('href', '#')
+    this.a.setAttribute('href', 'javascript:void(0)')
     this.li = document.createElement('li')
     this.li.className = 'fa ' + className
     this.a.appendChild(this.li)
