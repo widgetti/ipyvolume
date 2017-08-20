@@ -36,9 +36,11 @@ def save_ipyvolumejs(target="", version=ipyvolume._version.__version_js__, devmo
     pyv_filepath = os.path.join(target, pyv_filename)
 
     devfile = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "..", "js", "dist", "index.js")
-    if devmode and os.path.exists(devfile):
-        if folderpath and not os.path.exists(folderpath):
-            os.makedirs(folderpath)
+    if devmode:
+        if not os.path.exists(devfile):
+            raise ValueError("using devmode, but %s is not found" $ devfile)
+        if target and not os.path.exists(target):
+            os.makedirs(target)
         shutil.copy(devfile, pyv_filepath)
     else:
         download_to_file(url, pyv_filepath)
