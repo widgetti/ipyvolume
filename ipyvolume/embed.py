@@ -45,8 +45,8 @@ def save_ipyvolumejs(target="", version=ipyvolume._version.__version_js__, devmo
     else:
         download_to_file(url, pyv_filepath)
 
-    three_filename = 'three_v{version}.js'.format(version=version)
-    three_filepath = os.path.join(folderpath, three_filename)
+    three_filename = 'three_v{version}.js'.format(version=__version_threejs__)
+    three_filepath = os.path.join(target, three_filename)
     threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
     shutil.copy(threejs, three_filepath)
 
