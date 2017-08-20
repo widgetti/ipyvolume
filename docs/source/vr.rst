@@ -7,6 +7,6 @@ Open this page on your mobile device, enter fullscreen mode and put on your glas
 
 .. ipywidgets-display::
 
-    import ipyvolume
-    aqa2 = ipyvolume.datasets.aquariusA2.fetch()
-    ipyvolume.quickvolshow(aqa2.data.T, lighting=True, level=[0.16, 0.25, 0.46], width=256, height=256, stereo=True, opacity=0.06)
+    import ipyvolume as ipv
+    aqa2 = ipv.datasets.aquariusA2.fetch()
+    ipv.quickvolshow(aqa2.data.T, lighting=True, level=[0.16, 0.25, 0.46], width=256, height=256, stereo=True, opacity=0.06)

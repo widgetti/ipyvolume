@@ -24,7 +24,7 @@ For quick resuls, use :any:`ipyvolume.volume.quickvolshow`. From a numpy array, 
 
 .. ipywidgets-display::
     import numpy as np
-    import ipyvolume
+    import ipyvolume as ipv
     V = np.zeros((128,128,128)) # our 3d array
     # outer box
     V[30:-30,30:-30,30:-30] = 0.75
@@ -32,7 +32,7 @@ For quick resuls, use :any:`ipyvolume.volume.quickvolshow`. From a numpy array, 
     # inner box
     V[50:-50,50:-50,50:-50] = 0.25
     V[55:-55,55:-55,55:-55] = 0.0
-    ipyvolume.quickvolshow(V, level=[0.25, 0.75], opacity=0.03, level_width=0.1, data_min=0, data_max=1)
+    ipv.quickvolshow(V, level=[0.25, 0.75], opacity=0.03, level_width=0.1, data_min=0, data_max=1)
 
 Scatter plot
 ------------
@@ -40,10 +40,10 @@ Scatter plot
 Simple scatter plots are also supported.
 
 .. ipywidgets-display::
-    import ipyvolume
+    import ipyvolume as ipv
     import numpy as np
     x, y, z = np.random.random((3, 10000))
-    ipyvolume.quickscatter(x, y, z, size=1, marker="sphere")
+    ipv.quickscatter(x, y, z, size=1, marker="sphere")
 
 Quiver plot
 ------------
@@ -52,10 +52,10 @@ Quiver plot
 Quiver plots are also supported, showing a vector at each point.
 
 .. ipywidgets-display::
-    import ipyvolume
+    import ipyvolume as ipv
     import numpy as np
     x, y, z, u, v, w = np.random.random((6, 1000))*2-1
-    quiver = ipyvolume.quickquiver(x, y, z, u, v, w, size=5)
+    quiver = ipv.quickquiver(x, y, z, u, v, w, size=5)
 
 Mesh plot
 ------------
@@ -63,12 +63,12 @@ Mesh plot
 And surface/mesh plots, showing surfaces or wireframes.
 
 .. ipywidgets-display::
-	import ipyvolume.pylab as p3
-	x, y, z, u, v = p3.examples.klein_bottle(draw=False)
-	p3.figure()
-	m = p3.plot_mesh(x, y, z, wireframe=False)
-	p3.squarelim()
-	p3.show()
+	import ipyvolume as ipv
+	x, y, z, u, v = ipv.examples.klein_bottle(draw=False)
+	ipv.figure()
+	m = ipv.plot_mesh(x, y, z, wireframe=False)
+	ipv.squarelim()
+	ipv.show()
 
 
 Built on Ipywidgets
@@ -79,12 +79,12 @@ For anything more sophisticed, use :any:`ipyvolume.pylab`, ipyvolume's copy of m
 Since ipyvolume is built on `ipywidgets <http://ipywidgets.readthedocs.io/>`_, we can link widget's properties.
 
 .. ipywidgets-display::
-    import ipyvolume.pylab as p3
+    import ipyvolumeas ipv
     import numpy as np
     x, y, z, u, v, w = np.random.random((6, 1000))*2-1
     selected = np.random.randint(0, 1000, 100)
-    p3.figure()
-    quiver = p3.quiver(x, y, z, u, v, w, size=5, size_selected=8, selected=selected)
+    ipv.figure()
+    quiver = ipv.quiver(x, y, z, u, v, w, size=5, size_selected=8, selected=selected)
 
     from ipywidgets import FloatSlider, ColorPicker, VBox, jslink
     size = FloatSlider(min=0, max=30, step=0.1)
@@ -95,7 +95,7 @@ Since ipyvolume is built on `ipywidgets <http://ipywidgets.readthedocs.io/>`_, w
     jslink((quiver, 'size_selected'), (size_selected, 'value'))
     jslink((quiver, 'color'), (color, 'value'))
     jslink((quiver, 'color_selected'), (color_selected, 'value'))
-    VBox([p3.gcc(), size, size_selected, color, color_selected])
+    VBox([ipv.gcc(), size, size_selected, color, color_selected])
 
 Try changing the slider to the change the size of the vectors, or the colors.
 
