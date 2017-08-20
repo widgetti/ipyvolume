@@ -181,7 +181,11 @@ def test_threejs_version():
     configpath = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "..", "js", "package.json")
     with open(configpath) as f:
         config = json.load(f)
-    assert config['dependencies']['three'] == ipyvolume.embed.THREEJS_version
+    major, minor = ipyvolume._version.__version_threejs__.split(".")
+    major_js, minor_js, patch_js = config['dependencies']['three'][1:].split(".")
+    version_msg = "version in python and js side for three js conflect: %s vs %s" % (
+        ipyvolume._version.__version_threejs__, config['dependencies']['three'])
+    assert (major == major_js) and (minor == minor_js), version_msg
 
 
 # just cover and call
