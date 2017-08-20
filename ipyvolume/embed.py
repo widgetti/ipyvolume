@@ -5,6 +5,7 @@ import shutil
 from ipywidgets import embed as wembed
 import ipyvolume
 from ipyvolume.utils import download_to_file, download_to_bytes
+from ipyvolume._version import __version_threejs__
 
 html_template = u"""<!DOCTYPE html>
 <html lang="en">
@@ -22,17 +23,17 @@ html_template = u"""<!DOCTYPE html>
 """
 
 
-def save_ipyvolumejs(folderpath="", version=ipyvolume._version.__version_js__, devmode=False):
+def save_ipyvolumejs(target="", version=ipyvolume._version.__version_js__, devmode=False):
     """ output the ipyvolume javascript to a local file
     
-    :type folderpath: str
+    :type target: str
     :type version: str
     :type devmode: bool
 
     """
     url = "https://unpkg.com/ipyvolume@{version}/dist/index.js".format(version=version)
     pyv_filename = 'ipyvolume_v{version}.js'.format(version=version)
-    pyv_filepath = os.path.join(folderpath, pyv_filename)
+    pyv_filepath = os.path.join(target, pyv_filename)
 
     devfile = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "..", "js", "dist", "index.js")
     if devmode and os.path.exists(devfile):
@@ -50,60 +51,60 @@ def save_ipyvolumejs(folderpath="", version=ipyvolume._version.__version_js__, d
     return pyv_filename, three_filename
 
 
-def save_requirejs(folderpath="", version="2.3.4"):
+def save_requirejs(target="", version="2.3.4"):
     """ download and save the require javascript to a local file
 
-    :type folderpath: str
+    :type target: str
     :type version: str
     """
     url = "https://cdnjs.cloudflare.com/ajax/libs/require.js/{version}/require.min.js".format(version=version)
     filename = "require.min.v{0}.js".format(version)
-    filepath = os.path.join(folderpath, filename)
+    filepath = os.path.join(target, filename)
     download_to_file(url, filepath)
     return filename
 
 
-def save_embed_js(folderpath="", version=wembed.__html_manager_version__):
+def save_embed_js(target="", version=wembed.__html_manager_version__):
     """ download and save the ipywidgets embedding javascript to a local file
 
-    :type folderpath: str
+    :type target: str
     :type version: str
 
     """
     url = u'https://unpkg.com/@jupyter-widgets/html-manager@{0:s}/dist/embed-amd.js'.format(version)
     filename = "embed-amd_v{0:s}.js".format(version[1:])
-    filepath = os.path.join(folderpath, filename)
+    filepath = os.path.join(target, filename)
 
     download_to_file(url, filepath)
     return filename
 
 
 def save_font_awesome(dirpath='', version="4.7.0"):
-    """ download and save the font-awesome package to a local folder
+    """ download and save the font-awesome package to a local directory
 
     :type dirpath: str
     :type url: str
 
     """
-    folder_name = "font-awesome-{0:s}".format(version)
-    folder_path = os.path.join(dirpath, folder_name)
-    if os.path.exists(folder_path):
-        return folder_name
+    directory_name = "font-awesome-{0:s}".format(version)
+    directory_path = os.path.join(dirpath, directory_name)
+    if os.path.exists(directory_path):
+        return directory_name
 
     url = "http://fontawesome.io/assets/font-awesome-{0:s}.zip".format(version)
     content, encoding = download_to_bytes(url)
 
     try:
-        zip_folder = io.BytesIO(content)
-        unzip = zipfile.ZipFile(zip_folder)
+        zip_directory = io.BytesIO(content)
+        unzip = zipfile.ZipFile(zip_directory)
         top_level_name = unzip.namelist()[0]
         unzip.extractall(dirpath)
     except Exception as err:
         raise IOError('Could not unzip content from: {0}\n{1}'.format(url, err))
 
-    os.rename(os.path.join(dirpath, top_level_name), folder_path)
+    os.rename(os.path.join(dirpath, top_level_name), directory_path)
 
-    return folder_name
+    return directory_name
 
 
 def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_states=False,
@@ -122,12 +123,12 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
     :param all_states: if True, the state of all widgets know to the widget manager is included, else only those in widgets
     :param offline: if True, use local urls for required js/css packages and download all js/css required packages
     (if not already available), such that the html can be viewed with no internet connection
-    :param scripts_path: the folder to save required js/css packages to (relative to the filepath)
+    :param scripts_path: the directory to save required js/css packages to (relative to the filepath)
     :type drop_defaults: bool
     :param drop_defaults: Whether to drop default values from the widget states
     :param template: template string for the html, must contain at least {title} and {snippet} place holders
     :param template_options: list or dict of additional template options
-    :param devmode: if True, attempt to get index.js from local js/dist folder
+    :param devmode: if True, attempt to get index.js from local js/dist directory
     :param cors: if True, sets crossorigin attribute to anonymous
 
     """
