@@ -52,7 +52,7 @@ def save_ipyvolumejs(target="", version=ipyvolume._version.__version_js__, devmo
     # threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
     # shutil.copy(threejs, three_filepath)
 
-    return pyv_filename, three_filename
+    return pyv_filename#, three_filename
 
 
 def save_requirejs(target="", version="2.3.4"):
@@ -167,7 +167,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
         else:
             rel_script_path += '/'
 
-        fname_pyv, fname_three = save_ipyvolumejs(scripts_path, devmode=devmode)
+        fname_pyv = save_ipyvolumejs(scripts_path, devmode=devmode)
         fname_require = save_requirejs(os.path.join(scripts_path))
         fname_embed = save_embed_js(os.path.join(scripts_path))
         fname_fontawe = save_font_awesome(os.path.join(scripts_path))
@@ -186,13 +186,12 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
       map: {{
         '*': {{
           'ipyvolume': '{fname_pyv}',
-          'three': '{fname_three}'
         }}
       }}}})
 </script>
 {subsnippet}
         """.format(rel_script_path=rel_script_path, fname_fontawe=fname_fontawe, fname_require=fname_require,
-                   fname_pyv=os.path.splitext(fname_pyv)[0], fname_three=os.path.splitext(fname_three)[0],
+                   fname_pyv=os.path.splitext(fname_pyv)[0], 
                    subsnippet=subsnippet, cors=cors_attribute)
 
     template_opts['snippet'] = snippet
