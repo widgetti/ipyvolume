@@ -1,13 +1,20 @@
 from __future__ import absolute_import
+import ipyvolume
 import ipyvolume.pylab as p3
 import ipyvolume.examples
 import ipyvolume.datasets
+import ipyvolume.utils
 import numpy as np
 import os
+import shutil
+import json
 import pytest
 
-if not os.path.exists("tmp"):
-    os.makedirs("tmp")
+
+# helpful to remove previous test results for development
+if os.path.exists("tmp"):
+    shutil.rmtree("tmp")
+os.makedirs("tmp")
 
 def test_figure():
     f1 = p3.figure()
@@ -104,10 +111,11 @@ def test_bokeh():
     from bokeh.embed import components
 
     script, div = components(p)
+    template_options = dict(extra_script_head=script + CDN.render_js() + CDN.render_css(),
+                            body_pre="<h2>Do selections in 2d (bokeh)<h2>" + div + "<h2>And see the selection in ipyvolume<h2>")
     ipyvolume.embed.embed_html("tmp/bokeh.html",
-                               [p3.gcc(), ipyvolume.bokeh.wmh], all=True,
-                               extra_script_head=script + CDN.render_js() + CDN.render_css(),
-                               body_pre="<h2>Do selections in 2d (bokeh)<h2>" + div + "<h2>And see the selection in ipyvolume<h2>")
+                               [p3.gcc(), ipyvolume.bokeh.wmh], all_states=True,
+                               template_options=template_options)
 
 def test_quick():
     x, y, z = ipyvolume.examples.xyz()
@@ -139,6 +147,41 @@ def test_widgets_state(performance):
             scatter._split_state_buffers(state)
     finally:
         ipyvolume.serialize.performance = 0
+
+def test_download():
+    url = "https://github.com/maartenbreddels/ipyvolume/raw/master/datasets/hdz2000.npy.bz2"
+    ipyvolume.utils.download_to_file(url, "tmp/test_download.npy.bz2", chunk_size=None)
+    assert os.path.exists("tmp/test_download.npy.bz2")
+    ipyvolume.utils.download_to_file(url, "tmp/test_download2.npy.bz2", chunk_size=1000)
+    assert os.path.exists("tmp/test_download2.npy.bz2")
+    filesize = os.path.getsize("tmp/test_download.npy.bz2")
+    content, encoding = ipyvolume.utils.download_to_bytes(url, chunk_size=None)
+    assert len(content) == filesize
+    content, encoding = ipyvolume.utils.download_to_bytes(url, chunk_size=1000)
+    assert len(content) == filesize
+    byte_list = list(ipyvolume.utils.download_yield_bytes(url, chunk_size=1000))
+    # write the first chunk of the url to file then attempt to resume the download
+    with open("tmp/test_download3.npy.bz2", 'wb') as f:
+        f.write(byte_list[0])
+    ipyvolume.utils.download_to_file(url, "tmp/test_download3.npy.bz2", resume=True)
+
+
+def test_embed():
+    p3.clear()
+    x, y, z = np.random.random((3, 100))
+    p3.scatter(x, y, z)
+    p3.save("tmp/ipyolume_scatter_online.html", offline=False)
+    assert os.path.getsize("tmp/ipyolume_scatter_online.html") > 0
+    p3.save("tmp/ipyolume_scatter_offline.html", offline=True, scripts_path='js/subdir')
+    assert os.path.getsize("tmp/ipyolume_scatter_offline.html") > 0
+
+
+def test_threejs_version():
+    # a quick check, as a reminder to change if threejs version is updated
+    configpath = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "..", "js", "package.json")
+    with open(configpath) as f:
+        config = json.load(f)
+    assert config['dependencies']['three'] == ipyvolume.embed.THREEJS_version
 
 
 # just cover and call
