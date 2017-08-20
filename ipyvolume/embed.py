@@ -38,17 +38,19 @@ def save_ipyvolumejs(target="", version=ipyvolume._version.__version_js__, devmo
     devfile = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "..", "js", "dist", "index.js")
     if devmode:
         if not os.path.exists(devfile):
-            raise ValueError("using devmode, but %s is not found" $ devfile)
+            raise ValueError("using devmode, but %s is not found" % devfile)
         if target and not os.path.exists(target):
             os.makedirs(target)
         shutil.copy(devfile, pyv_filepath)
     else:
         download_to_file(url, pyv_filepath)
 
-    three_filename = 'three_v{version}.js'.format(version=__version_threejs__)
-    three_filepath = os.path.join(target, three_filename)
-    threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
-    shutil.copy(threejs, three_filepath)
+    # TODO: currently not in use, think about this if we want to have this external for embedding,
+    # see also https://github.com/jovyan/pythreejs/issues/109
+    # three_filename = 'three_v{version}.js'.format(version=__version_threejs__)
+    # three_filepath = os.path.join(target, three_filename)
+    # threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
+    # shutil.copy(threejs, three_filepath)
 
     return pyv_filename, three_filename
 
@@ -152,9 +154,6 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
         # {} characters (such as in the bokeh example) then an error is raised when trying to format
         snippet = wembed.embed_snippet(widgets, state=state, requirejs=True, drop_defaults=drop_defaults)
         directory = os.path.dirname(filepath)
-        threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
-        directory = directory or '.'
-        shutil.copy(threejs, directory)
     else:
 
         if not os.path.isabs(scripts_path):
