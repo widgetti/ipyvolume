@@ -71,31 +71,43 @@ var ScatterView = widgets.WidgetView.extend( {
                 animation_time_color : { type: "f", value: 1. },
             },
             vertexShader: require('raw-loader!../glsl/scatter-vertex.glsl'),
-            fragmentShader: require('raw-loader!../glsl/scatter-fragment.glsl')
+            fragmentShader: require('raw-loader!../glsl/scatter-fragment.glsl'),
+            visible: this.model.get("visible") && this.model.get("visible_markers")
             })
 
         this.material_rgb = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
             vertexShader: "#define USE_RGB\n"+require('raw-loader!../glsl/scatter-vertex.glsl'),
-            fragmentShader: "#define USE_RGB\n"+require('raw-loader!../glsl/scatter-fragment.glsl')
+            fragmentShader: "#define USE_RGB\n"+require('raw-loader!../glsl/scatter-fragment.glsl'),
+            visible: this.model.get("visible") && this.model.get("visible_markers")
             })
 
         this.line_material = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
             vertexShader:   "#define AS_LINE\n"+require('raw-loader!../glsl/scatter-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n"+require('raw-loader!../glsl/scatter-fragment.glsl')
+            fragmentShader: "#define AS_LINE\n"+require('raw-loader!../glsl/scatter-fragment.glsl'),
+            visible: this.model.get("visible") && this.model.get("visible_lines")
             })
 
         this.line_material_rgb = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
             vertexShader:   "#define AS_LINE\n#define USE_RGB\n"+require('raw-loader!../glsl/scatter-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n#define USE_RGB\n"+require('raw-loader!../glsl/scatter-fragment.glsl')
+            fragmentShader: "#define AS_LINE\n#define USE_RGB\n"+require('raw-loader!../glsl/scatter-fragment.glsl'),
+            visible: this.model.get("visible") && this.model.get("visible_lines")
             })
 
         this.create_mesh()
         this.add_to_scene()
         this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
         this.model.on("change:geo change:connected", this.update_, this)
+        this.model.on("change:visible change:visible_markers change:visible_lines", this.update_visibility, this)
+    },
+    update_visibility: function () {
+        this.material.visible = this.model.get("visible") && this.model.get("visible_markers");
+        this.material_rgb.visible = this.model.get("visible") && this.model.get("visible_markers");
+        this.line_material.visible = this.model.get("visible") && this.model.get("visible_lines");
+        this.line_material_rgb.visible = this.model.get("visible") && this.model.get("visible_lines");
+        this.renderer.update()
     },
     set_limits: function(limits) {
         _.mapObject(limits, function(value, key) {

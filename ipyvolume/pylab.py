@@ -324,6 +324,25 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
     fig.meshes = fig.meshes + [mesh]
     return mesh
 
+@_docsubst
+def plot(x, y, z, color=default_color, **kwargs):
+    """Plot a line in 3d
+
+    :param x: {x}
+    :param y:
+    :param z:
+    :param color: {color}
+    :param kwargs: extra arguments passed to the Scatter constructor
+    :return:
+    """
+    fig = gcf()
+    _grow_limits(x, y, z)
+    scatter = ipv.Scatter(x=x, y=y, z=z, color=color, color_selected=color_selected,
+        size_selected=1, size=1,
+                             connected=True, visible_markers=False, visible_lines=True, **kwargs)
+    fig.scatters = fig.scatters + [scatter]
+    return scatter
+
 
 @_docsubst
 def scatter(x, y, z, color=default_color, size=default_size, size_selected=default_size_selected,

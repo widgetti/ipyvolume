@@ -82,6 +82,9 @@ class Scatter(widgets.DOMWidget):
                                      default_value="green").tag(sync=True)
     geo = traitlets.Unicode('diamond').tag(sync=True)
     connected = traitlets.CBool(default_value=False).tag(sync=True)
+    visible = traitlets.CBool(default_value=True).tag(sync=True)
+    visible_lines = traitlets.CBool(default_value=False).tag(sync=True)
+    visible_markers = traitlets.CBool(default_value=True).tag(sync=True)
 
 
 
