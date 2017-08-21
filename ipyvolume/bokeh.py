@@ -23,11 +23,11 @@ def link_data_source_selection_to_widget(data_source, widget, trait_name):
     var widget_id = '%s'
     if(jupyter_widget_manager) {
         // MYSTERY: if we use require, we end up at bokeh's require, which cannot find it, using requirejs it seems to work
-        requirejs(["jupyter-js-widgets"], function(widgets) {
+        requirejs(["@jupyter-widgets/base"], function(widgets) {
             var widget_promise = widgets.unpack_models('IPY_MODEL_' +widget_id, jupyter_widget_manager)
             widget_promise.then(function(widget) {
                      widget.set(%r, indices)
-                     widget.save()
+                     widget.save_changes()
             })
         })
     } else {
