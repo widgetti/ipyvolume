@@ -470,6 +470,17 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:diffuse_coefficient', this.update_light, this);
         this.model.on('change:specular_coefficient', this.update_light, this);
         this.model.on('change:specular_exponent', this.update_light, this);
+        var update_center = () => {
+            // WARNING: we cheat a little by setting the scene positions (hence the minus) since it is
+            // easier, might get us in trouble later?
+            _.each([this.scene_opaque, this.scene_scatter, this.scene], (scene) => {
+                var pos = this.model.get('camera_center');
+                scene.position.set(-pos[0], -pos[1], -pos[2])
+            })
+            this.update()
+        }
+        this.model.on('change:camera_center', update_center)
+        update_center()
 
         this.model.on('change:tf', this.tf_set, this)
         this.listenTo(this.model, 'msg:custom', _.bind(this.custom_msg, this));
@@ -1248,6 +1259,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             stereo: false,
             camera_control: 'trackball',
             camera_fov: 45,
+            camera_center: [0.,0.,0.],
             width: 500,
             height: 400,
             downscale: 1,

@@ -122,6 +122,8 @@ class Figure(ipywebrtc.MediaStream):
 
     camera_control = traitlets.Unicode(default_value='trackball').tag(sync=True)
     camera_fov = traitlets.CFloat(45,min=0.1,max=179.9).tag(sync=True)
+    camera_center = traitlets.List(traitlets.CFloat, default_value=[0, 0, 0]).tag(sync=True)
+    #Tuple(traitlets.CFloat(0), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
 
     width = traitlets.CInt(500).tag(sync=True)
     height = traitlets.CInt(400).tag(sync=True)
