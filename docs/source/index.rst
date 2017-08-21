@@ -20,7 +20,7 @@ Quick intro
 Volume
 ------
 
-For quick resuls, use :any:`ipyvolume.volume.quickvolshow`. From a numpy array, we create two boxes, using slicing, and visualize it.
+For quick resuls, use :any:`ipyvolume.widgets.quickvolshow`. From a numpy array, we create two boxes, using slicing, and visualize it.
 
 .. ipywidgets-display::
     import numpy as np
