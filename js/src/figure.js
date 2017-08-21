@@ -1272,10 +1272,9 @@ var FigureModel = widgets.DOMWidgetModel.extend({
 var WidgetManagerHackModel = widgets.WidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.WidgetModel.prototype.defaults(), {
-            _model_name : 'WidgetManagerHack',
+            _model_name : 'WidgetManagerHackModel',
             _model_module : 'ipyvolume',
             _model_module_version: semver_range,
-             _view_module_version: semver_range,
         })
     },
     initialize: function(attributes, options) {

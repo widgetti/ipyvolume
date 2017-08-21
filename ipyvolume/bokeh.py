@@ -1,14 +1,17 @@
 from __future__ import absolute_import
 from bokeh.models import CustomJS
 from bokeh.plotting import figure
-
+import ipyvolume
 import ipywidgets as widgets
 from traitlets import Unicode
+
+semver_range_frontend = "~" + ipyvolume._version.__version_js__
 
 @widgets.register('ipyvolume.WidgetManagerHack')
 class WidgetManagerHackModel(widgets.Widget):
     _model_name = Unicode('WidgetManagerHackModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
 wmh = None
 def _ensure_widget_manager_hack():
