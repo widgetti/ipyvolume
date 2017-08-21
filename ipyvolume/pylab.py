@@ -347,7 +347,7 @@ def plot(x, y, z, color=default_color, **kwargs):
 @_docsubst
 def scatter(x, y, z, color=default_color, size=default_size, size_selected=default_size_selected,
             color_selected=default_color_selected, marker="diamond", selection=None, **kwargs):
-    """Create a scatter 3d plot with
+    """Plots many markers/symbols in 3d
 
     :param x: {x}
     :param y:
@@ -616,7 +616,7 @@ def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
     :param title: title for the html page
     :param all_states: if True, the state of all widgets know to the widget manager is included, else only those in widgets
     :param offline: if True, use local urls for required js/css packages and download all js/css required packages
-    (if not already available), such that the html can be viewed with no internet connection
+            (if not already available), such that the html can be viewed with no internet connection
     :param scripts_path: the folder to save required js/css packages to (relative to the filepath)
     :type drop_defaults: bool
     :param drop_defaults: Whether to drop default values from the widget states
@@ -642,10 +642,10 @@ def movie(f="movie.mp4", function=_change_y_angle, fps=30, frames=30, endpoint=F
     """Create a movie (mp4/gif) out of many frames
 
     Example:
-    def set_angles(fig, i, fraction):
-        fig.angley = fraction*np.pi*2
-    # 4 second movie, that rotates around the y axis
-    p3.movie('test2.gif', set_angles, fps=20, frames=20*4, endpoint=False)
+    >>> def set_angles(fig, i, fraction):
+    >>>     fig.angley = fraction*np.pi*2
+    >>> # 4 second movie, that rotates around the y axis
+    >>> p3.movie('test2.gif', set_angles, fps=20, frames=20*4, endpoint=False)
 
     :param f: filename out output movie (e.g. 'movie.mp4' or 'movie.gif')
     :param function: function called before each frame with arguments (figure, framenr, fraction)
