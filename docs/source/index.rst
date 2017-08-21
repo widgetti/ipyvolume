@@ -79,7 +79,7 @@ For anything more sophisticed, use :any:`ipyvolume.pylab`, ipyvolume's copy of m
 Since ipyvolume is built on `ipywidgets <http://ipywidgets.readthedocs.io/>`_, we can link widget's properties.
 
 .. ipywidgets-display::
-    import ipyvolumeas ipv
+    import ipyvolume as ipv
     import numpy as np
     x, y, z, u, v, w = np.random.random((6, 1000))*2-1
     selected = np.random.randint(0, 1000, 100)
