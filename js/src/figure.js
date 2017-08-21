@@ -390,10 +390,16 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.control_trackball = new THREE.TrackballControls( this.camera, this.renderer.domElement );
         this.control_orbit = new THREE.OrbitControls( this.camera, this.renderer.domElement );
+        this.control_trackball.dynamicDampingFactor = 1.
         this.control_trackball.noPan = true;
         this.control_orbit.enablePan = false;
+        this.control_orbit.dampingFactor = 1.
         this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
         this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
+
+        this.control_orbit.rotateSpeed = 0.5
+        this.control_trackball.rotateSpeed = 0.5
+        this.control_trackball.zoomSpeed = 3.
 
         //this.controls_device = controls = new THREE.DeviceOrientationControls( this.box_mesh );
 		window.addEventListener( 'deviceorientation', _.bind(this.on_orientationchange, this), false );

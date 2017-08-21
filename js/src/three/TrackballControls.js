@@ -117,10 +117,13 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		return function getMouseOnScreen( pageX, pageY ) {
 
-			vector.set(
+			/*vector.set(
 				( pageX - _this.screen.left ) / _this.screen.width,
 				( pageY - _this.screen.top ) / _this.screen.height
-			);
+			);*/
+			// more similar to OrbitControls
+			var element = _this.domElement === document ? _this.domElement.body : _this.domElement;
+			vector.set(pageX / element.clientWidth, pageY / element.clientHeight)
 
 			return vector;
 
@@ -133,6 +136,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 		var vector = new THREE.Vector2();
 
 		return function getMouseOnCircle( pageX, pageY ) {
+			return getMouseOnScreen(pageX*2 * Math.PI, -pageY*2 * Math.PI )
 
 			vector.set(
 				( ( pageX - _this.screen.width * 0.5 - _this.screen.left ) / ( _this.screen.width * 0.5 ) ),
