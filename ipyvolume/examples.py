@@ -63,7 +63,7 @@ def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], draw=True, show=True, **kwar
 
 # http://graphics.stanford.edu/data/voldata/
 
-def klein_bottle(draw=True, show=True, figure8=False, endpoint=True, uv=False, wireframe=False, texture=None, both=False, interval=1000):
+def klein_bottle(draw=True, show=True, figure8=False, endpoint=True, uv=True, wireframe=False, texture=None, both=False, interval=1000):
     import ipyvolume.pylab as p3
     # http://paulbourke.net/geometry/klein/
     u = np.linspace(0, 2 * pi, num=40, endpoint=endpoint)
