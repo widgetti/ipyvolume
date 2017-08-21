@@ -95,13 +95,74 @@ def klein_bottle(draw=True, show=True, figure8=False, endpoint=True, uv=True, wi
         if texture:
             uv = True
         if uv:
-            mesh = p3.plot_mesh(x, y, np.array([z]), wrapx=not endpoint, wrapy=not endpoint, u=u/(2*np.pi), v=v/(2*np.pi), wireframe=wireframe, texture=texture)
+            mesh = p3.plot_mesh(x, y, z, wrapx=not endpoint, wrapy=not endpoint, u=u/(2*np.pi), v=v/(2*np.pi), wireframe=wireframe, texture=texture)
         else:
-            mesh = p3.plot_mesh(x, y, np.array([z]), wrapx=not endpoint, wrapy=not endpoint, wireframe=wireframe, texture=texture)
+            mesh = p3.plot_mesh(x, y, z, wrapx=not endpoint, wrapy=not endpoint, wireframe=wireframe, texture=texture)
         if show:
             if both:
                 p3.animation_control(mesh, interval=interval)
+            p3.squarelim()
             p3.show()
         return mesh
     else:
         return x, y, z, u, v
+
+import warnings
+
+def brain(draw=True, show=True, fiducial=True, flat=True, inflated=True, subject='S1', interval=1000, uv=True, color=None):
+    import ipyvolume as ipv
+    try:
+        import cortex
+    except:
+        warnings.warn("it seems pycortex is not installed, which is needed for this example")
+        raise
+    xlist, ylist, zlist = [], [], []
+    polys_list = []
+    def add(pts, polys):
+        xlist.append(pts[:,0])
+        ylist.append(pts[:,1])
+        zlist.append(pts[:,2])
+        polys_list.append(polys)
+    def n(x):
+        return (x - x.min()) / x.ptp()
+    if fiducial or color is True:
+        pts, polys = cortex.db.get_surf('S1', 'fiducial', merge=True)
+        x, y, z = pts.T
+        r = n(x)
+        g = n(y)
+        b = n(z)
+        if color is True:
+            color = np.array([r,g,b]).T.copy()
+        else:
+            color = None
+        if fiducial:
+            add(pts, polys)
+    else:
+        if color is False:
+            color = None
+    if inflated:
+        add(*cortex.db.get_surf('S1', 'inflated', merge=True, nudge=True))
+    u = v = None
+    if flat or uv:
+        pts, polys = cortex.db.get_surf('S1', 'flat', merge=True, nudge=True)
+        x, y, z = pts.T
+        u = n(x)
+        v = n(y)
+        if flat:
+            add(pts, polys)
+
+    polys_list.sort(key=lambda x: len(x))
+    polys = polys_list[0]
+    if draw:
+        if color is None:
+            mesh = ipv.plot_trisurf(xlist, ylist, zlist, polys, u=u, v=v)
+        else:
+            mesh = ipv.plot_trisurf(xlist, ylist, zlist, polys, color=color, u=u, v=v)
+        if show:
+            if len(x) > 1:
+                ipv.animation_control(mesh, interval=interval)
+            ipv.squarelim()
+            ipv.show()
+        return mesh
+    else:
+        return xlist, ylist, zlist, polys
