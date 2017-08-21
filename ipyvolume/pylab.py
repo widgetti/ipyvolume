@@ -337,7 +337,7 @@ def plot(x, y, z, color=default_color, **kwargs):
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    scatter = ipv.Scatter(x=x, y=y, z=z, color=color, color_selected=color_selected,
+    scatter = ipv.Scatter(x=x, y=y, z=z, color=color, color_selected=None,
         size_selected=1, size=1,
                              connected=True, visible_markers=False, visible_lines=True, **kwargs)
     fig.scatters = fig.scatters + [scatter]
