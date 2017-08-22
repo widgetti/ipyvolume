@@ -1,5 +1,5 @@
-version_info    = (0, 4, 0, 'beta', 1)
-version_info_js = (0, 4, 0, 'beta', 1)
+version_info    = (0, 4, 0, 'final', 0)
+version_info_js = (0, 4, 0, 'final', 0)
 #__version__ = '.'.join(map(str, version_info))
 
 _specifier_ = {'alpha': 'a', 'beta': 'b', 'candidate': 'rc', 'final': ''}
