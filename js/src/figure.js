@@ -138,7 +138,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         document.addEventListener("keydown", keydown);
         document.addEventListener("keyup", keyup);
         this.once('remove', () => {
-            console.log('remove key listeners')
+            //console.log('remove key listeners')
             document.removeEventListener('keydown', keydown)
             document.removeEventListener('keyup', keyup)
         })
@@ -153,13 +153,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
             var old_height = el.style.height
             var restore = _.bind(function() {
                 if(!screenfull.isFullscreen) {
-                    console.log('is not fullscreen')
-                    console.log('restore and detach')
                     el.style.width = old_width;
                     el.style.height = old_height
                     screenfull.off('change', restore)
                 } else {
-                    console.log('is fullscreen')
                     el.style.width = '100vw'
                     el.style.height = '100vh'
                 }
