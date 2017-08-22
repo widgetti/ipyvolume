@@ -28,16 +28,24 @@ def _docsubst(f):
 
 _doc_snippets = {}
 _doc_snippets[
-    "color"] = "string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (N, 3)"
+    "color"] = "color for each point/vertex/symbol, can be string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (N, 3) or (S, N, 3)"
 _doc_snippets[
-    "color2d"] = "string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (2, N, 3)"
+    "color2d"] = "color for each point/vertex string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (2, N, 3) or (S, 2, N, 3)"
 _doc_snippets[
     "size"] = "float representing the size of the glyph in percentage of the viewport, where 100 is the full size of the viewport"
 _doc_snippets["marker"] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere'"
-_doc_snippets["x"] = "1d numpy array with x positions"
-_doc_snippets["u"] = "1d numpy array indicating the x direction"
-_doc_snippets["x2d"] = "2d numpy array with x positions"
-
+_doc_snippets["x"] = "numpy array of shape (N,) or (S, N) with x positions (can be a sequence)"
+_doc_snippets["y"] = "idem for y"
+_doc_snippets["z"] = "idem for z"
+_doc_snippets["u_dir"] = "numpy array of shape (N,) or (S, N) indicating the x component of a vector (can be a sequence)"
+_doc_snippets["v_dir"] = "idem for y"
+_doc_snippets["w_dir"] = "idem for z"
+_doc_snippets["u"] = "numpy array of shape (N,) or (S, N) indicating the u (x) coordinate for the texture (can be a sequence)"
+_doc_snippets["v"] = "numpy array of shape (N,) or (S, N) indicating the v (y) coordinate for the texture (can be a sequence)"
+_doc_snippets["x2d"] = "numpy array of shape (N,M) or (S, N, M) with x positions (can be a sequence)"
+_doc_snippets["y2d"] = "idem for y"
+_doc_snippets["z2d"] = "idem for z"
+_doc_snippets["texture"] = "PIL.Image object or ipywebrtc.MediaStream (can be a seqence)"
 
 class current:
     figure = None
@@ -56,13 +64,13 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, contro
     """Create a new figure (if no key is given) or return the figure associated with key
 
     :param key: Python object that identifies this figure
-    :param width: pixel width of WebGL canvas
-    :param height:  .. height ..
-    :param lighting: use lighting or not
-    :param controls: show controls or not
-    :param controls_vr: show controls for VR or not
-    :param debug: show debug buttons or not
-    :return:
+    :param int width: pixel width of WebGL canvas
+    :param int height:  .. height ..
+    :param bool lighting: use lighting or not
+    :param bool controls: show controls or not
+    :param bool controls_vr: show controls for VR or not
+    :param bool debug: show debug buttons or not
+    :return: :any:`Figure`
     """
     if key is not None and key in current.figures:
         current.figure = current.figures[key]
@@ -92,7 +100,10 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, contro
 
 
 def gcf():
-    """Get current figure, or create a new one"""
+    """Get current figure, or create a new one
+
+    :return: :any:`Figure`
+    """
     if current.figure is None:
         return figure()
     else:
@@ -145,6 +156,7 @@ def xyzlim(vmin, vmax=None):
 
 
 def squarelim():
+    """Sets all axes with equal aspect ratio, such that the space is 'square'"""
     fig = gcf()
     xmin, xmax = fig.xlim
     ymin, ymax = fig.ylim
@@ -168,30 +180,32 @@ default_size_selected = default_size * 1.3
 def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=None, v=None, texture=None):
     """Draws a polygon/triangle mesh defined by a coordinate and triangle indices
 
-    Example:
+    The following example plots a rectangle in the z==2 plane, consisting of 2 triangles:
 
-    The following plots a rectangle in the z==2 plane, consisting of 2 triangles
-
-    >>> plot_trisurf([0, 0, 3., 3.], [0, 4., 0, 4.], 2, triangles=[[0, 2, 3], [0, 3, 1]])
+    >>> plot_trisurf([0, 0, 3., 3.], [0, 4., 0, 4.], 2,
+           triangles=[[0, 2, 3], [0, 3, 1]])
 
     Note that the z value is constant, and thus not a list/array. For guidance, the triangles
-    refer to the vertices in this manner:
+    refer to the vertices in this manner::
 
-    ^ ydir
-    |
-    2 3
-    0 1  ---> x dir
+        ^ ydir
+        |
+        2 3
+        0 1  ---> x dir
 
     Note that if you want per face/triangle colors, you need to duplicate each vertex.
 
 
     :param x: {x}
-    :param y:
-    :param z:
-    :param triangles: ndarray with indices referring to the vertices, defining the triangles, with shape (M, 3)
-    :param lines: ndarray with indices referring to the vertices, defining the lines, with shape (K, 2)
+    :param y: {y}
+    :param z: {z}
+    :param triangles: numpy array with indices referring to the vertices, defining the triangles, with shape (M, 3)
+    :param lines: numpy array with indices referring to the vertices, defining the lines, with shape (K, 2)
     :param color: {color}
-    :return:
+    :param u: {u}
+    :param v: {v}
+    :param texture: {texture}
+    :return: :any:`Mesh`
     """
     fig = gcf()
     if triangles is not None:
@@ -206,15 +220,15 @@ def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=Non
 
 @_docsubst
 def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
-    """Draws a 2d surface in 3d, defines by the 2d ordered arrays x,y,z
+    """Draws a 2d surface in 3d, defined by the 2d ordered arrays x,y,z
 
     :param x: {x2d}
-    :param y:
-    :param z:
+    :param y: {y2d}
+    :param z: {z2d}
     :param color: {color2d}
-    :param wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
-    :param wrapy: simular for the y coordinate
-    :return:
+    :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
+    :param bool wrapy: simular for the y coordinate
+    :return: :any:`Mesh`
     """
     return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=False)
 
@@ -223,19 +237,36 @@ def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
 def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False):
     """Draws a 2d wireframe in 3d, defines by the 2d ordered arrays x,y,z
 
+    See also :any:`ipyvolume.pylab.plot_mesh`
+
     :param x: {x2d}
-    :param y:
-    :param z:
+    :param y: {y2d}
+    :param z: {z2d}
     :param color: {color2d}
-    :param wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
-    :param wrapy: simular for the y coordinate
-    :return:
+    :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the begin and end points
+    :param bool wrapy: idem for y
+    :return: :any:`Mesh`
     """
     return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=True, surface=False)
 
 
 def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None,
               texture=None):
+    """Draws a 2d wireframe+surface in 3d: generalization of :any:`plot_wireframe` and :any:`plot_surface`
+
+    :param x: {x2d}
+    :param y: {y2d}
+    :param z: {z2d}
+    :param color: {color2d}
+    :param bool wireframe: draw lines between the vertices
+    :param bool surface: draw faces/triangles between the vertices
+    :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the begin and end points
+    :param boool wrapy: idem for y
+    :param u: {u}
+    :param v: {v}
+    :param texture: {texture}
+    :return: :any:`Mesh`
+    """
     fig = gcf()
 
     # assert len(x.shape) == 2
@@ -329,11 +360,11 @@ def plot(x, y, z, color=default_color, **kwargs):
     """Plot a line in 3d
 
     :param x: {x}
-    :param y:
-    :param z:
+    :param y: {y}
+    :param z: {z}
     :param color: {color}
     :param kwargs: extra arguments passed to the Scatter constructor
-    :return:
+    :return: :any:`Scatter`
     """
     fig = gcf()
     _grow_limits(x, y, z)
@@ -350,16 +381,16 @@ def scatter(x, y, z, color=default_color, size=default_size, size_selected=defau
     """Plots many markers/symbols in 3d
 
     :param x: {x}
-    :param y:
-    :param z:
+    :param y: {y}
+    :param z: {z}
     :param color: {color}
     :param size: {size}
     :param size_selected: like size, but for selected glyphs
     :param color_selected:  like color, but for selected glyphs
     :param marker: {marker}
-    :param selection: array with indices of x,y,z arrays of the selected markers, which can have a different size and color
+    :param selection: numpy array of shape (N,) or (S, N) with indices of x,y,z arrays of the selected markers, which can have a different size and color
     :param kwargs:
-    :return:
+    :return: :any:`Scatter`
     """
     fig = gcf()
     _grow_limits(x, y, z)
@@ -368,24 +399,24 @@ def scatter(x, y, z, color=default_color, size=default_size, size_selected=defau
     fig.scatters = fig.scatters + [scatter]
     return scatter
 
-
+@_docsubst
 def quiver(x, y, z, u, v, w, size=default_size * 10, size_selected=default_size_selected * 10, color=default_color,
            color_selected=default_color_selected, marker="arrow", **kwargs):
     """Create a quiver plot, which is like a scatter plot but with arrows pointing in the direction given by u, v and w
 
     :param x: {x}
-    :param y:
-    :param z:
-    :param u: {u}
-    :param v:
-    :param w:
+    :param y: {y}
+    :param z: {z}
+    :param u: {u_dir}
+    :param v: {v_dir}
+    :param w: {w_dir}
     :param size: {size}
     :param size_selected: like size, but for selected glyphs
     :param color: {color}
     :param color_selected: like color, but for selected glyphs
     :param marker: (currently only 'arrow' would make sense)
-    :param kwargs:
-    :return:
+    :param kwargs: extra arguments passed on to the Scatter constructor
+    :return: :any:`Scatter`
     """
     fig = gcf()
     _grow_limits(x, y, z)
@@ -397,7 +428,7 @@ def quiver(x, y, z, u, v, w, size=default_size * 10, size_selected=default_size_
 
 
 def show(extra_widgets=[]):
-    """Display (like in IPython.display.dispay(...) the current figure"""
+    """Display (like in IPython.display.dispay(...)) the current figure"""
     gcf()  # make sure we have something..
     display(gcc())
     for widget in extra_widgets:
@@ -413,11 +444,14 @@ def animate_glyphs(*args, **kwargs):
 def animation_control(object, sequence_length=None, add=True, interval=200):
     """Animate scatter, quiver or mesh by adding a slider and play button.
 
-    :param object: scatter, quiver, or mesh object (having an sequence_index property), or a list of objects
-    :param sequence_length: If sequence_length is None we try try our best to figure out, in case we do it badly, you can tell us what it should be
-    :param add: if True, add the widgets to the container, else return a HBox with the slider and play button
+    :param object: :any:`Scatter` or :any:`Mesh` object (having an sequence_index property), or a list of these to control multiple.
+    :param sequence_length: If sequence_length is None we try try our best to figure out, in case we do it badly,
+            you can tell us what it should be. Should be equal to the S in the shape of the numpy arrays as for instance documented
+            in :any:`scatter` or :any:`plot_mesh`. 
+    :param add: if True, add the widgets to the container, else return a HBox with the slider and play button. Useful when you
+            want to customise the layout of the widgets yourself.
     :param interval: interval in msec between each frame
-    :return:
+    :return: If add is False, if returns the ipywidgets.HBox object containing the controls
     """
     if isinstance(object, (list, tuple)):
         objects = object
@@ -495,6 +529,16 @@ def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_wi
     return tf
 
 def plot_isosurface(data, level=None, color=default_color, wireframe=True, surface=True, controls=True):
+    """Plot a surface at constant value (like a 2d contour)
+
+    :param float level: value where the surface should lie
+    :param color: color of the surface, although it can be an array, the length is difficult to predict beforehand,
+                  if per vertex color are needed, it is better to set them on the returned mesh afterwards.
+    :param bool wireframe: draw lines between the vertices
+    :param bool surface: draw faces/triangles between the vertices
+    :param bool controls: add controls to change the isosurface
+    :return: :any:`Mesh`
+    """
     from skimage import measure
     if level is None:
         level = np.median(data)
@@ -549,21 +593,21 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
 
 
     :param data: 3d numpy array
-    :param lighting: boolean, to use lighting or not, if set to false, lighting parameters will be overriden
-    :param data_min: minimum value to consider for data, if None, computed using np.nanmin
-    :param data_max: maximum value to consider for data, if None, computed using np.nanmax
+    :param bool lighting: use lighting or not, if set to false, lighting parameters will be overriden
+    :param float data_min: minimum value to consider for data, if None, computed using np.nanmin
+    :param float data_max: maximum value to consider for data, if None, computed using np.nanmax
     :param tf: transfer function (or a default one)
-    :param stereo: stereo view for virtual reality (cardboard and similar VR head mount)
+    :param bool stereo: stereo view for virtual reality (cardboard and similar VR head mount)
     :param ambient_coefficient: lighting parameter
     :param diffuse_coefficient: lighting parameter
     :param specular_coefficient: lighting parameter
     :param specular_exponent: lighting parameter
-    :param downscale: downscale the rendering for better performance, for instance when set to 2, a 512x512 canvas will show a 256x256 rendering upscaled, but it will render twice as fast.
+    :param float downscale: downscale the rendering for better performance, for instance when set to 2, a 512x512 canvas will show a 256x256 rendering upscaled, but it will render twice as fast.
     :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
     :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
     :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
-    :param controls: add controls for lighting and transfer function or not
-    :param max_opacity: maximum opacity for transfer function controls
+    :param bool controls: add controls for lighting and transfer function or not
+    :param float max_opacity: maximum opacity for transfer function controls
     :return:
     """
     vol = gcf()
@@ -608,21 +652,22 @@ def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
          offline=False, scripts_path='js',
          drop_defaults=False, template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
          devmode=False, offline_cors=False):
-    """ save the current container to a minimal HTML file
+    """Save the current container to a HTML file
 
-    :type filepath: str
-    :param filepath: The file to write the HTML output to.
-    :param makedirs: whether to make directories in the filename path, if they do not already exist
-    :param title: title for the html page
-    :param all_states: if True, the state of all widgets know to the widget manager is included, else only those in widgets
-    :param offline: if True, use local urls for required js/css packages and download all js/css required packages
+    By default the HTML file is not standalone and requires an internet connection to fetch a few javascript
+    libraries. Use offline=True to download these and make the HTML file work without an internet connection.
+
+    :param str filepath: The file to write the HTML output to.
+    :param bool makedirs: whether to make directories in the filename path, if they do not already exist
+    :param str title: title for the html page
+    :param bool all_states: if True, the state of all widgets know to the widget manager is included, else only those in widgets
+    :param bool offline: if True, use local urls for required js/css packages and download all js/css required packages
             (if not already available), such that the html can be viewed with no internet connection
-    :param scripts_path: the folder to save required js/css packages to (relative to the filepath)
-    :type drop_defaults: bool
-    :param drop_defaults: Whether to drop default values from the widget states
+    :param str scripts_path: the folder to save required js/css packages to (relative to the filepath)
+    :param bool drop_defaults: Whether to drop default values from the widget states
     :param template_options: list or dict of additional template options
-    :param devmode: if True, attempt to get index.js from local js/dist folder
-    :param offline_cors: if True, sets crossorigin attribute of script tags to anonymous
+    :param bool devmode: if True, attempt to get index.js from local js/dist folder
+    :param bool offline_cors: if True, sets crossorigin attribute of script tags to anonymous
 
     """
     ipyvolume.embed.embed_html(filepath, current.container, makedirs=makedirs, title=title, all_states=all_states,
@@ -641,20 +686,27 @@ def movie(f="movie.mp4", function=_change_y_angle, fps=30, frames=30, endpoint=F
           gif_loop=0):
     """Create a movie (mp4/gif) out of many frames
 
+    If the filename ends in `.gif`, `convert` is used to convert all frames to an animated gif using the `cmd_template_gif`
+    template. Otherwise `ffmpeg is assumed to know the file format`.
+
     Example:
+
     >>> def set_angles(fig, i, fraction):
     >>>     fig.angley = fraction*np.pi*2
     >>> # 4 second movie, that rotates around the y axis
-    >>> p3.movie('test2.gif', set_angles, fps=20, frames=20*4, endpoint=False)
+    >>> p3.movie('test2.gif', set_angles, fps=20, frames=20*4,
+            endpoint=False)
 
-    :param f: filename out output movie (e.g. 'movie.mp4' or 'movie.gif')
+    Note that in the example above we use `endpoint=False` to avoid to first and last frame to be the same
+
+    :param str f: filename out output movie (e.g. 'movie.mp4' or 'movie.gif')
     :param function: function called before each frame with arguments (figure, framenr, fraction)
     :param fps: frames per seconds
-    :param frames: total number of frames
-    :param endpoint: if fraction goes from [0, 1] (inclusive) or [0, 1) (endpoint=False is useful for loops/rotatations)
-    :param cmd_template_ffmpeg: template command when running ffmpeg (non-gif ending filenames)
-    :param cmd_template_gif: template command when running imagemagick's convert (if filename ends in .gif)
-    :param gif_loop: None for no loop, otherwise the framenumber to go after the end
+    :param int frames: total number of frames
+    :param bool endpoint: if fraction goes from [0, 1] (inclusive) or [0, 1) (endpoint=False is useful for loops/rotatations)
+    :param str cmd_template_ffmpeg: template command when running ffmpeg (non-gif ending filenames)
+    :param str cmd_template_gif: template command when running imagemagick's convert (if filename ends in .gif)
+    :param gif_loop: None for no loop, otherwise the framenumber to go to after the last frame
     :return: the temp dir where the frames are stored
     """
     movie_filename = f
@@ -725,13 +777,10 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
     return base64.b64decode(data)
 
 def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=10, output_widget=None):
-    """ Save the figure to a PIL.Image object
+    """Save the figure to a PIL.Image object.
     
-    :type width: int
-    :param width: the width of the image in pixels
-    :type height: int
-    :param height: the height of the image in pixels
-    :type format: str
+    :param int width: the width of the image in pixels
+    :param int height: the height of the image in pixels
     :param format: format of output data (png, jpeg or svg)
     :type fig: ipyvolume.widgets.Figure or None
     :param fig: if None use the current figure
@@ -739,7 +788,7 @@ def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=
     :param timeout_seconds: maximum time to wait for image data to return
     :type output_widget: ipywidgets.Output
     :param output_widget: a widget to use as a context manager for capturing the data  
-    :return:
+    :return: PIL.Image
 
     """
     assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
@@ -749,22 +798,15 @@ def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=
     return PIL.Image.open(f)
 
 def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, output_widget=None):
-    """ Save the figure to an image file
+    """Save the figure to an image file.
     
-    :type filename: str
-    :param filename: must have extension .png, .jpeg or .svg
-    :type width: int
-    :param width: the width of the image in pixels
-    :type height: int
-    :param height: the height of the image in pixels
+    :param str filename: must have extension .png, .jpeg or .svg
+    :param int width: the width of the image in pixels
+    :param int height: the height of the image in pixels
     :type fig: ipyvolume.widgets.Figure or None
     :param fig: if None use the current figure    
-    :type timeout_seconds: int
-    :param timeout_seconds: maximum time to wait for image data to return
-    :type output_widget: ipywidgets.Output
-    :param output_widget: a widget to use as a context manager for capturing the data  
-    :return:
-
+    :param float timeout_seconds: maximum time to wait for image data to return
+    :param ipywidgets.Output output_widget: a widget to use as a context manager for capturing the data  
     """
     __, ext = os.path.splitext(filename)
     format = ext[1:]
@@ -801,9 +843,8 @@ def xyzlabel(labelx, labely, labelz):
 def view(azimuth, elevation):
     """Sets camera angles
 
-    :param azimuth: rotation around the axis pointing up in degrees
-    :param elevation: rotation where +90 means 'up', -90 means 'down', in degrees
-    :return:
+    :param float azimuth: rotation around the axis pointing up in degrees
+    :param float elevation: rotation where +90 means 'up', -90 means 'down', in degrees
     """
     fig = gcf()
     fig.anglex = np.radians(elevation)
@@ -890,7 +931,14 @@ class style:
         fig = gcf()
         fig.style = totalstyle
 
-def plot_square(where="back", texture=None, flip=False, color=None):
+@_docsubst
+def plot_plane(where="back", texture=None):
+    """Plots a plane at a particular location in the viewbox
+
+    :param str where: 'back', 'front', 'left', 'right'
+    :param texture: {texture}
+    :return: :any:`Mesh`
+    """
     fig = gcf()
     xmin, xmax = fig.xlim
     ymin, ymax = fig.ylim
@@ -918,6 +966,7 @@ def plot_square(where="back", texture=None, flip=False, color=None):
         v = [0., 0., 1., 1.]
     mesh = plot_trisurf(x, y, z, triangles, texture=texture, u=u, v=v)
     return mesh
+
 def selector_lasso(output_widget=None):
     fig = gcf()
     if output_widget is None:
