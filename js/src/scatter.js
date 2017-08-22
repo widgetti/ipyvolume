@@ -9,14 +9,10 @@ var cat_data = require("../data/cat.json")
 
 var ScatterView = widgets.WidgetView.extend( {
     render: function() {
-        console.log("created scatter view, parent is")
-        console.log(this.options.parent)
         this.renderer = this.options.parent;
         this.previous_values = {}
         this.attributes_changed = {}
         window.last_scatter = this;
-
-        console.log("create scatter")
 
         this.geo_diamond = new THREE.SphereGeometry(1, 2, 2)
         this.geo_sphere = new THREE.SphereGeometry(1, 12, 12)
@@ -115,11 +111,8 @@ var ScatterView = widgets.WidgetView.extend( {
         }, this)
     },
     add_to_scene: function() {
-        console.log("add")
         this.renderer.scene_scatter.add(this.mesh)
-        console.log(this.mesh, this.line_segments)
         if(this.line_segments) {
-            console.log('add line segments')
             this.renderer.scene_scatter.add(this.line_segments)
         }
     },
@@ -131,7 +124,6 @@ var ScatterView = widgets.WidgetView.extend( {
     },
     on_change: function(attribute) {
         _.mapObject(this.model.changedAttributes(), function(val, key){
-            console.log("changed " +key)
             this.previous_values[key] = this.model.previous(key)
             // attributes_changed keys will say what needs to be animated, it's values are the properties in
             // this.previous_values that need to be removed when the animation is done
@@ -164,7 +156,6 @@ var ScatterView = widgets.WidgetView.extend( {
         this.update_()
     },
     update_: function() {
-        console.log("update scatter")
         this.remove_from_scene()
         this.create_mesh()
         this.add_to_scene()
@@ -202,12 +193,12 @@ var ScatterView = widgets.WidgetView.extend( {
         return this._get_value_vec3(this.previous_values[name] || this.model.get(name), index, default_value)
     },
     create_mesh: function() {
-        console.log("previous values: ")
+        /*console.log("previous values: ")
         console.log(this.previous_values)
         console.log("attributes changed: ")
-        console.log(this.attributes_changed)
+        console.log(this.attributes_changed)*/
         var geo = this.model.get("geo")
-        console.log(geo)
+        //console.log(geo)
 
         if(!geo)
             geo = "diamond"
@@ -301,14 +292,13 @@ var ScatterView = widgets.WidgetView.extend( {
 
             }*/
             this.line_segments = new THREE.Line(geometry, this.line_material);
-            console.log('create line segments')
         } else {
             this.line_segments = null;
         }
 
         _.mapObject(this.attributes_changed, function(changed_properties, key){
             var property = "animation_time_" + key
-            console.log("animating", key)
+            //console.log("animating", key)
             var done = function done() {
                 _.each(changed_properties, function clear(prop) {
                     delete this.previous_values[prop] // may happen multiple times, that is ok

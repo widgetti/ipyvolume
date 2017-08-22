@@ -11,15 +11,12 @@ var TransferFunctionView = widgets.DOMWidgetView.extend( {
         this.img.setAttribute('src', this.model.get('rgba'));
         this.img.setAttribute('style', this.model.get('style'));
         this.model.on('change:rgba', function() {
-            console.log("set src")
-            console.log(this.model.get('rgba'))
             this.img.setAttribute('src', this.model.get('rgba'));
         }, this);
         this.model.on('change:style', function() {
             this.img.setAttribute('style', this.model.get('style'));
         }, this);
         this.el.appendChild(this.img);
-        console.log(this.model.get('r'))
     },
 });
 
@@ -54,7 +51,6 @@ var TransferFunctionJsBumpsModel  = TransferFunctionModel.extend({
         this.recalculate_rgba()
     },
     recalculate_rgba: function() {
-        console.log("recalc rgba")
         var rgba = []
         var colors = [[1,0,0], [0,1,0], [0,0,1]]
         var levels = this.get("levels")

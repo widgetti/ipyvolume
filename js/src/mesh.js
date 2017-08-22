@@ -103,7 +103,6 @@ var MeshView = widgets.WidgetView.extend( {
             this.textures = null
             this.texture_video = document.createElement('video')
             texture.stream.then(_.bind(function(stream) {
-                console.log('ok, setting video stream')
                 this.texture_video.src = window.URL.createObjectURL(stream);
                 var texture = new THREE.VideoTexture(this.texture_video)
                 //texture.wrapS = THREE.RepeatWrapping;
@@ -113,14 +112,11 @@ var MeshView = widgets.WidgetView.extend( {
                 this.textures = [texture];
                 this.update_()
             }, this))
-            console.log('texture stream')
         } else {
             this.textures = _.map(this.model.get('texture'), function(texture_url) {
-                console.log('loading texture', texture_url)
                 return this.texture_loader.load(texture_url, _.bind(function(texture) {
                     texture.wrapS = THREE.RepeatWrapping;
                     texture.wrapT = THREE.RepeatWrapping;
-                    console.log('loaded texture', texture, this)
                     this.update_()
                 }, this));
             }, this)
@@ -329,7 +325,6 @@ var MeshView = widgets.WidgetView.extend( {
             var u = current.array['u']
             var v = current.array['v']
             if(texture && u && v && this.textures) {
-                console.log('textures', this.textures)
                 material = this.material_texture
                 var sequence_index_texture = sequence_index;
                 material.uniforms['texture'].value = this.textures[sequence_index_texture % this.textures.length]; // TODO/BUG: there could
@@ -373,7 +368,6 @@ var MeshView = widgets.WidgetView.extend( {
             //TODO: check lines with volume rendering, also in scatter
             this.line_segments.material_rgb = this.line_material_rgb
             this.line_segments.material_normal = this.line_material
-            console.log('create line segments')
             this.meshes.push(this.line_segments)
         } else {
             this.line_segments = null;
