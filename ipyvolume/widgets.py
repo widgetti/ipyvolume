@@ -54,6 +54,8 @@ class Mesh(widgets.DOMWidget):
     visible_lines = traitlets.CBool(default_value=True).tag(sync=True)
     visible_faces = traitlets.CBool(default_value=True).tag(sync=True)
 
+    side = traitlets.CaselessStrEnum(['front', 'back', 'both'], 'both').tag(sync=True)
+
 @widgets.register
 class Scatter(widgets.DOMWidget):
     _view_name = Unicode('ScatterView').tag(sync=True)

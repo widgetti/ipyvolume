@@ -80,14 +80,23 @@ var MeshView = widgets.WidgetView.extend( {
             visible: this.model.get("visible") && this.model.get("visible_lines")
             })
 
+        this.update_side()
         this.create_mesh()
         this.add_to_scene()
         this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles",   this.on_change, this)
         this.model.on("change:geo change:connected", this.update_, this)
         this.model.on("change:texture", this._load_textures, this)
         this.model.on("change:visible change:visible_lines change:visible_faces", this.update_visibility, this)
+        this.model.on("change:side", this.update_side, this)
     },
-    
+    update_side: function () {
+        console.log('side', this.model.get("side"))
+        var side = {'front': THREE.FrontSide, 'back': THREE.BackSide, 'both':THREE.DoubleSide }[this.model.get("side").toLowerCase()]
+        this.material.side = side
+        this.material_rgb.side = side
+        this.material_texture.side = side
+        this.renderer.update()
+    },
     update_visibility: function () {
         this.material.visible = this.model.get("visible") && this.model.get("visible_faces");
         this.material_rgb.visible = this.model.get("visible") && this.model.get("visible_faces");
