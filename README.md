@@ -7,9 +7,9 @@
 [![Coverage Status](https://coveralls.io/repos/github/maartenbreddels/ipyvolume/badge.svg)](https://coveralls.io/github/maartenbreddels/ipyvolume)
 [![Build Status](https://travis-ci.org/maartenbreddels/ipyvolume.svg?branch=master)](https://travis-ci.org/maartenbreddels/ipyvolume)
 
-Try out in mybinder: [![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/maartenbreddels/ipyvolume/notebooks/examples/simple.ipynb?kernel_name=python2)
+Try out in mybinder: [![Binder](http://mybinder.org/badge.svg)](https://beta.mybinder.org/v2/gh/maartenbreddels/ipyvolume/master?filepath=notebooks/simple.ipynb)
 
-3d plotting for Python in the Jupyter notebook based on IPython widgets using WebGL. 
+3d plotting for Python in the Jupyter notebook based on IPython widgets using WebGL.
 
 Ipyvolume currenty can
  * Do volume rendering.
@@ -24,7 +24,7 @@ Ipyvolume currenty can
   * [ipywidgets](https://github.com/ipython/ipywidgets) for adding gui controls (sliders, button etc), see an [example at the documentation homepage](http://ipyvolume.readthedocs.io/en/latest/index.html#built-on-ipywidgets)
   * [bokeh](//bokeh.pydata.org)  by [linking the selection](http://ipyvolume.readthedocs.io/en/latest/bokeh.html)
   * [bqplot](https://github.com/bloomberg/bqplot) by [linking the selection](http://ipyvolume.readthedocs.io/en/latest/bqplot.html)
-  
+
 Ipyvolume will probably, but not yet:
  * Render labels in latex.
  * Do isosurface rendering.
@@ -68,7 +68,7 @@ To install use pip (as non-admin):
     $ jupyter nbextension enable --py --user ipyvolume
 
 Or with anaconda/conda:
- 
+
     $ pip install ipywidgets
     $ # or pip install ipywidgets~=7.0.0b1 # for github master
     $ conda install -c conda-forge ipyvolume
@@ -82,5 +82,3 @@ For a development installation (requires npm),
     $ jupyter nbextension enable --py --sys-prefix ipyvolume
 
 After changing the javascript, run npm install from the js directory, or `webpack --watch` and work from the examples/dev.ipynb notebook,
-   
-
