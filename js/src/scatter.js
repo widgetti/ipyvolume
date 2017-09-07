@@ -292,6 +292,7 @@ var ScatterView = widgets.WidgetView.extend( {
 
             }*/
             this.line_segments = new THREE.Line(geometry, this.line_material);
+            this.line_segments.frustumCulled = false;
         } else {
             this.line_segments = null;
         }
