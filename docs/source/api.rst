@@ -20,3 +20,10 @@ ipyvolume.widgets
     :undoc-members:
     :show-inheritance:
 
+ipyvolume.headless
+-----------------
+
+.. automodule:: ipyvolume.headless
+    :members: 
+    :undoc-members:
+    :show-inheritance:
