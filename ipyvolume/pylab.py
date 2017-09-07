@@ -736,47 +736,58 @@ def movie(f="movie.mp4", function=_change_y_angle, fps=30, frames=30, endpoint=F
     return tempdir
 
 
-def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width=None, height=None, fig=None):
+def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width=None, height=None, fig=None, headless=False):
     if fig is None:
         fig = gcf()
     else:
         assert isinstance(fig, ipv.Figure)
-    if output_widget is None:
-        output_widget = ipywidgets.Output()
-        display(output_widget)
-    # use lists to avoid globals
-    done = [False]
-    data = [None]
+    if headless:
+        from . import headless
+        import tempfile
+        tempdir = tempfile.mkdtemp()
+        tempdir = '/var/folders/vn/_rmzj8jd0215_g9yfrn8pmgm0000gn/T/tmpxv07_m6l/'
+        tempfile = os.path.join(tempdir, 'headless.html')
+        #tempfile = os.path.abspath(tempfile)
+        save(tempfile, offline=True, scripts_path=tempdir, devmode=True)
+        print(tempfile)
+        data = headless._screenshot_data("file://" + tempfile)
+    else:
+        if output_widget is None:
+            output_widget = ipywidgets.Output()
+            display(output_widget)
+        # use lists to avoid globals
+        done = [False]
+        data = [None]
 
-    def screenshot_handler(image_data):
-        with output_widget:
-            # print("data")
-            # print(data)
-            done[0] = True
-            data[0] = image_data
-
-    fig.on_screenshot(screenshot_handler)
-    try:
-        fig.screenshot(width=width, height=height,mime_type="image/"+format)
-        t0 = time.time()
-        timeout = False
-        ipython = IPython.get_ipython()
-        while (not done[0]) and not timeout:
-            ipython.kernel.do_one_iteration()
+        def screenshot_handler(image_data):
             with output_widget:
-                time.sleep(0.05)
-                timeout = (time.time() - t0) > timeout_seconds
-        with output_widget:
-            if timeout and not done[0]:
-                raise ValueError("timed out, no image data returned")
-    finally:
-        with output_widget:
-            fig.on_screenshot(screenshot_handler, remove=True)
-    data = data[0]
+                # print("data")
+                # print(data)
+                done[0] = True
+                data[0] = image_data
+
+        fig.on_screenshot(screenshot_handler)
+        try:
+            fig.screenshot(width=width, height=height,mime_type="image/"+format)
+            t0 = time.time()
+            timeout = False
+            ipython = IPython.get_ipython()
+            while (not done[0]) and not timeout:
+                ipython.kernel.do_one_iteration()
+                with output_widget:
+                    time.sleep(0.05)
+                    timeout = (time.time() - t0) > timeout_seconds
+            with output_widget:
+                if timeout and not done[0]:
+                    raise ValueError("timed out, no image data returned")
+        finally:
+            with output_widget:
+                fig.on_screenshot(screenshot_handler, remove=True)
+        data = data[0]
     data = data[data.find(",") + 1:]
     return base64.b64decode(data)
 
-def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=10, output_widget=None):
+def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=10, output_widget=None, headless=False):
     """Save the figure to a PIL.Image object.
     
     :param int width: the width of the image in pixels
@@ -793,11 +804,11 @@ def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=
     """
     assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
     data = _screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget, 
-    format=format, width=width, height=height, fig=fig)
+    format=format, width=width, height=height, fig=fig, headless=headless)
     f = StringIO(data)
     return PIL.Image.open(f)
 
-def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, output_widget=None):
+def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, output_widget=None, headless=False):
     """Save the figure to an image file.
     
     :param str filename: must have extension .png, .jpeg or .svg
@@ -813,7 +824,7 @@ def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, out
     assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
     with open(filename, "wb") as f:
         f.write(_screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget, 
-        format=format, width=width, height=height, fig=fig))
+        format=format, width=width, height=height, fig=fig, headless=headless))
 
 
 def xlabel(label):
