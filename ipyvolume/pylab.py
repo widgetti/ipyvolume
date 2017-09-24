@@ -36,7 +36,7 @@ _doc_snippets[
 _doc_snippets[
     "size"] = "float representing the size of the glyph in percentage of the viewport, where 100 is the full size of the viewport"
 _doc_snippets["marker"] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere'"
-_doc_snippets["x"] = "numpy array of shape (N,) or (S, N) with x positions. {}".format(_seq_sn)"
+_doc_snippets["x"] = "numpy array of shape (N,) or (S, N) with x positions. {}".format(_seq_sn)
 _doc_snippets["y"] = "idem for y"
 _doc_snippets["z"] = "idem for z"
 _doc_snippets["u_dir"] = "numpy array of shape (N,) or (S, N) indicating the x component of a vector. {}".format(_seq_sn)
@@ -370,9 +370,15 @@ def plot(x, y, z, color=default_color, **kwargs):
     """
     fig = gcf()
     _grow_limits(x, y, z)
+    extra_args = {'visible_lines': True}
+    for key in list(extra_args.keys()):
+        if key in kwargs:
+            del extra_args[key]
     scatter = ipv.Scatter(x=x, y=y, z=z, color=color, color_selected=None,
-        size_selected=1, size=1,
-                             connected=True, visible_markers=False, visible_lines=True, **kwargs)
+                          size_selected=1, size=1,
+                          connected=True, visible_markers=False,
+                          **extra_args,
+                          **kwargs)
     fig.scatters = fig.scatters + [scatter]
     return scatter
 
