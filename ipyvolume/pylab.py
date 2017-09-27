@@ -367,12 +367,12 @@ def plot(x, y, z, color=default_color, visible_lines=True, color_selected=None,
     :param y: {y}
     :param z: {z}
     :param color: {color}
-    :param visible_lines: {visible_lines}
-    :param color_selected: {color_selected}
-    :param size_selected: {size_selected}
+    :param bool visible_lines: whether lines are visible
+    :param size_selected: like size, but for selected glyphs
+    :param color_selected:  like color, but for selected glyphs
     :param size: {size}
-    :param connected: {connected}
-    :param visible_markers: {visible_markers}
+    :param bool connected: whether points are connected
+    :param bool visible_markers: whether markers are visible
     :param kwargs: extra arguments passed to the Scatter constructor
     :return: :any:`Scatter`
     """
@@ -402,7 +402,7 @@ def scatter(x, y, z, color=default_color, size=default_size,
     :param size: {size}
     :param size_selected: like size, but for selected glyphs
     :param color_selected:  like color, but for selected glyphs
-    :param geo: {geo} Uses marker
+    :param geo: Uses marker
     :param selection: numpy array of shape (N,) or (S, N) with indices of x,y,z arrays of the selected markers, which can have a different size and color
     :param kwargs:
     :return: :any:`Scatter`
@@ -425,9 +425,9 @@ def quiver(x, y, z, vx, vy, vz, size=default_size * 10,
     :param x: {x}
     :param y: {y}
     :param z: {z}
-    :param vx: {x_dir}
-    :param vy: {y_dir}
-    :param vz: {z_dir}
+    :param vx: x_dir
+    :param vy: y_dir
+    :param vz: z_dir
     :param size: {size}
     :param size_selected: like size, but for selected glyphs
     :param color: {color}
