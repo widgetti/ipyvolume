@@ -370,16 +370,12 @@ def plot(x, y, z, color=default_color, **kwargs):
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    extra_args = {'visible_lines': True}
-    for key in list(extra_args.keys()):
-        if key in kwargs:
-            del extra_args[key]
-    scatter = ipv.Scatter(x=x, y=y, z=z, color=color, color_selected=None,
-                          size_selected=1, size=1,
-                          connected=True, visible_markers=False,
-                          **extra_args,
-                          **kwargs)
-    fig.scatters = fig.scatters + [scatter]
+    local_kwargs = dict(visible_lines=True, color_selected=None,
+                        size_selected=1, size=1, connected=True,
+                        visible_markers=False)
+    local_kwargs.update(**kwargs)
+    scatter_hdl = ipv.Scatter(x=x, y=y, z=z, color=color, **local_kwargs)
+    fig.scatters = fig.scatters + [scatter_hdl]
     return scatter
 
 
