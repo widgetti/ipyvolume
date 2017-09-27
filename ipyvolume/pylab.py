@@ -358,30 +358,41 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
     return mesh
 
 @_docsubst
-def plot(x, y, z, color=default_color, **kwargs):
+def plot(x, y, z, color=default_color, visible_lines=True, color_selected=None,
+         size_selected=1, size=1, connected=True, visible_markers=False,
+         **kwargs):
     """Plot a line in 3d
 
     :param x: {x}
     :param y: {y}
     :param z: {z}
     :param color: {color}
+    :param visible_lines: {visible_lines}
+    :param color_selected: {color_selected}
+    :param size_selected: {size_selected}
+    :param size: {size}
+    :param connected: {connected}
+    :param visible_markers: {visible_markers}
     :param kwargs: extra arguments passed to the Scatter constructor
     :return: :any:`Scatter`
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    local_kwargs = dict(visible_lines=True, color_selected=None,
-                        size_selected=1, size=1, connected=True,
-                        visible_markers=False)
-    local_kwargs.update(**kwargs)
-    scatter_hdl = ipv.Scatter(x=x, y=y, z=z, color=color, **local_kwargs)
+    scatter_hdl = ipv.Scatter(x=x, y=y, z=z, color=color,
+                              visible_lines=visible_lines,
+                              color_selected=color_selected,
+                              size_selected=size_selected, size=size,
+                              connected=connected,
+                              visible_markers=visible_markers, **kwargs)
     fig.scatters = fig.scatters + [scatter_hdl]
     return scatter
 
 
 @_docsubst
-def scatter(x, y, z, color=default_color, size=default_size, size_selected=default_size_selected,
-            color_selected=default_color_selected, marker="diamond", selection=None, **kwargs):
+def scatter(x, y, z, color=default_color, size=default_size,
+            size_selected=default_size_selected,
+            color_selected=default_color_selected, geo="diamond",
+            selection=None, **kwargs):
     """Plots many markers/symbols in 3d
 
     :param x: {x}
@@ -391,43 +402,47 @@ def scatter(x, y, z, color=default_color, size=default_size, size_selected=defau
     :param size: {size}
     :param size_selected: like size, but for selected glyphs
     :param color_selected:  like color, but for selected glyphs
-    :param marker: {marker}
+    :param geo: {geo} Uses marker
     :param selection: numpy array of shape (N,) or (S, N) with indices of x,y,z arrays of the selected markers, which can have a different size and color
     :param kwargs:
     :return: :any:`Scatter`
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    scatter = ipv.Scatter(x=x, y=y, z=z, color=color, size=size, color_selected=color_selected,
-                             size_selected=size_selected, geo=marker, selection=selection, **kwargs)
-    fig.scatters = fig.scatters + [scatter]
+    scatter_hdl = ipv.Scatter(x=x, y=y, z=z, color=color, size=size,
+                              color_selected=color_selected,
+                              size_selected=size_selected, geo=geo,
+                              selection=selection, **kwargs)
+    fig.scatters = fig.scatters + [scatter_hdl]
     return scatter
 
 @_docsubst
-def quiver(x, y, z, u, v, w, size=default_size * 10, size_selected=default_size_selected * 10, color=default_color,
-           color_selected=default_color_selected, marker="arrow", **kwargs):
+def quiver(x, y, z, vx, vy, vz, size=default_size * 10,
+           size_selected=default_size_selected * 10, color=default_color,
+           color_selected=default_color_selected, geo="arrow", **kwargs):
     """Create a quiver plot, which is like a scatter plot but with arrows pointing in the direction given by u, v and w
 
     :param x: {x}
     :param y: {y}
     :param z: {z}
-    :param u: {u_dir}
-    :param v: {v_dir}
-    :param w: {w_dir}
+    :param vx: {x_dir}
+    :param vy: {y_dir}
+    :param vz: {z_dir}
     :param size: {size}
     :param size_selected: like size, but for selected glyphs
     :param color: {color}
     :param color_selected: like color, but for selected glyphs
-    :param marker: (currently only 'arrow' would make sense)
+    :param geo: (currently only 'arrow' would make sense)
     :param kwargs: extra arguments passed on to the Scatter constructor
     :return: :any:`Scatter`
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    scatter = ipv.Scatter(x=x, y=y, z=z, vx=u, vy=v, vz=w,
-                             color=color, size=size, color_selected=color_selected, size_selected=size_selected,
-                             geo=marker, **kwargs)
-    fig.scatters = fig.scatters + [scatter]
+    scatter_hdl = ipv.Scatter(x=x, y=y, z=z, vx=vx, vy=vy, vz=vz,
+                              color=color, size=size,
+                              color_selected=color_selected,
+                              size_selected=size_selected, geo=geo, **kwargs)
+    fig.scatters = fig.scatters + [scatter_hdl]
     return scatter
 
 
