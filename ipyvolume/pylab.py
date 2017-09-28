@@ -425,9 +425,9 @@ def quiver(x, y, z, u, v, w, size=default_size * 10,
     :param x: {x}
     :param y: {y}
     :param z: {z}
-    :param u: x_dir
-    :param v: y_dir
-    :param w: z_dir
+    :param u: {u_dir}
+    :param v: {v_dir}
+    :param w: {w_dir}
     :param size: {size}
     :param size_selected: like size, but for selected glyphs
     :param color: {color}
