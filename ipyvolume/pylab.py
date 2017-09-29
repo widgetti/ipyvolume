@@ -25,6 +25,8 @@ def _docsubst(f):
     f.__doc__ = f.__doc__.format(**_doc_snippets)
     return f
 
+_seq_sn = "If an (S, N) array, the first dimension will be used for frames in an animation."
+_seq_snm = "If an (S, N, M) array, the first dimension will be used for frames in an animation."
 
 _doc_snippets = {}
 _doc_snippets[
@@ -34,15 +36,15 @@ _doc_snippets[
 _doc_snippets[
     "size"] = "float representing the size of the glyph in percentage of the viewport, where 100 is the full size of the viewport"
 _doc_snippets["marker"] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere'"
-_doc_snippets["x"] = "numpy array of shape (N,) or (S, N) with x positions (can be a sequence)"
+_doc_snippets["x"] = "numpy array of shape (N,) or (S, N) with x positions. {}".format(_seq_sn)
 _doc_snippets["y"] = "idem for y"
 _doc_snippets["z"] = "idem for z"
-_doc_snippets["u_dir"] = "numpy array of shape (N,) or (S, N) indicating the x component of a vector (can be a sequence)"
+_doc_snippets["u_dir"] = "numpy array of shape (N,) or (S, N) indicating the x component of a vector. {}".format(_seq_sn)
 _doc_snippets["v_dir"] = "idem for y"
 _doc_snippets["w_dir"] = "idem for z"
-_doc_snippets["u"] = "numpy array of shape (N,) or (S, N) indicating the u (x) coordinate for the texture (can be a sequence)"
-_doc_snippets["v"] = "numpy array of shape (N,) or (S, N) indicating the v (y) coordinate for the texture (can be a sequence)"
-_doc_snippets["x2d"] = "numpy array of shape (N,M) or (S, N, M) with x positions (can be a sequence)"
+_doc_snippets["u"] = "numpy array of shape (N,) or (S, N) indicating the u (x) coordinate for the texture. {}".format(_seq_sn)
+_doc_snippets["v"] = "numpy array of shape (N,) or (S, N) indicating the v (y) coordinate for the texture. {}".format(_seq_sn)
+_doc_snippets["x2d"] = "numpy array of shape (N,M) or (S, N, M) with x positions. {}".format(_seq_snm)
 _doc_snippets["y2d"] = "idem for y"
 _doc_snippets["z2d"] = "idem for z"
 _doc_snippets["texture"] = "PIL.Image object or ipywebrtc.MediaStream (can be a seqence)"
@@ -447,7 +449,7 @@ def animation_control(object, sequence_length=None, add=True, interval=200):
     :param object: :any:`Scatter` or :any:`Mesh` object (having an sequence_index property), or a list of these to control multiple.
     :param sequence_length: If sequence_length is None we try try our best to figure out, in case we do it badly,
             you can tell us what it should be. Should be equal to the S in the shape of the numpy arrays as for instance documented
-            in :any:`scatter` or :any:`plot_mesh`. 
+            in :any:`scatter` or :any:`plot_mesh`.
     :param add: if True, add the widgets to the container, else return a HBox with the slider and play button. Useful when you
             want to customise the layout of the widgets yourself.
     :param interval: interval in msec between each frame
@@ -788,7 +790,7 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
 
 def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=10, output_widget=None, headless=False):
     """Save the figure to a PIL.Image object.
-    
+
     :param int width: the width of the image in pixels
     :param int height: the height of the image in pixels
     :param format: format of output data (png, jpeg or svg)
@@ -797,32 +799,32 @@ def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=
     :type timeout_seconds: int
     :param timeout_seconds: maximum time to wait for image data to return
     :type output_widget: ipywidgets.Output
-    :param output_widget: a widget to use as a context manager for capturing the data  
+    :param output_widget: a widget to use as a context manager for capturing the data
     :return: PIL.Image
 
     """
     assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
-    data = _screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget, 
+    data = _screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget,
     format=format, width=width, height=height, fig=fig, headless=headless)
     f = StringIO(data)
     return PIL.Image.open(f)
 
 def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, output_widget=None, headless=False):
     """Save the figure to an image file.
-    
+
     :param str filename: must have extension .png, .jpeg or .svg
     :param int width: the width of the image in pixels
     :param int height: the height of the image in pixels
     :type fig: ipyvolume.widgets.Figure or None
-    :param fig: if None use the current figure    
+    :param fig: if None use the current figure
     :param float timeout_seconds: maximum time to wait for image data to return
-    :param ipywidgets.Output output_widget: a widget to use as a context manager for capturing the data  
+    :param ipywidgets.Output output_widget: a widget to use as a context manager for capturing the data
     """
     __, ext = os.path.splitext(filename)
     format = ext[1:]
     assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
     with open(filename, "wb") as f:
-        f.write(_screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget, 
+        f.write(_screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget,
         format=format, width=width, height=height, fig=fig, headless=headless))
 
 
