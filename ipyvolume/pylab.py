@@ -546,7 +546,6 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
         values = measure.marching_cubes_lewiner(data, level)
     else:
         values = measure.marching_cubes(data, level)
-    values = measure.marching_cubes_lewiner(data, level)#, spacing=(0.1, 0.1, 0.1))
     verts, triangles = values[:2] # version 0.13 returns 4 values, normals, values
     # in the future we may want to support normals and the values (with colormap)
     # and require skimage >= 0.13
@@ -554,7 +553,8 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     mesh = plot_trisurf(x, y, z, triangles=triangles, color=color)
     if controls:
         vmin, vmax = np.percentile(data, 1),  np.percentile(data, 99)
-        level_slider = ipywidgets.FloatSlider(value=level, min=vmin, max=vmax, icon='eye')
+        step = (vmax - vmin)/250
+        level_slider = ipywidgets.FloatSlider(value=level, min=vmin, max=vmax, step=step, icon='eye')
         recompute_button = ipywidgets.Button(description='update')
         controls = ipywidgets.HBox(children=[level_slider, recompute_button])
         current.container.children += (controls,)
@@ -565,7 +565,6 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
                 values = measure.marching_cubes_lewiner(data, level)
             else:
                 values = measure.marching_cubes(data, level)
-            values = measure.marching_cubes_lewiner(data, level)#, spacing=(0.1, 0.1, 0.1))
             verts, triangles = values[:2] # version 0.13 returns 4 values, normals, values
             # in the future we may want to support normals and the values (with colormap)
             # and require skimage >= 0.13
