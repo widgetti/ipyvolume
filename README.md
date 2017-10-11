@@ -55,7 +55,7 @@ Documentation is generated at readthedocs: [![Documentation](https://readthedocs
 
 For all cases make sure [ipywidgets is enabled](http://ipywidgets.readthedocs.io/en/latest/user_install.html) after installation, if not already, e.g.:
 
-    $ jupyter nbextension enable --py --sys-prefix ipywidgets
+    $ jupyter nbextension enable --py --sys-prefix widgetsnbextension
 
 To install use pip:
 
