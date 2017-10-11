@@ -358,32 +358,22 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
     return mesh
 
 @_docsubst
-def plot(x, y, z, color=default_color, visible_lines=True, color_selected=None,
-         size_selected=1, size=1, connected=True, visible_markers=False,
-         **kwargs):
+def plot(x, y, z, color=default_color, **kwargs):
     """Plot a line in 3d
 
     :param x: {x}
     :param y: {y}
     :param z: {z}
     :param color: {color}
-    :param bool visible_lines: whether lines are visible
-    :param size_selected: like size, but for selected glyphs
-    :param color_selected:  like color, but for selected glyphs
-    :param size: {size}
-    :param bool connected: whether points are connected
-    :param bool visible_markers: whether markers are visible
     :param kwargs: extra arguments passed to the Scatter constructor
     :return: :any:`Scatter`
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    scatter_hdl = ipv.Scatter(x=x, y=y, z=z, color=color,
-                              visible_lines=visible_lines,
-                              color_selected=color_selected,
-                              size_selected=size_selected, size=size,
-                              connected=connected,
-                              visible_markers=visible_markers, **kwargs)
+    defaults = dict(visible_lines=True, color_selected=None, size_selected=1,
+                    size=1, connected=True, visible_markers=False)
+    kwargs = dict(defaults, **kwargs)
+    scatter_hdl = ipv.Scatter(x=x, y=y, z=z, color=color, **kwargs)
     fig.scatters = fig.scatters + [scatter_hdl]
     return scatter_hdl
 
@@ -409,6 +399,9 @@ def scatter(x, y, z, color=default_color, size=default_size,
     """
     fig = gcf()
     _grow_limits(x, y, z)
+    if 'geo' in kwargs:
+        marker = kwargs['geo']
+        del kwargs['geo']
     scatter_hdl = ipv.Scatter(x=x, y=y, z=z, color=color, size=size,
                               color_selected=color_selected,
                               size_selected=size_selected, geo=marker,
@@ -438,6 +431,11 @@ def quiver(x, y, z, u, v, w, size=default_size * 10,
     """
     fig = gcf()
     _grow_limits(x, y, z)
+    if 'geo' in kwargs:
+        marker = kwargs['geo']
+        del kwargs['geo']
+    if 'vx' in kwargs or 'vy' in kwargs or 'vz' in kwargs:
+        raise KeyError('Please use u, v, w instead of vx, vy, vz')
     scatter_hdl = ipv.Scatter(x=x, y=y, z=z, vx=u, vy=v, vz=w,
                               color=color, size=size,
                               color_selected=color_selected,
