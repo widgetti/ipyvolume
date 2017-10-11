@@ -385,7 +385,7 @@ def plot(x, y, z, color=default_color, visible_lines=True, color_selected=None,
                               connected=connected,
                               visible_markers=visible_markers, **kwargs)
     fig.scatters = fig.scatters + [scatter_hdl]
-    return scatter
+    return scatter_hdl
 
 
 @_docsubst
@@ -414,7 +414,7 @@ def scatter(x, y, z, color=default_color, size=default_size,
                               size_selected=size_selected, geo=marker,
                               selection=selection, **kwargs)
     fig.scatters = fig.scatters + [scatter_hdl]
-    return scatter
+    return scatter_hdl
 
 @_docsubst
 def quiver(x, y, z, u, v, w, size=default_size * 10,
@@ -443,7 +443,7 @@ def quiver(x, y, z, u, v, w, size=default_size * 10,
                               color_selected=color_selected,
                               size_selected=size_selected, geo=marker, **kwargs)
     fig.scatters = fig.scatters + [scatter_hdl]
-    return scatter
+    return scatter_hdl
 
 
 def show(extra_widgets=[]):
