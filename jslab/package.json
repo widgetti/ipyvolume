@@ -15,7 +15,7 @@
     "raw-loader": "^0.5.1"
   },
   "dependencies": {
-    "@jupyter-widgets/jupyterlab-manager": "^0.26.0",
+    "@jupyter-widgets/jupyterlab-manager": "^0.27.0",
     "ipyvolume": "~0.4.0"
   },
   "jupyterlab": {
