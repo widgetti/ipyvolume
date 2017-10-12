@@ -1221,7 +1221,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 this.texture_tf.image.data = tf.get_data_array()
                 this.texture_tf.needsUpdate = true
             }*/
-            this.texture_tf = new THREE.DataTexture(tf.get_data_array(), tf.get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
+            this.texture_tf = new THREE.DataTexture(tf.get_data_array(), tf.get("rgba").shape[0], 1, THREE.RGBAFormat, THREE.UnsignedByteType)
             this.texture_tf.needsUpdate = true // without this it doesn't seem to work
             this.box_material_volr.uniforms.transfer_function.value = this.texture_tf
             this.update()

@@ -122,6 +122,8 @@ def array_to_json(ar, obj=None):
 
 
 def array_to_binary(ar, obj=None, force_contiguous=True):
+	if ar is None:
+		return None
 	if ar.dtype.kind not in ['u', 'i', 'f']:  # ints and floats
 		raise ValueError("unsupported dtype: %s" % (ar.dtype))
 	if ar.dtype == np.float64:  # WebGL does not support float64, case it here
@@ -132,6 +134,8 @@ def array_to_binary(ar, obj=None, force_contiguous=True):
 		ar = np.ascontiguousarray(ar)
 	return {'buffer':memoryview(ar), 'dtype':str(ar.dtype), 'shape':ar.shape}
 
+def binary_to_array(value, obj=None):
+	return np.frombuffer(value['data'], dtype=value['dtype']).reshape(value['shape'])
 
 def array_sequence_to_binary_or_json(ar, obj=None):
 	if ar is None:
@@ -239,6 +243,7 @@ array_rgba_png_serialization = dict(to_json=rgba_to_json, from_json=from_json)
 image_serialization = dict(to_json=image_to_url, from_json=None)
 texture_serialization = dict(to_json=texture_to_json, from_json=None)
 
+ndarray_serialization = dict(to_json=array_to_binary, from_json=binary_to_array)
 
 if __name__ == "__main__":
     import sys

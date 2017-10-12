@@ -1,9 +1,9 @@
 // var exports = module.exports = {};
 var widgets = require('@jupyter-widgets/base');
 var _ = require('underscore')
-
+var serialize = require('./serialize.js')
 var semver_range = require('./utils.js').semver_range;
-
+var ndarray_pack = require("ndarray-pack");
 
 var TransferFunctionView = widgets.DOMWidgetView.extend( {
     render: function() {
@@ -29,8 +29,28 @@ var TransferFunctionModel = widgets.DOMWidgetModel.extend({
             _view_module : 'ipyvolume',
             _model_module_version: semver_range,
             _view_module_version: semver_range,
+            rgba: null,
         })
-    }
+    },
+    get_data_array: function() {
+        var flat_array = [];
+        var rgba = this.get("rgba")
+        for(var i = 0; i < rgba.shape[0]; i++) {
+            for(var j = 0; j < 4; j++) {
+              flat_array.push(rgba.get(i,j)*255)
+            }
+        }
+        var transfer_function_uint8_array = new Uint8Array(flat_array);
+        // REMOVE: for debugging
+        //window.transfer_function_uint8_array = transfer_function_uint8_array
+        //window.flat_array = flat_array
+        return transfer_function_uint8_array
+    },
+
+    },{
+    serializers: _.extend({
+        rgba: serialize.ndarray,
+    }, widgets.WidgetModel.serializers)
 });
 
 
@@ -81,6 +101,7 @@ var TransferFunctionJsBumpsModel  = TransferFunctionModel.extend({
             rgba.push(color)
         }
         this.set("rgba", rgba)
+        this.save_changes()
     }
 });
 
@@ -140,26 +161,14 @@ var TransferFunctionWidgetJs3Model  = TransferFunctionModel.extend({
             color[3] = Math.min(1, color[3]); // clip alpha
             rgba.push(color)
         }
+        rgba = ndarray_pack(rgba)
         this.set("rgba", rgba)
+        this.save_changes()
     },
-    get_data_array: function() {
-        var flat_array = [];
-        var rgba = this.get("rgba")
-        for(var i = 0; i < rgba.length; i++) {
-            for(var j = 0; j < 4; j++) {
-              flat_array.push(rgba[i][j]*255)
-            }
-        }
-        var transfer_function_uint8_array = new Uint8Array(flat_array);
-        // REMOVE: for debugging
-        //window.transfer_function_uint8_array = transfer_function_uint8_array
-        //window.flat_array = flat_array
-        return transfer_function_uint8_array
-    },
-
 });
 
 module.exports =  {
+    TransferFunctionModel: TransferFunctionModel,
     TransferFunctionView: TransferFunctionView,
     TransferFunctionWidgetJs3Model: TransferFunctionWidgetJs3Model,
     TransferFunctionJsBumpsModel: TransferFunctionJsBumpsModel

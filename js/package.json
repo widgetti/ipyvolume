@@ -47,6 +47,7 @@
     "jquery": "^3.1.1",
     "mqtt": "^2.11.0",
     "ndarray": "~1.0.18",
+    "ndarray-pack": "^1.2.1",
     "screenfull": "^3.3.1",
     "style-loader": "^0.18.2",
     "three": "^0.85.0",

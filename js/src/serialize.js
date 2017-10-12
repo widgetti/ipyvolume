@@ -2,6 +2,7 @@ var _ = require('underscore')
 var utils = require('./utils.js')
 var THREE = require('three')
 var widgets = require('@jupyter-widgets/base');
+var ndarray = require('ndarray')
 
 function ascii_decode(buf) {
         return String.fromCharCode.apply(null, new Uint8Array(buf));
@@ -65,6 +66,17 @@ var typesToArray = {
     uint32: Uint32Array,
     float32: Float32Array,
     float64: Float64Array
+}
+
+var arrayToTypes = {
+    Int8Array: 'int8',
+    Int16Array: 'int16',
+    Int32Array: 'int32',
+    Uint8Array: 'uint8',
+    Uint16Array: 'uint16',
+    Uint32Array: 'uint32',
+    Float32Array: 'float32',
+    Float64Array: 'float64'
 }
 
 function deserialize_typed_array(data, manager) {
@@ -243,9 +255,31 @@ function deserialize_texture(data, manager) {
     }
     return data
 }
+function deserialize_ndarray(data, manager) {
+    if(data === null)
+        return null;
+    console.log('deserialize_ndarray')
+    return ndarray(deserialize_typed_array(data, manager), data.shape);
+}
+
+function serialize_ndarray(data, manager) {
+    if(data === null)
+        return null;
+    var ar = data;
+    if(_.isArray(data) && !data.buffer) { // plain list of list
+        var ar = require("ndarray-pack")(data)
+    }
+    data_json = {'data': ar.data.buffer, dtype:arrayToTypes[ar.data.constructor.name], shape:ar.shape}
+    console.log('serialize_ndarray')
+    return data_json;
+}
+
 function serialize_texture(data, manager) {
     return data;
 }
+
+window.ndarray = ndarray;
+
 
 module.exports = {
     texture: {deserialize:deserialize_texture, serialize: serialize_texture},
@@ -253,5 +287,6 @@ module.exports = {
     deserialize_array_or_json: deserialize_array_or_json,
     deserialize_color_or_json: deserialize_color_or_json,
     array_or_json: { deserialize: deserialize_array_or_json, serialize: serialize_array_or_json },
-    color_or_json: { deserialize: deserialize_color_or_json, serialize: serialize_array_or_json }
+    color_or_json: { deserialize: deserialize_color_or_json, serialize: serialize_array_or_json },
+    ndarray: { deserialize: deserialize_ndarray, serialize: serialize_ndarray },
 }

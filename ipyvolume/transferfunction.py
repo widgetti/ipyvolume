@@ -4,6 +4,7 @@ from traitlets import Unicode, validate
 from traittypes import Array
 import traitlets
 import numpy as np
+from . import serialize
 from .serialize import array_rgba_png_serialization, array_serialization
 N = 1024
 x = np.linspace(0, 1, N, endpoint=True)
@@ -29,10 +30,12 @@ if 0:
 
 @widgets.register
 class TransferFunction(widgets.DOMWidget):
+	_model_name = Unicode('TransferFunctionModel').tag(sync=True)
 	_view_name = Unicode('TransferFunctionView').tag(sync=True)
+	_model_module = Unicode('ipyvolume').tag(sync=True)
 	_view_module = Unicode('ipyvolume').tag(sync=True)
 	style = Unicode("height: 32px; width: 100%;").tag(sync=True)
-	rgba = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+	rgba = Array(default_value=None, allow_none=True).tag(sync=True, **serialize.ndarray_serialization)
 	_view_module_version = Unicode(semver_range_frontend).tag(sync=True)
 	_model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
