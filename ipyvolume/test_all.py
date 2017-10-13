@@ -77,10 +77,23 @@ def test_scatter():
     p3.scatter(x, y, z)
     p3.save("tmp/ipyolume_scatter.html")
 
+
+def test_plot():
+    x, y, z = np.random.random((3, 100))
+    p3.plot(x, y, z)
+    p3.save("tmp/ipyolume_plot.html")
+
+
 def test_quiver():
     x, y, z, u, v, w = np.random.random((6, 100))
     p3.quiver(x, y, z, u, v, w)
     p3.save("tmp/ipyolume_quiver.html")
+
+
+def test_quiver_exception():
+    x, y, z, u, v, w = np.random.random((6, 100))
+    with pytest.raises(KeyError):
+        p3.quiver(x, y, z, u, v, w, vx=u)
 
 
 def test_volshow():
