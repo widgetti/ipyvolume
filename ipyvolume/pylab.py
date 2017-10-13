@@ -373,9 +373,9 @@ def plot(x, y, z, color=default_color, **kwargs):
     defaults = dict(visible_lines=True, color_selected=None, size_selected=1,
                     size=1, connected=True, visible_markers=False)
     kwargs = dict(defaults, **kwargs)
-    scatter_hdl = ipv.Scatter(x=x, y=y, z=z, color=color, **kwargs)
-    fig.scatters = fig.scatters + [scatter_hdl]
-    return scatter_hdl
+    s = ipv.Scatter(x=x, y=y, z=z, color=color, **kwargs)
+    fig.scatters = fig.scatters + [s]
+    return s
 
 
 @_docsubst
@@ -392,22 +392,18 @@ def scatter(x, y, z, color=default_color, size=default_size,
     :param size: {size}
     :param size_selected: like size, but for selected glyphs
     :param color_selected:  like color, but for selected glyphs
-    :param marker: Uses marker
+    :param marker: {marker}
     :param selection: numpy array of shape (N,) or (S, N) with indices of x,y,z arrays of the selected markers, which can have a different size and color
     :param kwargs:
     :return: :any:`Scatter`
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    if 'geo' in kwargs:
-        marker = kwargs['geo']
-        del kwargs['geo']
-    scatter_hdl = ipv.Scatter(x=x, y=y, z=z, color=color, size=size,
-                              color_selected=color_selected,
-                              size_selected=size_selected, geo=marker,
-                              selection=selection, **kwargs)
-    fig.scatters = fig.scatters + [scatter_hdl]
-    return scatter_hdl
+    s = ipv.Scatter(x=x, y=y, z=z, color=color, size=size,
+                    color_selected=color_selected, size_selected=size_selected,
+                    geo=marker, selection=selection, **kwargs)
+    fig.scatters = fig.scatters + [s]
+    return s
 
 @_docsubst
 def quiver(x, y, z, u, v, w, size=default_size * 10,
@@ -431,17 +427,13 @@ def quiver(x, y, z, u, v, w, size=default_size * 10,
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    if 'geo' in kwargs:
-        marker = kwargs['geo']
-        del kwargs['geo']
     if 'vx' in kwargs or 'vy' in kwargs or 'vz' in kwargs:
         raise KeyError('Please use u, v, w instead of vx, vy, vz')
-    scatter_hdl = ipv.Scatter(x=x, y=y, z=z, vx=u, vy=v, vz=w,
-                              color=color, size=size,
-                              color_selected=color_selected,
-                              size_selected=size_selected, geo=marker, **kwargs)
-    fig.scatters = fig.scatters + [scatter_hdl]
-    return scatter_hdl
+    s = ipv.Scatter(x=x, y=y, z=z, vx=u, vy=v, vz=w, color=color, size=size,
+                    color_selected=color_selected, size_selected=size_selected,
+                    geo=marker, **kwargs)
+    fig.scatters = fig.scatters + [s]
+    return s
 
 
 def show(extra_widgets=[]):
