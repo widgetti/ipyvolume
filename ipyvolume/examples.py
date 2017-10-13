@@ -37,11 +37,19 @@ def xyz(shape=128, limits=[-3, 3], spherical=False, sparse=True, centers=False):
 		return x, y, z
 
 
-def example_ylm(m=0, n=2, shape=128, limits=[-4, 4], **kwargs):
-	__, __, __, r, theta, phi = xyz(shape=shape, limits=limits, spherical=True)
-	radial = np.exp(-(r - 2) ** 2)
-	data = np.abs(scipy.special.sph_harm(m, n, theta, phi) ** 2) * radial
-	return ipyvolume.volshow(data=data.T, **kwargs)
+def example_ylm(m=0, n=2, shape=128, limits=[-4, 4],  draw=True, show=True, **kwargs):
+    import ipyvolume.pylab as p3
+    __, __, __, r, theta, phi = xyz(shape=shape, limits=limits, spherical=True)
+    radial = np.exp(-(r - 2) ** 2)
+    data = np.abs(scipy.special.sph_harm(m, n, theta, phi) ** 2) * radial
+    if draw:
+        vol = p3.volshow(data=data, **kwargs)
+        if show:
+            p3.show()
+        return vol
+    else:
+        return data
+    #return ipyvolume.volshow(data=data.T, **kwargs)
 
 def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], draw=True, show=True, **kwargs):
 	import ipyvolume.pylab as p3
