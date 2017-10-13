@@ -192,6 +192,11 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 return false;
             }
         }
+        window.ipvss = () => {
+            var data = this.screenshot()
+            //download_image(data)
+            return data
+        }
 
         this.camera_control_icon = new ToolIcon('fa-arrow-up', this.toolbar_div)
         this.camera_control_icon.a.title = 'Camera locked to \'up\' axis (orbit), instead of trackball mode'
