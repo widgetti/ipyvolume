@@ -370,16 +370,19 @@ def plot(x, y, z, color=default_color, **kwargs):
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    scatter = ipv.Scatter(x=x, y=y, z=z, color=color, color_selected=None,
-        size_selected=1, size=1,
-                             connected=True, visible_markers=False, visible_lines=True, **kwargs)
-    fig.scatters = fig.scatters + [scatter]
-    return scatter
+    defaults = dict(visible_lines=True, color_selected=None, size_selected=1,
+                    size=1, connected=True, visible_markers=False)
+    kwargs = dict(defaults, **kwargs)
+    s = ipv.Scatter(x=x, y=y, z=z, color=color, **kwargs)
+    fig.scatters = fig.scatters + [s]
+    return s
 
 
 @_docsubst
-def scatter(x, y, z, color=default_color, size=default_size, size_selected=default_size_selected,
-            color_selected=default_color_selected, marker="diamond", selection=None, **kwargs):
+def scatter(x, y, z, color=default_color, size=default_size,
+            size_selected=default_size_selected,
+            color_selected=default_color_selected, marker="diamond",
+            selection=None, **kwargs):
     """Plots many markers/symbols in 3d
 
     :param x: {x}
@@ -396,13 +399,15 @@ def scatter(x, y, z, color=default_color, size=default_size, size_selected=defau
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    scatter = ipv.Scatter(x=x, y=y, z=z, color=color, size=size, color_selected=color_selected,
-                             size_selected=size_selected, geo=marker, selection=selection, **kwargs)
-    fig.scatters = fig.scatters + [scatter]
-    return scatter
+    s = ipv.Scatter(x=x, y=y, z=z, color=color, size=size,
+                    color_selected=color_selected, size_selected=size_selected,
+                    geo=marker, selection=selection, **kwargs)
+    fig.scatters = fig.scatters + [s]
+    return s
 
 @_docsubst
-def quiver(x, y, z, u, v, w, size=default_size * 10, size_selected=default_size_selected * 10, color=default_color,
+def quiver(x, y, z, u, v, w, size=default_size * 10,
+           size_selected=default_size_selected * 10, color=default_color,
            color_selected=default_color_selected, marker="arrow", **kwargs):
     """Create a quiver plot, which is like a scatter plot but with arrows pointing in the direction given by u, v and w
 
@@ -422,11 +427,13 @@ def quiver(x, y, z, u, v, w, size=default_size * 10, size_selected=default_size_
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    scatter = ipv.Scatter(x=x, y=y, z=z, vx=u, vy=v, vz=w,
-                             color=color, size=size, color_selected=color_selected, size_selected=size_selected,
-                             geo=marker, **kwargs)
-    fig.scatters = fig.scatters + [scatter]
-    return scatter
+    if 'vx' in kwargs or 'vy' in kwargs or 'vz' in kwargs:
+        raise KeyError('Please use u, v, w instead of vx, vy, vz')
+    s = ipv.Scatter(x=x, y=y, z=z, vx=u, vy=v, vz=w, color=color, size=size,
+                    color_selected=color_selected, size_selected=size_selected,
+                    geo=marker, **kwargs)
+    fig.scatters = fig.scatters + [s]
+    return s
 
 
 def show(extra_widgets=[]):
