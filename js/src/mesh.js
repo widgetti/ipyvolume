@@ -83,7 +83,7 @@ var MeshView = widgets.WidgetView.extend( {
         this.update_side()
         this.create_mesh()
         this.add_to_scene()
-        this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles",   this.on_change, this)
+        this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles change:lines",   this.on_change, this)
         this.model.on("change:geo change:connected", this.update_, this)
         this.model.on("change:texture", this._load_textures, this)
         this.model.on("change:visible change:visible_lines change:visible_faces", this.update_visibility, this)
@@ -163,7 +163,10 @@ var MeshView = widgets.WidgetView.extend( {
                 }, this)
                     this.attributes_changed['texture'] = ['texture', 'sequence_index']
             }
-    	    else if(key_animation == "triangles") {
+            else if(key_animation == "triangles") {
+                // direct change, no animation
+            }
+            else if(key_animation == "lines") {
                 // direct change, no animation
             }
 	        else if(key_animation == "selected") { // and no explicit animation on this one
@@ -370,7 +373,8 @@ var MeshView = widgets.WidgetView.extend( {
             var color_previous = new THREE.BufferAttribute(previous.array_vec3['color'], 3)
             color_previous.normalized = true;
             geometry.addAttribute('color_previous', color_previous)
-            geometry.setIndex(new THREE.BufferAttribute(lines[0], 1))
+            var indices = new Uint32Array(lines[0]);
+            geometry.setIndex(new THREE.BufferAttribute(indices, 1))
 
             this.line_segments = new THREE.LineSegments(geometry, this.line_material);
             this.line_segments.frustumCulled = false;
