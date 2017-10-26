@@ -329,7 +329,7 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
     def index_from2d(i, j):
         xi = (i % nx)
         yi = (j % ny)
-        return nx * xi + yi
+        return ny * xi + yi
         """
         ^ ydir
         |
@@ -343,7 +343,7 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
             p1 = index_from2d(i + 1, j)
             p2 = index_from2d(i, j + 1)
             p3 = index_from2d(i + 1, j + 1)
-            triangle_index = (i * mx) + j
+            triangle_index = (i * my) + j
             triangles[triangle_index * 2 + 0, :] = [p0, p1, p3]
             triangles[triangle_index * 2 + 1, :] = [p0, p3, p2]
             lines[triangle_index * 4 + 0, :] = [p0, p1]
