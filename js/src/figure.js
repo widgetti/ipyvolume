@@ -734,6 +734,11 @@ var FigureView = widgets.DOMWidgetView.extend( {
         d.object_ticklabel.text = "" // TODO: removing and adding new tick marks will result in just many empty text sprites
     },
     update_scatters: function() {
+        if(this.scatter_views) {
+            this.scatter_views.forEach((scatter) => {
+                scatter.remove_from_scene()
+            })
+        }
         var scatters = this.model.get('scatters');
         if(scatters) {
             //this.scatters.update(scatters);
@@ -748,6 +753,11 @@ var FigureView = widgets.DOMWidgetView.extend( {
          }
     },
     update_meshes: function() {
+        if(this.mesh_views) {
+            this.mesh_views.forEach((mesh) => {
+                mesh.remove_from_scene()
+            })
+        }
         var meshes = this.model.get('meshes');
         if(meshes) {
             //this.meshes.update(meshes);
