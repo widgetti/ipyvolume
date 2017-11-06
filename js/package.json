@@ -39,7 +39,7 @@
     "ts-loader": "~2.2.2"
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^0.5.1",
+    "@jupyter-widgets/base": "^1.0.0",
     "css-loader": "^0.28.4",
     "d3": "~4.6.0",
     "gl-matrix": "^2.0.0",
@@ -54,5 +54,8 @@
     "three-text2d": "~0.3.2",
     "underscore": "^1.8.3",
     "webrtc-adapter": "^4.2.2"
+  },
+  "jupyterlab": {
+    "extension": "src/jupyterlab-plugin"
   }
 }
