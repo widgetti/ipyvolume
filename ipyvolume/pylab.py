@@ -321,35 +321,7 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
     if v is not None:
         v = reshape(v)
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
-    mx = nx if wrapx else nx - 1
-    my = ny if wrapy else ny - 1
-    triangles = np.zeros(((mx) * (my) * 2, 3), dtype=np.uint32)
-    lines = np.zeros(((mx) * (my) * 4, 2), dtype=np.uint32)
-
-    def index_from2d(i, j):
-        xi = (i % nx)
-        yi = (j % ny)
-        return ny * xi + yi
-        """
-        ^ ydir
-        |
-        2 3
-        0 1  ---> x dir
-        """
-
-    for i in range(mx):
-        for j in range(my):
-            p0 = index_from2d(i, j)
-            p1 = index_from2d(i + 1, j)
-            p2 = index_from2d(i, j + 1)
-            p3 = index_from2d(i + 1, j + 1)
-            triangle_index = (i * my) + j
-            triangles[triangle_index * 2 + 0, :] = [p0, p1, p3]
-            triangles[triangle_index * 2 + 1, :] = [p0, p3, p2]
-            lines[triangle_index * 4 + 0, :] = [p0, p1]
-            lines[triangle_index * 4 + 1, :] = [p0, p2]
-            lines[triangle_index * 4 + 2, :] = [p2, p3]
-            lines[triangle_index * 4 + 3, :] = [p1, p3]
+    triangles, lines = _make_triangles_lines(x.reshape(nx,ny),y.reshape(nx,ny),z.reshape(nx,ny),wrapx,wrapy)
     # print(i, j, p0, p1, p2, p3)
     mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles if surface else None, color=color,
                        lines=lines if wireframe else None,
@@ -1004,3 +976,88 @@ def selector_lasso(output_widget=None):
                     if selected:
                         scatter.selected = selected
     fig.on_lasso(lasso)
+    
+
+
+def _make_triangles_lines(x, y, z, wrapx=False, wrapy=False):
+    """Transform rectangular regular grid into triangles
+    
+    :param x: {x2d}
+    :param y: {y2d}
+    :param z: {z2d}
+    :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
+    :param bool wrapy: simular for the y coordinate
+    :return: triangles and lines used to plot Mesh
+    """
+    assert len(x.shape) == 2, "Array x must be 2 dimensional."
+    assert len(y.shape) == 2, "Array y must be 2 dimensional."
+    assert len(z.shape) == 2, "Array z must be 2 dimensional."
+    assert x.shape == y.shape, "Arrays x and y must have same shape."
+    assert y.shape == z.shape, "Arrays y and z must have same shape."
+    
+    nx, ny = x.shape
+
+    mx = nx if wrapx else nx - 1
+    my = ny if wrapy else ny - 1
+    
+    """
+    create all pair of indices (i,j) of the rectangular grid
+    minus last row if wrapx = False => mx
+    minus last column if wrapy = False => my
+    |  (0,0)   ...   (0,j)    ...   (0,my-1)  |
+    |    .      .      .       .       .      |
+    |  (i,0)   ...   (i,j)    ...   (i,my-1)  |
+    |    .      .      .       .       .      |
+    |(mx-1,0)  ...  (mx-1,j)  ... (mx-1,my-1) |
+    """
+    i, j = np.mgrid[0:mx, 0:my]
+
+    """
+    collapsed i and j in one dimensional array, row-major order
+    ex :
+    array([[0,  1,  2],     =>   array([0, 1, 2, 3, *4*, 5])
+           [3, *4*, 5]])
+    if we want vertex 4 at (i=1,j=1) we must transform it in i*ny+j = 4
+    """
+    i, j = np.ravel(i), np.ravel(j)
+
+    """
+    Let's go for the triangles :
+        (i,j)    -  (i,j+1)   -> y dir
+        (i+1,j)  - (i+1,j+1)
+          |
+          v
+        x dir
+
+    in flatten coordinates:
+        i*ny+j     -  i*ny+j+1
+        (i+1)*ny+j -  (i+1)*ny+j+1
+    """
+
+    t1 = (i * ny + j,
+          (i + 1) % nx * ny + j,
+          (i + 1) % nx * ny + (j + 1) % ny)
+    t2 = (i * ny + j,
+          (i + 1) % nx * ny + (j + 1) % ny,
+          i * ny + (j + 1) % ny)
+
+    """
+        %nx and %ny are used for wrapx and wrapy :
+        if (i+1)=nx => (i+1)%nx=0 => close mesh in x direction
+        if (j+1)=ny => (j+1)%ny=0 => close mesh in y direction
+    """
+    
+    nt = len(t1[0])
+    
+    triangles = np.zeros((nt * 2, 3), dtype=np.uint32)
+    triangles[0::2, 0], triangles[0::2, 1], triangles[0::2, 2] = t1
+    triangles[1::2, 0], triangles[1::2, 1], triangles[1::2, 2] = t2
+    
+    lines = np.zeros((nt * 4, 2), dtype=np.uint32)
+    lines[::4,0], lines[::4,1] = t1[:2]
+    lines[1::4,0], lines[1::4,1] = t1[0],t2[2]
+    lines[2::4,0], lines[2::4,1] = t2[2:0:-1]
+    lines[3::4,0], lines[3::4,1] = t1[1],t2[1]   
+    
+    return triangles, lines
+

@@ -95,6 +95,13 @@ ENV/
 # Rope project settings
 .ropeproject
 
+# Eclipse stuff
+.settings
+.project
+
+# Pydev stuff
+.pydevproject
+
 # Webpack watch files
 js/node_modules/
 # Javascript Build files
