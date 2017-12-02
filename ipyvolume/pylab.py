@@ -1007,9 +1007,9 @@ def _make_triangles_lines(x, y, z, wrapx=False, wrapy=False):
     create all pair of indices (i,j) of the rectangular grid
     minus last row if wrapx = False => mx
     minus last column if wrapy = False => my
-    |  (0,0)   ...   (0,j)    ...   (0,ny-1)  |
+    |  (0,0)   ...   (0,j)    ...   (0,my-1)  |
     |    .      .      .       .       .      |
-    |  (i,0)   ...   (i,j)    ...   (i,ny-1)  |
+    |  (i,0)   ...   (i,j)    ...   (i,my-1)  |
     |    .      .      .       .       .      |
     |(mx-1,0)  ...  (mx-1,j)  ... (mx-1,my-1) |
     """
