@@ -75,10 +75,8 @@ Or with anaconda/conda:
 
 For a development installation (requires npm),
 
-    $ git clone https://github.com/maartenbreddels/ipyvolume.git	
-    $ cd ipyvolume/js
-	$ nmp install
-	$ cd ..
+    $ git clone https://github.com/maartenbreddels/ipyvolume.git
+    $ cd ipyvolume
     $ pip install -e .
     $ jupyter nbextension install --py --symlink --sys-prefix ipyvolume
     $ jupyter nbextension enable --py --sys-prefix ipyvolume
