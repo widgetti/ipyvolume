@@ -321,7 +321,7 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
     if v is not None:
         v = reshape(v)
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
-    triangles, lines = make_triangles_lines(x.reshape(nx,ny),y.reshape(nx,ny),z.reshape(nx,ny),wrapx,wrapy)
+    triangles, lines = _make_triangles_lines(x.reshape(nx,ny),y.reshape(nx,ny),z.reshape(nx,ny),wrapx,wrapy)
     # print(i, j, p0, p1, p2, p3)
     mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles if surface else None, color=color,
                        lines=lines if wireframe else None,
@@ -982,7 +982,7 @@ def selector_lasso(output_widget=None):
     
 
 
-def make_triangles_lines(x, y, z, wrapx=False, wrapy=False):
+def _make_triangles_lines(x, y, z, wrapx=False, wrapy=False):
     """Transform rectangular regular grid into triangles
     
     :param x: {x2d}
@@ -1003,11 +1003,52 @@ def make_triangles_lines(x, y, z, wrapx=False, wrapy=False):
     mx = nx if wrapx else nx - 1
     my = ny if wrapy else ny - 1
     
+    """
+    create all pair of indices (i,j) of the rectangular grid
+    minus last row if wrapx = False => mx
+    minus last column if wrapy = False => my
+    |  (0,0)   ...   (0,j)    ...   (0,ny-1)  |
+    |    .      .      .       .       .      |
+    |  (i,0)   ...   (i,j)    ...   (i,ny-1)  |
+    |    .      .      .       .       .      |
+    |(mx-1,0)  ...  (mx-1,j)  ... (mx-1,my-1) |
+    """
     i, j = np.mgrid[0:mx, 0:my]
+
+    """
+    collapsed i and j in one dimensional array, row-major order
+    ex :
+    array([[0,  1,  2],     =>   array([0, 1, 2, 3, *4*, 5])
+           [3, *4*, 5]])
+    if we want vertex 4 at (i=1,j=1) we must transform it in i*ny+j = 4
+    """
     i, j = np.ravel(i), np.ravel(j)
-    
-    t1 = i * ny + j, (i + 1)%nx * ny + j, (i + 1)%nx * ny + (j + 1)%ny
-    t2 = i * ny + j, (i + 1)%nx * ny + (j + 1)%ny, i * ny + (j + 1)%ny 
+
+    """
+    Let's go for the triangles :
+        (i,j)    -  (i,j+1)   -> y dir
+        (i+1,j)  - (i+1,j+1)
+          |
+          v
+        x dir
+
+    in flatten coordinates:
+        i*ny+j     -  i*ny+j+1
+        (i+1)*ny+j -  (i+1)*ny+j+1
+    """
+
+    t1 = (i * ny + j,
+          (i + 1) % nx * ny + j,
+          (i + 1) % nx * ny + (j + 1) % ny)
+    t2 = (i * ny + j,
+          (i + 1) % nx * ny + (j + 1) % ny,
+          i * ny + (j + 1) % ny)
+
+    """
+        %nx and %ny are used for wrapx and wrapy :
+        if (i+1)=nx => (i+1)%nx=0 => close mesh in x direction
+        if (j+1)=ny => (j+1)%ny=0 => close mesh in y direction
+    """
     
     nt = len(t1[0])
     
