@@ -116,7 +116,7 @@ def test_bokeh():
     scatter = p3.scatter(x, y, z)
 
     tools = "wheel_zoom,box_zoom,box_select,lasso_select,help,reset,"
-    p = figure(title="E Lz space", tools=tools, webgl=True, width=500, height=500)
+    p = figure(title="E Lz space", tools=tools, width=500, height=500)
     r = p.circle(x, y, color="navy", alpha=0.2)
     ipyvolume.bokeh.link_data_source_selection_to_widget(r.data_source, scatter, 'selected')
 
