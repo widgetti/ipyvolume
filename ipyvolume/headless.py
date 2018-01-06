@@ -2,9 +2,8 @@
 
 Assuming osx, define the following aliases for convenience, and start in headless mode::
 
-     $ alias chrome-canary="/Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary"
      $ alias chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
-     $ chrome-canary --remote-debugging-port=9222 --headless
+     $ chrome --remote-debugging-port=9222 --headless
 
 Make sure you have `PyChromeDevTools` installed::
     
