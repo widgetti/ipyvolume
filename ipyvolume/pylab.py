@@ -753,11 +753,8 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
         from . import headless
         import tempfile
         tempdir = tempfile.mkdtemp()
-        tempdir = '/var/folders/vn/_rmzj8jd0215_g9yfrn8pmgm0000gn/T/tmpxv07_m6l/'
         tempfile = os.path.join(tempdir, 'headless.html')
-        #tempfile = os.path.abspath(tempfile)
         save(tempfile, offline=True, scripts_path=tempdir, devmode=True)
-        print(tempfile)
         data = headless._screenshot_data("file://" + tempfile)
     else:
         if output_widget is None:
