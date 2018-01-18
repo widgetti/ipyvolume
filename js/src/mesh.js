@@ -144,6 +144,7 @@ var MeshView = widgets.WidgetView.extend( {
     remove_from_scene: function() {
         _.each(this.meshes, function(mesh) {
             this.renderer.scene_scatter.remove(mesh)
+            mesh.geometry.dispose()
         }, this)
     },
     on_change: function(attribute) {
