@@ -132,7 +132,7 @@ setup_args = {
             'ipyvolume/static/three.js',
             'ipyvolume/static/index.js.map',
         ]),
-        ('etc/jupyter/nbconfig/notebook.d/' , ['ipyvolume.json'])
+        ('etc/jupyter/nbconfig/notebook.d' , ['ipyvolume.json'])
     ],
     'install_requires': [
         'ipywidgets>=7.0.0',
