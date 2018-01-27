@@ -95,6 +95,16 @@ ENV/
 # Rope project settings
 .ropeproject
 
+# npm install generation
+package-lock.json
+
+# Eclipse stuff
+.settings
+.project
+
+# Pydev stuff
+.pydevproject
+
 # Webpack watch files
 js/node_modules/
 # Javascript Build files
