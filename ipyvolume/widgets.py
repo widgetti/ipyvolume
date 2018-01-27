@@ -20,7 +20,7 @@ _last_volume_renderer = None
 import ipyvolume._version
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
 
-@widgets.register
+@widgets.register()
 class Mesh(widgets.DOMWidget):
     _view_name = Unicode('MeshView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
@@ -56,7 +56,7 @@ class Mesh(widgets.DOMWidget):
 
     side = traitlets.CaselessStrEnum(['front', 'back', 'both'], 'both').tag(sync=True)
 
-@widgets.register
+@widgets.register()
 class Scatter(widgets.DOMWidget):
     _view_name = Unicode('ScatterView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
@@ -90,7 +90,7 @@ class Scatter(widgets.DOMWidget):
 
 
 
-@widgets.register
+@widgets.register()
 class Figure(ipywebrtc.MediaStream):
     """Widget class representing a volume (rendering) using three.js"""
     _view_name = Unicode('FigureView').tag(sync=True)
