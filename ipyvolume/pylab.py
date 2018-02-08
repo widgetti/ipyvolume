@@ -716,7 +716,7 @@ def movie(f="movie.mp4", function=_change_y_angle, fps=30, frames=30, endpoint=F
     return tempdir
 
 
-def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width=None, height=None, fig=None, headless=False):
+def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width=None, height=None, fig=None, headless=False, devmode=False):
     if fig is None:
         fig = gcf()
     else:
@@ -726,7 +726,7 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
         import tempfile
         tempdir = tempfile.mkdtemp()
         tempfile = os.path.join(tempdir, 'headless.html')
-        save(tempfile, offline=True, scripts_path=tempdir, devmode=True)
+        save(tempfile, offline=False, scripts_path=tempdir, devmode=devmode)
         data = headless._screenshot_data("file://" + tempfile)
     else:
         if output_widget is None:
@@ -764,7 +764,7 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
     data = data[data.find(",") + 1:]
     return base64.b64decode(data)
 
-def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=10, output_widget=None, headless=False):
+def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=10, output_widget=None, headless=False, devmode=False):
     """Save the figure to a PIL.Image object.
 
     :param int width: the width of the image in pixels
@@ -776,16 +776,18 @@ def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=
     :param timeout_seconds: maximum time to wait for image data to return
     :type output_widget: ipywidgets.Output
     :param output_widget: a widget to use as a context manager for capturing the data
+    :param bool headless: if True, use headless chrome to take screenshot
+    :param bool devmode: if True, attempt to get index.js from local js/dist folder
     :return: PIL.Image
 
     """
     assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
     data = _screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget,
-    format=format, width=width, height=height, fig=fig, headless=headless)
+    format=format, width=width, height=height, fig=fig, headless=headless, devmode=devmode)
     f = StringIO(data)
     return PIL.Image.open(f)
 
-def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, output_widget=None, headless=False):
+def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, output_widget=None, headless=False, devmode=False):
     """Save the figure to an image file.
 
     :param str filename: must have extension .png, .jpeg or .svg
@@ -795,13 +797,15 @@ def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, out
     :param fig: if None use the current figure
     :param float timeout_seconds: maximum time to wait for image data to return
     :param ipywidgets.Output output_widget: a widget to use as a context manager for capturing the data
+    :param bool headless: if True, use headless chrome to save figure
+    :param bool devmode: if True, attempt to get index.js from local js/dist folder
     """
     __, ext = os.path.splitext(filename)
     format = ext[1:]
     assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
     with open(filename, "wb") as f:
         f.write(_screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget,
-        format=format, width=width, height=height, fig=fig, headless=headless))
+        format=format, width=width, height=height, fig=fig, headless=headless, devmode=devmode))
 
 
 def xlabel(label):

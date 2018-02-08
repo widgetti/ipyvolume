@@ -102,8 +102,7 @@ def save_font_awesome(dirpath='', version="4.7.0"):
     directory_path = os.path.join(dirpath, directory_name)
     if os.path.exists(directory_path):
         return directory_name
-
-    url = "http://fontawesome.io/assets/font-awesome-{0:s}.zip".format(version)
+    url = "https://fontawesome.com/v{0:s}/assets/font-awesome-{0:s}.zip".format(version)
     content, encoding = download_to_bytes(url)
 
     try:
