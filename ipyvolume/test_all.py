@@ -4,6 +4,7 @@ import ipyvolume.pylab as p3
 import ipyvolume.examples
 import ipyvolume.datasets
 import ipyvolume.utils
+import ipyvolume.serialize
 import numpy as np
 import os
 import shutil
@@ -15,6 +16,19 @@ import pytest
 if os.path.exists("tmp"):
     shutil.rmtree("tmp")
 os.makedirs("tmp")
+
+def test_serialize():
+    assert ipyvolume.serialize.array_sequence_to_binary_or_json(1) == 1
+    assert ipyvolume.serialize.array_sequence_to_binary_or_json([]) == []
+    empty_array = np.array([])
+    assert ipyvolume.serialize.array_sequence_to_binary_or_json(empty_array) == []
+    assert type(ipyvolume.serialize.array_sequence_to_binary_or_json(empty_array)) == list
+
+    value = np.asarray(5)
+    assert ipyvolume.serialize.array_sequence_to_binary_or_json(value) == 5
+    
+    value = np.asarray(5)
+    assert ipyvolume.serialize.array_sequence_to_binary_or_json(value) == 5
 
 def test_figure():
     f1 = p3.figure()

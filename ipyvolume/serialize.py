@@ -154,8 +154,11 @@ def array_sequence_to_binary_or_json(ar, obj=None):
 		pass
 	if isinstance(element, string_types):
 		return array_to_json(ar)
-	if dimension == 0: # scalars are passed as is (json)
-		return element
+	if dimension == 0: # scalars are passed as is (json), empty lists as well
+		if isinstance(element, np.ndarray): # must be an empty list
+			return []
+		else:
+			return element
 	if isinstance(ar, (list, tuple, np.ndarray)): # ok, at least 1d
 		if isinstance(ar[0], (list, tuple, np.ndarray)): # ok, 2d
 			return [array_to_binary(ar[k]) for k in range(len(ar))]
