@@ -38,6 +38,16 @@ def test_figure():
     f5 = p3.gcf()
     p3.clear()
     f6 = p3.gcf()
+    
+    f7 = p3.figure('f7')
+    f8 = p3.figure()
+    f9 = p3.figure('f7')
+    f10 = p3.figure(f8)
+    f11 = p3.gcf()
+    f12 = p3.current.figure
+    f13 = p3.figure('f7')
+    f14 = p3.current.figures['f7']
+    f15 = p3.current.figures[f7]
 
     assert f1 != f2
     assert f2 != f3
@@ -45,6 +55,14 @@ def test_figure():
     assert f2 == f2
     assert f4 == f5
     assert f5 != f6
+    
+    assert f7 == f9
+    assert f8 == f10
+    assert f10 == f11
+    assert f11 == f12
+    assert f13 == f14
+    assert f13 == f15
+    
 
     for controls in [True, False]:
         for debug in [True, False]:
