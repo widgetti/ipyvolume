@@ -13,6 +13,8 @@ from . import examples
 import warnings
 import PIL.Image
 import traitlets
+import uuid
+
 try:
     from io import BytesIO as StringIO
 except:
@@ -77,13 +79,19 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, contro
     if key is not None and key in current.figures:
         current.figure = current.figures[key]
         current.container = current.containers[key]
+    elif isinstance(key, ipv.Figure) and key in current.figures.values():
+        key_index = list(current.figures.values()).index(key)
+        key = list(current.figures.keys())[key_index]
+        current.figure = current.figures[key]
+        current.container = current.containers[key]
     else:
         current.figure = ipv.Figure(volume_data=None, width=width, height=height, **kwargs)
         current.container = ipywidgets.VBox()
         current.container.children = [current.figure]
-        if key is not None:
-            current.figures[key] = current.figure
-            current.containers[key] = current.container
+        if key is None:
+            key = uuid.uuid4().hex
+        current.figures[key] = current.figure
+        current.containers[key] = current.container
         if controls:
             #stereo = ipywidgets.ToggleButton(value=current.figure.stereo, description='stereo', icon='eye')
             #l1 = ipywidgets.jslink((current.figure, 'stereo'), (stereo, 'value'))
