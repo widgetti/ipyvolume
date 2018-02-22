@@ -451,12 +451,25 @@ def animation_control(object, sequence_length=None, add=True, interval=200):
         # get all non-None arrays
         sequence_lengths = []
         for object in objects:
+            sequence_lengths_previous = list(sequence_lengths)
             values = [getattr(object, name) for name in "x y z vx vy vz".split() if hasattr(object, name)]
             values = [k for k in values if k is not None]
             # sort them such that the higest dim is first
             values.sort(key=lambda key: -len(key.shape))
-            sequence_length = values[0].shape[0]  # assume this defines the sequence length
-            sequence_lengths.append(sequence_length)
+            try:
+                sequence_length = values[0].shape[0]  # assume this defines the sequence length
+                sequence_lengths.append(sequence_length)
+            except IndexError:      # scalars get ignored
+                pass
+            if hasattr(object, 'color'):
+                color = object.color
+                if color is not None:
+                    shape = color.shape
+                    if len(shape) == 3:  # would be the case for for (frame, point_index, color_index)
+                        sequence_lengths.append(shape[0])
+                    # TODO: maybe support arrays of string type of form (frame, point_index)
+            if len(sequence_lengths) == len(sequence_lengths_previous):
+                raise ValueError('no frame dimension found for object: %r'.format(object))
         sequence_length = max(sequence_lengths)
     fig = gcf()
     fig.animation = interval

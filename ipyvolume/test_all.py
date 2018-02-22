@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import ipyvolume
 import ipyvolume.pylab as p3
+import ipyvolume as ipv
 import ipyvolume.examples
 import ipyvolume.datasets
 import ipyvolume.utils
@@ -228,6 +229,35 @@ def test_threejs_version():
     version_msg = "version in python and js side for three js conflect: %s vs %s" % (
         ipyvolume._version.__version_threejs__, config['dependencies']['three'])
     assert (major == major_js) and (minor == minor_js), version_msg
+
+
+def test_animation_control():
+    fig = ipv.figure()
+    n_points = 3
+    n_frames = 4
+    ar = np.zeros(n_points)
+    ar_frames = np.zeros((n_frames, n_points))
+    colors = np.zeros((n_points, 3))
+    colors_frames = np.zeros((n_frames, n_points, 3))
+    scalar = 2
+
+    s = ipv.scatter(x=scalar, y=scalar, z=scalar)
+    with pytest.raises(ValueError):  # no animation present
+        slider = ipv.animation_control(s, add=False).children[1]
+
+    s = ipv.scatter(x=ar, y=scalar, z=scalar)
+    slider = ipv.animation_control(s, add=False).children[1]
+    assert slider.max == n_points - 1
+
+    s = ipv.scatter(x=ar_frames, y=scalar, z=scalar)
+    slider = ipv.animation_control(s, add=False).children[1]
+    assert slider.max == n_frames - 1
+
+    s = ipv.scatter(x=scalar, y=scalar, z=scalar, color=colors_frames)
+    slider = ipv.animation_control(s, add=False).children[1]
+    assert slider.max == n_frames - 1
+
+
 
 
 # just cover and call
