@@ -99,6 +99,33 @@ def test_limits():
     assert f.ylim  == [0, 10]
     assert f.zlim  == [-10, 5]
 
+def test_style():
+    f = ipv.figure()
+    ipv.style.use('nobox')
+    assert f.style['box']['visible'] == False
+    ipv.style.use(['nobox', {'box': {'visible': True}}])
+    assert f.style['box']['visible'] == True
+    ipv.style.use({'box': {'visible': False}})
+    assert f.style['box']['visible'] == False
+    ipv.style.use({'axes': {'visible': False}})
+    assert f.style['axes']['visible'] == False
+
+    ipv.style.axes_off()
+    assert f.style['axes']['visible'] == False
+    ipv.style.axes_on()
+    assert f.style['axes']['visible'] == True
+
+    ipv.style.box_off()
+    assert f.style['box']['visible'] == False
+    ipv.style.box_on()
+    assert f.style['box']['visible'] == True
+
+    ipv.style.set_style_light()
+    assert f.style['background-color'] == 'white'
+    ipv.style.box_off()
+    assert f.style['box']['visible'] == False
+    assert f.style['background-color'] == 'white' # keep old style settings
+
 def test_labels():
     f = p3.figure()
     p3.xlabel("x1")

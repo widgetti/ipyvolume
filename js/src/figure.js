@@ -312,17 +312,20 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.wire_box = new THREE.Object3D()
         var grey = 0xCCccCC;
-        //this.wire_box.add(make_line(-0.5, -0.5, -0.5, -0.5+1, -0.5, -0.5, grey))
+        this.wire_box_x_line = make_line(-0.5, -0.5, -0.5, -0.5+1, -0.5, -0.5, this.axes_material)
+        this.wire_box.add(this.wire_box_x_line)
         this.wire_box.add(make_line(-0.5, -0.5+1, -0.5, -0.5+1, -0.5+1, -0.5, this.axes_material))
         this.wire_box.add(make_line(-0.5, -0.5, -0.5+1, -0.5+1, -0.5, -0.5+1, this.axes_material))
         this.wire_box.add(make_line(-0.5, -0.5+1, -0.5+1, -0.5+1, -0.5+1, -0.5+1, this.axes_material))
 
-        //this.wire_box.add(make_line(-0.5, -0.5, -0.5, -0.5, -0.5+1, -0.5, this.axes_material))
+        this.wire_box_y_line = make_line(-0.5, -0.5, -0.5, -0.5, -0.5+1, -0.5, this.axes_material)
+        this.wire_box.add(this.wire_box_y_line)
         this.wire_box.add(make_line(-0.5+1, -0.5, -0.5, -0.5+1, -0.5+1, -0.5, this.axes_material))
         this.wire_box.add(make_line(-0.5, -0.5, -0.5+1, -0.5, -0.5+1, -0.5+1, this.axes_material))
         this.wire_box.add(make_line(-0.5+1, -0.5, -0.5+1, -0.5+1, -0.5+1, -0.5+1, this.axes_material))
 
-        //this.wire_box.add(make_line(-0.5, -0.5, -0.5, -0.5, -0.5, -0.5+1, this.axes_material))
+        this.wire_box_z_line = make_line(-0.5, -0.5, -0.5, -0.5, -0.5, -0.5+1, this.axes_material)
+        this.wire_box.add(this.wire_box_z_line)
         this.wire_box.add(make_line(-0.5+1, -0.5, -0.5, -0.5+1, -0.5, -0.5+1, this.axes_material))
         this.wire_box.add(make_line(-0.5, -0.5+1, -0.5, -0.5, -0.5+1, -0.5+1, this.axes_material))
         this.wire_box.add(make_line(-0.5+1, -0.5+1, -0.5, -0.5+1, -0.5+1, -0.5+1, this.axes_material))
@@ -945,6 +948,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.axes_data[2].label = this.model.get("zlabel")
 
         this.wire_box.visible = this.get_style('box.visible')
+        this.wire_box_x_line.visible = !this.x_axis.visible && this.wire_box.visible
+        this.wire_box_y_line.visible = !this.y_axis.visible && this.wire_box.visible
+        this.wire_box_z_line.visible = !this.z_axis.visible && this.wire_box.visible
 
         d3.select(this.el_axes).selectAll(".ipyvol-axis")
                 .data(this.axes_data)

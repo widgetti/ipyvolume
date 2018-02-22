@@ -935,11 +935,12 @@ class style:
                     utils.nested_setitem(style, to_name, value)
             return style
 
-        if isinstance(style, six.string_types):
+        if isinstance(style, six.string_types + (dict,)):
             styles = [style]
         else:
             styles = style
-        totalstyle = utils.dict_deep_update({}, ipyvolume.styles._defaults)
+        fig = gcf()
+        totalstyle = utils.dict_deep_update({}, fig.style)
         for style in styles:
             if isinstance(style, six.string_types):
                 if hasattr(ipyvolume.styles, style):
@@ -959,6 +960,38 @@ class style:
 
         fig = gcf()
         fig.style = totalstyle
+
+    @staticmethod
+    def axes_off():
+        """Do not draw the axes"""
+        style.use({'axes': {'visible': False}})
+
+    @staticmethod
+    def axes_on():
+        """Draw the axes"""
+        style.use({'axes': {'visible': True}})
+
+    @staticmethod
+    def box_off():
+        """Do not draw the box around the visible volume"""
+        style.use({'box': {'visible': False}})
+
+    @staticmethod
+    def box_on():
+        """Draw a box around the visible volume"""
+        style.use({'box': {'visible': True}})
+
+    @staticmethod
+    def background_color(color):
+        """Sets the background color"""
+        style.use({'background-color': color})
+
+for style_name, __ in ipv.styles.styles.items():
+    def closure(style_name=style_name):
+        def quick_set():
+            style.use(style_name)
+        setattr(style, 'set_style_' + style_name, staticmethod(quick_set))
+    closure()
 
 @_docsubst
 def plot_plane(where="back", texture=None):

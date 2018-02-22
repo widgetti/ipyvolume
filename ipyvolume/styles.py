@@ -41,12 +41,10 @@ _defaults = {
 }
 
 def create(name, properties):
-    style = copy.deepcopy(_defaults)
-    utils.dict_deep_update(style, properties)
-    styles[name] = style
-    return style
+    styles[name] = properties
+    return properties
 
-default = light = create("light", \
+light = create("light", \
 {
     'background-color': 'white',
     'axes': {
@@ -54,9 +52,13 @@ default = light = create("light", \
     }
 })
 
+default = {}
+utils.dict_deep_update(default, _defaults)
+utils.dict_deep_update(default, light)
+
 dark = create("dark", \
 {
-    'background-color': 'black',
+    'background-color': '#000001', # for some reason we cannot set it to black!?!
     'axes': {
         'color': 'white',
         'label': {
