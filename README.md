@@ -53,24 +53,24 @@ Documentation is generated at readthedocs: [![Documentation](https://readthedocs
 
 # Installation
 
-For all cases make sure [ipywidgets is enabled](http://ipywidgets.readthedocs.io/en/latest/user_install.html) after installation, if not already, e.g.:
-
-    $ jupyter nbextension enable --py --sys-prefix widgetsnbextension
-
 To install use pip:
 
     $ pip install ipyvolume
-    $ jupyter nbextension enable --py --sys-prefix ipyvolume
+    $ jupyter nbextension enable --py --sys-prefix ipyvolume # can be skipped for notebook version 5.3 and above
 
 To install use pip (as non-admin):
 
     $ pip install ipyvolume --user
     $ jupyter nbextension enable --py --user ipyvolume
 
+For all cases make sure [ipywidgets is enabled](http://ipywidgets.readthedocs.io/en/latest/user_install.html) if you use Jupyter notebook version < 5.3.
+
+    $ jupyter nbextension enable --py --sys-prefix widgetsnbextension # can be skipped for notebook version 5.3 and above
+
 Or with anaconda/conda:
 
     $ pip install ipywidgets
-    $ # or pip install ipywidgets~=7.0.0b1 # for github master
+    $ # or pip install ipywidgets
     $ conda install -c conda-forge ipyvolume
 
 For a development installation (requires npm),
