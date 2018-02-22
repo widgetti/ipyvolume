@@ -309,34 +309,40 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
     else:
         nx, ny = shape = x[0].shape
 
+    # assert len(x.shape) == 2, "Array x must be 2 dimensional."
+    # assert len(y.shape) == 2, "Array y must be 2 dimensional."
+    # assert len(z.shape) == 2, "Array z must be 2 dimensional."
+    # assert x.shape == y.shape, "Arrays x and y must have same shape."
+    # assert y.shape == z.shape, "Arrays y and z must have same shape."
+    # convert x, y, z from shape (nx, ny) to (nx * ny) or
+    # (frame, nx, ny) to (frame, nx*ny)
     def reshape(ar):
         if dim(ar) == 3:
             return [k.reshape(-1) for k in ar]
         else:
             return ar.reshape(-1)
-
-    def reshape_color(ar):
-        if dim(ar) == 4:
-            return [k.reshape(-1, 3) for k in ar]
-        else:
-            return ar.reshape(-1, 3)
-
-    if isinstance(color, np.ndarray):
-        # if dim(color) == 4:
-        #	color = color.reshape((color.shape[0], -1, color.shape[-1]))
-        color = reshape_color(color)
-        # print(color.shape)
-
     x = reshape(x)
     y = reshape(y)
     z = reshape(z)
+    # similar for texture coordinates
     if u is not None:
         u = reshape(u)
     if v is not None:
         v = reshape(v)
+
+    # convert color from shape (nx, ny, {3,4}) to (nx * ny, {3, 4}) or
+    # (frame, nx, ny, {3,4}) to (frame, nx*ny, {3,4})
+    def reshape_color(ar):
+        if dim(ar) == 4:
+            return [k.reshape(-1, k.shape[-1]) for k in ar]
+        else:
+            return ar.reshape(-1, k.shape[-1])
+
+    if isinstance(color, np.ndarray):
+        color = reshape_color(color)
+
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
-    triangles, lines = _make_triangles_lines(x.reshape(nx,ny),y.reshape(nx,ny),z.reshape(nx,ny),wrapx,wrapy)
-    # print(i, j, p0, p1, p2, p3)
+    triangles, lines = _make_triangles_lines((nx,ny) ,wrapx,wrapy)
     mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles if surface else None, color=color,
                        lines=lines if wireframe else None,
                        u=u, v=v, texture=texture)
@@ -464,7 +470,11 @@ def animation_control(object, sequence_length=None, add=True, interval=200):
             values.sort(key=lambda key: -len(key.shape))
             try:
                 sequence_length = values[0].shape[0]  # assume this defines the sequence length
-                sequence_lengths.append(sequence_length)
+                if isinstance(object, ipv.Mesh):  # for a mesh, it does not make sense to have less than 1 dimension
+                    if len(values[0].shape) >= 2:  # if just 1d, it is most likely not an animation
+                        sequence_lengths.append(sequence_length)
+                else:
+                    sequence_lengths.append(sequence_length)
             except IndexError:      # scalars get ignored
                 pass
             if hasattr(object, 'color'):
@@ -1010,7 +1020,7 @@ def selector_lasso(output_widget=None):
     
 
 
-def _make_triangles_lines(x, y, z, wrapx=False, wrapy=False):
+def _make_triangles_lines(shape, wrapx=False, wrapy=False):
     """Transform rectangular regular grid into triangles
     
     :param x: {x2d}
@@ -1020,13 +1030,8 @@ def _make_triangles_lines(x, y, z, wrapx=False, wrapy=False):
     :param bool wrapy: simular for the y coordinate
     :return: triangles and lines used to plot Mesh
     """
-    assert len(x.shape) == 2, "Array x must be 2 dimensional."
-    assert len(y.shape) == 2, "Array y must be 2 dimensional."
-    assert len(z.shape) == 2, "Array z must be 2 dimensional."
-    assert x.shape == y.shape, "Arrays x and y must have same shape."
-    assert y.shape == z.shape, "Arrays y and z must have same shape."
     
-    nx, ny = x.shape
+    nx, ny = shape
 
     mx = nx if wrapx else nx - 1
     my = ny if wrapy else ny - 1

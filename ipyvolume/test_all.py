@@ -268,8 +268,20 @@ def test_animation_control():
     slider = ipv.animation_control(s, add=False).children[1]
     assert slider.max == n_frames - 1
 
+    Nx, Ny = 10, 7
+    x = np.arange(Nx)
+    y = np.arange(Ny)
+    x, y = np.meshgrid(x, y)
+    z = x + y
+    m = ipv.plot_surface(x, y, z)
+    with pytest.raises(ValueError):  # no animation present
+        slider = ipv.animation_control(m, add=False).children[1]
 
 
+    z = [x + y * k for k in range(n_frames)]
+    m = ipv.plot_surface(x, y, z)
+    slider = ipv.animation_control(m, add=False).children[1]
+    assert slider.max == n_frames - 1
 
 # just cover and call
 ipyvolume.examples.ball()
