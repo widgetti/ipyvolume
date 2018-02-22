@@ -121,9 +121,15 @@ def gcf():
 
 
 def _grow_limit(limits, values):
-    finites = np.isfinite(values)
-    newvmin = np.min(values[finites])
-    newvmax = np.max(values[finites])
+    try:
+        values[0]  # test if scalar
+    except TypeError:
+        newvmin = values
+        newvmax = values
+    else:
+        finites = np.isfinite(values)
+        newvmin = np.min(values[finites])
+        newvmax = np.max(values[finites])
     if limits is None:
         return newvmin, newvmax
     else:

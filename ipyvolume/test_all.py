@@ -88,6 +88,17 @@ def test_limits():
     assert f.zlim[0] == -17
     assert f.zlim[1] == 17
 
+    # TODO: actually, default xlim should be None, and the limits should
+    # then now grow, but 'move' around the new point
+    f = ipv.figure()
+    assert f.xlim == [0, 1]
+    ipv.ylim(0, 10)
+    ipv.zlim(-10, 0)
+    ipv.scatter(3, 4, 5)
+    assert f.xlim  == [0, 3]
+    assert f.ylim  == [0, 10]
+    assert f.zlim  == [-10, 5]
+
 def test_labels():
     f = p3.figure()
     p3.xlabel("x1")
