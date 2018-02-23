@@ -136,6 +136,8 @@ class Figure(ipywebrtc.MediaStream):
     ylim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
     zlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
 
+    extent = traitlets.Any().tag(sync=True)
+
     matrix_projection = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
     matrix_world = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
 
@@ -233,7 +235,7 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
             specular_coefficient=0.5, specular_exponent=5,
             downscale=1,
-            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, **kwargs):
+            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, extent=None, **kwargs):
     """
     Visualize a 3d array using volume rendering
 
@@ -253,6 +255,7 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
     :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
     :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
     :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
+    :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume, otherwise the viewport is used
     :param kwargs: extra argument passed to Volume and default transfer function
     :return:
 
@@ -300,7 +303,7 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
                             diffuse_coefficient=diffuse_coefficient,
                             specular_coefficient=specular_coefficient,
                             specular_exponent=specular_exponent,
-                            tf=tf, **kwargs)
+                            tf=tf, extent=extent, **kwargs)
 
     box = _volume_widets(v, lighting=lighting)
     return box

@@ -121,15 +121,18 @@ def gcf():
 
 
 def _grow_limit(limits, values):
-    try:
-        values[0]  # test if scalar
-    except TypeError:
-        newvmin = values
-        newvmax = values
+    if isinstance(values, (tuple, list)) and len(values) == 2:
+        newvmin, newvmax = values
     else:
-        finites = np.isfinite(values)
-        newvmin = np.min(values[finites])
-        newvmax = np.max(values[finites])
+        try:
+            values[0]  # test if scalar
+        except TypeError:
+            newvmin = values
+            newvmax = values
+        else:
+            finites = np.isfinite(values)
+            newvmin = np.min(values[finites])
+            newvmax = np.max(values[finites])
     if limits is None:
         return newvmin, newvmax
     else:
@@ -603,7 +606,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
             specular_coefficient=0.5, specular_exponent=5,
             downscale=1,
             level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1,
-            controls=True, max_opacity=0.2):
+            controls=True, max_opacity=0.2, extent=None):
     """Visualize a 3d array using volume rendering.
 
     Currently only 1 volume can be rendered.
@@ -625,6 +628,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
     :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
     :param bool controls: add controls for lighting and transfer function or not
     :param float max_opacity: maximum opacity for transfer function controls
+    :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume, otherwise the viewport is used
     :return:
     """
     vol = gcf()
@@ -643,6 +647,9 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
     vol.diffuse_coefficient = diffuse_coefficient
     vol.specular_coefficient = specular_coefficient
     vol.specular_exponent = specular_exponent
+    vol.extent = extent
+    if extent:
+        _grow_limits(*extent)
 
     if controls:
         ambient_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=vol.ambient_coefficient,

@@ -274,6 +274,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.box_geo = new THREE.BoxBufferGeometry(1, 1, 1)
         //this.box_material = new THREE.MeshLambertMaterial({color: 0xCC0000});
         this.box_material = new THREE.ShaderMaterial({
+            uniforms: {
+                offset: { type: '3f', value: [0, 0, 0] },
+                scale : { type: '3f', value: [1, 1, 1] },
+            },
             fragmentShader: shaders["box_fragment"],
             vertexShader: shaders["box_vertex"],
             side: THREE.BackSide
@@ -449,6 +453,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.update_size()
         this.tf_set()
         this.data_set()
+        this._update_box_geo()
 
         var that = this;
         //*
@@ -459,6 +464,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this._save_matrices, this);
+        this.model.on('change:xlim change:ylim change:zlim change:extent', this._update_box_geo, this);
         this.model.on('change:downscale', this.update_size, this);
         this.model.on('change:stereo', this.update_size, this);
         this.model.on('change:anglex change:angley change:anglez', this.update_current_control, this);
@@ -563,6 +569,51 @@ var FigureView = widgets.DOMWidgetView.extend( {
             //console.log('!hover')
             this.hover = false
         }
+    },
+    _update_box_geo: function() {
+        var x = this.model.get('xlim')
+        var y = this.model.get('ylim')
+        var z = this.model.get('zlim')
+        var dx = (x[1] - x[0])
+        var dy = (y[1] - y[0])
+        var dz = (z[1] - z[0])
+
+        // if no extend given, scale it to viewport
+        var extent = this.model.get('extent')
+        if(!extent)
+           extent = [x, y, z]
+
+       // normalized coordinates of the corners of the box
+        var x0 = (extent[0][0]-x[0])/dx
+        var x1 = (extent[0][1]-x[0])/dx
+        var y0 = (extent[1][0]-y[0])/dy
+        var y1 = (extent[1][1]-y[0])/dy
+        var z0 = (extent[2][0]-z[0])/dz
+        var z1 = (extent[2][1]-z[0])/dz
+
+        // clipped coordinates
+        var cx0 = Math.max(x0,  0)
+        var cx1 = Math.min(x1,  1)
+        var cy0 = Math.max(y0,  0)
+        var cy1 = Math.min(y1,  1)
+        var cz0 = Math.max(z0,  0)
+        var cz1 = Math.min(z1,  1)
+
+        // the clipped coordinates back to world space, then normalized to extend
+        // these are example calculations, the transform goes into scale and offset uniforms below
+        // var cwx0 = (cx0 * dx + x[0] - extent[0][0])/(extent[0][1] - extent[0][0])
+        // var cwx1 = (cx1 * dx + x[0] - extent[0][0])/(extent[0][1] - extent[0][0])
+
+        this.box_geo = new THREE.BoxBufferGeometry(cx1-cx0, cy1-cy0, cz1-cz0)
+        this.box_geo.translate((cx1-x0)/2, (cy1-cy0)/2, (cz1-cz0)/2)
+        this.box_geo.translate(cx0, cy0, cz0)
+        this.box_geo.translate(-0.5, -0.5, -0.5)
+        this.box_mesh.geometry = this.box_geo
+        this.box_material.uniforms.scale.value = [dx/(extent[0][1] - extent[0][0]), dy/(extent[1][1] - extent[1][0]), dz/(extent[2][1] - extent[2][0])]
+        this.box_material.uniforms.offset.value = [(x[0] - extent[0][0])/(extent[0][1] - extent[0][0]),
+                                                   (y[0] - extent[1][0])/(extent[1][1] - extent[1][0]),
+                                                   (z[0] - extent[2][0])/(extent[2][1] - extent[2][0])]
+        this.update()
     },
     setStyle: function() {
         // ignore original style setting, our style != a style widget
@@ -1294,6 +1345,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             animation_exponent: 0.5,
             style: styles['light'],
             render_continuous: false,
+            extent: null
         })
     }
 }, {

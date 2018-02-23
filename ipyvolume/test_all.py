@@ -99,6 +99,14 @@ def test_limits():
     assert f.ylim  == [0, 10]
     assert f.zlim  == [-10, 5]
 
+
+    f = ipv.figure()
+    ipv.volshow(np.random.rand(5, 5, 5), extent=[[0.1, 0.9], [0.5, 2], [-2, 5]])
+    assert f.xlim == [0, 1]
+    assert f.ylim == [0, 2]
+    assert f.zlim == [-2, 5]
+
+
 def test_style():
     f = ipv.figure()
     ipv.style.use('nobox')
