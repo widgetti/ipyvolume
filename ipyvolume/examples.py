@@ -174,3 +174,20 @@ def brain(draw=True, show=True, fiducial=True, flat=True, inflated=True, subject
         return mesh
     else:
         return xlist, ylist, zlist, polys
+
+def gaussian(N=1000, draw=True, show=True, seed=42, color=None, marker='sphere'):
+    import ipyvolume as ipv
+    rng = np.random.RandomState(seed)
+    x, y, z = rng.normal(size=(3, N))
+
+    if draw:
+        if color:
+            mesh = ipv.scatter(x, y, z, marker=marker, color=color)
+        else:
+            mesh = ipv.scatter(x, y, z, marker=marker)
+        if show:
+            #ipv.squarelim()
+            ipv.show()
+        return mesh
+    else:
+        return x, y, z
