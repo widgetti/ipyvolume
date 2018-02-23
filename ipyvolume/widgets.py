@@ -148,6 +148,8 @@ class Figure(ipywebrtc.MediaStream):
     style = traitlets.Dict(default_value=ipyvolume.styles.default).tag(sync=True)
 
     render_continuous = traitlets.Bool(False).tag(sync=True)
+    selector = traitlets.Unicode(default_value='lasso').tag(sync=True)
+    selection_mode = traitlets.Unicode(default_value='replace').tag(sync=True)
 
     #xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
@@ -156,7 +158,7 @@ class Figure(ipywebrtc.MediaStream):
     def __init__(self, **kwargs):
         super(Figure, self).__init__(**kwargs)
         self._screenshot_handlers = widgets.CallbackDispatcher()
-        self._lasso_handlers = widgets.CallbackDispatcher()
+        self._selection_handlers = widgets.CallbackDispatcher()
         self.on_msg(self._handle_custom_msg)
 
     def screenshot(self, width=None, height=None, mime_type='image/png'):
@@ -168,20 +170,21 @@ class Figure(ipywebrtc.MediaStream):
     def _handle_custom_msg(self, content, buffers):
         if content.get('event', '') == 'screenshot':
             self._screenshot_handlers(content['data'])
-        if content.get('event', '') == 'lasso':
-            self._lasso_handlers(content['data'])
+        elif content.get('event', '') == 'selection':
+            self._selection_handlers(content['data'])
 
-    def on_lasso(self, callback, remove=False):
-        self._lasso_handlers.register_callback(callback, remove=remove)
+    def on_selection(self, callback, remove=False):
+        self._selection_handlers.register_callback(callback, remove=remove)
 
     def project(self, x, y, z):
         W = np.matrix(self.matrix_world).reshape((4,4))     .T
         P = np.matrix(self.matrix_projection).reshape((4,4)).T
         M = np.dot(P, W)
-        vertices = np.array([x, y, z, np.ones(len(x))])#.T
-        p = np.array(np.dot(M, vertices))
-        p = p / p[3]
-        return p
+        x = np.asarray(x)
+        vertices = np.array([x, y, z, np.ones(x.shape)])
+        screen_h = np.tensordot(M, vertices, axes=(1, 0))
+        xy = screen_h[:2] / screen_h[3]
+        return xy
 
 def _volume_widets(v, lighting=False):
     import ipywidgets

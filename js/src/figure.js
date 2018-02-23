@@ -122,6 +122,125 @@ ToolIcon = function(className, parent) {
     }
 }
 
+
+var _scale_point = function(xy, width, height) {
+    // gl's normalized device coordinates, [-1, 1]
+    return [xy[0] / width * 2 - 1, 1 - xy[1] / height * 2]
+}
+
+LassoSelector = function(canvas) {
+    this.canvas = canvas;
+    this.points = []
+    this.mouseMove = (x, y) => {
+        this.points.push([x, y])
+    }
+    this.close = () => {
+        ctx = this.canvas.getContext('2d');
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+    this.draw = () => {
+        ctx = this.canvas.getContext('2d');
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(255, 0, 0, 1)';
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        ctx.beginPath();
+        for(var i = 0; i < this.points.length; i++) {
+            ctx.lineTo(this.points[i][0], this.points[i][1]);
+        }
+        ctx.fill()
+        ctx.stroke()
+
+    }
+    this.getData = function(width, height) {
+        var data = {type: 'lasso'}
+        data['pixel'] = this.points
+        data['device'] = _.map(this.points, (xy) => _scale_point(xy, width, height))
+        return data;
+    }
+}
+
+CircleSelector = function(canvas) {
+    this.canvas = canvas;
+    this.points = []
+    this.begin = null;
+    this.end = null;
+    this.mouseMove = (x, y) => {
+        if(!this.begin)
+            this.begin = [x, y]
+        else
+            this.end = [x, y]
+    }
+    this.close = () => {
+        ctx = this.canvas.getContext('2d');
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.begin = null;
+        this.end = null;
+    }
+    this.draw = () => {
+        if(this.begin && this.end) {
+            ctx = this.canvas.getContext('2d');
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(255, 0, 0, 1)';
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.beginPath();
+            var dx = this.begin[0] - this.end[0];
+            var dy = this.begin[1] - this.end[1];
+            var r = Math.sqrt(dx*dx + dy*dy)
+            ctx.arc(this.begin[0], this.begin[1], r, 0, 2*Math.PI);
+            ctx.fill()
+            ctx.stroke()
+        }
+    }
+    this.getData = function(width, height) {
+        var data = {type: 'circle'}
+        data['pixel']  = {begin: this.begin, end: this.end}
+        data['device'] = {begin: _scale_point(this.begin, width, height), end:_scale_point(this.end, width, height)}
+        return data;
+    }
+}
+
+RectangleSelector = function(canvas) {
+    this.canvas = canvas;
+    this.points = []
+    this.begin = null;
+    this.end = null;
+    this.mouseMove = (x, y) => {
+        if(!this.begin)
+            this.begin = [x, y]
+        else
+            this.end = [x, y]
+    }
+    this.close = () => {
+        ctx = this.canvas.getContext('2d');
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.begin = null;
+        this.end = null;
+    }
+    this.draw = () => {
+        if(this.begin && this.end) {
+            ctx = this.canvas.getContext('2d');
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(255, 0, 0, 1)';
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.beginPath();
+            ctx.rect(this.begin[0], this.begin[1], this.end[0] - this.begin[0], this.end[1] - this.begin[1]);
+            ctx.fill()
+            ctx.stroke()
+        }
+    }
+    this.getData = function(width, height) {
+        var data = {type: 'rectangle'}
+        data['pixel']  = {begin: this.begin, end: this.end}
+        data['device'] = {begin: _scale_point(this.begin, width, height), end:_scale_point(this.end, width, height)}
+        return data;
+    }
+}
+
+var selectors = {'lasso': LassoSelector, 'circle': CircleSelector, 'rectangle': RectangleSelector};
+
 var FigureView = widgets.DOMWidgetView.extend( {
     render: function() {
         this.transitions = []
@@ -234,10 +353,24 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.model.save_changes()
         }
 
-        // set up WebGL using threejs
-        this.renderer = new THREE.WebGLRenderer({antialias: true});
         this.el.classList.add("jupyter-widgets");
-        this.el.appendChild(this.renderer.domElement);
+        // set up WebGL using threejs, with an overlay canvas for 2d drawing
+        this.canvas_container = document.createElement("div")
+        this.canvas_overlay_container = document.createElement("div")
+        this.canvas_overlay = document.createElement("canvas")
+        this.canvas_overlay_container.appendChild(this.canvas_overlay);
+        this.canvas_container.appendChild(this.canvas_overlay_container);
+
+        this.renderer = new THREE.WebGLRenderer({antialias: true});
+        this.canvas_renderer_container = document.createElement("div")
+        this.canvas_renderer_container.appendChild(this.renderer.domElement);
+
+        this.canvas_container.appendChild(this.canvas_renderer_container);
+        this.canvas_container.appendChild(this.canvas_overlay_container);
+        this.canvas_overlay_container .style = 'position: absolute; z-index: 2; pointer-events: none; '
+        this.canvas_renderer_container.style = 'position: absolute; z-index: 1'
+        this.canvas_container.style = 'position: relative'
+        this.el.appendChild(this.canvas_container);
         this.el.setAttribute('tabindex', '1') // make sure we can have focus
 
         // el_mirror is a 'mirror' dom tree that d3 needs
@@ -395,6 +528,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         window.addEventListener('mouseup', _.bind(this._mouse_up, this), false);
         this.capture_mouse = false
         this.mouse_trail = [] // list of x, y positions
+        this.select_overlay = null; // lasso or sth else?
 
 
         this.control_trackball = new THREE.TrackballControls( this.camera, this.renderer.domElement );
@@ -622,10 +756,11 @@ var FigureView = widgets.DOMWidgetView.extend( {
         //console.log('mouse down', e)
         window.last_event = e
         if(e.ctrlKey) {
-            console.log('pressed ctrl and mouse down')
             this.capture_mouse = true
             this.control_trackball.enabled = false
             this.control_orbit.enabled = false
+            var cls = selectors[this.model.get('selector')];
+            this.selector = new cls(this.canvas_overlay)
         }
     },
     _mouse_move: function(e) {
@@ -640,30 +775,57 @@ var FigureView = widgets.DOMWidgetView.extend( {
             mouseX = e.layerX;
             mouseY = e.layerY;
         }
-        if(this.capture_mouse)
+        if(this.capture_mouse) {
             this.mouse_trail.push([mouseX, mouseY])
+            this.selector.mouseMove(mouseX, mouseY)
+            this.update()
+        }
     },
     _mouse_up: function(e) {
         if(this.capture_mouse) {
             this.control_trackball.enabled = true
             this.control_orbit.enabled = true
             this.capture_mouse = false
-            var data = {}
-            var canvas = this.renderer.domElement
-            data['pixel'] = this.mouse_trail
-            // gl's normalized device coordinates, [-1, 1]
-            data['device'] = _.map(this.mouse_trail, function(xy) {
-                return [xy[0] / canvas.clientWidth * 2 - 1, 1 - xy[1] / canvas.clientHeight * 2]
-            }, this)
-            this.send({event: 'lasso', data: data});
+            var canvas = this.renderer.domElement;
+            this.send({event: 'selection', data: this.selector.getData(canvas.clientWidth, canvas.clientHeight)})
             // send event..
             this.mouse_trail = []
+            this.selector.close()
+            this.selector = null;
         }
     },
     _special_keys_down: function(e) {
         var evtobj = window.event? event : e
         if(evtobj.altKey) {
             //console.log('pressed alt', this.hover)
+        }
+        if(evtobj.key == '=') {  // '='
+            this.model.set('selection_mode', 'replace')
+            this.touch()
+        }
+        if(evtobj.key == '|') {  // '='
+            this.model.set('selection_mode', 'or')
+            this.touch()
+        }
+        if(evtobj.key == '&') {  // '='
+            this.model.set('selection_mode', 'and')
+            this.touch()
+        }
+        if(evtobj.key == '-') {  // '='
+            this.model.set('selection_mode', 'subtract')
+            this.touch()
+        }
+        if(evtobj.keyCode == 76) {  // 'l'
+            this.model.set('selector', 'lasso')
+            this.touch()
+        }
+        if(evtobj.keyCode == 67) {  // 'c'
+            this.model.set('selector', 'circle')
+            this.touch()
+        }
+        if(evtobj.keyCode == 82) {  // 'r'
+            this.model.set('selector', 'rectangle')
+            this.touch()
         }
         if(evtobj.keyCode == 17) {  // ctrl
             //console.log('pressed ctrl', this.hover)
@@ -1082,6 +1244,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.renderer.setScissorTest( false );
             this.renderer.setViewport( 0, 0, size.width, size.height );
         }
+        if(this.selector)
+            this.selector.draw() // TODO: what to do with stereo rendering?
         this.transitions = transitions_todo;
         if(this.transitions.length > 0) {
             this.update()
@@ -1234,6 +1398,12 @@ var FigureView = widgets.DOMWidgetView.extend( {
             render_height = custom_height || this.model.get("height");
         }
         this.renderer.setSize(width, height, false);
+        this.canvas_container.style.width = width + "px"
+        this.canvas_container.style.height = height + "px"
+        this.canvas_overlay.style.width = width + "px"
+        this.canvas_overlay.style.height = height + "px"
+        this.canvas_overlay.width = width
+        this.canvas_overlay.height = height
 
         if(this.model.get("stereo")) {
             render_width /= 2;
@@ -1345,7 +1515,9 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             animation_exponent: 0.5,
             style: styles['light'],
             render_continuous: false,
-            extent: null
+            extent: null,
+            selector: 'lasso',
+            selection_mode: 'replace'
         })
     }
 }, {

@@ -1036,27 +1036,60 @@ def plot_plane(where="back", texture=None):
     mesh = plot_trisurf(x, y, z, triangles, texture=texture, u=u, v=v)
     return mesh
 
-def selector_lasso(output_widget=None):
+def selector_default(output_widget=None):
     fig = gcf()
     if output_widget is None:
         output_widget = ipywidgets.Output()
         display(output_widget)
     def lasso(data, other=None, fig=fig):
         with output_widget:
-            if data['device']:
+            if data['device'] and data['type'] == 'lasso':
                 import shapely.geometry
                 region = shapely.geometry.Polygon(data['device'])
-                for scatter in fig.scatters:
-                    xyz_projected = fig.project(scatter.x, scatter.y, scatter.z)
-                    points = xyz_projected.T[:,:2]
-                    selected = []
-                    for i, p in enumerate(points):
-                        #print(i, p)
-                        if region.contains(shapely.geometry.Point(p)):
-                            selected.append(i)
-                    if selected:
-                        scatter.selected = selected
-    fig.on_lasso(lasso)
+                @np.vectorize
+                def inside(x, y):
+                    return region.contains(shapely.geometry.Point([x, y]))
+            if data['device'] and data['type'] == 'circle':
+                x1, y1 = data['device']['begin']
+                x2, y2 = data['device']['end']
+                dx = x2 - x1
+                dy = y2 - y1
+                r = (dx**2 + dy**2)**0.5
+                def inside(x, y):
+                    return ((x-x1)**2 + (y-y1)**2) < r**2
+            if data['device'] and data['type'] == 'rectangle':
+                x1, y1 = data['device']['begin']
+                x2, y2 = data['device']['end']
+                x = [x1, x2]
+                y = [y1, y2]
+                xmin, xmax = min(x), max(x)
+                ymin, ymax = min(y), max(y)
+                def inside(x, y):
+                    return (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
+            def join(x, y, mode):
+                N = np.max(x) if x is not None else np.max(y)
+                N = max(N, np.max(y))
+                xmask = np.zeros(N+1, np.bool)
+                ymask = np.zeros(N+1, np.bool)
+                if x is not None:
+                    xmask[x] = True
+                ymask[y] = True
+                if mode == "replace":
+                    return np.where(ymask)
+                if mode == "and":
+                    mask = xmask & ymask
+                    return np.where(ymask if x is None else mask)
+                if mode == "or":
+                    mask = xmask | ymask
+                    return np.where(ymask if x is None else mask)
+                if mode == "subtract":
+                    mask = xmask & ~ymask
+                    return np.where(ymask if x is None else mask)
+            for scatter in fig.scatters:
+                x, y = fig.project(scatter.x, scatter.y, scatter.z)
+                mask = inside(x, y)
+                scatter.selected = join(scatter.selected, np.where(mask), fig.selection_mode)
+    fig.on_selection(lasso)
     
 
 
