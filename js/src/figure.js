@@ -1084,6 +1084,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         return matrix;
     },
     _get_view_matrix() {
+        // make sure the camera's inverse is up to date, normally the renderer would do this
+        // but this also gets called before the first render
+        this.camera.updateMatrixWorld()
+        this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld )
         // we don't really properly use the worldmatrix, rendering threejs's frustum culling
         // useless, we maybe should change this
         // https://github.com/mrdoob/three.js/issues/78#issuecomment-846917
