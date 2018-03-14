@@ -525,6 +525,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // since we disable the controls, seems to work on chrome
         this.renderer.domElement.addEventListener('mousedown', _.bind(this._mouse_down, this), false);
         this.renderer.domElement.addEventListener('mousemove', _.bind(this._mouse_move, this), false);
+        this.renderer.domElement.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        }, false);
         window.addEventListener('mouseup', _.bind(this._mouse_up, this), false);
         this.capture_mouse = false
         this.mouse_trail = [] // list of x, y positions
