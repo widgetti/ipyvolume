@@ -117,6 +117,9 @@ var ScatterView = widgets.WidgetView.extend( {
         }
     },
     remove_from_scene: function() {
+        if(this.renderer.scene_scatter.children.indexOf(this.mesh) == -1) {
+            console.warn('trying to removing scatter mesh from scene that does not include it');
+        }
         this.renderer.scene_scatter.remove(this.mesh)
         if(this.line_segments) {
             this.renderer.scene_scatter.remove(this.line_segments)
