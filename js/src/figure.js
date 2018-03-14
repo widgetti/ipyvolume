@@ -956,7 +956,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
     update_scatters: function() {
         if(this.scatter_views) {
             this.scatter_views.forEach((scatter) => {
-                scatter.remove_from_scene()
+                scatter.remove_from_scene();
+                scatter.remove();
             })
         }
         var scatters = this.model.get('scatters');
@@ -975,7 +976,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
     update_meshes: function() {
         if(this.mesh_views) {
             this.mesh_views.forEach((mesh) => {
-                mesh.remove_from_scene()
+                mesh.remove_from_scene();
+                mesh.remove();
             })
         }
         var meshes = this.model.get('meshes');
