@@ -31,6 +31,50 @@ def test_serialize():
     value = np.asarray(5)
     assert ipyvolume.serialize.array_sequence_to_binary_or_json(value) == 5
 
+def test_serialize_cube():
+    cube = np.zeros((100, 200, 300))
+    tiles, tile_shape, rows, columns, slices = ipv.serialize._cube_to_tiles(cube, 0, 1)
+    assert len(tiles.shape) == 3 # should be 2d + 1d for channels
+    f = ipv.serialize.StringIO()
+    ipv.serialize.cube_to_png(cube, 0, 1, f)
+    assert len(f.getvalue()) > 0
+
+def test_tile_size():
+    rows, columns, image_width, image_height = ipyvolume.serialize._compute_tile_size((256, 256, 256))
+    # expect 16x16,
+    assert rows == 16
+    assert columns == 16
+    assert image_width == 256*16
+    assert image_height == 256*16
+
+    rows, columns, image_width, image_height = ipyvolume.serialize._compute_tile_size((254, 254, 254))
+    # expect the same, everything upscaled to a power of 2
+    assert rows == 16
+    assert columns == 16
+    assert image_width == 256*16
+    assert image_height == 256*16
+
+    ipyvolume.serialize.max_texture_width = 256*8
+    rows, columns, image_width, image_height = ipyvolume.serialize._compute_tile_size((254, 254, 254))
+    assert rows == 32
+    assert columns == 8
+    assert image_width == 256*8
+    assert image_height == 256*32
+
+    ipyvolume.serialize.min_texture_width = 16*8
+    rows, columns, image_width, image_height = ipyvolume.serialize._compute_tile_size((16, 16, 16))
+    assert rows == 2
+    assert columns == 8
+    assert image_width == 128
+    assert image_height == 128  # this is the min texture size
+
+    ipyvolume.serialize.min_texture_width = 16*8
+    rows, columns, image_width, image_height = ipyvolume.serialize._compute_tile_size((15, 15, 15))
+    assert rows == 2
+    assert columns == 8
+    assert image_width == 128
+    assert image_height == 128  # this is the min texture size
+
 def test_figure():
     f1 = p3.figure()
     f2 = p3.figure(2)

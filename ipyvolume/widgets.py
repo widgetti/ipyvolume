@@ -7,7 +7,7 @@ from traitlets import Unicode, Integer
 import traitlets
 import logging
 import numpy as np
-from .serialize import array_cube_png_serialization, array_serialization, array_sequence_serialization,\
+from .serialize import array_cube_tile_serialization, array_serialization, array_sequence_serialization,\
     color_serialization, image_serialization, texture_serialization
 from .transferfunction import *
 import warnings
@@ -100,7 +100,7 @@ class Figure(ipywebrtc.MediaStream):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_png_serialization)
+    volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_tile_serialization)
     eye_separation = traitlets.CFloat(6.4).tag(sync=True)
     data_min = traitlets.CFloat().tag(sync=True)
     data_max = traitlets.CFloat().tag(sync=True)

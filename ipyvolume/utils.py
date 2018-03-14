@@ -5,6 +5,10 @@ import io
 import os
 
 
+# https://stackoverflow.com/questions/14267555/find-the-smallest-power-of-2-greater-than-n-in-python
+def next_power_of_2(x):
+    return 1 if x == 0 else 2**(x - 1).bit_length()
+
 # original from http://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
 def dict_deep_update(d, u):
     for k, v in u.items():

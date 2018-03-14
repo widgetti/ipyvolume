@@ -1432,7 +1432,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
             return;
             //this.volume = {image_shape: [2048, 1024], slice_shape: [128, 128], rows: 8, columns:16, slices: 128, src:default_cube_url}
         }
-        this.texture_volume = this.texture_loader.load(this.volume.src, _.bind(this.update, this));//, _.bind(this.update, this))
+        var data = new Uint8Array(this.volume.tiles.buffer)
+        this.texture_volume = new THREE.DataTexture(data, this.volume.image_shape[0], this.volume.image_shape[1],
+                                                    THREE.RGBAFormat, THREE.UnsignedByteType)
         this.texture_volume.magFilter = THREE.LinearFilter
         this.texture_volume.minFilter = THREE.LinearFilter
         this.box_material_volr.uniforms.volume_rows.value = this.volume.rows,
@@ -1441,6 +1443,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.box_material_volr.uniforms.volume_size.value = this.volume.image_shape
         this.box_material_volr.uniforms.volume_slice_size.value = this.volume.slice_shape
         this.box_material_volr.uniforms.volume.value = this.texture_volume
+        this.texture_volume.needsUpdate = true // without this it doesn't seem to work
         if(this.model.previous("volume_data")) {
             this.update()
         } else {

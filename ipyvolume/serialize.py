@@ -1,18 +1,22 @@
 import logging
-import numpy as np
 import math
+
 from ipython_genutils.py3compat import string_types, PY3
 import ipyvolume as ipv
+from . import utils
 import ipywidgets
 import ipywebrtc
+import numpy as np
+import PIL.Image
 
-logger = logging.getLogger("ipyvolume")
 try:
 	from io import BytesIO as StringIO # python3
 except:
 	from StringIO import StringIO # python2
 from base64 import b64encode
 import warnings
+
+logger = logging.getLogger("ipyvolume")
 
 def image_to_url(image, widget):
     if image is None:
@@ -50,12 +54,22 @@ def texture_to_json(texture, widget):
     else:
         return image_to_url(texture, widget)
 
+max_texture_width = 2048*8  # this will nicely fit 512**3 textures
+min_texture_width = 256
 
-def cube_to_png(grid, vmin, vmax, file):
-	image_width = 2048
-	slices = grid.shape[0]
-	columns = image_width // grid.shape[2]
+def _compute_tile_size(shape):
+	# TODO: we need to be a bit smarter here, for large grids we need to 
+	slices = shape[0]
+	approx_rows = int(round(math.sqrt(slices)))
+	image_width = max(min_texture_width, min(max_texture_width, utils.next_power_of_2(approx_rows * shape[1])))
+	columns = image_width // shape[2]
 	rows = int(math.ceil(slices/columns))
+	image_height = max(min_texture_width, utils.next_power_of_2(rows * shape[1]))
+	return rows, columns, image_width, image_height
+
+def _cube_to_tiles(grid, vmin, vmax):
+	slices = grid.shape[0]
+	rows, columns, image_width, image_height = _compute_tile_size(grid.shape)
 	image_height = rows * grid.shape[1]
 	data = np.zeros((image_height, image_width, 4), dtype=np.uint8)
 	#vmin, vmax = np.nanmin(grid), np.nanmax(grid)
@@ -77,11 +91,19 @@ def cube_to_png(grid, vmin, vmax, file):
 					subdata[...,i] = ((gradient[i][zindex]/2.+0.5)*255).astype(np.uint8)
 				#for i in range(3):
 				#	subdata[...,i+1] = subdata[...,0]
+	tile_shape = (grid.shape[2], grid.shape[1])
+
+	return data, tile_shape, rows, columns, grid.shape[0]
+
+
+def cube_to_png(grid, vmin, vmax, file):
+	tiles_data, tile_shape, rows, columns, slices = _cube_to_tiles(grid, vmin, vmax)
+	image_height, image_width, __ = tiles_data.shape
 	with warnings.catch_warnings():
 		warnings.simplefilter("ignore")
-		img = PIL.Image.frombuffer("RGBA", (image_width, image_height), data, 'raw')
+		img = PIL.Image.frombuffer("RGBA", (image_width, image_height), tiles_data, 'raw')
 		img.save(file, "png")
-	return (image_width, image_height), (grid.shape[2], grid.shape[1]), rows, columns, grid.shape[0]
+	return (image_width, image_height), tile_shape, rows, columns, slices
 
 def rgba_to_png(rgba, file):
 	import PIL.Image
@@ -113,6 +135,16 @@ def cube_to_json(grid, obj=None):
 	json = {"image_shape": image_shape, "slice_shape": slice_shape, "rows": rows, "columns": columns, "slices": slices, "src": image_url}
 	return json
 
+def cube_to_tiles(grid, obj=None):
+	if grid is None or len(grid.shape) == 1:
+		return None
+	f = StringIO()
+	tiles_data, slice_shape, rows, columns, slices = _cube_to_tiles(grid, obj.data_min, obj.data_max)
+	image_height, image_width, __ = tiles_data.shape
+	image_shape = image_width, image_height
+	json = {"tiles": memoryview(tiles_data), "image_shape": image_shape, "slice_shape": slice_shape,
+			"rows": rows, "columns": columns, "slices": slices}
+	return json
 
 def from_json(value, obj=None):
 	return []
@@ -242,6 +274,7 @@ array_serialization = dict(to_json=array_to_binary_or_json, from_json=None)
 
 array_cube_png_serialization = dict(to_json=cube_to_json, from_json=from_json)
 array_rgba_png_serialization = dict(to_json=rgba_to_json, from_json=from_json)
+array_cube_tile_serialization = dict(to_json=cube_to_tiles, from_json=from_json)
 #array_binary_serialization = dict(to_json=array_to_binary_or_json, from_json=from_json_to_array)
 image_serialization = dict(to_json=image_to_url, from_json=None)
 texture_serialization = dict(to_json=texture_to_json, from_json=None)
