@@ -131,26 +131,26 @@ var _scale_point = function(xy, width, height) {
 LassoSelector = function(canvas) {
     this.canvas = canvas;
     this.points = []
+    this.context = this.canvas.getContext('2d');
     this.mouseMove = (x, y) => {
         this.points.push([x, y])
     }
     this.close = () => {
-        ctx = this.canvas.getContext('2d');
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        //ctx.canvas.width = context.canvas.width
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
     this.draw = () => {
-        ctx = this.canvas.getContext('2d');
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = 'rgba(255, 0, 0, 1)';
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-        ctx.beginPath();
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.context.lineWidth = 1.5;
+        this.context.strokeStyle = 'rgba(255, 0, 0, 1)';
+        this.context.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        this.context.beginPath();
         for(var i = 0; i < this.points.length; i++) {
-            ctx.lineTo(this.points[i][0], this.points[i][1]);
+            this.context.lineTo(this.points[i][0], this.points[i][1]);
         }
-        ctx.fill()
-        ctx.stroke()
-
+        this.context.closePath()
+        this.context.fill()
+        this.context.stroke()
     }
     this.getData = function(width, height) {
         var data = {type: 'lasso'}
@@ -531,6 +531,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }, false);
         window.addEventListener('mouseup', _.bind(this._mouse_up, this), false);
         this.capture_mouse = false
+        this.mouse_inside = false;
         this.mouse_trail = [] // list of x, y positions
         this.select_overlay = null; // lasso or sth else?
 
@@ -765,6 +766,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.control_orbit.enabled = false
             var cls = selectors[this.model.get('selector')];
             this.selector = new cls(this.canvas_overlay)
+            e.preventDefault();
+            e.stopPropagation();
         }
     },
     _mouse_move: function(e) {
@@ -782,13 +785,17 @@ var FigureView = widgets.DOMWidgetView.extend( {
         if(this.capture_mouse) {
             this.mouse_trail.push([mouseX, mouseY])
             this.selector.mouseMove(mouseX, mouseY)
-            this.update()
+            this.selector.draw()
         }
     },
     _mouse_up: function(e) {
         if(this.capture_mouse) {
-            this.control_trackball.enabled = true
-            this.control_orbit.enabled = true
+            // make sure we don't accidently handle the event handler for the controls
+            // so enable them outside the event handler?
+            setTimeout(() => {
+                this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
+                this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
+            }, 0)
             this.capture_mouse = false
             var canvas = this.renderer.domElement;
             this.send({event: 'selection', data: this.selector.getData(canvas.clientWidth, canvas.clientHeight)})
@@ -796,6 +803,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.mouse_trail = []
             this.selector.close()
             this.selector = null;
+            e.preventDefault();
+            e.stopPropagation();
         }
     },
     _special_keys_down: function(e) {
@@ -803,39 +812,45 @@ var FigureView = widgets.DOMWidgetView.extend( {
         if(evtobj.altKey) {
             //console.log('pressed alt', this.hover)
         }
+        var handled = false;
         if(evtobj.key == '=') {  // '='
-            this.model.set('selection_mode', 'replace')
-            this.touch()
+            this.model.set('selection_mode', 'replace');
+            handled = true;
         }
         if(evtobj.key == '|') {  // '='
-            this.model.set('selection_mode', 'or')
-            this.touch()
+            this.model.set('selection_mode', 'or');
+            handled = true;
         }
         if(evtobj.key == '&') {  // '='
-            this.model.set('selection_mode', 'and')
-            this.touch()
+            this.model.set('selection_mode', 'and');
+            handled = true;
         }
         if(evtobj.key == '-') {  // '='
-            this.model.set('selection_mode', 'subtract')
-            this.touch()
+            this.model.set('selection_mode', 'subtract');
+            handled = true;
         }
         if(evtobj.keyCode == 76) {  // 'l'
-            this.model.set('selector', 'lasso')
-            this.touch()
+            this.model.set('selector', 'lasso');
+            handled = true;
         }
         if(evtobj.keyCode == 67) {  // 'c'
-            this.model.set('selector', 'circle')
-            this.touch()
+            this.model.set('selector', 'circle');
+            handled = true;
         }
         if(evtobj.keyCode == 82) {  // 'r'
-            this.model.set('selector', 'rectangle')
-            this.touch()
+            this.model.set('selector', 'rectangle');
+            handled = true;
         }
         if(evtobj.keyCode == 17) {  // ctrl
             //console.log('pressed ctrl', this.hover)
             if(this.hover) {
                 this.select_icon.active(true)
             }
+        }
+        if(handled) {
+            this.touch()
+            //e.preventDefault();
+            //e.stopPropagation();
         }
     },
     _special_keys_up: function(e) {
@@ -1146,9 +1161,11 @@ var FigureView = widgets.DOMWidgetView.extend( {
     },
     _real_update: function() {
         //this.controls_device.update()
-        this.control_trackball.handleResize()
-        this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
-        this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
+        if(!this.capture_mouse) {
+            this.control_trackball.handleResize()
+            this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
+            this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
+        }
         this._update_requested = false
 
 
