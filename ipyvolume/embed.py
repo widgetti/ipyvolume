@@ -91,7 +91,7 @@ def save_embed_js(target="", version=wembed.__html_manager_version__):
 
 
 # TODO this may be able to get directly taken from embed-amd.js in the future jupyter-widgets/ipywidgets#1650
-def save_font_awesome(dirpath='', version="4.7.0"):
+def save_font_awesome(dirpath='', version="5.0.8"):
     """ download and save the font-awesome package to a local directory
 
     :type dirpath: str
@@ -102,7 +102,9 @@ def save_font_awesome(dirpath='', version="4.7.0"):
     directory_path = os.path.join(dirpath, directory_name)
     if os.path.exists(directory_path):
         return directory_name
-    url = "https://fontawesome.com/v{0:s}/assets/font-awesome-{0:s}.zip".format(version)
+
+    # url = "http://fontawesome.io/assets/font-awesome-{0:s}.zip".format(version)
+    url = "https://use.fontawesome.com/releases/v{0:s}/fontawesome-free-{0:s}.zip".format(version)
     content, encoding = download_to_bytes(url)
 
     try:
