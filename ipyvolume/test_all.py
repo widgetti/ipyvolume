@@ -110,6 +110,24 @@ def test_figure():
         for debug in [True, False]:
             p3.figure(debug=debug, controls=controls)
 
+def test_context():
+    f1 = ipv.figure(1)
+    f2 = ipv.figure(2)
+    f3 = ipv.figure(2)
+
+    assert ipv.gcf() is f3
+    with f2:
+        assert ipv.gcf() is f2
+    assert ipv.gcf() is f3
+    # test nested
+    with f2:
+        assert ipv.gcf() is f2
+        with f1:
+            assert ipv.gcf() is f1
+        assert ipv.gcf() is f2
+    assert ipv.gcf() is f3
+
+
 def test_limits():
     f = p3.figure()
     p3.xlim(-10, 11)

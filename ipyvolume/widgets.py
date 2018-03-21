@@ -161,6 +161,27 @@ class Figure(ipywebrtc.MediaStream):
         self._selection_handlers = widgets.CallbackDispatcher()
         self.on_msg(self._handle_custom_msg)
 
+    def __enter__(self):
+        """Sets this figure as the current in the pylab API
+
+        Example:
+        >>> f1 = ipv.figure(1)
+        >>> f2 = ipv.figure(2)
+        >>> with f1:
+        >>>  ipv.scatter(x, y, z)
+        >>> assert ipv.gcf() is f2
+        """
+
+
+        import ipyvolume as ipv
+        self._previous_figure = ipv.gcf()
+        ipv.figure(self)
+
+    def __exit__(self, type, value, traceback):
+        import ipyvolume as ipv
+        ipv.figure(self._previous_figure)
+        del self._previous_figure
+
     def screenshot(self, width=None, height=None, mime_type='image/png'):
         self.send({'msg':'screenshot', 'width':width, 'height':height, 'mime_type':mime_type})
 
