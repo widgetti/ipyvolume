@@ -56,23 +56,21 @@ void main(void) {
     vec3 position_offset = vec3(x, y, z);
     vec3 position_offset_previous = vec3(x_previous, y_previous, z_previous);
 
-    // assume the vector points to the y axis
-    vec3 vector_current = mix(normalize(vector_previous), normalize(vector), vec3(animation_time_vx, animation_time_vy, animation_time_vz))
-           * mix(length(vector_previous), length(vector), (animation_time_vx+ animation_time_vy+ animation_time_vz)/3.);
-    vec3 y_axis = normalize(vector_current);
-    // we may have bad luck, and alight with 1 vector, so take two vectors, and we'll always find a non-zero vector
-    vec3 some_z_vector_a = vec3(0., 1., 1.);
-    vec3 some_z_vector_b = normalize(vec3(0., 2., 1.));
-    vec3 x_axis = normalize(cross(y_axis, some_z_vector_a)  + cross(y_axis, some_z_vector_b));
-    vec3 z_axis = -normalize(cross(y_axis, x_axis)); // - to keep it right handed
-    mat3 move_to_vector = mat3(x_axis, y_axis, z_axis);
     float s = mix(size_previous/100., size/100., animation_time_size);
-    vec3 pos = vec3(0, 0, 0)*(move_to_vector * (position*s))
-        + (mix(position_offset_previous, position_offset, vec3(animation_time_x, animation_time_y, animation_time_z))
+    vec3 pos = (mix(position_offset_previous, position_offset, vec3(animation_time_x, animation_time_y, animation_time_z))
                 - origin) / size_viewport - 0.5;
-    gl_Position = projectionMatrix *
+    vec4 posxy = projectionMatrix *
                 modelViewMatrix *
-                vec4(pos,1.0) + vec4((position.x-0.5)*s, (position.y-0.5)*s, 0, 0);
+                vec4(pos,1.0);
+    // Test vector used to correct scale in clipspace
+    vec4 posxy_test = projectionMatrix *
+                modelViewMatrix *
+                vec4(1.0,0.0,0.0,1.0);
+    float posxy_mag = sqrt(posxy_test.x*posxy_test.x +
+                           posxy_test.y*posxy_test.y +
+                           posxy_test.z*posxy_test.z);   
+    s = s * posxy_mag; 
+    gl_Position = posxy + vec4((position.x-0.5)*s, (position.y-0.5)*s, 0, 0);
     vec3 positionEye = ( modelViewMatrix * vec4( pos, 1.0 ) ).xyz;
     vertex_position = positionEye;
     vertex_uv = position.xy;

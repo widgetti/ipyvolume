@@ -17,6 +17,7 @@ void main(void) {
     gl_FragColor = vec4( vertex_color.rgb, 1.0 );
 #else
 #ifdef USE_SPRITE
+    // TODO: Look up colors based on texture
     gl_FragColor = vec4( vertex_color.rgb, 1.0);
 #else
     vec3 fdx = dFdx( vertex_position );
