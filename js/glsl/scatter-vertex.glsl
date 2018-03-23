@@ -51,8 +51,6 @@ void main(void) {
     vec3 origin = vec3(xlim.x, ylim.x, zlim.x);
     vec3 size_viewport = vec3(xlim.y, ylim.y, zlim.y) - origin;
 #ifdef USE_SPRITE
-    vec3 vector = v;
-    vec3 vector_previous = v_previous;
     vec3 position_offset = vec3(x, y, z);
     vec3 position_offset_previous = vec3(x_previous, y_previous, z_previous);
 
@@ -63,19 +61,18 @@ void main(void) {
                 modelViewMatrix *
                 vec4(pos,1.0);
     // Test vector used to correct scale in clipspace
+    // This could probably be optimized since half of the test vector components are zero...
     vec4 posxy_test = projectionMatrix *
                 modelViewMatrix *
-                vec4(1.0,0.0,0.0,1.0);
-    float posxy_mag = sqrt(posxy_test.x*posxy_test.x +
-                           posxy_test.y*posxy_test.y +
-                           posxy_test.z*posxy_test.z);   
+                vec4(1.0, 0.0, 0.0, 1.0);
+    float posxy_mag = length(posxy_test.xyz);
     s = s * posxy_mag; 
-    gl_Position = posxy + vec4((position.x-0.5)*s, (position.y-0.5)*s, 0, 0);
+    gl_Position = posxy + vec4((position.x - 0.5) * s, (position.y - 0.5) * s, 0, 0);
     vec3 positionEye = ( modelViewMatrix * vec4( pos, 1.0 ) ).xyz;
     vertex_position = positionEye;
     vertex_uv = position.xy;
 #else
-#ifndef AS_LINE
+  #ifndef AS_LINE
     vec3 vector = v;
     vec3 vector_previous = v_previous;
     vec3 position_offset = vec3(x, y, z);
@@ -102,10 +99,10 @@ void main(void) {
         + (mix(position_offset_previous, position_offset, vec3(animation_time_x, animation_time_y, animation_time_z))
                 - origin) / size_viewport - 0.5;
     //vec3 pos = (pos_object ) / size;// - 0.5;
-#else
+  #else
     vec3 pos = (mix(position_previous, position, vec3(animation_time_x, animation_time_y, animation_time_z))
                 - origin) / size_viewport - 0.5;
-#endif
+  #endif
     gl_Position = projectionMatrix *
                 modelViewMatrix *
                 vec4(pos,1.0);

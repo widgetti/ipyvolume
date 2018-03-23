@@ -42,20 +42,20 @@ var ScatterView = widgets.WidgetView.extend( {
                 this.geo_cat.faces.push(face)
             }
         }
-        this.geo_point = new THREE.Geometry();
-        this.geo_point.vertices.push(new THREE.Vector3(0, 0, 0));
-        this.geo_point.vertices.push(new THREE.Vector3(1, 0, 0));
-        this.geo_point.vertices.push(new THREE.Vector3(1, 1, 0));
-        this.geo_point.vertices.push(new THREE.Vector3(0, 1, 0));
-        this.geo_point.faces.push(new THREE.Face3(0, 1, 2));
-        this.geo_point.faces.push(new THREE.Face3(0, 2, 3));
+        this.geo_point_2d = new THREE.Geometry();
+        this.geo_point_2d.vertices.push(new THREE.Vector3(0, 0, 0));
+        this.geo_point_2d.vertices.push(new THREE.Vector3(1, 0, 0));
+        this.geo_point_2d.vertices.push(new THREE.Vector3(1, 1, 0));
+        this.geo_point_2d.vertices.push(new THREE.Vector3(0, 1, 0));
+        this.geo_point_2d.faces.push(new THREE.Face3(0, 1, 2));
+        this.geo_point_2d.faces.push(new THREE.Face3(0, 2, 3));
         
-        this.geo_tri = new THREE.Geometry();
+        this.geo_tri_2d = new THREE.Geometry();
         var y_centroid = 0.2357;
-        this.geo_tri.vertices.push(new THREE.Vector3(0, y_centroid, 0));
-        this.geo_tri.vertices.push(new THREE.Vector3(1, y_centroid, 0));
-        this.geo_tri.vertices.push(new THREE.Vector3(0.5, 0.7071 + y_centroid, 0));
-        this.geo_tri.faces.push(new THREE.Face3(0, 1, 2));
+        this.geo_tri_2d.vertices.push(new THREE.Vector3(0, y_centroid, 0));
+        this.geo_tri_2d.vertices.push(new THREE.Vector3(1, y_centroid, 0));
+        this.geo_tri_2d.vertices.push(new THREE.Vector3(0.5, 0.7071 + y_centroid, 0));
+        this.geo_tri_2d.faces.push(new THREE.Face3(0, 1, 2));
         //this.geo = new THREE.ConeGeometry(0.2, 1)
         this.geo_arrow = new THREE.CylinderGeometry(0, 0.2, 1)
         this.geos = {
@@ -64,10 +64,9 @@ var ScatterView = widgets.WidgetView.extend( {
             arrow: this.geo_arrow,
             sphere: this.geo_sphere,
             cat: this.geo_cat,
-            point: this.geo_point,
-            tri: this.geo_tri
+            point_2d: this.geo_point_2d,
+            tri_2d: this.geo_tri_2d
         }
-        this.sprite_geos = ['point', 'tri'];
 
         this.material = new THREE.RawShaderMaterial({
             uniforms: {
@@ -95,7 +94,7 @@ var ScatterView = widgets.WidgetView.extend( {
             visible: this.model.get("visible") && this.model.get("visible_markers")
             })
 
-        this.material_sprite = new THREE.RawShaderMaterial({
+        this.sprite_material = new THREE.RawShaderMaterial({
             uniforms: this.material.uniforms,
             vertexShader: '#define USE_SPRITE' + require('raw-loader!../glsl/scatter-vertex.glsl'),
             fragmentShader: '#define USE_SPRITE' + require('raw-loader!../glsl/scatter-fragment.glsl'),
@@ -228,7 +227,7 @@ var ScatterView = widgets.WidgetView.extend( {
         //console.log(geo)
         if(!geo)
             geo = "diamond"
-        var sprite = this.sprite_geos.indexOf(geo);
+        var sprite = geo.endsWith('2d');
         var buffer_geo = new THREE.BufferGeometry().fromGeometry(this.geos[geo]);
         var instanced_geo = new THREE.InstancedBufferGeometry();
 
@@ -288,10 +287,10 @@ var ScatterView = widgets.WidgetView.extend( {
         current.add_attributes(instanced_geo)
         previous.add_attributes(instanced_geo, '_previous')
         var material;
-        if (sprite == -1){
-            material = this.material
+        if (sprite){
+            material = this.sprite_material;
         } else {
-            material = this.material_sprite
+            material = this.material;
         }
 	    this.mesh = new THREE.Mesh(instanced_geo, material );
 	    this.mesh.material_rgb = this.material_rgb
