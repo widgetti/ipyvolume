@@ -13,6 +13,7 @@ from .transferfunction import *
 import warnings
 import ipyvolume
 import ipywebrtc
+import pythreejs
 
 logger = logging.getLogger("ipyvolume")
 
@@ -51,10 +52,16 @@ class Mesh(widgets.DOMWidget):
 #                                     default_value="green").tag(sync=True)
 #    geo = traitlets.Unicode('diamond').tag(sync=True)
     visible = traitlets.CBool(default_value=True).tag(sync=True)
-    visible_lines = traitlets.CBool(default_value=True).tag(sync=True)
-    visible_faces = traitlets.CBool(default_value=True).tag(sync=True)
 
-    side = traitlets.CaselessStrEnum(['front', 'back', 'both'], 'both').tag(sync=True)
+    material = traitlets.Instance(pythreejs.RawShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    @traitlets.default('material')
+    def _default_material(self):
+        return pythreejs.RawShaderMaterial(side=pythreejs.Side.DoubleSide)
+
+    line_material = traitlets.Instance(pythreejs.RawShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    @traitlets.default('line_material')
+    def _default_line_material(self):
+        return pythreejs.RawShaderMaterial()
 
 @widgets.register
 class Scatter(widgets.DOMWidget):
@@ -85,8 +92,6 @@ class Scatter(widgets.DOMWidget):
     geo = traitlets.Unicode('diamond').tag(sync=True)
     connected = traitlets.CBool(default_value=False).tag(sync=True)
     visible = traitlets.CBool(default_value=True).tag(sync=True)
-    visible_lines = traitlets.CBool(default_value=False).tag(sync=True)
-    visible_markers = traitlets.CBool(default_value=True).tag(sync=True)
 
     texture = traitlets.Union([
         traitlets.Instance(ipywebrtc.MediaStream),
@@ -96,6 +101,15 @@ class Scatter(widgets.DOMWidget):
         traitlets.List(Image(default_value=None, allow_none=True))
     ]).tag(sync=True, **texture_serialization)
 
+    material = traitlets.Instance(pythreejs.RawShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    @traitlets.default('material')
+    def _default_material(self):
+        return pythreejs.RawShaderMaterial()
+
+    line_material = traitlets.Instance(pythreejs.RawShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    @traitlets.default('line_material')
+    def _default_line_material(self):
+        return pythreejs.RawShaderMaterial()
 
 @widgets.register
 class Figure(ipywebrtc.MediaStream):

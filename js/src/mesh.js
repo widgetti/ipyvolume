@@ -20,8 +20,7 @@ var MeshView = widgets.WidgetView.extend( {
             this._load_textures()
         }
 
-        this.material = new THREE.RawShaderMaterial({
-            uniforms: {
+        this.uniforms = {
                 xlim : { type: "2f", value: [0., 1.] },
                 ylim : { type: "2f", value: [0., 1.] },
                 zlim : { type: "2f", value: [0., 1.] },
@@ -34,75 +33,31 @@ var MeshView = widgets.WidgetView.extend( {
                 animation_time_texture : { type: "f", value: 1. },
                 texture: { type: 't', value: null },
                 texture_previous: { type: 't', value: null },
-            },
-            side:THREE.DoubleSide,
-            vertexShader: require('raw-loader!../glsl/mesh-vertex.glsl'),
-            fragmentShader: require('raw-loader!../glsl/mesh-fragment.glsl'),
-            polygonOffset: true,
-            polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
-            polygonOffsetUnits: 1,
-            visible: this.model.get("visible") && this.model.get("visible_faces")
-                })
+        }
+        this.material = this.model.get('material').obj.clone()
+        this.material_rgb = this.model.get('material').obj.clone()
+        this.line_material = this.model.get('line_material').obj.clone()
+        this.line_material_rgb = this.model.get('line_material').obj.clone()
+        this.materials = [this.material, this.material_rgb, this.line_material, this.line_material_rgb]
+        this._update_materials()
+        this.model.get('material').on('change', () => {
+            this._update_materials()
+            this.renderer.update()
+        })
+        this.model.get('line_material').on('change', () => {
+            this._update_materials()
+            this.renderer.update()
+        })
 
-        this.material_texture = new THREE.RawShaderMaterial({
-            uniforms: this.material.uniforms,
-            vertexShader: "#define USE_TEXTURE\n"+require('raw-loader!../glsl/mesh-vertex.glsl'),
-            fragmentShader: "#define USE_TEXTURE\n"+require('raw-loader!../glsl/mesh-fragment.glsl'),
-            side:THREE.DoubleSide,
-            polygonOffset: true,
-            polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
-            polygonOffsetUnits: 1,
-            visible: this.model.get("visible") && this.model.get("visible_faces")
-            })
-
-        this.material_rgb = new THREE.RawShaderMaterial({
-            uniforms: this.material.uniforms,
-            vertexShader: "#define USE_RGB\n"+require('raw-loader!../glsl/mesh-vertex.glsl'),
-            fragmentShader: "#define USE_RGB\n"+require('raw-loader!../glsl/mesh-fragment.glsl'),
-            side:THREE.DoubleSide,
-            polygonOffset: true,
-            polygonOffsetFactor: 1, // positive value pushes polygon further away, so wireframes will render properly (z-buffer issues)
-            polygonOffsetUnits: 1,
-            visible: this.model.get("visible") && this.model.get("visible_faces")
-            })
-
-        this.line_material = new THREE.RawShaderMaterial({
-            uniforms: this.material.uniforms,
-            vertexShader:   "#define AS_LINE\n"+require('raw-loader!../glsl/mesh-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n"+require('raw-loader!../glsl/mesh-fragment.glsl'),
-            visible: this.model.get("visible") && this.model.get("visible_lines")
-            })
-
-        this.line_material_rgb = new THREE.RawShaderMaterial({
-            uniforms: this.material.uniforms,
-            vertexShader:   "#define AS_LINE\n#define USE_RGB\n"+require('raw-loader!../glsl/mesh-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n#define USE_RGB\n"+require('raw-loader!../glsl/mesh-fragment.glsl'),
-            visible: this.model.get("visible") && this.model.get("visible_lines")
-            })
-
-        this.update_side()
         this.create_mesh()
         this.add_to_scene()
         this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles change:lines",   this.on_change, this)
         this.model.on("change:geo change:connected", this.update_, this)
         this.model.on("change:texture", this._load_textures, this)
-        this.model.on("change:visible change:visible_lines change:visible_faces", this.update_visibility, this)
-        this.model.on("change:side", this.update_side, this)
-    },
-    update_side: function () {
-        console.log('side', this.model.get("side"))
-        var side = {'front': THREE.FrontSide, 'back': THREE.BackSide, 'both':THREE.DoubleSide }[this.model.get("side").toLowerCase()]
-        this.material.side = side
-        this.material_rgb.side = side
-        this.material_texture.side = side
-        this.renderer.update()
+        this.model.on("change:visible", this.update_visibility, this)
     },
     update_visibility: function () {
-        this.material.visible = this.model.get("visible") && this.model.get("visible_faces");
-        this.material_rgb.visible = this.model.get("visible") && this.model.get("visible_faces");
-        this.material_texture.visible = this.model.get("visible") && this.model.get("visible_faces");
-        this.line_material.visible = this.model.get("visible") && this.model.get("visible_lines");
-        this.line_material_rgb.visible = this.model.get("visible") && this.model.get("visible_lines");
+        this._update_materials()
         this.renderer.update()
     },
 
@@ -221,6 +176,29 @@ var MeshView = widgets.WidgetView.extend( {
     get_previous_vec3: function(name, index, default_value) {
         return this._get_value_vec3(this.previous_values[name] || this.model.get(name), index, default_value)
     },
+    _update_materials: function() {
+        this.material.copy(this.model.get('material').obj)
+        this.material_rgb.copy(this.model.get('material').obj)
+        this.line_material.copy(this.model.get('line_material').obj)
+        this.line_material_rgb.copy(this.model.get('line_material').obj)
+        this.material_rgb.defines = {USE_RGB: true}
+        this.line_material.defines = {USE_RGB: true, AS_LINE: true}
+        this.line_material_rgb.defines = {USE_RGB: true}
+        // locally and the visible with this object's visible trait
+        this.material.visible = this.material.visible && this.model.get('visible');
+        this.material_rgb.visible = this.material.visible && this.model.get('visible');
+        this.line_material.visible = this.line_material.visible && this.model.get('visible');
+        this.line_material_rgb.visible = this.line_material.visible && this.model.get('visible');
+        this.materials.forEach((material) => {
+            material.vertexShader = require('raw-loader!../glsl/mesh-vertex.glsl');
+            material.fragmentShader = require('raw-loader!../glsl/mesh-fragment.glsl');
+            material.uniforms = this.uniforms;
+        })
+        var texture = this.model.get('texture');
+        if(texture && this.textures) {
+            this.material.defines['USE_TEXTURE'] = true;
+        }
+    },
     create_mesh: function() {
         /*console.log("previous values: ")
         console.log(this.previous_values)
@@ -338,27 +316,24 @@ var MeshView = widgets.WidgetView.extend( {
             var u = current.array['u']
             var v = current.array['v']
             if(texture && u && v && this.textures) {
-                material = this.material_texture
                 var sequence_index_texture = sequence_index;
-                material.uniforms['texture'].value = this.textures[sequence_index_texture % this.textures.length]; // TODO/BUG: there could
+                this.material.uniforms['texture'].value = this.textures[sequence_index_texture % this.textures.length]; // TODO/BUG: there could
                 // be a situation where texture property is modified, but this.textures isn't done yet..
-                material.uniforms['texture_previous'].value = this.textures[sequence_index_previous % this.textures.length];
+                this.material.uniforms['texture_previous'].value = this.textures[sequence_index_previous % this.textures.length];
                 geometry.addAttribute('u', new THREE.BufferAttribute(u, 1))
                 geometry.addAttribute('v', new THREE.BufferAttribute(v, 1))
                 var u_previous = previous.array['u']
                 var v_previous = previous.array['v']
                 geometry.addAttribute('u_previous', new THREE.BufferAttribute(u_previous, 1))
                 geometry.addAttribute('v_previous', new THREE.BufferAttribute(v_previous, 1))
-            } else {
-                material = this.material
             }
 
-            this.surface_mesh = new THREE.Mesh(geometry, material);
+            this.surface_mesh = new THREE.Mesh(geometry, this.material);
             // BUG? because of our custom shader threejs thinks our object if out
             // of the frustum
             this.surface_mesh.frustumCulled = false;
             this.surface_mesh.material_rgb = this.material_rgb
-            this.surface_mesh.material_normal = material
+            this.surface_mesh.material_normal = this.material
             this.meshes.push(this.surface_mesh)
         }
 
@@ -433,6 +408,8 @@ var MeshModel = widgets.WidgetModel.extend({
         lines: serialize.array_or_json,
         color: serialize.color_or_json,
         texture: serialize.texture,
+        material: { deserialize: widgets.unpack_models },
+        line_material: { deserialize: widgets.unpack_models },
     }, widgets.WidgetModel.serializers)
 });
 

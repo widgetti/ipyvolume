@@ -67,8 +67,7 @@ var ScatterView = widgets.WidgetView.extend( {
             triangle_2d: this.geo_triangle_2d
         }
 
-        this.material = new THREE.RawShaderMaterial({
-            uniforms: {
+        this.uniforms = {
                 xlim : { type: "2f", value: [0., 1.] },
                 ylim : { type: "2f", value: [0., 1.] },
                 zlim : { type: "2f", value: [0., 1.] },
@@ -83,52 +82,27 @@ var ScatterView = widgets.WidgetView.extend( {
                 texture: { type: 't', value: null },
                 texture_previous: { type: 't', value: null },
             },
-            vertexShader: require('raw-loader!../glsl/scatter-vertex.glsl'),
-            fragmentShader: require('raw-loader!../glsl/scatter-fragment.glsl'),
-            visible: this.model.get("visible") && this.model.get("visible_markers")
-            })
-
-        this.material_rgb = new THREE.RawShaderMaterial({
-            uniforms: this.material.uniforms,
-            vertexShader: "#define USE_RGB\n"+require('raw-loader!../glsl/scatter-vertex.glsl'),
-            fragmentShader: "#define USE_RGB\n"+require('raw-loader!../glsl/scatter-fragment.glsl'),
-            visible: this.model.get("visible") && this.model.get("visible_markers")
-            })
-
-        this.sprite_material = new THREE.RawShaderMaterial({
-            uniforms: this.material.uniforms,
-            vertexShader: '#define USE_SPRITE' + require('raw-loader!../glsl/scatter-vertex.glsl'),
-            fragmentShader: '#define USE_SPRITE' + require('raw-loader!../glsl/scatter-fragment.glsl'),
-            visible: this.model.get("visible") && this.model.get("visible_markers"),
-            transparent: true
-            })
-        this.sprite_material_texture = new THREE.RawShaderMaterial({
-            uniforms: this.material.uniforms,
-            vertexShader:   '#define USE_SPRITE\n#define USE_TEXTURE' + require('raw-loader!../glsl/scatter-vertex.glsl'),
-            fragmentShader: '#define USE_SPRITE\n#define USE_TEXTURE' + require('raw-loader!../glsl/scatter-fragment.glsl'),
-            visible: this.model.get("visible") && this.model.get("visible_markers"),
-            })
-
-        this.line_material = new THREE.RawShaderMaterial({
-            uniforms: this.material.uniforms,
-            vertexShader:   "#define AS_LINE\n"+require('raw-loader!../glsl/scatter-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n"+require('raw-loader!../glsl/scatter-fragment.glsl'),
-            visible: this.model.get("visible") && this.model.get("visible_lines")
-            })
-
-        this.line_material_rgb = new THREE.RawShaderMaterial({
-            uniforms: this.material.uniforms,
-            vertexShader:   "#define AS_LINE\n#define USE_RGB\n"+require('raw-loader!../glsl/scatter-vertex.glsl'),
-            fragmentShader: "#define AS_LINE\n#define USE_RGB\n"+require('raw-loader!../glsl/scatter-fragment.glsl'),
-            visible: this.model.get("visible") && this.model.get("visible_lines")
-            })
+        this.material = this.model.get('material').obj.clone()
+        this.material_rgb = this.model.get('material').obj.clone()
+        this.line_material = this.model.get('line_material').obj.clone()
+        this.line_material_rgb = this.model.get('line_material').obj.clone()
+        this.materials = [this.material, this.material_rgb, this.line_material, this.line_material_rgb]
+        this._update_materials()
+        this.model.get('material').on('change', () => {
+            this._update_materials()
+            this.renderer.update()
+        })
+        this.model.get('line_material').on('change', () => {
+            this._update_materials()
+            this.renderer.update()
+        })
 
         this.create_mesh()
         this.add_to_scene()
         this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
         this.model.on("change:geo change:connected", this.update_, this)
         this.model.on("change:texture", this._load_textures, this)
-        this.model.on("change:visible change:visible_markers change:visible_lines", this.update_visibility, this)
+        this.model.on("change:visible", this.update_visibility, this)
     },
     _load_textures: function() {
         var texture = this.model.get('texture');
@@ -156,10 +130,7 @@ var ScatterView = widgets.WidgetView.extend( {
         }
     },
     update_visibility: function () {
-        this.material.visible = this.model.get("visible") && this.model.get("visible_markers");
-        this.material_rgb.visible = this.model.get("visible") && this.model.get("visible_markers");
-        this.line_material.visible = this.model.get("visible") && this.model.get("visible_lines");
-        this.line_material_rgb.visible = this.model.get("visible") && this.model.get("visible_lines");
+        this._update_materials()
         this.renderer.update()
     },
     set_limits: function(limits) {
@@ -252,11 +223,38 @@ var ScatterView = widgets.WidgetView.extend( {
     get_previous_vec3: function(name, index, default_value) {
         return this._get_value_vec3(this.previous_values[name] || this.model.get(name), index, default_value)
     },
+    _update_materials: function() {
+        this.material.copy(this.model.get('material').obj)
+        this.material_rgb.copy(this.model.get('material').obj)
+        this.line_material.copy(this.model.get('line_material').obj)
+        this.line_material_rgb.copy(this.model.get('line_material').obj)
+        this.material_rgb.defines = {USE_RGB: true}
+        this.line_material.defines = {USE_RGB: true, AS_LINE: true}
+        this.line_material_rgb.defines = {USE_RGB: true}
+        // locally and the visible with this object's visible trait
+        this.material.visible = this.material.visible && this.model.get('visible');
+        this.material_rgb.visible = this.material.visible && this.model.get('visible');
+        this.line_material.visible = this.line_material.visible && this.model.get('visible');
+        this.line_material_rgb.visible = this.line_material.visible && this.model.get('visible');
+        this.materials.forEach((material) => {
+            material.vertexShader = require('raw-loader!../glsl/scatter-vertex.glsl');
+            material.fragmentShader = require('raw-loader!../glsl/scatter-fragment.glsl');
+            material.uniforms = this.uniforms;
+        })
+        var geo = this.model.get("geo")
+        var sprite = geo.endsWith('2d');
+        if(sprite) {
+            this.material.defines['USE_SPRITE'] = true;
+            this.material_rgb.defines['USE_SPRITE'] = true;
+        }
+        if (sprite){
+            var texture = this.model.get('texture');
+            if(texture && this.textures) {
+                this.material.defines['USE_TEXTURE'] = true;
+            }
+        }
+    },
     create_mesh: function() {
-        /*console.log("previous values: ")
-        console.log(this.previous_values)
-        console.log("attributes changed: ")
-        console.log(this.attributes_changed)*/
         var geo = this.model.get("geo")
         //console.log(geo)
         if(!geo)
@@ -320,22 +318,17 @@ var ScatterView = widgets.WidgetView.extend( {
         // add atrributes to the geometry, this makes the available to the shader
         current.add_attributes(instanced_geo)
         previous.add_attributes(instanced_geo, '_previous')
-        var material;
         if (sprite){
             var texture = this.model.get('texture');
             if(texture && this.textures) {
-                material = this.sprite_material_texture
-                material.uniforms['texture'].value = this.textures[sequence_index % this.textures.length]; // TODO/BUG: there could
-                material.uniforms['texture_previous'].value = this.textures[sequence_index_previous % this.textures.length];
-            } else {
-                material = this.sprite_material;
+                // TODO: this should prolly go into _update_materiuals
+                this.material.uniforms['texture'].value = this.textures[sequence_index % this.textures.length]; // TODO/BUG: there could
+                this.material.uniforms['texture_previous'].value = this.textures[sequence_index_previous % this.textures.length];
             }
-        } else {
-            material = this.material;
         }
-	    this.mesh = new THREE.Mesh(instanced_geo, material );
+	    this.mesh = new THREE.Mesh(instanced_geo, this.material);
 	    this.mesh.material_rgb = this.material_rgb
-	    this.mesh.material_normal = material
+	    this.mesh.material_normal = this.material
 
 
         if(this.model.get('connected')) {
@@ -418,6 +411,8 @@ var ScatterModel = widgets.WidgetModel.extend({
         color: serialize.color_or_json,
         color_selected: serialize.color_or_json,
         texture: serialize.texture,
+        material: { deserialize: widgets.unpack_models },
+        line_material: { deserialize: widgets.unpack_models },
     }, widgets.WidgetModel.serializers)
 });
 
