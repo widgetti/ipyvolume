@@ -37,7 +37,7 @@ _doc_snippets[
     "color2d"] = "color for each point/vertex string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (2, N, 3) or (S, 2, N, 3)"
 _doc_snippets[
     "size"] = "float representing the size of the glyph in percentage of the viewport, where 100 is the full size of the viewport"
-_doc_snippets["marker"] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere'"
+_doc_snippets["marker"] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere', 'point_2d', 'square_2d', 'triangle_2d', 'circle_2d'"
 _doc_snippets["x"] = "numpy array of shape (N,) or (S, N) with x positions. {}".format(_seq_sn)
 _doc_snippets["y"] = "idem for y"
 _doc_snippets["z"] = "idem for z"

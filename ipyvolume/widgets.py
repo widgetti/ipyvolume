@@ -88,6 +88,13 @@ class Scatter(widgets.DOMWidget):
     visible_lines = traitlets.CBool(default_value=False).tag(sync=True)
     visible_markers = traitlets.CBool(default_value=True).tag(sync=True)
 
+    texture = traitlets.Union([
+        traitlets.Instance(ipywebrtc.MediaStream),
+        Unicode(),
+        traitlets.List(Unicode, [], allow_none=True),
+        Image(default_value=None, allow_none=True),
+        traitlets.List(Image(default_value=None, allow_none=True))
+    ]).tag(sync=True, **texture_serialization)
 
 
 @widgets.register
