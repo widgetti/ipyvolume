@@ -14,6 +14,12 @@ var ScatterView = widgets.WidgetView.extend( {
         this.attributes_changed = {}
         window.last_scatter = this;
 
+        this.texture_loader = new THREE.TextureLoader()
+        this.textures = null;
+        if(this.model.get('texture')) {
+            this._load_textures()
+        }
+
         this.geo_diamond = new THREE.SphereGeometry(1, 2, 2)
         this.geo_sphere = new THREE.SphereGeometry(1, 12, 12)
         this.geo_box = new THREE.BoxGeometry(1, 1, 1)
@@ -42,6 +48,11 @@ var ScatterView = widgets.WidgetView.extend( {
                 this.geo_cat.faces.push(face)
             }
         }
+        this.geo_square_2d = new THREE.PlaneGeometry(2, 2, 1, 1)
+        this.geo_point_2d = new THREE.PlaneGeometry(0.1, 0.1, 1, 1)
+        this.geo_triangle_2d = new THREE.CircleGeometry(1, 3, Math.PI/2);
+        this.geo_circle_2d = new THREE.CircleGeometry(1, 32, Math.PI/2);
+
         //this.geo = new THREE.ConeGeometry(0.2, 1)
         this.geo_arrow = new THREE.CylinderGeometry(0, 0.2, 1)
         this.geos = {
@@ -50,6 +61,10 @@ var ScatterView = widgets.WidgetView.extend( {
             arrow: this.geo_arrow,
             sphere: this.geo_sphere,
             cat: this.geo_cat,
+            square_2d: this.geo_square_2d,
+            point_2d: this.geo_point_2d,
+            circle_2d: this.geo_circle_2d,
+            triangle_2d: this.geo_triangle_2d
         }
 
         this.material = new THREE.RawShaderMaterial({
@@ -65,6 +80,8 @@ var ScatterView = widgets.WidgetView.extend( {
                 animation_time_vz : { type: "f", value: 1. },
                 animation_time_size : { type: "f", value: 1. },
                 animation_time_color : { type: "f", value: 1. },
+                texture: { type: 't', value: null },
+                texture_previous: { type: 't', value: null },
             },
             vertexShader: require('raw-loader!../glsl/scatter-vertex.glsl'),
             fragmentShader: require('raw-loader!../glsl/scatter-fragment.glsl'),
@@ -76,6 +93,20 @@ var ScatterView = widgets.WidgetView.extend( {
             vertexShader: "#define USE_RGB\n"+require('raw-loader!../glsl/scatter-vertex.glsl'),
             fragmentShader: "#define USE_RGB\n"+require('raw-loader!../glsl/scatter-fragment.glsl'),
             visible: this.model.get("visible") && this.model.get("visible_markers")
+            })
+
+        this.sprite_material = new THREE.RawShaderMaterial({
+            uniforms: this.material.uniforms,
+            vertexShader: '#define USE_SPRITE' + require('raw-loader!../glsl/scatter-vertex.glsl'),
+            fragmentShader: '#define USE_SPRITE' + require('raw-loader!../glsl/scatter-fragment.glsl'),
+            visible: this.model.get("visible") && this.model.get("visible_markers"),
+            transparent: true
+            })
+        this.sprite_material_texture = new THREE.RawShaderMaterial({
+            uniforms: this.material.uniforms,
+            vertexShader:   '#define USE_SPRITE\n#define USE_TEXTURE' + require('raw-loader!../glsl/scatter-vertex.glsl'),
+            fragmentShader: '#define USE_SPRITE\n#define USE_TEXTURE' + require('raw-loader!../glsl/scatter-fragment.glsl'),
+            visible: this.model.get("visible") && this.model.get("visible_markers"),
             })
 
         this.line_material = new THREE.RawShaderMaterial({
@@ -96,7 +127,33 @@ var ScatterView = widgets.WidgetView.extend( {
         this.add_to_scene()
         this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:selected change:vx change:vy change:vz",   this.on_change, this)
         this.model.on("change:geo change:connected", this.update_, this)
+        this.model.on("change:texture", this._load_textures, this)
         this.model.on("change:visible change:visible_markers change:visible_lines", this.update_visibility, this)
+    },
+    _load_textures: function() {
+        var texture = this.model.get('texture');
+        if(texture.stream) { // instanceof media.MediaStreamModel) {
+            this.textures = null
+            this.texture_video = document.createElement('video')
+            texture.stream.then(_.bind(function(stream) {
+                this.texture_video.src = window.URL.createObjectURL(stream);
+                var texture = new THREE.VideoTexture(this.texture_video)
+                //texture.wrapS = THREE.RepeatWrapping;
+                //texture.wrapT = THREE.RepeatWrapping;
+                texture.minFilter = THREE.LinearFilter;
+                //texture.wrapT = THREE.RepeatWrapping;
+                this.textures = [texture];
+                this.update_()
+            }, this))
+        } else {
+            this.textures = _.map(this.model.get('texture'), function(texture_url) {
+                return this.texture_loader.load(texture_url, _.bind(function(texture) {
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    this.update_()
+                }, this));
+            }, this)
+        }
     },
     update_visibility: function () {
         this.material.visible = this.model.get("visible") && this.model.get("visible_markers");
@@ -202,9 +259,9 @@ var ScatterView = widgets.WidgetView.extend( {
         console.log(this.attributes_changed)*/
         var geo = this.model.get("geo")
         //console.log(geo)
-
         if(!geo)
             geo = "diamond"
+        var sprite = geo.endsWith('2d');
         var buffer_geo = new THREE.BufferGeometry().fromGeometry(this.geos[geo]);
         var instanced_geo = new THREE.InstancedBufferGeometry();
 
@@ -263,10 +320,22 @@ var ScatterView = widgets.WidgetView.extend( {
         // add atrributes to the geometry, this makes the available to the shader
         current.add_attributes(instanced_geo)
         previous.add_attributes(instanced_geo, '_previous')
-
-	    this.mesh = new THREE.Mesh(instanced_geo, this.material );
+        var material;
+        if (sprite){
+            var texture = this.model.get('texture');
+            if(texture && this.textures) {
+                material = this.sprite_material_texture
+                material.uniforms['texture'].value = this.textures[sequence_index % this.textures.length]; // TODO/BUG: there could
+                material.uniforms['texture_previous'].value = this.textures[sequence_index_previous % this.textures.length];
+            } else {
+                material = this.sprite_material;
+            }
+        } else {
+            material = this.material;
+        }
+	    this.mesh = new THREE.Mesh(instanced_geo, material );
 	    this.mesh.material_rgb = this.material_rgb
-	    this.mesh.material_normal = this.material
+	    this.mesh.material_normal = material
 
 
         if(this.model.get('connected')) {
@@ -347,7 +416,8 @@ var ScatterModel = widgets.WidgetModel.extend({
         size: serialize.array_or_json,
         size_selected: serialize.array_or_json,
         color: serialize.color_or_json,
-        color_selected: serialize.color_or_json
+        color_selected: serialize.color_or_json,
+        texture: serialize.texture,
     }, widgets.WidgetModel.serializers)
 });
 
