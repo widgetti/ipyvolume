@@ -377,7 +377,7 @@ def plot(x, y, z, color=default_color, **kwargs):
 def scatter(x, y, z, color=default_color, size=default_size,
             size_selected=default_size_selected,
             color_selected=default_color_selected, marker="diamond",
-            selection=None, **kwargs):
+            selection=None, grow_limits=True, **kwargs):
     """Plots many markers/symbols in 3d
 
     :param x: {x}
@@ -393,7 +393,8 @@ def scatter(x, y, z, color=default_color, size=default_size,
     :return: :any:`Scatter`
     """
     fig = gcf()
-    _grow_limits(x, y, z)
+    if grow_limits:
+        _grow_limits(x, y, z)
     s = ipv.Scatter(x=x, y=y, z=z, color=color, size=size,
                     color_selected=color_selected, size_selected=size_selected,
                     geo=marker, selection=selection, **kwargs)
