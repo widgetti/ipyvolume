@@ -153,8 +153,10 @@ var ScatterView = widgets.WidgetView.extend( {
             console.warn('trying to removing scatter mesh from scene that does not include it');
         }
         this.renderer.scene_scatter.remove(this.mesh)
+        this.mesh.geometry.dispose()
         if(this.line_segments) {
             this.renderer.scene_scatter.remove(this.line_segments)
+            this.line_segments.geometry.dispose()
         }
     },
     on_change: function(attribute) {
