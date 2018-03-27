@@ -103,6 +103,10 @@ var ScatterView = widgets.WidgetView.extend( {
         this.model.on("change:geo change:connected", this.update_, this)
         this.model.on("change:texture", this._load_textures, this)
         this.model.on("change:visible", this.update_visibility, this)
+        this.model.on("change:geo", () => {
+            this._update_materials()
+            this.renderer.update()
+        })
     },
     _load_textures: function() {
         var texture = this.model.get('texture');
@@ -227,10 +231,14 @@ var ScatterView = widgets.WidgetView.extend( {
         this.material.copy(this.model.get('material').obj)
         this.material_rgb.copy(this.model.get('material').obj)
         this.line_material.copy(this.model.get('line_material').obj)
+        // not present on .copy.. bug?
         this.line_material_rgb.copy(this.model.get('line_material').obj)
+        this.line_material_rgb.linewidth = this.line_material.linewidth = this.model.get('line_material').obj.linewidth
+        this.material.extensions = {derivatives: true}
         this.material_rgb.defines = {USE_RGB: true}
-        this.line_material.defines = {USE_RGB: true, AS_LINE: true}
-        this.line_material_rgb.defines = {USE_RGB: true}
+        this.material_rgb.extensions = {derivatives: true}
+        this.line_material.defines = {AS_LINE: true}
+        this.line_material_rgb.defines = {USE_RGB: true, AS_LINE: true}
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get('visible');
         this.material_rgb.visible = this.material.visible && this.model.get('visible');
@@ -239,7 +247,8 @@ var ScatterView = widgets.WidgetView.extend( {
         this.materials.forEach((material) => {
             material.vertexShader = require('raw-loader!../glsl/scatter-vertex.glsl');
             material.fragmentShader = require('raw-loader!../glsl/scatter-fragment.glsl');
-            material.uniforms = this.uniforms;
+            material.uniforms = _.extend({}, material.uniforms, this.uniforms);
+            material.needsUpdate = true;
         })
         var geo = this.model.get("geo")
         var sprite = geo.endsWith('2d');

@@ -184,6 +184,7 @@ var MeshView = widgets.WidgetView.extend( {
         this.material_rgb.defines = {USE_RGB: true}
         this.line_material.defines = {USE_RGB: true, AS_LINE: true}
         this.line_material_rgb.defines = {USE_RGB: true}
+        this.material.extensions = {derivatives: true}
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get('visible');
         this.material_rgb.visible = this.material.visible && this.model.get('visible');

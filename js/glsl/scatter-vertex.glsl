@@ -1,9 +1,5 @@
-#define SHADER_NAME vertInstanced
+#include <fog_pars_vertex>
 
-precision highp float;
-
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
  // for animation, all between 0 and 1
 uniform float animation_time_x;
 uniform float animation_time_y;
@@ -21,8 +17,6 @@ uniform vec2 zlim;
 varying vec3 vertex_color;
 varying vec3 vertex_position;
 varying vec2 vertex_uv;
-
-attribute vec3 position;
 
 #ifdef AS_LINE
 attribute vec3 position_previous;
@@ -55,7 +49,7 @@ void main(void) {
 #ifdef AS_LINE
     vec3 model_pos = (mix(position_previous, position, vec3(animation_time_x, animation_time_y, animation_time_z))
                 - origin) / size_viewport - 0.5;
-    vec4 view_pos = modelViewMatrix * pos;
+    vec4 view_pos = modelViewMatrix * vec4(model_pos, 1.0);
 #else
     vec3 vector = v;
     vec3 vector_previous = v_previous;
@@ -87,18 +81,16 @@ void main(void) {
         vec4 view_pos = modelViewMatrix * vec4(model_pos, 1.0);
     #endif
 #endif
+    vec4 mvPosition = view_pos;
     gl_Position = projectionMatrix * view_pos;
     vec3 positionEye = ( modelViewMatrix * vec4( model_pos, 1.0 ) ).xyz;
     vertex_position = positionEye;
     vertex_uv = position.xy / 2. - 0.5;
 #ifdef USE_RGB
-    vertex_color = vec3(pos + vec3(0.5, 0.5, 0.5));
+    vertex_color = vec3(model_pos + vec3(0.5, 0.5, 0.5));
 #else
-    // vec3 fog_color = vec3(1., 1., 1.);
-    // float fog_density = 0.5;
-    // float distance = -view_pos.z;
-    // float fog = clamp(exp(-distance*fog_density), 0., 1.);
-    // vertex_color = mix(fog_color, mix(color_previous, color, animation_time_color), fog);
     vertex_color = mix(color_previous, color, animation_time_color);
 #endif
+
+    #include <fog_vertex>
 }

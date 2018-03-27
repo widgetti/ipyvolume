@@ -1,7 +1,4 @@
-#define SHADER_NAME fragInstanced
-#extension GL_OES_standard_derivatives : enable
-
-precision highp float;
+#include <fog_pars_fragment>
 
 varying vec3 vertex_color;
 varying vec3 vertex_position;
@@ -37,4 +34,5 @@ void main(void) {
 #endif
 #endif
 #endif
+	#include <fog_fragment>
 }

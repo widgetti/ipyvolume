@@ -387,16 +387,20 @@ var FigureView = widgets.DOMWidgetView.extend( {
         const FAR = 10000;
         const orthoNEAR = -500;
         const orthoFAR = 1000;
-        this.camera = new THREE.CombinedCamera(
-            window.innerWidth/2,
-            window.innerHeight/2,
-            this.model.get("camera_fov"),
-            //aspect,
-            NEAR,
-            FAR,
-            orthoNEAR,
-            orthoFAR
-        );
+        // this.camera = new THREE.CombinedCamera(
+        //     window.innerWidth/2,
+        //     window.innerHeight/2,
+        //     this.model.get("camera_fov"),
+        //     //aspect,
+        //     NEAR,
+        //     FAR,
+        //     orthoNEAR,
+        //     orthoFAR
+        // );
+        this.camera = this.model.get('camera').obj
+        // this.camera.aspect = 0.8
+        // this.camera.cameraP.aspect = 0.8
+        this.model.get('camera').on('change', () => this.update())
         //this.camera.toOrthographic()
         this.camera_stereo = new THREE.StereoCamera()
         this.renderer.setSize(width, height);
@@ -469,7 +473,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         // set a good intial z for any fov angle
         // see maartenbreddels/ipyvolume#40 for explanation
-        this.camera.position.z = 2 * this.getTanDeg(45/2) / this.getTanDeg(this.model.get("camera_fov")/2)
+        // TODO: this should now be reflected on the Python side on the camera
+        // this.camera.position.z = 2 * this.getTanDeg(45/2) / this.getTanDeg(this.model.get("camera_fov")/2)
 
 
         // d3 data
@@ -481,8 +486,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.ticks = 5; //hardcoded for now
 
-        this.scene = new THREE.Scene();
-        //this.scene.add(this.camera);
+        //this.scene = new THREE.Scene();
+        this.scene = this.model.get('scene').obj
+        this.model.get('scene').on('rerender', () => this.update())
+        this.scene.add(this.camera);
         this.scene.add(this.box_mesh)
 
         this.scene_scatter = new THREE.Scene();
@@ -1129,7 +1136,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         var oldfov = this.camera.fov
         var newfov = this.model.get("camera_fov")
-        this.camera.setFov(newfov);
+        //this.camera.setFov(newfov);
 
         var target = new THREE.Vector3()
         var distance = this.camera.position.length()
@@ -1279,6 +1286,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
         if(this.model.get('render_continuous'))
             this.update()
+        this.model.get('scene').trigger('afterRender', this.scene, this.renderer, this.camera)
     },
     get_style_color: function(name) {
         style = this.get_style(name)
@@ -1440,6 +1448,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         var aspect = render_width / render_height;
         this.camera.aspect = aspect
+        // TODO: should we now update the camera object?
+        // this.camera.width = render_width
+        // this.camera.height = render_height
         this.camera.updateProjectionMatrix();
         //console.log("render size: ", width, height, render_width, render_height)
         this.back_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
@@ -1555,6 +1566,8 @@ var FigureModel = widgets.DOMWidgetModel.extend({
         tf: { deserialize: widgets.unpack_models },
         scatters: { deserialize: widgets.unpack_models },
         meshes: { deserialize: widgets.unpack_models },
+        camera: { deserialize: widgets.unpack_models },
+        scene: { deserialize: widgets.unpack_models },
     }, widgets.DOMWidgetModel.serializers)
 });
 

@@ -1,7 +1,3 @@
-#define SHADER_NAME fragInstanced
-#extension GL_OES_standard_derivatives : enable
-precision highp float;
-
 varying vec3 vertex_color;
 varying vec3 vertex_position;
 varying vec2 vertex_uv;

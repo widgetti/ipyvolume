@@ -10,9 +10,6 @@ if (window.require) {
                 "ipyvolume": "nbextensions/ipyvolume/index",
                 "jupyter-js-widgets": "nbextensions/jupyter-js-widgets/extension"
             }
-        },
-        paths: {
-            "three": ["../nbextensions/ipyvolume/three"]
         }
     });
 }

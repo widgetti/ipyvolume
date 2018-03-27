@@ -1,9 +1,3 @@
-#define SHADER_NAME vertInstanced
-
-precision highp float;
-
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
  // for animation, all between 0 and 1
 uniform float animation_time_x;
 uniform float animation_time_y;
@@ -19,7 +13,6 @@ uniform vec2 zlim;
 varying vec3 vertex_color;
 varying vec3 vertex_position;
 
-attribute vec3 position;
 attribute vec3 position_previous;
 
 #ifdef USE_TEXTURE

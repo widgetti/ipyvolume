@@ -53,15 +53,15 @@ class Mesh(widgets.DOMWidget):
 #    geo = traitlets.Unicode('diamond').tag(sync=True)
     visible = traitlets.CBool(default_value=True).tag(sync=True)
 
-    material = traitlets.Instance(pythreejs.RawShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    material = traitlets.Instance(pythreejs.ShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('material')
     def _default_material(self):
-        return pythreejs.RawShaderMaterial(side=pythreejs.Side.DoubleSide)
+        return pythreejs.ShaderMaterial(side=pythreejs.Side.DoubleSide)
 
-    line_material = traitlets.Instance(pythreejs.RawShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    line_material = traitlets.Instance(pythreejs.ShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('line_material')
     def _default_line_material(self):
-        return pythreejs.RawShaderMaterial()
+        return pythreejs.ShaderMaterial()
 
 @widgets.register
 class Scatter(widgets.DOMWidget):
@@ -101,15 +101,15 @@ class Scatter(widgets.DOMWidget):
         traitlets.List(Image(default_value=None, allow_none=True))
     ]).tag(sync=True, **texture_serialization)
 
-    material = traitlets.Instance(pythreejs.RawShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    material = traitlets.Instance(pythreejs.ShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('material')
     def _default_material(self):
-        return pythreejs.RawShaderMaterial()
+        return pythreejs.ShaderMaterial()
 
-    line_material = traitlets.Instance(pythreejs.RawShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    line_material = traitlets.Instance(pythreejs.ShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('line_material')
     def _default_line_material(self):
-        return pythreejs.RawShaderMaterial()
+        return pythreejs.ShaderMaterial()
 
 @widgets.register
 class Figure(ipywebrtc.MediaStream):
@@ -147,6 +147,18 @@ class Figure(ipywebrtc.MediaStream):
     camera_fov = traitlets.CFloat(45,min=0.1,max=179.9).tag(sync=True)
     camera_center = traitlets.List(traitlets.CFloat, default_value=[0, 0, 0]).tag(sync=True)
     #Tuple(traitlets.CFloat(0), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
+
+    camera = traitlets.Instance(pythreejs.Camera).tag(sync=True, **ipywidgets.widget_serialization)
+    @traitlets.default('camera')
+    def _default_camera(self):
+        # return pythreejs.CombinedCamera(fov=46, position=(0, 0, 2), width=400, height=500)
+        return pythreejs.PerspectiveCamera(fov=46, position=(0, 0, 2), width=400, height=500)
+
+    scene = traitlets.Instance(pythreejs.Scene).tag(sync=True, **ipywidgets.widget_serialization)
+    @traitlets.default('scene')
+    def _default_scene(self):
+        # return pythreejs.CombinedCamera(fov=46, position=(0, 0, 2), width=400, height=500)
+        return pythreejs.Scene()
 
     width = traitlets.CInt(500).tag(sync=True)
     height = traitlets.CInt(400).tag(sync=True)
