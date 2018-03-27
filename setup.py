@@ -141,7 +141,8 @@ setup_args = {
         'traitlets',
         'Pillow',
         'ipywebrtc',
-        'requests'
+        'requests',
+        'pythreejs>=1.0.0'
     ],
     'license': 'MIT',
     'packages': find_packages(),
