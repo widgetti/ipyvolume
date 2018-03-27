@@ -489,7 +489,7 @@ def animation_control(object, sequence_length=None, add=True, interval=200):
                         sequence_lengths.append(shape[0])
                     # TODO: maybe support arrays of string type of form (frame, point_index)
             if len(sequence_lengths) == len(sequence_lengths_previous):
-                raise ValueError('no frame dimension found for object: %r'.format(object))
+                raise ValueError('no frame dimension found for object: {}'.format(object))
         sequence_length = max(sequence_lengths)
     fig = gcf()
     fig.animation = interval
