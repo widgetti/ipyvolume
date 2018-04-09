@@ -126,10 +126,6 @@ class Figure(ipywebrtc.MediaStream):
     data_min = traitlets.CFloat().tag(sync=True)
     data_max = traitlets.CFloat().tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
-    anglex = traitlets.Float(0.0).tag(sync=True)
-    angley = traitlets.Float(0.0).tag(sync=True)
-    anglez = traitlets.Float(0.0).tag(sync=True)
-    angle_order = Unicode(default_value="XYZ").tag(sync=True)
 
     scatters = traitlets.List(traitlets.Instance(Scatter), [], allow_none=False).tag(sync=True, **ipywidgets.widget_serialization)
     meshes = traitlets.List(traitlets.Instance(Mesh), [], allow_none=False).tag(sync=True, **ipywidgets.widget_serialization)

@@ -341,16 +341,11 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.reset_icon = new ToolIcon('fa-refresh', this.toolbar_div)
         this.reset_icon.a.title = 'Reset view'
-        var initial_angle_x = this.model.get('anglex')
-        var initial_angle_y = this.model.get('angley')
-        var initial_angle_z = this.model.get('anglez')
         var initial_fov = this.model.get("camera_fov")
         this.reset_icon.a.onclick = () => {
-            this.model.set({anglex: initial_angle_x,
-                            angley: initial_angle_y,
-                            anglez: initial_angle_z,
-                            camera_fov: initial_fov})
-            this.model.save_changes()
+            this.camera.copy(this.camera_initial)
+            this.camera.ipymodel.syncToModel(true)
+            //this.model.save_changes()
         }
 
         this.el.classList.add("jupyter-widgets");
@@ -398,9 +393,22 @@ var FigureView = widgets.DOMWidgetView.extend( {
         //     orthoFAR
         // );
         this.camera = this.model.get('camera').obj
+        this.camera_initial = this.camera.clone()
+        this.model.get('camera').on('change', () => {
+            // the threejs' lookAt ignore the quaternion, and uses the up vector
+            // we manually set it ourselve
+            var up = new THREE.Vector3( 0, 1, 0 );
+            up.applyQuaternion( this.camera.quaternion );
+            this.camera.up = up;
+            this.camera.lookAt(0, 0, 0)
+            // TODO: shouldn't we do the same with the orbit control?
+            this.control_trackball.position0 = this.camera.position.clone()
+            this.control_trackball.up0 = this.camera.up.clone()
+            // TODO: if we implement figure.look_at, we should update control's target as well
+            this.update()
+        })
         // this.camera.aspect = 0.8
         // this.camera.cameraP.aspect = 0.8
-        this.model.get('camera').on('change', () => this.update())
         //this.camera.toOrthographic()
         this.camera_stereo = new THREE.StereoCamera()
         this.renderer.setSize(width, height);
@@ -474,7 +482,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // set a good intial z for any fov angle
         // see maartenbreddels/ipyvolume#40 for explanation
         // TODO: this should now be reflected on the Python side on the camera
-        // this.camera.position.z = 2 * this.getTanDeg(45/2) / this.getTanDeg(this.model.get("camera_fov")/2)
+        this.camera.position.z = 2 * this.getTanDeg(45/2) / this.getTanDeg(this.model.get("camera_fov")/2)
 
 
         // d3 data
@@ -613,8 +621,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:xlim change:ylim change:zlim change:extent', this._update_box_geo, this);
         this.model.on('change:downscale', this.update_size, this);
         this.model.on('change:stereo', this.update_size, this);
-        this.model.on('change:anglex change:angley change:anglez', this.update_current_control, this);
-        this.model.on('change:angle_order', this.update_current_control, this)
         this.model.on('change:volume_data', this.data_set, this);
         this.model.on('change:eye_separation', this.update, this)
 
@@ -1079,11 +1085,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
     },
     update_angles: function() {
-        //console.log("camera", this.camera.rotation)
-        var rotation = new THREE.Euler().setFromQuaternion(this.camera.quaternion, this.model.get('angle_order'));
-        this.model.set({anglex: rotation.x, angley: rotation.y, anglez: rotation.z})
-        this.model.save_changes()
-        this._save_matrices()
+        this.camera.ipymodel.syncToModel(true)
         this.update()
     },
     _get_scale_matrix: function() {
@@ -1117,47 +1119,15 @@ var FigureView = widgets.DOMWidgetView.extend( {
         view_matrix.multiply(this._get_scale_matrix().clone())
         return view_matrix;
     },
-    _save_matrices: function() {
-        this.model.set('matrix_projection', this.camera.projectionMatrix.elements.slice())
-        this.model.set('matrix_world', this._get_view_matrix().elements.slice())
-        //console.log('setting matrices')
-        this.model.save_changes()
-    },
     getTanDeg: function(deg) {
       var rad = deg * Math.PI/180;
       return Math.tan(rad);
     },
 
     update_current_control: function() {
-        var euler = new THREE.Euler(this.model.get('anglex'), this.model.get('angley'), this.model.get('anglez'), this.model.get('angle_order'))
-        //console.log("updating camera", euler)
-        var q = new THREE.Quaternion().setFromEuler(euler)
-        //this.camera.quaternion = q
-
-        var oldfov = this.camera.fov
-        var newfov = this.model.get("camera_fov")
-        //this.camera.setFov(newfov);
-
-        var target = new THREE.Vector3()
-        var distance = this.camera.position.length()
-        // change distance to account for new fov angle
-        // see maartenbreddels/ipyvolume#40 for explanation
-        var newdist = distance * this.getTanDeg(oldfov/2) / this.getTanDeg(newfov/2)
-
-        var eye = new THREE.Vector3(0, 0, 1);
-        var up = new THREE.Vector3(0, 1, 0);
-        eye.applyQuaternion(q)
-        eye.multiplyScalar(newdist)
-        this.camera.position.copy(eye)
-        this.camera.up = up
-        this.camera.up.applyQuaternion(q)
-        this.camera.lookAt(target);
+        this.camera.ipymodel.syncToModel(true)
         this.control_trackball.position0 = this.camera.position.clone()
         this.control_trackball.up0 = this.camera.up.clone()
-        this.control_trackball.reset()
-        //console.log("updating camera", q, this.camera, eye, distance, up, this.camera.position)
-        this._save_matrices()
-        this.update()
     },
     update: function() {
         // requestAnimationFrame stacks, so make sure multiple update calls only lead to 1 _real_update call
@@ -1174,6 +1144,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
         }
         this._update_requested = false
+        // since the threejs animation system can update the camera, make sure we keep looking at the
+        // center
+        this.camera.lookAt(0, 0, 0)
 
 
 
@@ -1527,11 +1500,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             _view_module : 'ipyvolume',
             _model_module_version: semver_range,
              _view_module_version: semver_range,
-            anglex: 0.0,
-            angley: 0.0,
-            anglez: 0.0,
             eye_separation: 6.4,
-            angle_order: 'XYZ',
             ambient_coefficient: 0.5,
             diffuse_coefficient: 0.8,
             specular_coefficient: 0.5,
