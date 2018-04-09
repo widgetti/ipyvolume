@@ -1005,7 +1005,7 @@ for style_name, __ in ipv.styles.styles.items():
 def plot_plane(where="back", texture=None):
     """Plots a plane at a particular location in the viewbox
 
-    :param str where: 'back', 'front', 'left', 'right'
+    :param str where: 'back', 'front', 'left', 'right', 'top', 'bottom'
     :param texture: {texture}
     :return: :any:`Mesh`
     """
@@ -1022,13 +1022,21 @@ def plot_plane(where="back", texture=None):
         y = [ymin, ymin, ymax, ymax]
         z = [zmax, zmax, zmax, zmax]
     if where == "left":
-        x = [xmin, xmin, xmin, zmin]
+        x = [xmin, xmin, xmin, xmin]
         y = [ymin, ymin, ymax, ymax]
         z = [zmin, zmax, zmax, zmin]
     if where == "right":
-        x = [xmax, xmax, xmax, zmax]
+        x = [xmax, xmax, xmax, xmax]
         y = [ymin, ymin, ymax, ymax]
         z = [zmin, zmax, zmax, zmin][::-1]
+    if where == "top":
+        x = [xmin, xmax, xmax, xmin]
+        y = [ymax, ymax, ymax, ymax]
+        z = [zmax, zmax, zmin, zmin]
+    if where == "bottom":
+        x = [xmax, xmin, xmin, xmax]
+        y = [ymin, ymin, ymin, ymin]
+        z = [zmin, zmin, zmax, zmax]
     triangles = [(0, 1, 2), (0, 2, 3)]
     u = v = None
     if texture is not None:
