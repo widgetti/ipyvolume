@@ -339,7 +339,7 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
         if dim(ar) == 4:
             return [k.reshape(-1, k.shape[-1]) for k in ar]
         else:
-            return ar.reshape(-1, k.shape[-1])
+            return ar.reshape(-1, ar.shape[-1])
 
     if isinstance(color, np.ndarray):
         color = reshape_color(color)
@@ -1005,7 +1005,7 @@ for style_name, __ in ipv.styles.styles.items():
 def plot_plane(where="back", texture=None):
     """Plots a plane at a particular location in the viewbox
 
-    :param str where: 'back', 'front', 'left', 'right'
+    :param str where: 'back', 'front', 'left', 'right', 'top', 'bottom'
     :param texture: {texture}
     :return: :any:`Mesh`
     """
@@ -1022,13 +1022,21 @@ def plot_plane(where="back", texture=None):
         y = [ymin, ymin, ymax, ymax]
         z = [zmax, zmax, zmax, zmax]
     if where == "left":
-        x = [xmin, xmin, xmin, zmin]
+        x = [xmin, xmin, xmin, xmin]
         y = [ymin, ymin, ymax, ymax]
         z = [zmin, zmax, zmax, zmin]
     if where == "right":
-        x = [xmax, xmax, xmax, zmax]
+        x = [xmax, xmax, xmax, xmax]
         y = [ymin, ymin, ymax, ymax]
         z = [zmin, zmax, zmax, zmin][::-1]
+    if where == "top":
+        x = [xmin, xmax, xmax, xmin]
+        y = [ymax, ymax, ymax, ymax]
+        z = [zmax, zmax, zmin, zmin]
+    if where == "bottom":
+        x = [xmax, xmin, xmin, xmax]
+        y = [ymin, ymin, ymin, ymin]
+        z = [zmin, zmin, zmax, zmax]
     triangles = [(0, 1, 2), (0, 2, 3)]
     u = v = None
     if texture is not None:
@@ -1091,12 +1099,12 @@ def selector_default(output_widget=None):
                 mask = inside(x, y)
                 scatter.selected = join(scatter.selected, np.where(mask), fig.selection_mode)
     fig.on_selection(lasso)
-    
+
 
 
 def _make_triangles_lines(shape, wrapx=False, wrapy=False):
     """Transform rectangular regular grid into triangles
-    
+
     :param x: {x2d}
     :param y: {y2d}
     :param z: {z2d}
@@ -1104,12 +1112,12 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
     :param bool wrapy: simular for the y coordinate
     :return: triangles and lines used to plot Mesh
     """
-    
+
     nx, ny = shape
 
     mx = nx if wrapx else nx - 1
     my = ny if wrapy else ny - 1
-    
+
     """
     create all pair of indices (i,j) of the rectangular grid
     minus last row if wrapx = False => mx
@@ -1156,18 +1164,17 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
         if (i+1)=nx => (i+1)%nx=0 => close mesh in x direction
         if (j+1)=ny => (j+1)%ny=0 => close mesh in y direction
     """
-    
+
     nt = len(t1[0])
-    
+
     triangles = np.zeros((nt * 2, 3), dtype=np.uint32)
     triangles[0::2, 0], triangles[0::2, 1], triangles[0::2, 2] = t1
     triangles[1::2, 0], triangles[1::2, 1], triangles[1::2, 2] = t2
-    
+
     lines = np.zeros((nt * 4, 2), dtype=np.uint32)
     lines[::4,0], lines[::4,1] = t1[:2]
     lines[1::4,0], lines[1::4,1] = t1[0],t2[2]
     lines[2::4,0], lines[2::4,1] = t2[2:0:-1]
-    lines[3::4,0], lines[3::4,1] = t1[1],t2[1]   
-    
-    return triangles, lines
+    lines[3::4,0], lines[3::4,1] = t1[1],t2[1]
 
+    return triangles, lines
