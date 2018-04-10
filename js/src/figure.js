@@ -613,6 +613,28 @@ var FigureView = widgets.DOMWidgetView.extend( {
         //*
         this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
 
+        // TODO: remove this when we fully depend on the camera worldMatrix
+        var update_matrix_world_scale = () => {
+            this.model.set('matrix_world', this._get_view_matrix().elements.slice())
+            this.touch()
+        }
+        this.model.on('change:xlim change:ylim change:zlim', () => {
+            update_matrix_world_scale()
+        })
+        this.model.get('camera').on('change:matrixWorld', () => {
+            update_matrix_world_scale()
+        })
+        update_matrix_world_scale()
+
+        var update_matrix_projection = () => {
+            this.model.set('matrix_projection', this.camera.projectionMatrix.elements.slice())
+        }
+        update_matrix_projection()
+        this.model.get('camera').on('change:projectionMatrix', () => {
+            update_matrix_world_scale()
+        })
+
+
         this.model.on('change:xlabel change:ylabel change:zlabel change:camera_control', this.update, this);
         this.model.on('change:render_continuous', this.update, this)
         this.model.on('change:style', this.update, this);
@@ -1123,7 +1145,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
       var rad = deg * Math.PI/180;
       return Math.tan(rad);
     },
-
     update_current_control: function() {
         this.camera.ipymodel.syncToModel(true)
         this.control_trackball.position0 = this.camera.position.clone()
