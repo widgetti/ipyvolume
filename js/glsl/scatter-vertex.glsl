@@ -47,8 +47,7 @@ void main(void) {
     vec3 animation_time = vec3(animation_time_x, animation_time_y, animation_time_z);
 
 #ifdef AS_LINE
-    vec3 model_pos = (mix(position_previous, position, vec3(animation_time_x, animation_time_y, animation_time_z))
-                - origin) / size_viewport - 0.5;
+    vec3 model_pos = (mix(position_previous, position, animation_time) - origin) / size_viewport - 0.5;
     vec4 view_pos = modelViewMatrix * vec4(model_pos, 1.0);
 #else
     vec3 vector = v;
