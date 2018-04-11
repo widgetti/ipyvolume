@@ -153,8 +153,9 @@ class Figure(ipywebrtc.MediaStream):
     scene = traitlets.Instance(pythreejs.Scene).tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('scene')
     def _default_scene(self):
-        # return pythreejs.CombinedCamera(fov=46, position=(0, 0, 2), width=400, height=500)
-        return pythreejs.Scene()
+        # could be removed when https://github.com/jovyan/pythreejs/issues/176 is solved
+        # the default for pythreejs is white, which leads the volume rendering pass to make everything white
+        return pythreejs.Scene(background=None)
 
     width = traitlets.CInt(500).tag(sync=True)
     height = traitlets.CInt(400).tag(sync=True)
