@@ -550,9 +550,11 @@ def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_wi
         current.container.children = (tf.control(max_opacity=max_opacity),) + current.container.children
     return tf
 
+
 def plot_isosurface(data, level=None, color=default_color, wireframe=True, surface=True, controls=True):
     """Plot a surface at constant value (like a 2d contour)
 
+    :param data: 3d numpy array
     :param float level: value where the surface should lie
     :param color: color of the surface, although it can be an array, the length is difficult to predict beforehand,
                   if per vertex color are needed, it is better to set them on the returned mesh afterwards.
