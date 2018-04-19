@@ -102,7 +102,7 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, contro
             ipywidgets.jslink((eye_separation, 'value'), (current.figure, 'eye_separation'))
             current.container.children += (eye_separation,)
         if debug:
-            show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front"])
+            show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front", "Coordinate"])
             current.container.children += (show,)
             #ipywidgets.jslink((current.figure, 'show'), (show, 'value'))
             traitlets.link((current.figure, 'show'), (show, 'value'))
