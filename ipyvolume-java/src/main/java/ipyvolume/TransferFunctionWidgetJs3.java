@@ -1,6 +1,14 @@
 package ipyvolume;
 
 
+import com.twosigma.beakerx.widget.Box;
+import com.twosigma.beakerx.widget.FloatSlider;
+import com.twosigma.beakerx.widget.HBox;
+import com.twosigma.beakerx.widget.Label;
+import com.twosigma.beakerx.widget.VBox;
+
+import java.util.Arrays;
+
 public class TransferFunctionWidgetJs3 extends TransferFunction {
 
 
@@ -110,6 +118,44 @@ public class TransferFunctionWidgetJs3 extends TransferFunction {
   public void setWidth3(double width3){
     this.width3 = width3;
     sendUpdate(WIDTH3, width3);
+  }
+
+  public Box control(){
+    FloatSlider l1 = new FloatSlider();
+      l1.setMin(0);
+      l1.setMax(1);
+      l1.setStep(0.001);
+      l1.setValue(level1);
+    FloatSlider l2 = new FloatSlider();
+      l2.setMin(0);
+      l2.setMax(1);
+      l2.setStep(0.001);
+      l2.setValue(level2);
+    FloatSlider l3 = new FloatSlider();
+      l3.setMin(0);
+      l3.setMax(1);
+      l3.setStep(0.001);
+      l3.setValue(level3);
+    FloatSlider o1 = new FloatSlider();
+      o1.setMin(0);
+      o1.setMax(1);
+      o1.setStep(0.001);
+      o1.setValue(opacity1);
+    FloatSlider o2 = new FloatSlider();
+      o2.setMin(0);
+      o2.setMax(1);
+      o2.setStep(0.001);
+      o2.setValue(opacity2);
+    FloatSlider o3 = new FloatSlider();
+      o3.setMin(0);
+      o3.setMax(1);
+      o3.setStep(0.001);
+      o3.setValue(opacity3);
+    Label label1 = new Label();
+    label1.setDescription("Levels");
+    Label label2 = new Label();
+    label2.setDescription("Opacities");
+    return new VBox(Arrays.asList(new HBox(Arrays.asList(label1, l1, l2, l3)), new HBox(Arrays.asList(label2, o1, o2, o3))));
   }
 
 }

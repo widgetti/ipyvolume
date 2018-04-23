@@ -4,9 +4,10 @@ package ipyvolume;
 import com.twosigma.beakerx.widget.DOMWidget;
 import com.twosigma.beakerx.widget.Style;
 
+import java.io.Serializable;
+import java.util.HashMap;
+
 public class TransferFunction extends DOMWidget {
-
-
 
   public static final String MODEL_MODULE_VALUE = "ipyvolume";
   public static final String MODEL_MODULE_VERSION_VALUE = "~0.4.5";
@@ -16,7 +17,6 @@ public class TransferFunction extends DOMWidget {
   public static final String VIEW_NAME_VALUE = "TransferFunctionView";
   public static final String RGBA = "rgba";
   public static final String STYLE = "style";
-
   private Object rgba = null;
   private Style style = null;
 
@@ -57,14 +57,15 @@ public class TransferFunction extends DOMWidget {
   public Object getRgba() {
     return rgba;
   }
-  public void setRgba(Object rgba){
+  public void setRgba(Rgba rgba){
     this.rgba = rgba;
-    sendUpdate(RGBA, rgba);
+    sendUpdate(RGBA, rgba.serializeToJson());
   }
 
   public Style getStyle() {
     return style;
   }
+
   public void setStyle(Style style){
     this.style = style;
     sendUpdate(STYLE, style);

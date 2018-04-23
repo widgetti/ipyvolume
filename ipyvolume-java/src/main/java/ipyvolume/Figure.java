@@ -3,8 +3,23 @@ package ipyvolume;
 
 import com.twosigma.beakerx.widget.Style;
 import ipywebrtc.MediaStream;
+import org.apache.commons.lang3.ArrayUtils;
+import org.assertj.core.internal.Bytes;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class Figure extends MediaStream {
@@ -44,6 +59,8 @@ public class Figure extends MediaStream {
   public static final String SPECULAR_EXPONENT = "specular_exponent";
   public static final String STEREO = "stereo";
   public static final String STYLE = "style";
+  public static final String TF = "tf";
+  public static final String VOLUME_DATA = "volume_data";
   public static final String WIDTH = "width";
   public static final String XLABEL = "xlabel";
   public static final String XLIM = "xlim";
@@ -79,6 +96,7 @@ public class Figure extends MediaStream {
   private double specularExponent = 5;
   private boolean stereo = false;
   private Style style = null;
+  private TransferFunction tf = null;
   private int width = 500;
   private String xlabel = "x";
   private List xlim = Arrays.asList(0, 1);
@@ -86,6 +104,7 @@ public class Figure extends MediaStream {
   private List ylim = Arrays.asList(0, 1);
   private String zlabel = "z";
   private List zlim = Arrays.asList(0, 1);
+  private VolumeData volumeData;
 
   public Figure() {
     super();
@@ -388,4 +407,23 @@ public class Figure extends MediaStream {
     sendUpdate(ZLIM, zlim);
   }
 
+  public VolumeData getVolumeData(){
+    return volumeData;
+  }
+
+  public void setVolumeData(float[][][] volumeData) {
+
+    VolumeData vol = new VolumeData(volumeData);
+    this.volumeData = vol;
+    sendUpdate(VOLUME_DATA, vol.serializeToJson());
+  }
+
+  public TransferFunction getTf() {
+    return tf;
+  }
+
+  public void setTf(TransferFunction tf) {
+    this.tf = tf;
+    sendUpdate(TF, "IPY_MODEL_" + tf.getComm().getCommId());
+  }
 }
