@@ -1569,45 +1569,55 @@ var FigureView = widgets.DOMWidgetView.extend( {
         return value[0]
     },
     _render_eye: function(camera) {
-        if(this.model.get("volume_data")) {
-            this.camera.updateMatrixWorld();
-            // render the back coordinates
-            // render the back coordinates of the box
-            //camera.updateMatrixWorld();
-            this.box_mesh.material = this.box_material;
-            this.box_material.side = THREE.BackSide;
-            this.renderer.clearTarget(this.back_texture, true, true, true)
-            this.renderer.render(this.scene, camera, this.back_texture);
+        this.camera.updateMatrixWorld();
+        var has_volumes = this.model.get("volume_data");
 
-            // now render the opaque object, such that we limit the rays
-            // set material to rgb
-            _.each(this.scatter_views, function(scatter) {
-                scatter.mesh.material = scatter.mesh.material_rgb
-                scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
-            }, this)
-            _.each(this.mesh_views, function(mesh_view) {
-                mesh_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
-                _.each(mesh_view.meshes, function(mesh) {
-                    mesh.material = mesh.material_rgb
-                }, this);
-            }, this)
-            this.renderer.autoClear = false;
-            this.scene_opaque.overrideMaterial = this.box_material;
-            this.renderer.render(this.scene_scatter, camera, this.back_texture);
-            this.renderer.render(this.scene_opaque, camera, this.back_texture);
-            this.renderer.autoClear = true;
+        // clear main render target
+        this.renderer.clearTarget(this.volr_texture, true, true, true)
 
-            // restore materials
-            _.each(this.scatter_views, function(scatter) {
-                scatter.mesh.material = scatter.mesh.material_normal
-            }, this)
-            _.each(this.mesh_views, function(mesh_view) {
-                _.each(mesh_view.meshes, function(mesh) {
-                    mesh.material = mesh.material_normal
-                }, this);
-            }, this)
+        // render the back coordinates of the box
+        this.box_mesh.material = this.box_material;
+        this.box_material.side = THREE.BackSide;
+        this.renderer.clearTarget(this.back_texture, true, true, true)
+        this.renderer.render(this.scene, camera, this.back_texture);
+
+        // now render the opaque object, such that we limit the rays
+        // set material to rgb
+        _.each(this.scatter_views, function(scatter) {
+            scatter.mesh.material = scatter.mesh.material_rgb
+            scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
+        }, this)
+        _.each(this.mesh_views, function(mesh_view) {
+            mesh_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
+            _.each(mesh_view.meshes, function(mesh) {
+                mesh.material = mesh.material_rgb
+            }, this);
+        }, this)
+        this.renderer.autoClear = false;
+        this.scene_opaque.overrideMaterial = this.box_material;
+        this.renderer.render(this.scene_scatter, camera, this.back_texture);
+        this.renderer.render(this.scene_opaque, camera, this.back_texture);
+
+        // we also render this for the zoom coordinate
+        this.renderer.setClearAlpha(0)
+        this.renderer.clearTarget(this.coordinate_texture, true, true, true)
+        this.renderer.render(this.scene_scatter, camera, this.coordinate_texture);
+        this.renderer.render(this.scene_opaque, camera, this.coordinate_texture);
+
+        this.renderer.autoClear = true;
+
+        // restore materials
+        _.each(this.scatter_views, function(scatter) {
+            scatter.mesh.material = scatter.mesh.material_normal
+        }, this)
+        _.each(this.mesh_views, function(mesh_view) {
+            _.each(mesh_view.meshes, function(mesh) {
+                mesh.material = mesh.material_normal
+            }, this);
+        }, this)
 
 
+        if(has_volumes) {
             // render the front coordinates
             //this.box_mesh.material = this.box_material_volr;
             this.box_material.side = THREE.FrontSide;
@@ -1615,15 +1625,16 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.renderer.clearTarget(this.front_texture, true, true, true)
             this.renderer.render(this.scene, camera, this.front_texture);
             this.renderer.autoClear = true;
+        }
 
-            // render the opaque objects with normal materials
-            this.scene_opaque.overrideMaterial = null;
-            this.renderer.autoClear = false;
-            this.renderer.clearTarget(this.volr_texture, true, true, true)
-            this.renderer.render(this.scene_scatter, camera, this.volr_texture);
-            this.renderer.render(this.scene_opaque, camera, this.volr_texture);
-            this.renderer.autoClear = true;
+        // render the opaque objects with normal materials
+        this.scene_opaque.overrideMaterial = null;
+        this.renderer.autoClear = false;
+        this.renderer.render(this.scene_scatter, camera, this.volr_texture);
+        this.renderer.render(this.scene_opaque, camera, this.volr_texture);
+        this.renderer.autoClear = true;
 
+        if(has_volumes) {
             // last pass, render the volume
             this.box_mesh.material = this.box_material_volr;
             this.renderer.autoClear = false;
@@ -1632,45 +1643,22 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.renderer.render(this.scene, camera, this.volr_texture);
             this.renderer.autoClear = true;
             // restore material
+        }
 
-            // now we do a pass that render the depth
-
-         } else {
-            this.camera.updateMatrixWorld();
-            _.each(this.scatter_views, function(scatter) {
-                scatter.mesh.material = scatter.mesh.material_normal
-                scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
-            }, this)
-            _.each(this.mesh_views, function(mesh) {
-                mesh.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
-                _.each(mesh.meshes, function(mesh) {
-                    mesh.material = mesh.material_normal
-                }, this);
-            }, this)
-            this.renderer.autoClear = false;
-            this.renderer.clear()
-            this.renderer.render(this.scene_scatter, camera);
-            this.renderer.render(this.scene_opaque, camera);
-            this.renderer.autoClear = true;
-         }
-
-
-        this.renderer.autoClear = false;
-
+        // now we render the weighted coordinate for the volumetric data
         // make sure where we don't render, alpha = 0
-        this.renderer.setClearAlpha(0)
-        this.renderer.clearTarget(this.coordinate_texture, true, true, true)
-        this.box_mesh.material = this.box_material_volr_depth;
-        this.renderer.render(this.scene, camera, this.coordinate_texture);
+        if(has_volumes) {
+            this.renderer.autoClear = false;
+            this.box_mesh.material = this.box_material_volr_depth;
+            this.renderer.render(this.scene, camera, this.coordinate_texture);
+        }
         this.renderer.autoClear = true;
 
-        if(this.model.get("volume_data")) {
-            // render to screen
-            this.screen_texture = {Volume:this.volr_texture, Back:this.back_texture, Front:this.front_texture, Coordinate:this.coordinate_texture}[this.model.get("show")]
-            this.screen_material.uniforms.tex.value = this.screen_texture.texture
-            //this.renderer.clearTarget(this.renderer, true, true, true)
-            this.renderer.render(this.screen_scene, this.screen_camera);
-        }
+        // render to screen
+        this.screen_texture = {Volume:this.volr_texture, Back:this.back_texture, Front:this.front_texture, Coordinate:this.coordinate_texture}[this.model.get("show")]
+        this.screen_material.uniforms.tex.value = this.screen_texture.texture
+        //this.renderer.clearTarget(this.renderer, true, true, true)
+        this.renderer.render(this.screen_scene, this.screen_camera);
 
 
     },
