@@ -180,6 +180,7 @@ class Figure(ipywebrtc.MediaStream):
     render_continuous = traitlets.Bool(False).tag(sync=True)
     selector = traitlets.Unicode(default_value='lasso').tag(sync=True)
     selection_mode = traitlets.Unicode(default_value='replace').tag(sync=True)
+    mouse_mode = traitlets.Unicode(default_value='normal').tag(sync=True)
 
     #xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)

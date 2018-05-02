@@ -2,6 +2,8 @@
     text-align: center;
     padding: 2px 2px; /* Some top and bottom padding */
     color: #337ab7;
+    position: relative;
+    display: inline-block;
 }
 
 .fa-inactive {
@@ -10,4 +12,28 @@
 .fa-disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+
+.ipyvolume-toolicon-inactive {
+    opacity: 0.3;
+}
+
+.ipyvolume-toolicon:hover .ipyvolume-toolicon-dropdown-container {
+	display: block;
+}
+.ipyvolume-toolicon-dropdown-container  {
+	display: none;
+	position: absolute;
+	z-index: 10;
+	min-width: 200px;
+	background-color: #999;
+	box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+	background-color: #f9f9f9;
+	padding-left: 2px;
+
+}
+.ipyvolume-toolicon-dropdown  {
+	text-align: left;
+	display: block;
 }

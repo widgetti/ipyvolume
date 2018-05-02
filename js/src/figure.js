@@ -112,13 +112,35 @@ ToolIcon = function(className, parent) {
     this.a.setAttribute('href', 'javascript:void(0)')
     this.li = document.createElement('li')
     this.li.className = 'fa ' + className
+    this.sub = document.createElement('div')
+    this.sub.className = 'ipyvolume-toolicon-dropdown-container'
     this.a.appendChild(this.li)
+    this.a.appendChild(this.sub)
     parent.appendChild(this.a)
     this.active = (state) => {
         if(state)
             this.li.classList.remove('fa-inactive')
         else
             this.li.classList.add('fa-inactive')
+    }
+}
+
+ToolIconDropdown = function(className, parent, text) {
+    this.a = document.createElement('a')
+    this.a.className = 'ipyvolume-toolicon-dropdown'
+    this.a.setAttribute('href', 'javascript:void(0)')
+    this.li = document.createElement('li')
+    this.li.className = 'fa ' + className;
+    this.span_text = document.createElement('span')
+    this.span_text.innerText = text
+    this.a.appendChild(this.li)
+    this.li.appendChild(this.span_text)
+    parent.appendChild(this.a)
+    this.active = (state) => {
+        if(state)
+            this.a.classList.remove('ipyvolume-toolicon-inactive')
+        else
+            this.a.classList.add('ipyvolume-toolicon-inactive')
     }
 }
 
@@ -329,17 +351,66 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 this.model.set('camera_control', 'trackball')
                 this.camera_control_icon.active(false)
             }
-            this.model.save_changes()
+            this.touch()
         }
         this.camera_control_icon.active(false)
 
         this.select_icon = new ToolIcon('fa-pencil-square-o', this.toolbar_div)
         this.select_icon.a.title = 'Select mode (auto when control key is pressed)'
         this.select_icon.a.onclick = () => {
+            if(this.model.get('mouse_mode') == 'select') {
+                this.model.set('mouse_mode', 'normal');
+            } else {
+                this.model.set('mouse_mode', 'select');
+            }
+            this.update_icons()
+            this.touch()
         }
         this.select_icon.active(false)
 
-        this.reset_icon = new ToolIcon('fa-refresh', this.toolbar_div)
+        this.select_icon_lasso = new ToolIconDropdown('fa-vine', this.select_icon.sub, 'Lasso selector')
+        this.select_icon_circle = new ToolIconDropdown('fa-circle', this.select_icon.sub, 'Circle selector')
+        this.select_icon_rectangle = new ToolIconDropdown('fa-square', this.select_icon.sub, 'Rectangle selector')
+        this.select_icon_lasso.a.onclick = (event) => {
+            event.stopPropagation()
+            this.model.set('mouse_mode', 'select');
+            this.model.set('selector', 'lasso')
+            this.touch()
+        }
+        this.select_icon_circle.a.onclick = (event) => {
+            event.stopPropagation()
+            this.model.set('mouse_mode', 'select');
+            this.model.set('selector', 'circle')
+            this.touch()
+        }
+        this.select_icon_rectangle.a.onclick = (event) => {
+            event.stopPropagation()
+            this.model.set('mouse_mode', 'select');
+            this.model.set('selector', 'rectangle')
+            this.touch()
+        }
+
+        this.zoom_icon = new ToolIcon('fa-search-plus', this.toolbar_div)
+        this.zoom_icon.a.title = 'Zoom mode (auto when control key is pressed, use scrolling)'
+        this.zoom_icon.a.onclick = () => {
+            if(this.model.get('mouse_mode') == 'zoom') {
+                this.model.set('mouse_mode', 'normal');
+            } else {
+                this.model.set('mouse_mode', 'zoom');
+            }
+            this.touch()
+        }
+        this.zoom_icon.active(false)
+        // using ctrl and shift, you can quickly change mode
+        // remember the previous mode so we can restore it
+        this.quick_mouse_mode_change = false;
+        this.quick_mouse_previous_mode = this.model.get('mouse_mode');
+
+        this.update_icons()
+        this.model.on('change:mouse_mode change:selector', this.update_icons, this)
+        this.model.on('change:mouse_mode change:selector', this.update_mouse_mode, this)
+
+        this.reset_icon = new ToolIcon('fa-home', this.toolbar_div)
         this.reset_icon.a.title = 'Reset view'
         var initial_fov = this.model.get("camera_fov")
         this.reset_icon.a.onclick = () => {
@@ -548,7 +619,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
             event.stopPropagation();
         }, false);
         window.addEventListener('mouseup', _.bind(this._mouse_up, this), false);
-        this.capture_mouse = false
         this.mouse_inside = false;
         this.mouse_trail = [] // list of x, y positions
         this.select_overlay = null; // lasso or sth else?
@@ -798,10 +868,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
     _mouse_down: function(e) {
         //console.log('mouse down', e)
         window.last_event = e
-        if(e.ctrlKey) {
-            this.capture_mouse = true
-            this.control_trackball.enabled = false
-            this.control_orbit.enabled = false
+        if(this.model.get('mouse_mode') == 'select') {
             var cls = selectors[this.model.get('selector')];
             this.selector = new cls(this.canvas_overlay)
             e.preventDefault();
@@ -820,21 +887,14 @@ var FigureView = widgets.DOMWidgetView.extend( {
             mouseX = e.layerX;
             mouseY = e.layerY;
         }
-        if(this.capture_mouse) {
+        if(this.selector) {
             this.mouse_trail.push([mouseX, mouseY])
             this.selector.mouseMove(mouseX, mouseY)
             this.selector.draw()
         }
     },
     _mouse_up: function(e) {
-        if(this.capture_mouse) {
-            // make sure we don't accidently handle the event handler for the controls
-            // so enable them outside the event handler?
-            setTimeout(() => {
-                this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
-                this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
-            }, 0)
-            this.capture_mouse = false
+        if(this.selector) {
             var canvas = this.renderer.domElement;
             this.send({event: 'selection', data: this.selector.getData(canvas.clientWidth, canvas.clientHeight)})
             // send event..
@@ -846,6 +906,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
     },
     _special_keys_down: function(e) {
+        if(!this.hover) return;
         var evtobj = window.event? event : e
         if(evtobj.altKey) {
             //console.log('pressed alt', this.hover)
@@ -879,16 +940,28 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.model.set('selector', 'rectangle');
             handled = true;
         }
+        if(evtobj.keyCode == 18) {  // shift
+            // avoid ctrl and shift
+            if(!this.quick_mouse_mode_change) {
+                this.quick_mouse_mode_change = true;
+                this.quick_mouse_previous_mode = this.model.get('mouse_mode')
+                this.model.set('mouse_mode', 'zoom')
+                handled = true;
+            }
+        }
         if(evtobj.keyCode == 17) {  // ctrl
-            //console.log('pressed ctrl', this.hover)
-            if(this.hover) {
-                this.select_icon.active(true)
+            if(!this.quick_mouse_mode_change) {
+                this.quick_mouse_mode_change = true;
+                this.quick_mouse_previous_mode = this.model.get('mouse_mode')
+                this.model.set('mouse_mode', 'select')
+                handled = true;
             }
         }
         if(handled) {
             this.touch()
-            //e.preventDefault();
-            //e.stopPropagation();
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
         }
     },
     _special_keys_up: function(e) {
@@ -896,9 +969,12 @@ var FigureView = widgets.DOMWidgetView.extend( {
         if(evtobj.altKey) {
             //console.log('released alt', this.hover)
         }
-        if(evtobj.keyCode == 17) { // ctrl
-            //console.log('released ctrl', this.hover)
-            this.select_icon.active(false)
+        if((evtobj.keyCode == 17) || (evtobj.keyCode == 18)) { // ctrl or shift
+            if(this.quick_mouse_mode_change) {
+                this.quick_mouse_mode_change = false;
+                this.model.set('mouse_mode', this.quick_mouse_previous_mode)
+                this.touch()
+            }
         }
     },
     custom_msg: function(content) {
@@ -1162,11 +1238,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
     },
     _real_update: function() {
         //this.controls_device.update()
-        if(!this.capture_mouse) {
-            this.control_trackball.handleResize()
-            this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
-            this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
-        }
+        this.control_trackball.handleResize()
         this._update_requested = false
         // since the threejs animation system can update the camera, make sure we keep looking at the
         // center
@@ -1551,7 +1623,8 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             render_continuous: false,
             extent: null,
             selector: 'lasso',
-            selection_mode: 'replace'
+            selection_mode: 'replace',
+            mouse_mode: 'normal',
         })
     }
 }, {
