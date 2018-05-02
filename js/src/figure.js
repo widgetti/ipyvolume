@@ -688,11 +688,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // a clone of the box_material_volr, with a different define (faster to render)
         this.box_material_volr_depth = new THREE.ShaderMaterial({
             uniforms: this.box_material_volr.uniforms,
-            blending: THREE.CustomBlending,
-            blendSrc: THREE.SrcAlphaFactor,
-            blendDst: THREE.OneMinusSrcAlphaFactor,
-            blendEquation: THREE.AddEquation,
-            transparent: true,
+            blending: THREE.NoBlending,
             fragmentShader: shaders["volr_fragment"],
             vertexShader: shaders["volr_vertex"],
             defines: {COORDINATE: true},
