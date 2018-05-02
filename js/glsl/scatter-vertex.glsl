@@ -45,6 +45,7 @@ void main(void) {
     vec3 origin = vec3(xlim.x, ylim.x, zlim.x);
     vec3 size_viewport = vec3(xlim.y, ylim.y, zlim.y) - origin;
     vec3 animation_time = vec3(animation_time_x, animation_time_y, animation_time_z);
+    vec3 animation_time_v = vec3(animation_time_vx, animation_time_vy, animation_time_vz);
 
 #ifdef AS_LINE
     vec3 model_pos = (mix(position_previous, position, animation_time) - origin) / size_viewport - 0.5;
@@ -56,7 +57,7 @@ void main(void) {
     vec3 position_offset_previous = vec3(x_previous, y_previous, z_previous);
 
     // assume the vector points to the y axis
-    vec3 vector_current = mix(normalize(vector_previous), normalize(vector), animation_time)
+    vec3 vector_current = mix(normalize(vector_previous), normalize(vector), animation_time_v)
            * mix(length(vector_previous), length(vector), (animation_time_vx+ animation_time_vy+ animation_time_vz)/3.);
     vec3 y_axis = normalize(vector_current);
     // we may have bad luck, and alight with 1 vector, so take two vectors, and we'll always find a non-zero vector

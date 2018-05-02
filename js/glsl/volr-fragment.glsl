@@ -21,6 +21,9 @@ uniform vec2 render_size;
 
 uniform sampler2D transfer_function;
 
+uniform vec3 scale;
+uniform vec3 offset;
+
 
 // for lighting
 uniform mat3 mvMatrix;
@@ -90,10 +93,16 @@ void main(void) {
 
 	float delta = 1.0/256./2.;
 
+#ifdef COORDINATE
+    vec3 weighted_coordinate = vec3(0., 0., 0.);
+    float weight_coordinate;
+#endif
+
 
     for(int i = 0; i < steps; i++) {
         vec3 pos = ray_pos;
-        vec4 sample = sample_as_3d_texture(volume, volume_size, pos, volume_slice_size, volume_slices, volume_rows, volume_columns);
+        vec3 pos_relative = (pos+offset)*scale;
+        vec4 sample = sample_as_3d_texture(volume, volume_size, pos_relative, volume_slice_size, volume_slices, volume_rows, volume_columns);
         /*vec4 sample_x = sample_as_3d_texture(volume, volume_size, pos + vec3(delta, 0, 0), volume_slice_size, volume_slices, volume_rows, volume_columns);
         vec4 sample_y = sample_as_3d_texture(volume, volume_size, pos + vec3(0, delta, 0), volume_slice_size, volume_slices, volume_rows, volume_columns);
         vec4 sample_z = sample_as_3d_texture(volume, volume_size, pos + vec3(0, 0, delta), volume_slice_size, volume_slices, volume_rows, volume_columns);
@@ -103,15 +112,20 @@ void main(void) {
         float cosangle_light = max((dot(light_dir, normal)), 0.);
         float cosangle_eye = max((dot(eye, normal)), 0.);*/
 
+        float data_value = (sample.a - data_min) * data_scale;
+        vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
+
+#ifdef COORDINATE
+#else
         vec3 normal = (-sample.xyz)*2.+1.;
         //normal = -vec3(normal.x, normal.y, normal.z);
         float cosangle_light = max((dot(light_dir, normal)), 0.);
         float cosangle_eye = max((dot(eye, normal)), 0.);
 
-        float data_value = (sample.a - data_min) * data_scale;
-        vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
-
         color_sample = color_sample * (ambient_coefficient + diffuse_coefficient*cosangle_light + specular_coefficient * pow(cosangle_eye, specular_exponent));
+        // float data_value = (sample.a - data_min) * data_scale;
+        // vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
+#endif
 
         float intensity = color_sample.a;
         //float intensity = texture2D(transfer_function, vec2(data_value, 0.5)).a;
@@ -123,12 +137,19 @@ void main(void) {
         alpha_sample = clamp(alpha_sample, 0., 1.);
         color = color + (1.0 - alpha_total) * color_sample * alpha_sample;
         alpha_total = clamp(alpha_total + alpha_sample, 0., 1.);
+#ifdef COORDINATE
+        weighted_coordinate += ray_pos * sqrt(alpha_sample);
+        weight_coordinate += sqrt(alpha_sample);
+#endif
         if(alpha_total >= 1.)
             break;
-
         ray_pos += ray_delta;
     }
+#ifdef COORDINATE
+    gl_FragColor = vec4(weighted_coordinate/weight_coordinate, alpha_total);
+#else
     gl_FragColor = vec4(color.rgb, alpha_total) * brightness;
+#endif
     //gl_FragColor = vec4(ray_begin.xyz, 0.1) * brightness;
     //gl_FragColor = vec4(rotation[0], 1) * brightness;
     //gl_FragColor = vec4(alpha_total, 0., 0., 1.) * brightness;

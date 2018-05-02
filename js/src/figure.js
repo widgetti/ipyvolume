@@ -447,6 +447,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.el_axes = document.createElement("div")
         this.el_mirror.appendChild(this.el_axes);
 
+        this.renderer.domElement.addEventListener('wheel', this.mousewheel.bind(this), false );
+
+
         //const VIEW_ANGLE = this.model.get("camera_fov");
         //const aspect = width / height;
         const NEAR = 0.01;
@@ -592,6 +595,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.back_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
         this.front_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
         this.volr_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+        this.coordinate_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
 
         this.screen_texture = this.volr_texture
         this.screen_scene = new THREE.Scene();
@@ -666,6 +670,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 specular_coefficient : { type: "f", value: this.model.get("specular_coefficient") },
                 specular_exponent : { type: "f", value: this.model.get("specular_exponent") },
                 render_size : { type: "2f", value: [render_width, render_height] },
+                scale: {type: "3f"},
+                offset: {type: "3f"},
             },
             blending: THREE.CustomBlending,
             blendSrc: THREE.SrcAlphaFactor,
@@ -674,6 +680,19 @@ var FigureView = widgets.DOMWidgetView.extend( {
             transparent: true,
             fragmentShader: shaders["volr_fragment"],
             vertexShader: shaders["volr_vertex"],
+            side: THREE.BackSide
+        });
+        // a clone of the box_material_volr, with a different define (faster to render)
+        this.box_material_volr_depth = new THREE.ShaderMaterial({
+            uniforms: this.box_material_volr.uniforms,
+            blending: THREE.CustomBlending,
+            blendSrc: THREE.SrcAlphaFactor,
+            blendDst: THREE.OneMinusSrcAlphaFactor,
+            blendEquation: THREE.AddEquation,
+            transparent: true,
+            fragmentShader: shaders["volr_fragment"],
+            vertexShader: shaders["volr_vertex"],
+            defines: {COORDINATE: true},
             side: THREE.BackSide
         });
         //this.volume_changed()
@@ -704,11 +723,12 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
         update_matrix_projection()
         this.model.get('camera').on('change:projectionMatrix', () => {
-            update_matrix_world_scale()
+            update_matrix_projection()
         })
+        update_matrix_projection()
 
-
-        this.model.on('change:xlabel change:ylabel change:zlabel change:camera_control', this.update, this);
+        this.model.on('change:camera_control', this.update_mouse_mode, this)
+        this.model.on('change:xlabel change:ylabel change:zlabel', this.update, this);
         this.model.on('change:render_continuous', this.update, this)
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
@@ -851,19 +871,93 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // var cwx0 = (cx0 * dx + x[0] - extent[0][0])/(extent[0][1] - extent[0][0])
         // var cwx1 = (cx1 * dx + x[0] - extent[0][0])/(extent[0][1] - extent[0][0])
 
-        this.box_geo = new THREE.BoxBufferGeometry(cx1-cx0, cy1-cy0, cz1-cz0)
-        this.box_geo.translate((cx1-x0)/2, (cy1-cy0)/2, (cz1-cz0)/2)
+        // this.box_geo = new THREE.BoxBufferGeometry(cx1-cx0, cy1-cy0, cz1-cz0)
+        // this.box_geo.translate((cx1-x0)/2, (cy1-cy0)/2, (cz1-cz0)/2)
+        // this.box_geo.translate(cx0, cy0, cz0)
+        // this.box_geo.translate(-0.5, -0.5, -0.5)
+        this.box_geo = new THREE.BoxBufferGeometry(1, 1, 1)
+        this.box_geo.translate(0.5, 0.5, 0.5)
+        this.box_geo.scale((cx1-cx0), (cy1-cy0), (cz1-cz0))
         this.box_geo.translate(cx0, cy0, cz0)
         this.box_geo.translate(-0.5, -0.5, -0.5)
         this.box_mesh.geometry = this.box_geo
-        this.box_material.uniforms.scale.value = [dx/(extent[0][1] - extent[0][0]), dy/(extent[1][1] - extent[1][0]), dz/(extent[2][1] - extent[2][0])]
-        this.box_material.uniforms.offset.value = [(x[0] - extent[0][0])/(extent[0][1] - extent[0][0]),
-                                                   (y[0] - extent[1][0])/(extent[1][1] - extent[1][0]),
-                                                   (z[0] - extent[2][0])/(extent[2][1] - extent[2][0])]
+        // this.box_material_volr.uniforms.scale.value = [dx/(extent[0][1] - extent[0][0]), dy/(extent[1][1] - extent[1][0]), dz/(extent[2][1] - extent[2][0])]
+        // this.box_material_volr.uniforms.offset.value = [(x[0] - extent[0][0])/(extent[0][1] - extent[0][0]),
+        //                                            (y[0] - extent[1][0])/(extent[1][1] - extent[1][0]),
+        //                                            (z[0] - extent[2][0])/(extent[2][1] - extent[2][0])]
+        this.box_material_volr.uniforms.scale.value = [1/(x1-x0), 1/(y1-y0), 1/(z1-z0)]
+        this.box_material_volr.uniforms.offset.value = [-x0, -y0, -z0]
         this.update()
     },
     setStyle: function() {
         // ignore original style setting, our style != a style widget
+    },
+    update_icons: function() {
+        var select_mode = this.model.get('mouse_mode') == 'select'
+        this.select_icon_lasso.active(this.model.get('selector') == 'lasso' && select_mode)
+        this.select_icon_circle.active(this.model.get('selector') == 'circle' && select_mode)
+        this.select_icon_rectangle.active(this.model.get('selector') == 'rectangle' && select_mode)
+        this.select_icon.active(select_mode)
+        var zoom_mode = this.model.get('mouse_mode') == 'zoom'
+        this.zoom_icon.active(zoom_mode)
+    },
+    update_mouse_mode: function() {
+        var normal_mode = this.model.get('mouse_mode') == 'normal';
+        this.control_trackball.enabled = this.model.get('camera_control') == 'trackball' && normal_mode;
+        this.control_orbit.enabled = this.model.get('camera_control') == 'orbit' && normal_mode;
+
+    },
+    mousewheel: function(e) {
+        if(this.model.get('mouse_mode') != 'zoom') return;
+        e.preventDefault();
+        e.stopPropagation();
+        var amount = event.deltaY * 0.00025;
+        if(event.deltaMode == 2) // pages
+            amount = event.deltaY * 0.025;
+        if(event.deltaMode == 1) // lines
+            amount -= event.deltaY * 0.01;
+        var mouseX, mouseY;
+        if (e.offsetX) {
+            mouseX = e.offsetX;
+            mouseY = e.offsetY;
+        }
+        else if (e.layerX) {
+            mouseX = e.layerX;
+            mouseY = e.layerY;
+        }
+        amount *= 10;
+        var factor = Math.pow(10, amount)
+        var buffer = new Uint8Array(4);
+        var height = this.renderer.domElement.clientHeight;
+        this.renderer.readRenderTargetPixels(this.coordinate_texture, mouseX, height-mouseY, 1, 1, buffer)
+        // clear it so that we don't use it again
+        // console.log(amount, factor, mouseX, height-mouseY, buffer)
+        if(buffer[3] > 1) { // at least something got drawn
+            this.renderer.clearTarget(this.coordinate_texture, true, true, true)
+            var center = new THREE.Vector3(buffer[0], buffer[1], buffer[2])
+            center.multiplyScalar(1/255.); // normalize
+            // work in normalized coordinates
+            var np1 = center.clone().sub(center.clone().multiplyScalar(factor))
+            var np2 = center.clone().add(center.clone().negate().addScalar(1).multiplyScalar(factor))
+
+            // and rescale to x/y/z lim
+            var xlim = this.model.get('xlim')
+            var ylim = this.model.get('ylim')
+            var zlim = this.model.get('zlim')
+            var p1 = new THREE.Vector3(xlim[0], ylim[0], zlim[0]);
+            var p2 = new THREE.Vector3(xlim[1], ylim[1], zlim[1]);
+            var scale = p2.clone().sub(p1);
+            var new_p1 = np1.clone().multiply(scale).add(p1);
+            var new_p2 = np2.clone().multiply(scale).add(p1);
+            this.model.set('xlim', [new_p1.x, new_p2.x])
+            this.model.set('ylim', [new_p1.y, new_p2.y])
+            this.model.set('zlim', [new_p1.z, new_p2.z])
+            // console.log('xlim', xlim, [new_p1.x, new_p2.x])
+            // console.log(center, center.clone().multiply(scale).add(p1))
+            this.touch()
+            //this.update()
+        }
+        return false;
     },
     _mouse_down: function(e) {
         //console.log('mouse down', e)
@@ -1421,6 +1515,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
 
             // render the front coordinates
+            //this.box_mesh.material = this.box_material_volr;
             this.box_material.side = THREE.FrontSide;
             this.renderer.autoClear = false;
             this.renderer.clearTarget(this.front_texture, true, true, true)
@@ -1442,12 +1537,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.renderer.clearTarget(this.volr_texture, false, true, false)
             this.renderer.render(this.scene, camera, this.volr_texture);
             this.renderer.autoClear = true;
+            // restore material
 
-            // render to screen
-            this.screen_texture = {Volume:this.volr_texture, Back:this.back_texture, Front:this.front_texture}[this.model.get("show")]
-            this.screen_material.uniforms.tex.value = this.screen_texture.texture
-            //this.renderer.clearTarget(this.renderer, true, true, true)
-            this.renderer.render(this.screen_scene, this.screen_camera);
+            // now we do a pass that render the depth
+
          } else {
             this.camera.updateMatrixWorld();
             _.each(this.scatter_views, function(scatter) {
@@ -1466,6 +1559,24 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.renderer.render(this.scene_opaque, camera);
             this.renderer.autoClear = true;
          }
+
+
+        this.renderer.autoClear = false;
+
+        // make sure where we don't render, alpha = 0
+        this.renderer.setClearAlpha(0)
+        this.renderer.clearTarget(this.coordinate_texture, true, true, true)
+        this.box_mesh.material = this.box_material_volr_depth;
+        this.renderer.render(this.scene, camera, this.coordinate_texture);
+        this.renderer.autoClear = true;
+
+        if(this.model.get("volume_data")) {
+            // render to screen
+            this.screen_texture = {Volume:this.volr_texture, Back:this.back_texture, Front:this.front_texture, Coordinate:this.coordinate_texture}[this.model.get("show")]
+            this.screen_material.uniforms.tex.value = this.screen_texture.texture
+            //this.renderer.clearTarget(this.renderer, true, true, true)
+            this.renderer.render(this.screen_scene, this.screen_camera);
+        }
 
 
     },
@@ -1525,6 +1636,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.back_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
         this.front_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
         this.volr_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+        this.coordinate_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
         this.screen_texture = this.volr_texture
         this.box_material_volr.uniforms.back.value = this.back_texture.texture
         this.box_material_volr.uniforms.front.value = this.front_texture.texture

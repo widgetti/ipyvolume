@@ -7,5 +7,6 @@ void main(void) {
     gl_Position = projectionMatrix *
                 modelViewMatrix *
                 vec4(pos,1.0);
-    vertex_color = vec4((pos + vec3(0.5, 0.5, 0.5))*scale + offset, 1);
+    //vertex_color = vec4((pos + vec3(0.5, 0.5, 0.5))*scale + offset, 1);
+    vertex_color = vec4((pos + vec3(0.5, 0.5, 0.5)), 1);
 }
