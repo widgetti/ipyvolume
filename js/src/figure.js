@@ -400,7 +400,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             }
             this.touch()
         }
-        this.zoom_icon.active(false)
+        //this.zoom_icon.active(false)
         // using ctrl and shift, you can quickly change mode
         // remember the previous mode so we can restore it
         this.quick_mouse_mode_change = false;
@@ -618,6 +618,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // since we disable the controls, seems to work on chrome
         this.renderer.domElement.addEventListener('mousedown', _.bind(this._mouse_down, this), false);
         this.renderer.domElement.addEventListener('mousemove', _.bind(this._mouse_move, this), false);
+        this.renderer.domElement.addEventListener('dblclick', this._mouse_dbl_click.bind(this), false)
         this.renderer.domElement.addEventListener('contextmenu', (event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -634,8 +635,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.control_trackball.noPan = true;
         this.control_orbit.enablePan = false;
         this.control_orbit.dampingFactor = 1.
-        this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
-        this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
+        this.update_mouse_mode()
+        // this.control_trackball.enabled = this.model.get('camera_control') == 'trackball'
+        // this.control_orbit.enabled = this.model.get('camera_control') == 'orbit'
 
         this.control_orbit.rotateSpeed = 0.5
         this.control_trackball.rotateSpeed = 0.5
@@ -929,13 +931,21 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var factor = Math.pow(10, amount)
         var buffer = new Uint8Array(4);
         var height = this.renderer.domElement.clientHeight;
-        this.renderer.readRenderTargetPixels(this.coordinate_texture, mouseX, height-mouseY, 1, 1, buffer)
-        // clear it so that we don't use it again
+        if(!this.last_zoom_coordinate) {
+            this.renderer.readRenderTargetPixels(this.coordinate_texture, mouseX, height-mouseY, 1, 1, buffer)
+            if(buffer[3] > 1) { // at least something got drawn
+                var center = new THREE.Vector3(buffer[0], buffer[1], buffer[2])
+                center.multiplyScalar(1/255.); // normalize
+                this.last_zoom_coordinate = center;
+            }
+        }
         // console.log(amount, factor, mouseX, height-mouseY, buffer)
-        if(buffer[3] > 1) { // at least something got drawn
+        if(this.last_zoom_coordinate) { // at least something got drawn
+            // clear it so that we don't use it again
             this.renderer.clearTarget(this.coordinate_texture, true, true, true)
-            var center = new THREE.Vector3(buffer[0], buffer[1], buffer[2])
-            center.multiplyScalar(1/255.); // normalize
+            //var center = new THREE.Vector3(buffer[0], buffer[1], buffer[2])
+            //center.multiplyScalar(1/255.); // normalize
+            var center = this.last_zoom_coordinate;
             // work in normalized coordinates
             var np1 = center.clone().sub(center.clone().multiplyScalar(factor))
             var np2 = center.clone().add(center.clone().negate().addScalar(1).multiplyScalar(factor))
@@ -962,6 +972,25 @@ var FigureView = widgets.DOMWidgetView.extend( {
     _mouse_down: function(e) {
         //console.log('mouse down', e)
         window.last_event = e
+        if (e.offsetX) {
+            mouseX = e.offsetX;
+            mouseY = e.offsetY;
+        }
+        else if (e.layerX) {
+            mouseX = e.layerX;
+            mouseY = e.layerY;
+        }
+        this.mouse_down_position = {x:mouseX, y:mouseY};
+        this.mouse_down_limits = {x: this.model.get('xlim'), y:this.model.get('ylim'), z:this.model.get('zlim')}
+        var height = this.renderer.domElement.clientHeight;
+        var buffer = new Uint8Array(4);
+        this.renderer.readRenderTargetPixels(this.coordinate_texture, mouseX, height-mouseY, 1, 1, buffer)
+        if(buffer[3] > 1) { // at least something got drawn
+            var center = new THREE.Vector3(buffer[0], buffer[1], buffer[2])
+            center.multiplyScalar(1/255.); // normalize
+            this.last_pan_coordinate = center;
+        }
+
         if(this.model.get('mouse_mode') == 'select') {
             var cls = selectors[this.model.get('selector')];
             this.selector = new cls(this.canvas_overlay)
@@ -981,10 +1010,75 @@ var FigureView = widgets.DOMWidgetView.extend( {
             mouseX = e.layerX;
             mouseY = e.layerY;
         }
+        mouse_position = {x:mouseX, y:mouseY};
+        this.last_zoom_coordinate = null;
         if(this.selector) {
             this.mouse_trail.push([mouseX, mouseY])
             this.selector.mouseMove(mouseX, mouseY)
             this.selector.draw()
+        }
+        if(this.model.get('mouse_mode') == 'zoom' && this.last_pan_coordinate) {
+            if(e.buttons == 1) {
+                var canvas = this.renderer.domElement;
+                var pixels_right = mouse_position.x - this.mouse_down_position.x;
+                var pixels_up   = -(mouse_position.y - this.mouse_down_position.y);
+                // normalized GL screen coordinates
+                var right = (pixels_right/canvas.clientWidth) * 2;
+                var up    = (pixels_up/canvas.clientHeight) * 2;
+                var P = last_volume.camera.projectionMatrix
+                var W = last_volume._get_view_matrix()
+                // M goes from world to screen
+                var M = M = P.clone().multiply(W)
+                var Mi = M.clone().getInverse(M)
+
+
+                var xlim = this.mouse_down_limits.x
+                var ylim = this.mouse_down_limits.y
+                var zlim = this.mouse_down_limits.z
+                var l1 = new THREE.Vector3(xlim[0], ylim[0], zlim[0]);
+                var l2 = new THREE.Vector3(xlim[1], ylim[1], zlim[1]);
+                var scale = l2.clone().sub(l1);
+
+                // start pos in world cooordinates
+                var p1 = this.last_pan_coordinate.clone().multiply(scale).add(l1)
+                // project to screen coordinates
+                var sp1 = p1.clone().applyMatrix4(M)
+                // move p2 in screen coordinates
+                var sp2 = sp1.clone()
+                sp2.x += right
+                sp2.y += up
+
+                // move them back to world coordinates
+                var np1 = sp1.applyMatrix4(Mi)
+                var np2 = sp2.applyMatrix4(Mi)
+                var delta = np2.clone().sub(np1);
+
+                l1.sub(delta);
+                l2.sub(delta);
+                this.model.set('xlim', [l1.x, l2.x])
+                this.model.set('ylim', [l1.y, l2.y])
+                this.model.set('zlim', [l1.z, l2.z])
+
+
+            }
+        }
+    },
+    _mouse_dbl_click: function(e) {
+        if(this.model.get('mouse_mode') == 'zoom' && this.last_pan_coordinate) {
+            var xlim = this.mouse_down_limits.x
+            var ylim = this.mouse_down_limits.y
+            var zlim = this.mouse_down_limits.z
+            var l1 = new THREE.Vector3(xlim[0], ylim[0], zlim[0]);
+            var l2 = new THREE.Vector3(xlim[1], ylim[1], zlim[1]);
+            var scale = l2.clone().sub(l1);
+
+            var center = this.last_pan_coordinate.clone().multiply(scale).add(l1)
+            var half_scale = scale.clone().multiplyScalar(0.5);
+            l1 = center.clone().sub(half_scale);
+            l2 = center.clone().add(half_scale);
+            this.model.set('xlim', [l1.x, l2.x])
+            this.model.set('ylim', [l1.y, l2.y])
+            this.model.set('zlim', [l1.z, l2.z])
         }
     },
     _mouse_up: function(e) {
