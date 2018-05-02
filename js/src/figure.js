@@ -662,6 +662,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 brightness : { type: "f", value: 2. },
                 data_min : { type: "f", value: 0. },
                 data_max : { type: "f", value: 1. },
+                opacity_scale :  { type: "f", value: 1.0 },
                 volume_rows : { type: "f", value: 8. },
                 volume_columns : { type: "f", value: 16. },
                 volume_slices : { type: "f", value: 128. },
@@ -750,6 +751,14 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:diffuse_coefficient', this.update_light, this);
         this.model.on('change:specular_coefficient', this.update_light, this);
         this.model.on('change:specular_exponent', this.update_light, this);
+
+        var update_opacity_scale = () => {
+            this.box_material_volr.uniforms['opacity_scale'].value = this.model.get('opacity_scale')
+            this.update()
+        }
+        update_opacity_scale()
+        this.model.on('change:opacity_scale', update_opacity_scale)
+
         var update_center = () => {
             // WARNING: we cheat a little by setting the scene positions (hence the minus) since it is
             // easier, might get us in trouble later?
@@ -1795,6 +1804,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             diffuse_coefficient: 0.8,
             specular_coefficient: 0.5,
             specular_exponent: 5,
+            opacity_scale: 1.0,
             stereo: false,
             camera_control: 'trackball',
             camera_fov: 45,

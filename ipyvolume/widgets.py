@@ -125,6 +125,7 @@ class Figure(ipywebrtc.MediaStream):
     eye_separation = traitlets.CFloat(6.4).tag(sync=True)
     data_min = traitlets.CFloat().tag(sync=True)
     data_max = traitlets.CFloat().tag(sync=True)
+    opacity_scale = traitlets.CFloat(1.0).tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
 
     scatters = traitlets.List(traitlets.Instance(Scatter), [], allow_none=False).tag(sync=True, **ipywidgets.widget_serialization)

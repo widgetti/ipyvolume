@@ -9,6 +9,7 @@ uniform sampler2D volume;
 //uniform float opacity[4];
 //uniform float volume_level[4];
 //uniform float volume_width[4];
+uniform float opacity_scale;
 uniform float brightness;
 uniform float data_min;
 uniform float data_max;
@@ -127,7 +128,7 @@ void main(void) {
         // vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
 #endif
 
-        float intensity = color_sample.a;
+        float intensity = color_sample.a * opacity_scale;
         //float intensity = texture2D(transfer_function, vec2(data_value, 0.5)).a;
         //color_sample = texture2D(transfer_function, data_value);
         //vec4 color_sample = texture2D(colormap, vec2(sample.a, colormap_index_scaled));
