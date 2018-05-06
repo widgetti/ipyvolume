@@ -161,6 +161,10 @@ class Figure(ipywebrtc.MediaStream):
     width = traitlets.CInt(500).tag(sync=True)
     height = traitlets.CInt(400).tag(sync=True)
     downscale = traitlets.CInt(1).tag(sync=True)
+    displayscale = traitlets.CFloat(1).tag(sync=True)
+    capture_fps = traitlets.CFloat(None, allow_none=True).tag(sync=True)
+    cube_resolution = traitlets.CInt(512).tag(sync=True)
+
     show = traitlets.Unicode("Volume").tag(sync=True) # for debugging
 
     xlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
@@ -182,6 +186,7 @@ class Figure(ipywebrtc.MediaStream):
     selector = traitlets.Unicode(default_value='lasso').tag(sync=True)
     selection_mode = traitlets.Unicode(default_value='replace').tag(sync=True)
     mouse_mode = traitlets.Unicode(default_value='normal').tag(sync=True)
+    threesixty = traitlets.Bool(False).tag(sync=True)
 
     #xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)

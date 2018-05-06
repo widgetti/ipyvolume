@@ -419,6 +419,47 @@ var FigureView = widgets.DOMWidgetView.extend( {
             //this.model.save_changes()
         }
 
+
+        this.setting_icon = new ToolIcon('fa-cog', this.toolbar_div)
+        this.setting_icon_360 = new ToolIconDropdown('fa-circle', this.setting_icon.sub, '360 degrees')
+        var add_resolution = (name, x, y, stereo) => {
+            var tool = new ToolIconDropdown('fa-cogs', this.setting_icon.sub, name + ' (' + x + 'x' + y + ')')
+            tool.a.onclick = (event) => {
+                this.model.set('width',  x);
+                this.model.set('height', y);
+                this.touch();
+            }
+        }
+        add_resolution('default', this.model.get('width'), this.model.get('height'))
+        add_resolution('HD 720', 1280, 720)
+        add_resolution('HD', 1920, 1080)
+        add_resolution('2k', 2048, 1080)
+        add_resolution('2k x 2k', 2048, 2048)
+        add_resolution('4k UHD ', 3840, 2160)
+        add_resolution('4k', 4096, 2160)
+        add_resolution('4k x 4k', 4096, 4096)
+        // add_resolution('8k UHD', 7680, 4320)
+        var add_scaling = (x) => {
+            var tool = new ToolIconDropdown('fa-compress', this.setting_icon.sub, 'Scale canvas (down) by ' + x)
+            tool.a.onclick = (event) => {
+                this.model.set('displayscale',  1/x);
+                this.touch();
+            }
+        }
+        add_scaling(1)
+        add_scaling(2)
+        add_scaling(4)
+        add_scaling(8)
+        this.setting_icon_360.a.onclick = (event) => {
+            event.stopPropagation()
+            this.model.set('threesixty', !this.model.get('threesixty'));
+            this.touch()
+        }
+        this.model.on('change:threesixty', () => {
+            this.setting_icon_360.active(this.model.get('threesixty'))
+        })
+
+
         this.el.classList.add("jupyter-widgets");
         // set up WebGL using threejs, with an overlay canvas for 2d drawing
         this.canvas_container = document.createElement("div")
@@ -481,6 +522,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             // TODO: if we implement figure.look_at, we should update control's target as well
             this.update()
         })
+        this.cube_camera = new THREE.CubeCamera(this.camera.near, this.camera.far, this.model.get('cube_resolution'));
         // this.camera.aspect = 0.8
         // this.camera.cameraP.aspect = 0.8
         //this.camera.toOrthographic()
@@ -599,19 +641,30 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.screen_texture = this.volr_texture
         this.screen_scene = new THREE.Scene();
+        this.screen_scene_cube = new THREE.Scene();
         this.screen_plane = new THREE.PlaneBufferGeometry( 1.0, 1.0 );
         this.screen_material = new THREE.ShaderMaterial( {
-					uniforms: { tex: { type: 't', value: this.front_texture.texture } },
-					vertexShader: shaders["screen_vertex"],
-					fragmentShader: shaders["screen_fragment"],
-					depthWrite: false
+                    uniforms: { tex: { type: 't', value: this.front_texture.texture } },
+                    vertexShader: shaders["screen_vertex"],
+                    fragmentShader: shaders["screen_fragment"],
+                    depthWrite: false
+                } );
+        this.screen_material_cube = new THREE.ShaderMaterial( {
+                    uniforms: { tex: { type: 't', value: this.cube_camera.renderTarget} },
+                    vertexShader: shaders["screen_vertex"],
+                    fragmentShader: shaders["screen_fragment"],
+                    defines: {THREESIXTY: true},
+                    depthWrite: false
+                } );
 
-				} );
 
         this.screen_mesh = new THREE.Mesh(this.screen_plane, this.screen_material );
+        this.screen_mesh_cube = new THREE.Mesh(this.screen_plane, this.screen_material_cube );
         this.screen_scene.add(this.screen_mesh)
+        this.screen_scene_cube.add(this.screen_mesh_cube)
         this.screen_camera = new THREE.OrthographicCamera( 1 / - 2, 1 / 2, 1 / 2, 1 / - 2, -10000, 10000 );
         this.screen_camera.position.z = 10;
+        this.on('change:threesixty', this.update, this)
 
 
         // we rely here on these events listeners to be executed before those of the controls
@@ -742,6 +795,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.model.on('change:width', this.update_size, this);
         this.model.on('change:height', this.update_size, this);
+        this.model.on('change:displayscale', this.update_size, this);
 
         this.model.on('change:ambient_coefficient', this.update_light, this);
         this.model.on('change:diffuse_coefficient', this.update_light, this);
@@ -830,7 +884,11 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         //this.el.addEventListener("mousedown", _.bind(this._special_keys_down, this));
         //this.el.addEventListener("keyup", _.bind(this._special_keys_up, this));
-        var stream = this.renderer.domElement.captureStream()
+        // var stream = this.renderer.domElement.captureStream(this.model.get('capture_fps'))
+        if(this.model.get('capture_fps'))
+            var stream = this.renderer.domElement.captureStream(this.model.get('capture_fps'))
+        else
+            var stream = this.renderer.domElement.captureStream()
         this.model.stream = Promise.resolve(stream)
         window.last_figure_stream = (stream)
         //console.log('set this figure as last stream')
@@ -1521,19 +1579,32 @@ var FigureView = widgets.DOMWidgetView.extend( {
             var size = this.renderer.getSize();
             if (this.camera.parent === null ) this.camera.updateMatrixWorld();
             this.camera_stereo.eyeSep = this.model.get('eye_separation')/100;
-            this.camera.focus = this.camera.cameraP.focus
+            this.camera.focus = this.camera.focus
             this.camera_stereo.update(this.camera)
 
+            // default is to render left left, and right right
+            // in 360 mode, left is rendered top, right bottom
+            _360 = this.model.get('threesixty');
             // left eye
             this.renderer.setScissorTest( true );
-            this.renderer.setScissor( 0, 0, size.width / 2, size.height );
-            this.renderer.setViewport( 0, 0, size.width / 2, size.height );
+            if(_360) {
+                this.renderer.setScissor( 0, 0, size.width, size.height/2);
+                this.renderer.setViewport(0, 0, size.width, size.height/2);
+            } else {
+                this.renderer.setScissor( 0, 0, size.width / 2, size.height );
+                this.renderer.setViewport( 0, 0, size.width / 2, size.height );
+            }
             //this.renderer.render(this.scene, this.camera_stereo.cameraL );
             this._render_eye(this.camera_stereo.cameraL);
 
             // right eye
-            this.renderer.setScissor( size.width / 2, 0, size.width / 2, size.height );
-            this.renderer.setViewport( size.width / 2, 0, size.width / 2, size.height );
+            if(_360) {
+                this.renderer.setScissor( 0, size.height/2, size.width, size.height/2 );
+                this.renderer.setViewport(0, size.height/2, size.width, size.height/2 );
+            } else {
+                this.renderer.setScissor( size.width/2, 0, size.width/2, size.height );
+                this.renderer.setViewport(size.width/2, 0, size.width/2, size.height );
+            }
             //this.renderer.render(this.scene, this.camera_stereo.cameraR );
             this._render_eye(this.camera_stereo.cameraR);
 
@@ -1576,6 +1647,30 @@ var FigureView = widgets.DOMWidgetView.extend( {
     _render_eye: function(camera) {
         this.camera.updateMatrixWorld();
         var has_volumes = this.model.get("volume_data");
+        _360 = this.model.get('threesixty');
+
+        // set material to rgb
+        _.each(this.scatter_views, function(scatter) {
+            scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
+        }, this)
+        _.each(this.mesh_views, function(mesh_view) {
+            mesh_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
+        }, this)
+
+        if(_360) {
+            this.cube_camera.clear(this.renderer, true, true, true)
+            this.renderer.autoClear = false;
+            this.cube_camera.position.copy(this.camera.position)
+            this.cube_camera.rotation.copy(this.camera.rotation)
+            this.cube_camera.quaternion.copy(this.camera.quaternion)
+            this.cube_camera.update(this.renderer, this.scene_scatter)
+            this.cube_camera.update(this.renderer, this.scene_opaque)
+            this.screen_texture = this.cube_camera.renderTarget; //{Volume:this.volr_texture, Back:this.back_texture, Front:this.front_texture, Coordinate:this.coordinate_texture}[this.model.get("show")]
+            //this.renderer.clearTarget(this.renderer, true, true, true)
+            this.renderer.render(this.screen_scene_cube, this.screen_camera);
+            //this.screen_material.uniforms.tex.value = null;
+            return
+        }
 
         // clear main render target
         this.renderer.clearTarget(this.volr_texture, true, true, true)
@@ -1590,10 +1685,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // set material to rgb
         _.each(this.scatter_views, function(scatter) {
             scatter.mesh.material = scatter.mesh.material_rgb
-            scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
         }, this)
         _.each(this.mesh_views, function(mesh_view) {
-            mesh_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
             _.each(mesh_view.meshes, function(mesh) {
                 mesh.material = mesh.material_rgb
             }, this);
@@ -1694,15 +1787,25 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // the offscreen rendering can be of lower resolution
         var render_width = width;
         var render_height = height;
+        var display_width = width * this.model.get('displayscale')
+        var display_height = height * this.model.get('displayscale')
         if(this.is_fullscreen() && this.model.get("volume_data")) {
             // fullscreen volume rendering is slow, respect width and height
             render_width = custom_width || this.model.get("width");
             render_height = custom_height || this.model.get("height");
         }
         this.renderer.setSize(width, height, false);
-        this.canvas_container.style.width = width + "px"
-        this.canvas_container.style.height = height + "px"
-        this.canvas_overlay.style.width = width + "px"
+        var buffer_width = this.renderer.context.drawingBufferWidth;
+        var buffer_height = this.renderer.context.drawingBufferWidth;
+        if((buffer_width < width) || (buffer_height < height)) {
+            console.info('could not set resolution to', width, height, ', resolution is', buffer_width, buffer_height)
+        }
+
+        this.renderer.domElement.style.width = display_width + "px"
+        this.renderer.domElement.style.height = display_height + "px"
+        this.canvas_container.style.width = display_width + "px"
+        this.canvas_container.style.height = display_height + "px"
+        this.canvas_overlay.style.width = display_width + "px"
         this.canvas_overlay.style.height = height + "px"
         this.canvas_overlay.width = width
         this.canvas_overlay.height = height
@@ -1808,6 +1911,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             width: 500,
             height: 400,
             downscale: 1,
+            displayscale: 1,
             scatters: null,
             meshes: null,
             show: "Volume",
@@ -1825,6 +1929,9 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             selector: 'lasso',
             selection_mode: 'replace',
             mouse_mode: 'normal',
+            threesixty: true,
+            capture_fps: undefined,
+            cube_resolution: 512
         })
     }
 }, {
