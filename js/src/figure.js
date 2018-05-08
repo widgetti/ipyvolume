@@ -421,6 +421,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
 
         this.setting_icon = new ToolIcon('fa-cog', this.toolbar_div)
+        this.setting_icon_180 = new ToolIconDropdown('fa-circle', this.setting_icon.sub, '180 degrees')
         this.setting_icon_360 = new ToolIconDropdown('fa-circle', this.setting_icon.sub, '360 degrees')
         var add_resolution = (name, x, y, stereo) => {
             var tool = new ToolIconDropdown('fa-cogs', this.setting_icon.sub, name + ' (' + x + 'x' + y + ')')
@@ -450,13 +451,28 @@ var FigureView = widgets.DOMWidgetView.extend( {
         add_scaling(2)
         add_scaling(4)
         add_scaling(8)
-        this.setting_icon_360.a.onclick = (event) => {
+        this.setting_icon_180.a.onclick = (event) => {
             event.stopPropagation()
-            this.model.set('threesixty', !this.model.get('threesixty'));
+            if(this.model.get('panorama_mode') == '180')
+                this.model.set('panorama_mode', 'no');
+            else
+                this.model.set('panorama_mode', '180');
             this.touch()
         }
-        this.model.on('change:threesixty', () => {
-            this.setting_icon_360.active(this.model.get('threesixty'))
+        this.setting_icon_360.a.onclick = (event) => {
+            event.stopPropagation()
+            if(this.model.get('panorama_mode') == '360')
+                this.model.set('panorama_mode', 'no');
+            else
+                this.model.set('panorama_mode', '360');
+            this.touch()
+        }
+        this.setting_icon_360.active(this.model.get('panorama_mode') == '360')
+        this.setting_icon_180.active(this.model.get('panorama_mode') == '180')
+        this.model.on('change:panorama_mode', () => {
+            this.setting_icon_360.active(this.model.get('panorama_mode') == '360')
+            this.setting_icon_180.active(this.model.get('panorama_mode') == '180')
+            this.update_panorama()
         })
 
 
@@ -650,10 +666,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
                     depthWrite: false
                 } );
         this.screen_material_cube = new THREE.ShaderMaterial( {
-                    uniforms: { tex: { type: 't', value: this.cube_camera.renderTarget} },
+                    uniforms: { tex: { type: 't', value: this.cube_camera.renderTarget.texture } },
                     vertexShader: shaders["screen_vertex"],
                     fragmentShader: shaders["screen_fragment"],
-                    defines: {THREESIXTY: true},
+                    defines: {},
                     depthWrite: false
                 } );
 
@@ -664,7 +680,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.screen_scene_cube.add(this.screen_mesh_cube)
         this.screen_camera = new THREE.OrthographicCamera( 1 / - 2, 1 / 2, 1 / 2, 1 / - 2, -10000, 10000 );
         this.screen_camera.position.z = 10;
-        this.on('change:threesixty', this.update, this)
+        this.update_panorama()
+        this.on('change:panorama_mode', this.update_panorama, this)
 
 
         // we rely here on these events listeners to be executed before those of the controls
@@ -1480,6 +1497,15 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.control_trackball.position0 = this.camera.position.clone()
         this.control_trackball.up0 = this.camera.up.clone()
     },
+    update_panorama: function() {
+        material = this.screen_material_cube
+        if(this.model.get('panorama_mode') == '360')
+            material.defines = {PANORAMA_360: true}
+        if(this.model.get('panorama_mode') == '180')
+            material.defines = {PANORAMA_180: true}
+        material.needsUpdate = true
+        this.update()
+    },
     update: function() {
         // requestAnimationFrame stacks, so make sure multiple update calls only lead to 1 _real_update call
         if(!this._update_requested) {
@@ -1582,12 +1608,21 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.camera.focus = this.camera.focus
             this.camera_stereo.update(this.camera)
 
+            // the 360 rendering uses the position and quaternion, not the matrices
+            this.camera_stereo.cameraL.position.copy(this.camera.position)
+            this.camera_stereo.cameraR.position.copy(this.camera.position)
+            this.camera_stereo.cameraL.quaternion.copy(this.camera.quaternion)
+            this.camera_stereo.cameraR.quaternion.copy(this.camera.quaternion)
+            // and up is used for lookAt
+            this.camera_stereo.cameraL.up.copy(this.camera.up)
+            this.camera_stereo.cameraR.up.copy(this.camera.up)
+
             // default is to render left left, and right right
             // in 360 mode, left is rendered top, right bottom
-            _360 = this.model.get('threesixty');
+            var panorama = this.model.get('panorama_mode') != 'no';
             // left eye
             this.renderer.setScissorTest( true );
-            if(_360) {
+            if(panorama) {
                 this.renderer.setScissor( 0, 0, size.width, size.height/2);
                 this.renderer.setViewport(0, 0, size.width, size.height/2);
             } else {
@@ -1598,7 +1633,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this._render_eye(this.camera_stereo.cameraL);
 
             // right eye
-            if(_360) {
+            if(panorama) {
                 this.renderer.setScissor( 0, size.height/2, size.width, size.height/2 );
                 this.renderer.setViewport(0, size.height/2, size.width, size.height/2 );
             } else {
@@ -1647,7 +1682,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
     _render_eye: function(camera) {
         this.camera.updateMatrixWorld();
         var has_volumes = this.model.get("volume_data");
-        _360 = this.model.get('threesixty');
+        var panorama = this.model.get('panorama_mode') != 'no';
 
         // set material to rgb
         _.each(this.scatter_views, function(scatter) {
@@ -1657,12 +1692,32 @@ var FigureView = widgets.DOMWidgetView.extend( {
             mesh_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
         }, this)
 
-        if(_360) {
+        if(panorama) {
             this.cube_camera.clear(this.renderer, true, true, true)
             this.renderer.autoClear = false;
-            this.cube_camera.position.copy(this.camera.position)
-            this.cube_camera.rotation.copy(this.camera.rotation)
+            this.cube_camera.position.copy(camera.position)
+            this.cube_camera.rotation.copy(camera.rotation)
             this.cube_camera.quaternion.copy(this.camera.quaternion)
+
+            if(this.model.get('stereo')) {
+                // we do 'toe in' http://paulbourke.net/papers/vsmm2006/vsmm2006.pdf
+                // which should be fine with spherical screens or projections right?
+                // as opposed to what is described here http://paulbourke.net/stereographics/stereorender/
+                var displacement = new THREE.Vector3(0.0, 0, 0);
+                if(camera == this.camera_stereo.cameraR)
+                    displacement.x += 0.032
+                if(camera == this.camera_stereo.cameraL)
+                    displacement.x -= 0.032
+                displacement.applyQuaternion(camera.quaternion);
+                this.cube_camera.position.add(displacement)
+                var focal_point = new THREE.Vector3(0, 0, 1 * this.camera.focus); // neg z points in screen
+                focal_point.applyQuaternion(camera.quaternion);
+                this.cube_camera.lookAt(focal_point)
+            }
+            // this.cube_camera.matrixWorld.copy(camera.matrixWorld)
+            // this.cube_camera.matrixAutoUpdate = false;
+
+            // this.cube_camera.matrixWorld.copy(camera.matrixWorld)
             this.cube_camera.update(this.renderer, this.scene_scatter)
             this.cube_camera.update(this.renderer, this.scene_opaque)
             this.screen_texture = this.cube_camera.renderTarget; //{Volume:this.volr_texture, Back:this.back_texture, Front:this.front_texture, Coordinate:this.coordinate_texture}[this.model.get("show")]
@@ -1929,7 +1984,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             selector: 'lasso',
             selection_mode: 'replace',
             mouse_mode: 'normal',
-            threesixty: true,
+            panorama_mode: 'no',
             capture_fps: undefined,
             cube_resolution: 512
         })

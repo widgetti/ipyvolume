@@ -186,7 +186,7 @@ class Figure(ipywebrtc.MediaStream):
     selector = traitlets.Unicode(default_value='lasso').tag(sync=True)
     selection_mode = traitlets.Unicode(default_value='replace').tag(sync=True)
     mouse_mode = traitlets.Unicode(default_value='normal').tag(sync=True)
-    threesixty = traitlets.Bool(False).tag(sync=True)
+    panorama_mode = traitlets.Enum(values=['no', '360', '180'], default_value='no').tag(sync=True)
 
     #xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     #y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
