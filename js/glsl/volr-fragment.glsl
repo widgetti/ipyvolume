@@ -69,6 +69,11 @@ mat3 transpose3(mat3 m) {
         );
 }
 void main(void) {
+#ifdef METHOD_MAX_INTENSITY
+    float max_value = 0.;
+    float max_cosangle_light = 0.;
+    float max_cosangle_eye = 0.;
+#endif
     const int steps = 150;
 
     vec2 pixel = vec2(gl_FragCoord.x, gl_FragCoord.y) / render_size;
@@ -96,7 +101,7 @@ void main(void) {
 
 #ifdef COORDINATE
     vec3 weighted_coordinate = vec3(0., 0., 0.);
-    float weight_coordinate;
+    float weight_coordinate = 0.;
 #endif
 
 
@@ -114,33 +119,56 @@ void main(void) {
         float cosangle_eye = max((dot(eye, normal)), 0.);*/
 
         float data_value = (sample.a - data_min) * data_scale;
-        vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
-
-#ifdef COORDINATE
-#else
+//#ifndef COORDINATE
+#ifdef USE_LIGHTING
         vec3 normal = (-sample.xyz)*2.+1.;
         //normal = -vec3(normal.x, normal.y, normal.z);
         float cosangle_light = max((dot(light_dir, normal)), 0.);
         float cosangle_eye = max((dot(eye, normal)), 0.);
+#endif
+//#endif
 
+#if defined(METHOD_MAX_INTENSITY)
+        if(data_value > max_value) {
+ #ifdef COORDINATE
+            weighted_coordinate = ray_pos;
+            weight_coordinate = 1.;
+ #else
+ #endif
+            max_value = data_value;
+            alpha_total = data_value * opacity_scale;
+#ifdef USE_LIGHTING
+            max_cosangle_light = cosangle_light;
+            max_cosangle_eye = cosangle_eye;
+#endif
+        }
+        //max_value = max(alpha_sample, max_value);
+#else
+        vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
+ #ifdef COORDINATE
+ #else
+#ifdef USE_LIGHTING
         color_sample = color_sample * (ambient_coefficient + diffuse_coefficient*cosangle_light + specular_coefficient * pow(cosangle_eye, specular_exponent));
+#endif
         // float data_value = (sample.a - data_min) * data_scale;
         // vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
-#endif
+ #endif
 
         float intensity = color_sample.a * opacity_scale;
+        float alpha_sample = intensity * sign(data_value) * sign(1.-data_value) * 100. / float(steps) * ray_length;//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
+
         //float intensity = texture2D(transfer_function, vec2(data_value, 0.5)).a;
         //color_sample = texture2D(transfer_function, data_value);
         //vec4 color_sample = texture2D(colormap, vec2(sample.a, colormap_index_scaled));
         //color_sample = texture2D(volume, ray_pos.yz);
         //float alpha_sample = opacity*intensity;//1./128.* length(color_sample) * 100.;
-        float alpha_sample = intensity * sign(data_value) * sign(1.-data_value) * 100. / float(steps) * ray_length;//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
         alpha_sample = clamp(alpha_sample, 0., 1.);
         color = color + (1.0 - alpha_total) * color_sample * alpha_sample;
         alpha_total = clamp(alpha_total + alpha_sample, 0., 1.);
-#ifdef COORDINATE
+ #ifdef COORDINATE
         weighted_coordinate += ray_pos * sqrt(alpha_sample);
         weight_coordinate += sqrt(alpha_sample);
+ #endif
 #endif
         if(alpha_total >= 1.)
             break;
@@ -149,6 +177,12 @@ void main(void) {
 #ifdef COORDINATE
     gl_FragColor = vec4(weighted_coordinate/weight_coordinate, alpha_total);
 #else
+ #if defined(METHOD_MAX_INTENSITY)
+    color = texture2D(transfer_function, vec2(max_value * opacity_scale, 0.5)) * alpha_total;
+  #ifdef USE_LIGHTING
+    color.rgb = color.rgb * (ambient_coefficient + diffuse_coefficient*max_cosangle_light + specular_coefficient * pow(max_cosangle_eye, specular_exponent));
+  #endif
+ #endif
     gl_FragColor = vec4(color.rgb, alpha_total) * brightness;
 #endif
     //gl_FragColor = vec4(ray_begin.xyz, 0.1) * brightness;

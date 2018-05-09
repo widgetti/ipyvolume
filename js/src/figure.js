@@ -753,8 +753,17 @@ var FigureView = widgets.DOMWidgetView.extend( {
             transparent: true,
             fragmentShader: shaders["volr_fragment"],
             vertexShader: shaders["volr_vertex"],
+            defines: {},
             side: THREE.BackSide
         });
+        var update_volr_defines = () => {
+            this.box_material_volr.defines = {USE_LIGHTING: this.model.get('volume_rendering_lighting')}
+            this.box_material_volr.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
+            this.box_material_volr.needsUpdate = true
+            this.update()
+        }
+        this.model.on('change:volume_rendering_method change:volume_rendering_lighting', update_volr_defines)
+        update_volr_defines()
         // a clone of the box_material_volr, with a different define (faster to render)
         this.box_material_volr_depth = new THREE.ShaderMaterial({
             uniforms: this.box_material_volr.uniforms,
@@ -1986,7 +1995,9 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             mouse_mode: 'normal',
             panorama_mode: 'no',
             capture_fps: undefined,
-            cube_resolution: 512
+            cube_resolution: 512,
+            volume_rendering_lighting: true,
+            volume_rendering_method: 'NORMAL'
         })
     }
 }, {
