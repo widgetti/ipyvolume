@@ -242,6 +242,15 @@ def test_volshow():
     p3.volshow(x*y*z, level_width=1)
     p3.save("tmp/ipyolume_volume.html")
 
+def test_volshow_max_shape():
+    x, y, z = ipyvolume.examples.xyz(shape=32)
+    I = x*y*z
+    v = p3.volshow(I, max_shape=16, extent=[[0, 32]] * 3)
+    assert v.volume_data.shape == (16, 16, 16)
+    data = v.volume_data
+    p3.xlim(0, 16)
+    #assert np.all(v.volume_data == I[::2,::2,0:16])
+
 
 def test_bokeh():
     from bokeh.io import output_notebook, show

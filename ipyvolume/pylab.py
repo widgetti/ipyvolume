@@ -604,7 +604,8 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     return mesh
 
 
-def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=False,
+def volshow(data, lighting=False, data_min=None, data_max=None,
+            max_shape=256, tf=None, stereo=False,
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
             specular_coefficient=0.5, specular_exponent=5,
             downscale=1,
@@ -619,6 +620,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
     :param bool lighting: use lighting or not, if set to false, lighting parameters will be overriden
     :param float data_min: minimum value to consider for data, if None, computed using np.nanmin
     :param float data_max: maximum value to consider for data, if None, computed using np.nanmax
+    :parap int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]), set to None to disable.
     :param tf: transfer function (or a default one)
     :param bool stereo: stereo view for virtual reality (cardboard and similar VR head mount)
     :param ambient_coefficient: lighting parameter
@@ -644,13 +646,16 @@ def volshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=
     vol.tf = tf
     vol.data_min = data_min
     vol.data_max = data_max
-    vol.volume_data = data
+    if extent is None:
+        extent = [(0, k) for k in data.shape]
+    vol.extent_original = extent
+    vol.volume_data_max_shape = max_shape
+    vol.volume_data_original = data
     vol.stereo = stereo
     vol.ambient_coefficient = ambient_coefficient
     vol.diffuse_coefficient = diffuse_coefficient
     vol.specular_coefficient = specular_coefficient
     vol.specular_exponent = specular_exponent
-    vol.extent = extent
     if extent:
         _grow_limits(*extent)
 

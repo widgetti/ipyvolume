@@ -10,6 +10,7 @@ import numpy as np
 from .serialize import array_cube_tile_serialization, array_serialization, array_sequence_serialization,\
     color_serialization, image_serialization, texture_serialization
 from .transferfunction import *
+from .utils import debounced, grid_slice, reduce_size
 import warnings
 import ipyvolume
 import ipywebrtc
@@ -122,6 +123,8 @@ class Figure(ipywebrtc.MediaStream):
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
     volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_tile_serialization)
+    volume_data_original = Array(default_value=None, allow_none=True)
+    volume_data_max_shape = traitlets.CInt(None, allow_none=True)  # TODO: allow this to be a list
     eye_separation = traitlets.CFloat(6.4).tag(sync=True)
     data_min = traitlets.CFloat().tag(sync=True)
     data_max = traitlets.CFloat().tag(sync=True)
@@ -175,6 +178,7 @@ class Figure(ipywebrtc.MediaStream):
     zlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
 
     extent = traitlets.Any().tag(sync=True)
+    extent_original = traitlets.Any()
 
     matrix_projection = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
     matrix_world = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
@@ -200,6 +204,30 @@ class Figure(ipywebrtc.MediaStream):
         self._screenshot_handlers = widgets.CallbackDispatcher()
         self._selection_handlers = widgets.CallbackDispatcher()
         self.on_msg(self._handle_custom_msg)
+        self._update_volume_data()
+        self.observe(self.update_volume_data, ['xlim', 'ylim', 'zlim', 'volume_data_original', 'volume_data_max_shape'])
+
+    @debounced(method=True)
+    def update_volume_data(self, change=None):
+        self._update_volume_data()
+
+    def _update_volume_data(self):
+        if self.volume_data_original is None:
+            return
+        if all([k <= self.volume_data_max_shape for k in self.volume_data_original.shape]):
+            self.volume_data = self.volume_data_original
+            self.extent = self.extent_original
+            return
+        shape = self.volume_data_original.shape
+        viewx, xt = grid_slice(*self.extent_original[0], shape[2], *self.xlim)
+        viewy, yt = grid_slice(*self.extent_original[1], shape[1], *self.ylim)
+        viewz, zt = grid_slice(*self.extent_original[2], shape[0], *self.zlim)
+        view = [slice(*viewz), slice(*viewy), slice(*viewx)]
+        data_view = self.volume_data_original[view]
+        extent = [xt, yt, zt]
+        data_view, extent = reduce_size(data_view, self.volume_data_max_shape, extent)
+        self.volume_data = np.array(data_view)
+        self.extent = extent
 
     def __enter__(self):
         """Sets this figure as the current in the pylab API
