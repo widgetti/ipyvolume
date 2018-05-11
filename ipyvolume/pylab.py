@@ -644,8 +644,10 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     if data_max is None:
         data_max = np.nanmax(data)
     vol.tf = tf
-    vol.data_min = data_min
-    vol.data_max = data_max
+    vol.volume_data_min = data_min
+    vol.volume_data_max = data_max
+    vol.volume_show_min = data_min
+    vol.volume_show_max = data_max
     if extent is None:
         extent = [(0, k) for k in data.shape]
     vol.extent_original = extent

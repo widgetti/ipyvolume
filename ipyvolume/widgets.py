@@ -126,8 +126,12 @@ class Figure(ipywebrtc.MediaStream):
     volume_data_original = Array(default_value=None, allow_none=True)
     volume_data_max_shape = traitlets.CInt(None, allow_none=True)  # TODO: allow this to be a list
     eye_separation = traitlets.CFloat(6.4).tag(sync=True)
-    data_min = traitlets.CFloat().tag(sync=True)
-    data_max = traitlets.CFloat().tag(sync=True)
+    volume_data_min = traitlets.CFloat().tag(sync=True)
+    volume_data_max = traitlets.CFloat().tag(sync=True)
+    volume_show_min = traitlets.CFloat().tag(sync=True)
+    volume_show_max = traitlets.CFloat().tag(sync=True)
+    volume_clamp_min = traitlets.CBool(False).tag(sync=True)
+    volume_clamp_max = traitlets.CBool(False).tag(sync=True)
     opacity_scale = traitlets.CFloat(1.0).tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
 

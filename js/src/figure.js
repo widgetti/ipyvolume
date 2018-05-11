@@ -738,6 +738,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 volume_slices : { type: "f", value: 128. },
                 volume_size : { type: "2f", value: [2048., 1024.] },
                 volume_slice_size : { type: "2f", value: [128., 128.] },
+                volume_show_range : { type: "2f", value: [0., 1.] },
+                volume_data_range : { type: "2f", value: [0., 1.] },
+                clamp_min : {type: "b", value: false},
+                clamp_max : {type: "b", value: false},
                 ambient_coefficient : { type: "f", value: this.model.get("ambient_coefficient") },
                 diffuse_coefficient : { type: "f", value: this.model.get("diffuse_coefficient") },
                 specular_coefficient : { type: "f", value: this.model.get("specular_coefficient") },
@@ -756,14 +760,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
             defines: {},
             side: THREE.BackSide
         });
-        var update_volr_defines = () => {
-            this.box_material_volr.defines = {USE_LIGHTING: this.model.get('volume_rendering_lighting')}
-            this.box_material_volr.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
-            this.box_material_volr.needsUpdate = true
-            this.update()
-        }
-        this.model.on('change:volume_rendering_method change:volume_rendering_lighting', update_volr_defines)
-        update_volr_defines()
         // a clone of the box_material_volr, with a different define (faster to render)
         this.box_material_volr_depth = new THREE.ShaderMaterial({
             uniforms: this.box_material_volr.uniforms,
@@ -773,6 +769,18 @@ var FigureView = widgets.DOMWidgetView.extend( {
             defines: {COORDINATE: true},
             side: THREE.BackSide
         });
+        var update_volr_defines = () => {
+            this.box_material_volr.defines = {USE_LIGHTING: this.model.get('volume_rendering_lighting')}
+            this.box_material_volr.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
+            this.box_material_volr.needsUpdate = true
+            this.box_material_volr_depth.defines = {COORDINATE: true, USE_LIGHTING: this.model.get('volume_rendering_lighting')}
+            this.box_material_volr_depth.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
+            this.box_material_volr_depth.needsUpdate = true
+            this.update()
+        }
+        this.model.on('change:volume_rendering_method change:volume_rendering_lighting', update_volr_defines)
+        update_volr_defines()
+
         //this.volume_changed()
         this.update_size()
         this.tf_set()
@@ -827,6 +835,22 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:diffuse_coefficient', this.update_light, this);
         this.model.on('change:specular_coefficient', this.update_light, this);
         this.model.on('change:specular_exponent', this.update_light, this);
+        var update_volume_minmax = () => {
+            this.box_material_volr.uniforms.volume_data_range.value = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
+            this.box_material_volr.uniforms.volume_show_range.value = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
+            this.update()
+        }
+        this.model.on('change:volume_data_min change:volume_data_max change:volume_show_min change:volume_show_max', update_volume_minmax, this);
+        update_volume_minmax()
+
+        var update_volume_clamp = () => {
+            this.box_material_volr.uniforms.clamp_min.value = this.model.get('volume_clamp_min')
+            this.box_material_volr.uniforms.clamp_max.value = this.model.get('volume_clamp_max')
+            this.update()
+        }
+        this.model.on('change:volume_clamp_min change:volume_clamp_max', update_volume_clamp, this);
+        update_volume_clamp()
+
 
         var update_opacity_scale = () => {
             this.box_material_volr.uniforms['opacity_scale'].value = this.model.get('opacity_scale')
@@ -1916,6 +1940,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.box_material_volr.uniforms.volume_size.value = this.volume.image_shape
         this.box_material_volr.uniforms.volume_slice_size.value = this.volume.slice_shape
         this.box_material_volr.uniforms.volume.value = this.texture_volume
+        this.box_material_volr.uniforms.volume_data_range.value = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
+        this.box_material_volr.uniforms.volume_show_range.value = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
         this.texture_volume.needsUpdate = true // without this it doesn't seem to work
         if(this.model.previous("volume_data")) {
             this.update()
@@ -1997,7 +2023,11 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             capture_fps: undefined,
             cube_resolution: 512,
             volume_rendering_lighting: true,
-            volume_rendering_method: 'NORMAL'
+            volume_rendering_method: 'NORMAL',
+            volume_clamp_min: false,
+            volume_clamp_max: false,
+            volume_data_range: null,
+            volume_show_range: null,
         })
     }
 }, {
