@@ -139,7 +139,7 @@ def cube_to_tiles(grid, obj=None):
 	if grid is None or len(grid.shape) == 1:
 		return None
 	f = StringIO()
-	tiles_data, slice_shape, rows, columns, slices = _cube_to_tiles(grid, obj.data_min, obj.data_max)
+	tiles_data, slice_shape, rows, columns, slices = _cube_to_tiles(grid, obj.volume_data_min, obj.volume_data_max)
 	image_height, image_width, __ = tiles_data.shape
 	image_shape = image_width, image_height
 	json = {"tiles": memoryview(tiles_data), "image_shape": image_shape, "slice_shape": slice_shape,
