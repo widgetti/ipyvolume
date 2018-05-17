@@ -75,7 +75,7 @@ For a development installation (requires npm),
     $ jupyter nbextension install --py --symlink --sys-prefix ipyvolume
     $ jupyter nbextension enable --py --sys-prefix ipyvolume
 
-For all cases make sure [ipywidgets is enabled](http://ipywidgets.readthedocs.io/en/latest/user_install.html) if you use Jupyter notebook version < 5.3:
+For all cases make sure [ipywidgets is enabled](http://ipywidgets.readthedocs.io/en/latest/user_install.html) if you use Jupyter notebook version < 5.3 (using `--user` instead of `--sys-prefix` if doing a local install):
 
     $ jupyter nbextension enable --py --sys-prefix widgetsnbextension
     $ jupyter nbextension enable --py --sys-prefix pythreejs
