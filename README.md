@@ -81,4 +81,8 @@ For a development installation (requires npm),
     $ jupyter nbextension install --py --symlink --sys-prefix ipyvolume
     $ jupyter nbextension enable --py --sys-prefix ipyvolume
 
-After changing the javascript, run npm install from the js directory, or `webpack --watch` and work from the examples/dev.ipynb notebook,
+If you have not previously installed widgets, you might also need
+
+    $ jupyter nbextension enable --py --sys-prefix widgetsnbextension
+
+After changing the javascript, run npm install from the js directory, or `webpack --watch` and work from the examples/dev.ipynb notebook.
