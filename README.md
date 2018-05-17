@@ -56,16 +56,10 @@ Documentation is generated at readthedocs: [![Documentation](https://readthedocs
 To install use pip:
 
     $ pip install ipyvolume
-    $ jupyter nbextension enable --py --sys-prefix ipyvolume # can be skipped for notebook version 5.3 and above
 
 To install use pip (as non-admin):
 
     $ pip install ipyvolume --user
-    $ jupyter nbextension enable --py --user ipyvolume
-
-For all cases make sure [ipywidgets is enabled](http://ipywidgets.readthedocs.io/en/latest/user_install.html) if you use Jupyter notebook version < 5.3.
-
-    $ jupyter nbextension enable --py --sys-prefix widgetsnbextension # can be skipped for notebook version 5.3 and above
 
 Or with anaconda/conda:
 
@@ -81,8 +75,11 @@ For a development installation (requires npm),
     $ jupyter nbextension install --py --symlink --sys-prefix ipyvolume
     $ jupyter nbextension enable --py --sys-prefix ipyvolume
 
-If you have not previously installed widgets, you might also need
+For all cases make sure [ipywidgets is enabled](http://ipywidgets.readthedocs.io/en/latest/user_install.html) if you use Jupyter notebook version < 5.3:
 
     $ jupyter nbextension enable --py --sys-prefix widgetsnbextension
+    $ jupyter nbextension enable --py --sys-prefix pythreejs
+    $ jupyter nbextension enable --py --sys-prefix ipywebrtc
+    $ jupyter nbextension enable --py --sys-prefix ipyvolume
 
 After changing the javascript, run npm install from the js directory, or `webpack --watch` and work from the examples/dev.ipynb notebook.
