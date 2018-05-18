@@ -47,14 +47,17 @@ public class VolumeData {
     public VolumeData(float[][][] data) {
         this.slices = data.length;
         int approxRows = (int) Math.round(Math.sqrt(this.slices));
-        int imgWidth = Math.max(MIN_TEXTURE_WIDTH,
-                Math.min(MAX_TEXTURE_WIDTH, 32 - Integer.numberOfLeadingZeros(approxRows * data[0].length - 1)));
+        int imgWidth = Math.max(MIN_TEXTURE_WIDTH, Math.min(MAX_TEXTURE_WIDTH, getNextPowOf2(approxRows * data[0].length)));
         this.columns = imgWidth/ data[0][0].length;
-        this.rows = (int) Math.ceil(this.slices/this.columns);
-        int imgHeight = Math.max(MIN_TEXTURE_WIDTH, 32 - Integer.numberOfLeadingZeros(this.rows * data[0].length - 1));
+        this.rows = (int) Math.ceil(this.slices/ (float) this.columns);
+        int imgHeight = Math.max(MIN_TEXTURE_WIDTH, getNextPowOf2(this.rows * data[0].length));
         this.imageShape = Arrays.asList(imgWidth, imgHeight);
         this.sliceShape = Arrays.asList(data.length, data.length);
         this.tiles = data;
+    }
+
+    private int getNextPowOf2(int value) {
+        return (int) Math.pow(2, 32 - Integer.numberOfLeadingZeros(value - 1));
     }
 
     public List<Integer> getImageShape() {
