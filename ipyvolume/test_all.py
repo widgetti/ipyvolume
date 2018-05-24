@@ -11,7 +11,17 @@ import os
 import shutil
 import json
 import pytest
+import contextlib
 
+
+@contextlib.contextmanager
+def shim_savefig():
+    previous = ipyvolume.pylab.savefig
+    ipyvolume.pylab.savefig = lambda *x, **y: None
+    try:
+        yield
+    finally:
+        ipyvolume.pylab.savefig = previous
 
 # helpful to remove previous test results for development
 if os.path.exists("tmp"):
@@ -127,6 +137,14 @@ def test_context():
         assert ipv.gcf() is f2
     assert ipv.gcf() is f3
 
+def test_movie():
+    fractions = []
+    def f(fig, i, fraction):
+        fractions.append(fraction)
+    ipv.figure()
+    with shim_savefig():
+        ipv.movie(function=f, frames=2)
+    assert fractions == [0, 0.5]
 
 def test_limits():
     f = p3.figure()

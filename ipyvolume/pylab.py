@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 _last_figure = None
 import ipywidgets
 from IPython.display import display

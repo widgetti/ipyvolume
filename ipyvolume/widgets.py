@@ -223,9 +223,10 @@ class Figure(ipywebrtc.MediaStream):
             self.extent = self.extent_original
             return
         shape = self.volume_data_original.shape
-        viewx, xt = grid_slice(*self.extent_original[0], shape[2], *self.xlim)
-        viewy, yt = grid_slice(*self.extent_original[1], shape[1], *self.ylim)
-        viewz, zt = grid_slice(*self.extent_original[2], shape[0], *self.zlim)
+        ex = self.extent_original
+        viewx, xt = grid_slice(ex[0][0], ex[0][1], shape[2], *self.xlim)
+        viewy, yt = grid_slice(ex[1][0], ex[1][1], shape[1], *self.ylim)
+        viewz, zt = grid_slice(ex[2][0], ex[2][1], shape[0], *self.zlim)
         view = [slice(*viewz), slice(*viewy), slice(*viewx)]
         data_view = self.volume_data_original[view]
         extent = [xt, yt, zt]
