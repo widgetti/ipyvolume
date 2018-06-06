@@ -5,13 +5,15 @@ var utils = require('./utils.js')
 /* Manages a list of scalar and arrays for use with WebGL instanced rendering
 */
 
-function Values(names, names_vec3, getter, sequence_index) {
+function Values(names, names_vec3, getter, sequence_index, names_vec4) {
     var defaults = {vx: 0, vy: 1, vz: 0, x: 0, y: 0, z: 0, size:0}
     this.length = Infinity;
     this.scalar = {}
     this.scalar_vec3 = {}
+    this.scalar_vec4 = {};
     this.array = {}
     this.array_vec3 = {}
+    this.array_vec4 = {};
     this.values = {}
 
     _.each(names, function(name) {
@@ -39,6 +41,28 @@ function Values(names, names_vec3, getter, sequence_index) {
         }
         this.values[name] = value;
     }, this);
+
+    _.each(names_vec4, (name) => {
+        var value = getter(name, sequence_index, defaults[name]);
+
+        if(name.indexOf('color') !== -1  && typeof value === "string") {
+             // special case to support controlling color from a widget
+            var color = new THREE.Color(value);
+            value = new Float32Array([color.r, color.g, color.b, 1.0]);
+        }
+
+        if(utils.is_typedarray(value) && value.length > 4) {
+            this.array_vec4[name] = value;
+            // color vectors have 4 components
+            this.length = Math.min(this.length, value.length / 4);
+        } else {
+            // single value is interpreted as scalar
+            this.scalar_vec4[name] = value;
+        }
+
+        this.values[name] = value;
+    });
+
     this.trim = function(new_length) {
         this.array = _.mapObject(this.array, function(array) {
             return array.length == new_length ? array : array.slice(0, new_length)
@@ -46,6 +70,11 @@ function Values(names, names_vec3, getter, sequence_index) {
         this.array_vec3 = _.mapObject(this.array_vec3, function(array_vec3) {
             return array_vec3.length == new_length*3 ? array_vec3 : array_vec3.slice(0, new_length*3)
         })
+    
+        this.array_vec4 = _.mapObject(this.array_vec4, (array_vec4) => {
+            return (array_vec4.length === new_length * 4) ? array_vec4 : array_vec4.slice(0, new_length * 4);
+        });
+    
         this.length = new_length;
     }
     this.ensure_array = function(name) {
@@ -58,6 +87,8 @@ function Values(names, names_vec3, getter, sequence_index) {
                 delete this.values[name]
             }
             var value_vec3 = this.scalar_vec3[name]
+            var value_vec4 = this.scalar_vec4[name];
+            
             if(typeof value_vec3 != 'undefined') {
                 var array = this.array_vec3[name] = new Float32Array(this.length*3);
                 for(var i = 0; i < this.length; i++) {
@@ -67,6 +98,21 @@ function Values(names, names_vec3, getter, sequence_index) {
                 }
                 delete this.scalar_vec3[name]
                 delete this.values[name]
+            }
+            
+            if(typeof value_vec4 !== 'undefined') {
+                this.array_vec4[name] = new Float32Array(this.length * 4);
+                
+                var array = this.array_vec4[name];
+    
+                for(var i = 0; i < this.length; i++) {
+                    array[i * 4 + 0] = value_vec4[0];
+                    array[i * 4 + 1] = value_vec4[1];
+                    array[i * 4 + 2] = value_vec4[2];
+                    array[i * 4 + 3] = value_vec4[3];
+                }
+                delete this.scalar_vec4[name];
+                delete this.values[name];
             }
         }, this)
     }
@@ -109,6 +155,28 @@ function Values(names, names_vec3, getter, sequence_index) {
             new_array.set(array_vec3)
             return new_array;
         })
+    
+        this.array_vec4 = _.mapObject(this.array_vec4, (array_vec4, name) => {
+            var new_array = new array_vec4.constructor(other.length * 4);
+    
+            if(typeof other.array_vec4[name] === "undefined") {
+                // then other must be a scalar
+                var other_scalar = other.scalar_vec4[name];
+    
+                for(var i = this.length; i < other.length; i++) {
+                    new_array[i * 4 + 0] = other_scalar[0];
+                    new_array[i * 4 + 1] = other_scalar[1];
+                    new_array[i * 4 + 2] = other_scalar[2];
+                    new_array[i * 4 + 3] = other_scalar[3];
+                }
+            } else {
+                new_array.set(other.array_vec4[name].slice(this.length * 4), this.length * 4);
+            }
+    
+            new_array.set(array_vec4);
+            return new_array;
+        });
+    
         this.length = other.length;
     }
     this.select = function(selected) {
