@@ -24,6 +24,8 @@
   "devDependencies": {
     "@types/expect.js": "^0.3.29",
     "@types/mocha": "^2.2.41",
+    "@types/requirejs": "^2.1.31",
+    "@types/three": "^0.92.4",
     "json-loader": "^0.5.4",
     "karma-chrome-launcher": "^2.0.0",
     "karma-typescript": "^2.0.3",

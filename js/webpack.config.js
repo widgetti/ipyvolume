@@ -5,7 +5,8 @@ var version = require('./package.json').version;
 var loaders = [
     { test: /\.css$/, loaders: ['style-loader', 'css-loader']},
     { test: /\.json$/, loader: 'json-loader' },
-    {test: /\.png$/,loader: 'url-loader?limit=10000000'}
+    {test: /\.png$/,loader: 'url-loader?limit=10000000'},
+    { test: /\.ts?$/, loader: 'ts-loader' }
 ];
 
 
@@ -19,6 +20,7 @@ module.exports = [
      // extension.
      //
         entry: './src/extension.js',
+        devtool: 'inline-source-map',
         output: {
             filename: 'extension.js',
             path: '../ipyvolume/static',
@@ -32,6 +34,7 @@ module.exports = [
      // It must be an amd module
      //
         entry: './src/index.js',
+        devtool: 'inline-source-map',
         output: {
             filename: 'index.js',
             path: '../ipyvolume/static',
@@ -58,6 +61,7 @@ module.exports = [
      // by the custom widget embedder.
      //
         entry: './src/embed.js',
+        devtool: 'inline-source-map',
         output: {
             filename: 'index.js',
             path: './dist/',
