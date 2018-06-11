@@ -63,9 +63,13 @@ To install use pip (as non-admin):
 
 Or with anaconda/conda:
 
-    $ pip install ipywidgets
-    $ # or pip install ipywidgets
     $ conda install -c conda-forge ipyvolume
+
+For jupyter lab:
+
+    $ jupyter labextension install ipyvolume
+    $ jupyter labextension install jupyter-threejs
+
 
 For a development installation (requires npm),
 
