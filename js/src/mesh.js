@@ -67,13 +67,15 @@ var MeshView = widgets.WidgetView.extend( {
             this.textures = null
             this.texture_video = document.createElement('video')
             texture.stream.then(_.bind(function(stream) {
-                this.texture_video.src = window.URL.createObjectURL(stream);
+                this.texture_video.srcObject = stream;
+                this.texture_video.play()
                 var texture = new THREE.VideoTexture(this.texture_video)
                 //texture.wrapS = THREE.RepeatWrapping;
                 //texture.wrapT = THREE.RepeatWrapping;
                 texture.minFilter = THREE.LinearFilter;
                 //texture.wrapT = THREE.RepeatWrapping;
                 this.textures = [texture];
+                this._update_materials()
                 this.update_()
             }, this))
         } else {
@@ -81,6 +83,7 @@ var MeshView = widgets.WidgetView.extend( {
                 return this.texture_loader.load(texture_url, _.bind(function(texture) {
                     texture.wrapS = THREE.RepeatWrapping;
                     texture.wrapT = THREE.RepeatWrapping;
+                    this._update_materials()
                     this.update_()
                 }, this));
             }, this)
