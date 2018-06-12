@@ -10,7 +10,7 @@ uniform vec2 xlim;
 uniform vec2 ylim;
 uniform vec2 zlim;
 
-varying vec3 vertex_color;
+varying vec4 vertex_color;
 varying vec3 vertex_position;
 
 attribute vec3 position_previous;
@@ -23,8 +23,8 @@ attribute float v_previous;
 varying vec2 vertex_uv;
 #endif
 
-attribute vec3 color;
-attribute vec3 color_previous;
+attribute vec4 color;
+attribute vec4 color_previous;
 
 
 
@@ -44,7 +44,7 @@ void main(void) {
 #endif
 
 #ifdef USE_RGB
-    vertex_color = vec3(pos + vec3(0.5, 0.5, 0.5));
+    vertex_color = vec4(pos + vec3(0.5, 0.5, 0.5), 1.0);
 #else
     vertex_color = mix(color_previous, color, animation_time_color);
 #endif

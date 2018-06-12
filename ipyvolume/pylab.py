@@ -552,7 +552,7 @@ def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_wi
     return tf
 
 
-def plot_isosurface(data, level=None, color=default_color, wireframe=True, surface=True, controls=True):
+def plot_isosurface(data, level=None, color=default_color, wireframe=True, surface=True, controls=True, extent=None):
     """Plot a surface at constant value (like a 2d contour)
 
     :param data: 3d numpy array
@@ -562,6 +562,7 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     :param bool wireframe: draw lines between the vertices
     :param bool surface: draw faces/triangles between the vertices
     :param bool controls: add controls to change the isosurface
+    :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounding box of the mesh, otherwise the viewport is used
     :return: :any:`Mesh`
     """
     from skimage import measure
@@ -575,6 +576,15 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     # in the future we may want to support normals and the values (with colormap)
     # and require skimage >= 0.13
     x, y, z = verts.T
+
+    # Rescale coordinates to given limits
+    if extent:
+        xlim, ylim, zlim = extent
+        x = x * np.diff(xlim)/(data.shape[0]-1) + xlim[0]
+        y = y * np.diff(ylim)/(data.shape[1]-1) + ylim[0]
+        z = z * np.diff(zlim)/(data.shape[2]-1) + zlim[0]
+        _grow_limits(*extent)
+
     mesh = plot_trisurf(x, y, z, triangles=triangles, color=color)
     if controls:
         vmin, vmax = np.percentile(data, 1),  np.percentile(data, 99)

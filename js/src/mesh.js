@@ -151,12 +151,35 @@ var MeshView = widgets.WidgetView.extend( {
     _get_value: function(value, index, default_value) {
         var default_value = default_value;
         if(!value)
-            return default_value
+            return default_value;
         // it is either an array of typed arrays, or a list of numbers coming from the javascript world
-        if(_.isArray(value) && !_.isNumber(value[0]))
-            return value[index % value.length]
-        else
-            return value
+        if(_.isArray(value) && !_.isNumber(value[0])) {
+            // check whether alpha component was provided or not
+            var out_index = index % value.length;
+            var rows = value.original_data[out_index].shape[0];
+            var cols = value.original_data[out_index].shape[1];
+
+            if ((cols === 3) && _.isNumber(value[out_index][0])) {
+                // for rbg colors add alphas
+                var out_length = rows * 4;
+                var out_value = new Float32Array(out_length);
+                var temp_value = value[out_index];
+
+                for (var i = 0; i < rows; i++) {
+                    out_value[i*4] = temp_value[i*3];
+                    out_value[i*4 + 1] = temp_value[i*3 + 1];
+                    out_value[i*4 + 2] = temp_value[i*3 + 2];
+                    out_value[i*4 + 3] = 1.0;
+                }
+
+                return out_value;
+            } else {
+                // either we have color with alpha or a different format, not the rgb
+                return value[out_index];
+            }
+        } else {
+            return value;
+        }
     },
     get_current: function(name, index, default_value) {
         return this._get_value(this.model.get(name), index, default_value)
@@ -253,10 +276,18 @@ var MeshView = widgets.WidgetView.extend( {
         //console.log('>>>', sequence_index, sequence_index_previous, time_offset, time_delta)
 
         var scalar_names = ['x', 'y', 'z', 'u', 'v'];
-        var vector3_names = ['color']
+        var vector4_names = ['color'];
 
-        var current  = new values.Values(scalar_names, vector3_names, _.bind(this.get_current, this), sequence_index)
-        var previous = new values.Values(scalar_names, vector3_names, _.bind(this.get_previous, this), sequence_index_previous)
+        var current  = new values.Values(scalar_names,
+                                        [],
+                                        _.bind(this.get_current, this),
+                                        sequence_index,
+                                        vector4_names);
+        var previous = new values.Values(scalar_names,
+                                        [],
+                                        _.bind(this.get_previous, this),
+                                        sequence_index_previous,
+                                        vector4_names);
 
         var length = Math.max(current.length, previous.length)
         if(length == 0) {
@@ -267,34 +298,6 @@ var MeshView = widgets.WidgetView.extend( {
         previous.trim(previous.length)
         var previous_length = previous.length;
         var current_length = current.length;
-        /*if(this.model.get("selected") || this.previous_values["selected"]) {
-            // upgrade size and size_previous to an array if they were not already
-            current.ensure_array(['size', 'size_selected', 'color', 'color_selected'])
-            previous.ensure_array(['size', 'size_selected', 'color', 'color_selected'])
-            var selected = this.get_current('selected', sequence_index, []);
-            current.select(selected)
-            var selected = this.get_previous('selected', sequence_index_previous, []);
-            previous.select(selected)
-        }*/
-        // if we have a change in length, we use size to fade in/out particles, so make sure they are arrays
-        /*if(current.length != previous.length) {
-            current.ensure_array('size')
-            previous.ensure_array('size')
-        }
-        if(current.length > previous.length) { // grow..
-            previous.pad(current)
-            previous.array['size'].fill(0, previous_length); // this will make them smoothly fade in
-        } else if(current.length < previous.length) { // shrink..
-            current.pad(previous)
-            current.array['size'].fill(0, current_length); // this will make them smoothly fade out
-        }*/
-        // we are only guaranteed to have 16 attributes for the shader, so better merge some into single vectors
-        //current.merge_to_vec3(['vx', 'vy', 'vz'], 'v')
-        //previous.merge_to_vec3(['vx', 'vy', 'vz'], 'v')
-
-        // we don't want to send these to the shader, these are handled at the js side
-        //current.pop(['size_selected', 'color_selected'])
-        //previous.pop(['size_selected', 'color_selected'])
 
         if(current.length > previous.length) { // grow..
             previous.pad(current)
@@ -311,10 +314,10 @@ var MeshView = widgets.WidgetView.extend( {
         if(triangles) {
             triangles = triangles[0]
             var geometry = new THREE.BufferGeometry();
-            geometry.addAttribute('position', new THREE.BufferAttribute(current.array_vec3['vertices'], 3))
-            geometry.addAttribute('position_previous', new THREE.BufferAttribute(previous.array_vec3['vertices'], 3))
-            geometry.addAttribute('color', new THREE.BufferAttribute(current.array_vec3['color'], 3))
-            geometry.addAttribute('color_previous', new THREE.BufferAttribute(previous.array_vec3['color'], 3))
+            geometry.addAttribute('position', new THREE.BufferAttribute(current.array_vec3['vertices'], 3));
+            geometry.addAttribute('position_previous', new THREE.BufferAttribute(previous.array_vec3['vertices'], 3));
+            geometry.addAttribute('color', new THREE.BufferAttribute(current.array_vec4['color'], 4));
+            geometry.addAttribute('color_previous', new THREE.BufferAttribute(previous.array_vec4['color'], 4));
             geometry.setIndex(new THREE.BufferAttribute(triangles, 1))
             var texture = this.model.get('texture');
             var u = current.array['u']
@@ -347,10 +350,10 @@ var MeshView = widgets.WidgetView.extend( {
 
             geometry.addAttribute('position', new THREE.BufferAttribute(current.array_vec3['vertices'], 3))
             geometry.addAttribute('position_previous', new THREE.BufferAttribute(previous.array_vec3['vertices'], 3))
-            var color = new THREE.BufferAttribute(current.array_vec3['color'], 3)
+            var color = new THREE.BufferAttribute(current.array_vec4['color'], 4);
             color.normalized = true;
             geometry.addAttribute('color', color)
-            var color_previous = new THREE.BufferAttribute(previous.array_vec3['color'], 3)
+            var color_previous = new THREE.BufferAttribute(previous.array_vec4['color'], 4);
             color_previous.normalized = true;
             geometry.addAttribute('color_previous', color_previous)
             var indices = new Uint32Array(lines[0]);

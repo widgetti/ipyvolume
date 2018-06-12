@@ -104,5 +104,9 @@ ENV/
 
 # Webpack watch files
 js/node_modules/
+js/package-lock.json
 # Javascript Build files
 static/
+
+# Visual Studio Code
+.vscode/
