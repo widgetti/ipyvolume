@@ -730,8 +730,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         //d.object_ticklabel.fillStyle = this.model.get("style")[parent_data.name + 'axis.color']
     },
     _d3_remove_axis_tick: function(node, d, i) {
-        //console.log("remove tick", d, i)
-        d.object_ticklabel.text = "" // TODO: removing and adding new tick marks will result in just many empty text sprites
+        d.object_ticklabel.parent.remove(d.object_ticklabel)
     },
     update_scatters: function() {
         if(this.scatter_views) {
