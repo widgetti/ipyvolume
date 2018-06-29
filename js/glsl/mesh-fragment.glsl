@@ -3,9 +3,9 @@ varying vec3 vertex_position;
 varying vec2 vertex_uv;
 
 #ifdef USE_TEXTURE
-uniform sampler2D texture;
-uniform sampler2D texture_previous;
-uniform float animation_time_texture;
+    uniform sampler2D texture;
+    uniform sampler2D texture_previous;
+    uniform float animation_time_texture;
 #endif
 
 

@@ -189,50 +189,6 @@ function deserialize_color_or_json(data, manager) {
     }
     arrays.original_data = data;
     return arrays;
-    if(utils.is_typedarray(data)) {
-        return data
-    } else
-    if(_.isArray(data) && !data.buffer) { // plain json, or list of buffers
-        var dimension = utils.get_array_dimension(data)
-        if(dimension == 1 && typeof data[0] == "string") {
-            arrays = string_array_to_rgb(data)
-        } else
-        if(dimension == 1 && data[0].buffer) { // array of buffers
-            arrays = _.map(data, function(data) { return new Float32Array(data.buffer)});
-        } else
-        if(dimension == 2 && utils.is_typedarray(data[0])) { // similar to dimension is 3 and _isNumber(data[0][0][0])
-            arrays = data
-        } else
-        if(dimension == 2 && typeof data[0][0] == "string") {
-            arrays = _.map(data, string_array_to_rgb)
-        } else {
-        if(dimension == 1 && _.isNumber(data[0])) {
-            if(data.length != 3)
-                console.error("color expected to be of length 3", data)
-            arrays = new Float32Array([data[0], data[1], data[2]]) // no sequence, scalar
-        } else
-        if(dimension == 2 && _.isNumber(data[0][0])) {
-            arrays = rgb_array_to_rgb(data)
-        } else
-        if(dimension == 3 && _.isNumber(data[0][0][0])) {
-            arrays = _.map(data, rgb_array_to_rgb)
-        } else {
-            console.log("unhandled case for color")}
-        }
-    } else {
-        var nd = numpy_buffer_to_ndarray(data.buffer)
-        if(nd.shape.length == 3) { // convert to flattend list of arrays
-            arrays = []
-            for(var i = 0; i < nd.shape[0]; i++) {
-                var ar = nd.data.slice(i*nd.stride[0], (i+1)*nd.stride[0])
-                arrays.push(ar)
-            }
-        } else { // assume 2d... ?
-            arrays = [nd.data];
-        }
-    }
-    arrays.original_data = data;
-    return arrays;
 }
 
 

@@ -1,11 +1,11 @@
-var _ = require('underscore')
+var _ = require('underscore');
 var widgets = require('@jupyter-widgets/base');
-var THREE = require('three')
-var serialize = require('./serialize.js')
-var values = require('./values.js')
+var THREE = require('three');
+var serialize = require('./serialize.js');
+var values = require('./values.ts');
 
 var semver_range = require('./utils.js').semver_range;
-var cat_data = require("../data/cat.json")
+var cat_data = require("../data/cat.json");
 
 var ScatterView = widgets.WidgetView.extend( {
     render: function() {
@@ -354,19 +354,7 @@ var ScatterView = widgets.WidgetView.extend( {
             previous.ensure_array(['color'])
             geometry.addAttribute('color', new THREE.BufferAttribute(current.array_vec3['color'], 3))
             geometry.addAttribute('color_previous', new THREE.BufferAttribute(previous.array_vec3['color'], 3))
-            //material = new THREE.LineBasicMaterial( {  linewidth: 1, vertexColors: THREE.VertexColors } );
-
-            /*var geometry = new THREE.Geometry();
-            var vs = current.array_vec3['vertices'];
-            //this.material.uniforms[key].value = value
-            for ( i = 0; i < vs.length/3; i ++ ) {
-                var vertex1 = new THREE.Vector3();
-                vertex1.x = vs[i*3+0];
-                vertex1.y = vs[i*3+1];
-                vertex1.z = vs[i*3+2];
-                geometry.vertices.push( vertex1 );
-
-            }*/
+            
             this.line_segments = new THREE.Line(geometry, this.line_material);
             this.line_segments.frustumCulled = false;
         } else {
