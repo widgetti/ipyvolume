@@ -35,6 +35,9 @@ module.exports = [
      //
         entry: './src/index.js',
         devtool: 'inline-source-map',
+        resolve: {
+            extensions: ['.ts', '.js', '']
+        },
         output: {
             filename: 'index.js',
             path: '../ipyvolume/static',
