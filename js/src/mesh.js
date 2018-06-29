@@ -1,8 +1,8 @@
-var _ = require('underscore')
+var _ = require('underscore');
 var widgets = require('@jupyter-widgets/base');
-var THREE = require('three')
-var serialize = require('./serialize.js')
-var values = require('./values.js')
+var THREE = require('three');
+var serialize = require('./serialize.js');
+var values = require('./values.ts');
 var semver_range = require('./utils.js').semver_range;
 
 var MeshView = widgets.WidgetView.extend( {
@@ -235,10 +235,13 @@ var MeshView = widgets.WidgetView.extend( {
 
         var sequence_index = sequence_index_original = this.model.get("sequence_index");
         var sequence_index_previous = sequence_index_previous_original = sequence_index;
+
         if(typeof this.previous_values["sequence_index"] != "undefined") {
             sequence_index_previous = sequence_index_previous_original = this.previous_values["sequence_index"]
         }
+
         var time_offset, time_delta;
+
         if(sequence_index >= sequence_index_previous) {
             time_offset = sequence_index_previous - Math.floor(sequence_index_previous)
             time_delta = sequence_index - sequence_index_previous
@@ -265,14 +268,21 @@ var MeshView = widgets.WidgetView.extend( {
                     time_delta = sequence_index_previous-sequence_index_original
                 }
             }
-        }/**/
-        if(time_delta > 1) { // we're going over a 'keyframe' border
-            time_delta = time_delta % 1
-            if(time_delta == 0) // special case
-                time_delta = 1
-        }/**/
-				if(time_delta == 0) // occurs when we don't change keyframes, but just a property
-					time_delta = 1
+        }
+
+        if (time_delta > 1) { // we're going over a 'keyframe' border
+            time_delta = time_delta % 1;
+
+            if(time_delta == 0) {
+                // special case
+                time_delta = 1.;
+            }
+        }
+        
+        if (time_delta == 0) {
+            // occurs when we don't change keyframes, but just a property
+			time_delta = 1;
+        }
         //console.log('>>>', sequence_index, sequence_index_previous, time_offset, time_delta)
 
         var scalar_names = ['x', 'y', 'z', 'u', 'v'];
@@ -339,12 +349,12 @@ var MeshView = widgets.WidgetView.extend( {
             // BUG? because of our custom shader threejs thinks our object if out
             // of the frustum
             this.surface_mesh.frustumCulled = false;
-            this.surface_mesh.material_rgb = this.material_rgb
-            this.surface_mesh.material_normal = this.material
-            this.meshes.push(this.surface_mesh)
+            this.surface_mesh.material_rgb = this.material_rgb;
+            this.surface_mesh.material_normal = this.material;
+            this.meshes.push(this.surface_mesh);
         }
 
-	    var lines = this.model.get('lines')
+	    var lines = this.model.get('lines');
 	    if(lines) {
             var geometry = new THREE.BufferGeometry();
 
@@ -355,28 +365,28 @@ var MeshView = widgets.WidgetView.extend( {
             geometry.addAttribute('color', color)
             var color_previous = new THREE.BufferAttribute(previous.array_vec4['color'], 4);
             color_previous.normalized = true;
-            geometry.addAttribute('color_previous', color_previous)
+            geometry.addAttribute('color_previous', color_previous);
             var indices = new Uint32Array(lines[0]);
-            geometry.setIndex(new THREE.BufferAttribute(indices, 1))
+            geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
             this.line_segments = new THREE.LineSegments(geometry, this.line_material);
             this.line_segments.frustumCulled = false;
             //TODO: check lines with volume rendering, also in scatter
-            this.line_segments.material_rgb = this.line_material_rgb
-            this.line_segments.material_normal = this.line_material
-            this.meshes.push(this.line_segments)
+            this.line_segments.material_rgb = this.line_material_rgb;
+            this.line_segments.material_normal = this.line_material;
+            this.meshes.push(this.line_segments);
         } else {
             this.line_segments = null;
         }
 
 
         _.mapObject(this.attributes_changed, function(changed_properties, key){
-            var property = "animation_time_" + key
+            var property = "animation_time_" + key;
             //console.log("animating", key)
             var done = function done() {
                 _.each(changed_properties, function clear(prop) {
-                    delete this.previous_values[prop] // may happen multiple times, that is ok
-                }, this)
+                    delete this.previous_values[prop]; // may happen multiple times, that is ok
+                }, this);
             }
             // uniforms of material_rgb has a reference to these same object
             //this.renderer.transition(this.material.uniforms[property], "value", done, this)
@@ -384,7 +394,7 @@ var MeshView = widgets.WidgetView.extend( {
                 this.material.uniforms[property]['value'] = time_offset + time_delta * value;
             }, done, this);
         }, this)
-        this.attributes_changed = {}
+        this.attributes_changed = {};
     }
 });
 
