@@ -627,8 +627,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.ticks = 5; //hardcoded for now
 
-        //this.scene = new THREE.Scene();
-        this.scene = this.model.get('scene').obj
+        this.scene = new THREE.Scene();
+        // this.scene = this.model.get('scene').obj
         // could be removed when https://github.com/jovyan/pythreejs/issues/176 is solved
         // the default for pythreejs is white, which leads the volume rendering pass to make everything white
         this.scene.background = null
