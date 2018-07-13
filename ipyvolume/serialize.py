@@ -121,7 +121,7 @@ def tile_volume(vol, tex_size, nr_of_tiles, vol_size):
 	        yoffset = tileY*vol_size[1]	
 	        tex[yoffset:yoffset+vol_size[1],xoffset:xoffset+vol_size[0]] = slice_data
 	# debug image saving
-	scipy.misc.toimage(tex, cmin=tex.min(), cmax=tex.max()).save('outfile.png')
+	# scipy.misc.toimage(tex, cmin=tex.min(), cmax=tex.max()).save('outfile.png')
 
 
 	return array_to_binary(tex)
@@ -130,8 +130,9 @@ def tile_volume(vol, tex_size, nr_of_tiles, vol_size):
 def volume_to_json_volume_tiled(vol, obj=None):
 	if vol is None:
 		return None
-	vol = np.array(vol)
+	vol = np.asarray(vol)
 
+	# Keeping things square
 	# x * y * a^2 = z
 	# a = sqrt(z/(x*y))
 	# nrtilex = y*a
@@ -225,7 +226,7 @@ def array_sequence_to_binary_or_json(ar, obj=None):
 		return None
 	element = ar
 	dimension = 0
-	try: # This is nasty
+	try:
 		while True:
 			element = element[0]
 			dimension += 1

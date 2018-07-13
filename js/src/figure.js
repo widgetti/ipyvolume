@@ -878,6 +878,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.box_geo.translate(cx0, cy0, cz0)
         this.box_geo.translate(-0.5, -0.5, -0.5)
         //this.box_mesh.geometry = this.box_geomox
+        
+        
+        
         this.update()
     },
     setStyle: function() {

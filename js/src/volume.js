@@ -22,11 +22,12 @@ var VolumeView = widgets.WidgetView.extend( {
 
         window.vol = this;
 
-        this.box_geo = new THREE.BoxBufferGeometry(1, 1, 1)
+        this.box_geo = this.renderer.box_geo;
         //this.box_material = new THREE.MeshLambertMaterial({color: 0xCC0000});
         this.box_material = new THREE.ShaderMaterial({
             uniforms: {
-                centerNormalizeTransform: {type:'m4', value: new THREE.Matrix4()},
+                offset: { type: '3f', value: [0, 0, 0] },
+                scale : { type: '3f', value: [1, 1, 1] },
             },
             fragmentShader: shaders["box_fragment"],
             vertexShader: shaders["box_vertex"],
@@ -41,35 +42,63 @@ var VolumeView = widgets.WidgetView.extend( {
 
         this.texture_tf = null;//new THREE.DataTexture(null, this.model.get("tf").get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
 
-        var render_size = this.renderer.getRenderSize()
-
-        this.box_material_volr = new THREE.ShaderMaterial( {
+        this.box_material_volr = new THREE.ShaderMaterial({
             uniforms: {
-                exit_points: { type: "t", value: null },
-                volume_tex : { type: 't', value: null },
-                geometry_color_tex: { type: "t", value: null},
-                geometry_depth_tex: { type: "t", value: null},
-                transfer_function_tex: { type: 't', value: this.texture_tf},
-                data_values_minmax: {type: "v2", value: new THREE.Vector2(this.model.get("data_min"),this.model.get("data_max"))},
-                volume_size: { type: "v3", value: [0,0,0]},
-                tex_tile_size: { type: "v2", value: [1,1]},
-                nr_of_tiles: { type: "v2", value: [1,1]},
-                slice_pixel_size: { type: "v2", value: [1,1]},
-                slice_inner_size: { type: "v2", value: [1,1]},
-                render_size: { type: 'v2', value: render_size},
-                step_size: {type: 'f', value: this.model.get("step_size")},
-                threshold: {type: 'v2', value: [0.4,0.6]}, // DEBGUUUU
-                show_threshold: {type: 'i', value: false}, 
-                centerNormalizeTransform: {type:'m4', value: new THREE.Matrix4()},
-                debugnumber: {type: 'i', value:0},
-                debugfloat: { type: "f", value: 0.0},
-                noise_factor: {type: 'f', value: 0.1}
+                front: { type: 't', value: null },
+                back : { type: 't', value: null },
+                volume : { type: 't', value: null },
+                transfer_function : { type: 't', value: this.texture_tf },
+                brightness : { type: "f", value: 2. },
+                data_min : { type: "f", value: 0. },
+                data_max : { type: "f", value: 1. },
+                opacity_scale :  { type: "f", value: 1.0 },
+                volume_rows : { type: "f", value: 8. },
+                volume_columns : { type: "f", value: 16. },
+                volume_slices : { type: "f", value: 128. },
+                volume_size : { type: "2f", value: [2048., 1024.] },
+                volume_slice_size : { type: "2f", value: [128., 128.] },
+                volume_show_range : { type: "2f", value: [0., 1.] },
+                volume_data_range : { type: "2f", value: [0., 1.] },
+                clamp_min : {type: "b", value: false},
+                clamp_max : {type: "b", value: false},
+                ambient_coefficient : { type: "f", value: this.model.get("ambient_coefficient") },
+                diffuse_coefficient : { type: "f", value: this.model.get("diffuse_coefficient") },
+                specular_coefficient : { type: "f", value: this.model.get("specular_coefficient") },
+                specular_exponent : { type: "f", value: this.model.get("specular_exponent") },
+                render_size : { type: "2f", value: [render_width, render_height] },
+                scale: {type: "3f"},
+                offset: {type: "3f"},
             },
-            fragmentShader: shaders["volume_fragment"],
-            vertexShader: shaders["volume_vertex"],
+            blending: THREE.CustomBlending,
+            blendSrc: THREE.SrcAlphaFactor,
+            blendDst: THREE.OneMinusSrcAlphaFactor,
+            blendEquation: THREE.AddEquation,
             transparent: true,
-            side: THREE.FrontSide,
-        } );
+            fragmentShader: shaders["volr_fragment"],
+            vertexShader: shaders["volr_vertex"],
+            defines: {},
+            side: THREE.BackSide
+        });
+        // a clone of the box_material_volr, with a different define (faster to render)
+        this.box_material_volr_depth = new THREE.ShaderMaterial({
+            uniforms: this.box_material_volr.uniforms,
+            blending: THREE.NoBlending,
+            fragmentShader: shaders["volr_fragment"],
+            vertexShader: shaders["volr_vertex"],
+            defines: {COORDINATE: true},
+            side: THREE.BackSide
+        });
+        var update_volr_defines = () => {
+            this.box_material_volr.defines = {USE_LIGHTING: this.model.get('volume_rendering_lighting')}
+            this.box_material_volr.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
+            this.box_material_volr.needsUpdate = true
+            this.box_material_volr_depth.defines = {COORDINATE: true, USE_LIGHTING: this.model.get('volume_rendering_lighting')}
+            this.box_material_volr_depth.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
+            this.box_material_volr_depth.needsUpdate = true
+            this.update()
+        }
+        this.model.on('change:volume_rendering_method change:volume_rendering_lighting', update_volr_defines)
+        update_volr_defines()
 
         this.tf_set()
         this.data_set()
@@ -77,98 +106,70 @@ var VolumeView = widgets.WidgetView.extend( {
         this.add_to_scene()
 
         this.model.on('change:volume_data', this.data_set, this);
-        this.model.on('change:tf', this.tf_set, this)
 
         this.model.on('change:ambient_coefficient', this.update_light, this);
         this.model.on('change:diffuse_coefficient', this.update_light, this);
         this.model.on('change:specular_coefficient', this.update_light, this);
         this.model.on('change:specular_exponent', this.update_light, this);
+        var update_volume_minmax = () => {
+            this.box_material_volr.uniforms.volume_data_range.value = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
+            this.box_material_volr.uniforms.volume_show_range.value = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
+            this.update()
+        }
+        this.model.on('change:volume_data_min change:volume_data_max change:volume_show_min change:volume_show_max', update_volume_minmax, this);
+        update_volume_minmax()
 
-        this.model.on('change:step_size', this.update_volume_render_settings, this);
+        var update_volume_clamp = () => {
+            this.box_material_volr.uniforms.clamp_min.value = this.model.get('volume_clamp_min')
+            this.box_material_volr.uniforms.clamp_max.value = this.model.get('volume_clamp_max')
+            this.update()
+        }
+        this.model.on('change:volume_clamp_min change:volume_clamp_max', update_volume_clamp, this);
+        update_volume_clamp()
+
+        var update_opacity_scale = () => {
+            this.box_material_volr.uniforms['opacity_scale'].value = this.model.get('opacity_scale')
+            this.update()
+        }
+        update_opacity_scale()
+        this.model.on('change:opacity_scale', update_opacity_scale)
+
+        this.model.on('change:tf', this.tf_set, this)        
 
         this.update_light();
     },
-    update_volume_render_settings: function(){
-        this.box_material_volr.uniforms.step_size.value = this.model.get('step_size');
-    },
-    set_limits: function(limits) {
-        // refactor and maybe rename function and pass global domain translation 
-
-        var xptp = limits.xlim[1] - limits.xlim[0]
-        var yptp = limits.ylim[1] - limits.ylim[0]
-        var zptp = limits.zlim[1] - limits.zlim[0]
-
-        var domainscale = Math.max(Math.max(xptp,yptp),zptp)
-
-        var volOrigin = this.model.get('origin')
-        var volDomainSize = this.model.get('domain_size')
-
-        this.box_material_volr.uniforms.centerNormalizeTransform.value.identity()
-                                .multiply((new THREE.Matrix4()).makeScale(1/domainscale,1/domainscale,1/domainscale)) // Global domain scale
-                                .multiply((new THREE.Matrix4()).makeTranslation(-(limits.xlim[0]+xptp/2),-(limits.ylim[0]+yptp/2),-(limits.zlim[0]+zptp/2))) // Global translation
-                                .multiply((new THREE.Matrix4()).makeTranslation((volOrigin[0]+volDomainSize[0]/2),(volOrigin[1]+volDomainSize[1]/2),(volOrigin[2]+volDomainSize[2]/2))) // Translate to volume origin
-                                .multiply((new THREE.Matrix4()).makeScale(volDomainSize[0],volDomainSize[1],volDomainSize[2])) // Scale to volume domain size
-        this.box_material.uniforms.centerNormalizeTransform.value.identity()
-                                .multiply((new THREE.Matrix4()).makeScale(1/domainscale,1/domainscale,1/domainscale)) // Global domain scale
-                                .multiply((new THREE.Matrix4()).makeTranslation(-(limits.xlim[0]+xptp/2),-(limits.ylim[0]+yptp/2),-(limits.zlim[0]+zptp/2))) // Global translation
-                                .multiply((new THREE.Matrix4()).makeTranslation((volOrigin[0]+volDomainSize[0]/2),(volOrigin[1]+volDomainSize[1]/2),(volOrigin[2]+volDomainSize[2]/2))) // Translate to volume origin
-                                .multiply((new THREE.Matrix4()).makeScale(volDomainSize[0],volDomainSize[1],volDomainSize[2])) // Scale to volume domain size
-    },
     update_light: function() {
-        // this.box_material_volr.uniforms.ambient_coefficient.value = this.model.get("ambient_coefficient")
-        // this.box_material_volr.uniforms.diffuse_coefficient.value = this.model.get("diffuse_coefficient")
-        // this.box_material_volr.uniforms.specular_coefficient.value = this.model.get("specular_coefficient")
-        // this.box_material_volr.uniforms.specular_exponent.value = this.model.get("specular_exponent")
-        // this.renderer.update()
+        this.box_material_volr.uniforms.ambient_coefficient.value = this.model.get("ambient_coefficient")
+        this.box_material_volr.uniforms.diffuse_coefficient.value = this.model.get("diffuse_coefficient")
+        this.box_material_volr.uniforms.specular_coefficient.value = this.model.get("specular_coefficient")
+        this.box_material_volr.uniforms.specular_exponent.value = this.model.get("specular_exponent")
+        this.update()
     },
     data_set: function() {
-        var volumes = this.model.get("volume_data")
-        if(!volumes) {
-            this.renderer.update_size()
+        this.volume = this.model.get("volume_data")
+        if(!this.volume) {
+            this.update_size()
             return;
             //this.volume = {image_shape: [2048, 1024], slice_shape: [128, 128], rows: 8, columns:16, slices: 128, src:default_cube_url}
         }
-
-        // VOLUME LOADER THAT NEEDS TO BE CHANGED INTO DATA TEXTURE
-        //this.texture_volume = this.texture_loader.load(this.volume.src, _.bind(this.update, this));//, _.bind(this.update, this))
-        //this.texture_volume.magFilter = THREE.LinearFilter
-        //this.texture_volume.minFilter = THREE.LinearFilter
-        // *************** //
-
-        var tex_tile_size = [1.0 / volumes.nr_of_tiles[0],1.0 / volumes.nr_of_tiles[1]]
-    
-        var slicePixelSize = new THREE.Vector2(tex_tile_size[0]/volumes.size[0],tex_tile_size[1]/volumes.size[1]);
-        var volumeSliceSize = new THREE.Vector2(volumes.size[0],volumes.size[1]);
-        var sliceInnerSize = slicePixelSize.clone().multiply(volumeSliceSize.clone().subScalar(1.0));
-
-        this.texture_volumes = []
-
-        _.each(volumes.volume_data_tiled, function(vol) {
-            var dataValues = new Float32Array( vol.buffer.buffer );
-            var texvol = new THREE.DataTexture(dataValues, volumes.size[0]*volumes.nr_of_tiles[0], volumes.size[1]*volumes.nr_of_tiles[1], 
-                                               THREE.LuminanceFormat, 
-                                               THREE.FloatType,
-                                               THREE.UVMapping,
-                                               THREE.ClampToEdgeWrapping,
-                                               THREE.ClampToEdgeWrapping,
-                                               THREE.LinearFilter,
-                                               THREE.LinearFilter);
-            texvol.needsUpdate = true;
-            this.texture_volumes.push(texvol)
-        }, this)
-
-        this.box_material_volr.uniforms.volume_size.value = volumes.size
-        this.box_material_volr.uniforms.volume_tex.value = this.texture_volumes[0]
-        this.box_material_volr.uniforms.tex_tile_size.value = tex_tile_size
-        this.box_material_volr.uniforms.nr_of_tiles.value = volumes.nr_of_tiles
-        this.box_material_volr.uniforms.slice_pixel_size.value = slicePixelSize
-        this.box_material_volr.uniforms.slice_inner_size.value = sliceInnerSize
-        this.box_material_volr.needsUpdate = true;
-
+        var data = new Uint8Array(this.volume.tiles.buffer)
+        this.texture_volume = new THREE.DataTexture(data, this.volume.image_shape[0], this.volume.image_shape[1],
+                                                    THREE.RGBAFormat, THREE.UnsignedByteType)
+        this.texture_volume.magFilter = THREE.LinearFilter
+        this.texture_volume.minFilter = THREE.LinearFilter
+        this.box_material_volr.uniforms.volume_rows.value = this.volume.rows,
+        this.box_material_volr.uniforms.volume_columns.value = this.volume.columns
+        this.box_material_volr.uniforms.volume_slices.value = this.volume.slices
+        this.box_material_volr.uniforms.volume_size.value = this.volume.image_shape
+        this.box_material_volr.uniforms.volume_slice_size.value = this.volume.slice_shape
+        this.box_material_volr.uniforms.volume.value = this.texture_volume
+        this.box_material_volr.uniforms.volume_data_range.value = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
+        this.box_material_volr.uniforms.volume_show_range.value = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
+        this.texture_volume.needsUpdate = true // without this it doesn't seem to work
         if(this.model.previous("volume_data")) {
-            this.renderer.update()
+            this.update()
         } else {
-            this.renderer.update_size() // could need a resize, see update_size
+            this.update_size() // could need a resize, see update_size
         }
     },
     tf_set: function() {
@@ -187,10 +188,10 @@ var VolumeView = widgets.WidgetView.extend( {
                 this.texture_tf.image.data = tf.get_data_array()
                 this.texture_tf.needsUpdate = true
             }*/
-            this.texture_tf = new THREE.DataTexture(tf.get_data_array(), tf.get("rgba").shape[0], 1, THREE.RGBAFormat)
+            this.texture_tf = new THREE.DataTexture(tf.get_data_array(), tf.get("rgba").shape[0], 1, THREE.RGBAFormat, THREE.UnsignedByteType)
             this.texture_tf.needsUpdate = true // without this it doesn't seem to work
-            this.box_material_volr.uniforms.transfer_function_tex.value = this.texture_tf
-            this.renderer.update()
+            this.box_material_volr.uniforms.transfer_function.value = this.texture_tf
+            this.update()
         }
     },
     add_to_scene: function() {
@@ -199,13 +200,10 @@ var VolumeView = widgets.WidgetView.extend( {
     remove_from_scene: function() {
         this.renderer.scene_volume.remove(this.box_mesh)
     },
-    update_: function() {
-
-    },
-    set_render_size: function(render_width, render_height){ // Check this
+    set_render_size: function(render_width, render_height){
         this.box_material_volr.uniforms.render_size.value = [render_width, render_height]
     },
-    set_exit_points_tex: function(tex){
+    set_back_tex: function(tex){
         this.box_material_volr.uniforms.exit_points.value = tex;
     },
     set_geometry_color_depth_tex: function(render_target){
