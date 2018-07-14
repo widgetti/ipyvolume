@@ -82,8 +82,9 @@ def stars(N=1000, radius=100000, thickness=3, seed=42, color=[255, 240, 240]):
     x /= r
     y /= r
     z /= r
-    return ipv.scatter(x, y, z, texture=radial_sprite((64, 64), color), marker='square_2d', grow_limits=False, size=radius*0.7/100)
-
+    s = ipv.scatter(x, y, z, texture=radial_sprite((64, 64), color), marker='square_2d', grow_limits=False, size=radius*0.7/100)
+    s.material.transparent = True
+    return s
 
 milkyway_url = 'https://www.nasa.gov/sites/default/files/images/620057main_milkyway_full.jpg'
 milkyway_image = UrlCached(milkyway_url)
