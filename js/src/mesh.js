@@ -225,6 +225,8 @@ var MeshView = widgets.WidgetView.extend( {
         if(texture && this.textures) {
             this.material.defines['USE_TEXTURE'] = true;
         }
+        this.material.needsUpdate = true;
+        this.material_rgb.needsUpdate = true;
     },
     create_mesh: function() {
         /*console.log("previous values: ")
