@@ -484,7 +484,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.canvas_overlay_container.appendChild(this.canvas_overlay);
         this.canvas_container.appendChild(this.canvas_overlay_container);
 
-        this.renderer = new THREE.WebGLRenderer({alpha: true, antialias: true});
+        this.renderer = new THREE.WebGLRenderer({alpha: false, antialias: true, premultipliedAlpha: false});
 
         this.canvas_renderer_container = document.createElement("div")
         this.canvas_renderer_container.appendChild(this.renderer.domElement);

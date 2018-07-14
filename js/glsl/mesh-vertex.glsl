@@ -16,11 +16,11 @@ varying vec3 vertex_position;
 attribute vec3 position_previous;
 
 #ifdef USE_TEXTURE
-attribute float u;
-attribute float v;
-attribute float u_previous;
-attribute float v_previous;
-varying vec2 vertex_uv;
+    attribute float u;
+    attribute float v;
+    attribute float u_previous;
+    attribute float v_previous;
+    varying vec2 vertex_uv;
 #endif
 
 attribute vec4 color;

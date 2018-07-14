@@ -21,7 +21,7 @@ ipyvolume.widgets
     :show-inheritance:
 
 ipyvolume.headless
------------------
+------------------
 
 .. automodule:: ipyvolume.headless
     :members: 

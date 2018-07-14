@@ -16,30 +16,37 @@
   ],
   "scripts": {
     "prepublish": "webpack ",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "install-test": "npm install && karma start --single-run",
+    "test": "karma start --single-run"
   },
   "jupyterlab": {
     "extension": "src/labplugin"
   },
   "devDependencies": {
+    "@types/chai": "^4.1.4",
     "@types/expect.js": "^0.3.29",
     "@types/mocha": "^2.2.41",
+    "@types/requirejs": "^2.1.31",
+    "@types/three": "^0.92.4",
+    "chai": "^4.1.2",
     "json-loader": "^0.5.4",
-    "karma-chrome-launcher": "^2.0.0",
-    "karma-typescript": "^2.0.3",
-    "karma-mocha": "^1.3.0",
+    "karma": "^2.0.3",
     "karma-chai": "^0.1.0",
-    "karma-webpack": "^2.0.3",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-mocha": "^1.3.0",
+    "karma-sinon": "^1.0.5",
     "karma-sourcemap-loader": "^0.3.7",
-    "url-loader": "^0.5.7",
-    "webpack": "^1.12.14",
+    "karma-typescript": "^3.0.12",
+    "karma-typescript-es6-transform": "^1.0.4",
+    "karma-webpack": "^2.0.3",
+    "mocha": "^3.5.3",
     "raw-loader": "^0.5.1",
-    "mocha": "^3.3.0",
-    "chai": "^4.0.0",
-    "sinon": "^2.1.0",
+    "sinon": "^2.4.1",
     "sinon-chai": "^2.11.0",
+    "ts-loader": "~2.2.2",
     "typescript": "~2.3.1",
-    "ts-loader": "~2.2.2"
+    "url-loader": "^0.5.7",
+    "webpack": "^1.12.14"
   },
   "dependencies": {
     "@jupyter-widgets/base": "^1.0.0",

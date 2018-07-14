@@ -12,6 +12,9 @@ matrix:
   allow_failures:
     env: PYTHON_VERSION=3.6
 
+addons:
+  chrome: stable
+
 before_install:
   - if [[ $TRAVIS_OS_NAME == linux ]]; then sudo apt-get update; fi
   - . $HOME/.nvm/nvm.sh
@@ -35,6 +38,7 @@ install:
 
 script:
   - py.test --cov-report= --cov=ipyvolume
+  - npm run --prefix js install-test
 #  - runipy examples/examples.ipynb
 
 after_success:
