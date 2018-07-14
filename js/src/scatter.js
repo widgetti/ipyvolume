@@ -21,7 +21,7 @@ var ScatterView = widgets.WidgetView.extend( {
         }
 
         this.geo_diamond = new THREE.SphereGeometry(1, 2, 2)
-        this.geo_sphere = new THREE.SphereGeometry(1, 12, 12)
+        this.geo_sphere = new THREE.SphereGeometry(0.5, 12, 12)
         this.geo_box = new THREE.BoxGeometry(1, 1, 1)
         this.geo_cat = new THREE.Geometry()
         for(var i = 0; i < cat_data.vertices.length; i++) {
