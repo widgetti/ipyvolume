@@ -2012,7 +2012,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             ylabel: 'y',
             zlabel: 'z',
             animation: 1000,
-            animation_exponent: 0.5,
+            animation_exponent: 1.0,
             style: styles['light'],
             render_continuous: false,
             extent: null,

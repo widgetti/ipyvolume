@@ -142,7 +142,7 @@ class Figure(ipywebrtc.MediaStream):
     meshes = traitlets.List(traitlets.Instance(Mesh), [], allow_none=False).tag(sync=True, **ipywidgets.widget_serialization)
 
     animation = traitlets.Float(1000.0).tag(sync=True)
-    animation_exponent = traitlets.Float(.5).tag(sync=True)
+    animation_exponent = traitlets.Float(1.0).tag(sync=True)
 
     ambient_coefficient = traitlets.Float(0.5).tag(sync=True)
     diffuse_coefficient = traitlets.Float(0.8).tag(sync=True)
