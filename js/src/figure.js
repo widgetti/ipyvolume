@@ -627,13 +627,17 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.ticks = 5; //hardcoded for now
 
+        // we have our 'private' scene, if we use the real scene, it gives buggy
+        // results in the volume rendering when we have two views
         this.scene = new THREE.Scene();
-        // this.scene = this.model.get('scene').obj
+        this.shared_scene = this.model.get('scene').obj
         // could be removed when https://github.com/jovyan/pythreejs/issues/176 is solved
         // the default for pythreejs is white, which leads the volume rendering pass to make everything white
         this.scene.background = null
         this.model.get('scene').on('rerender', () => this.update())
         this.scene.add(this.camera);
+        // the threejs animation system looks at the parent of the camera and sends rerender msg'es
+        this.shared_scene.add(this.camera);
         this.scene.add(this.box_mesh)
 
         this.scene_scatter = new THREE.Scene();
