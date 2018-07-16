@@ -1033,7 +1033,7 @@ def plot_plane(where="back", texture=None):
     fig = gcf()
     xmin, xmax = fig.xlim
     ymin, ymax = fig.ylim
-    zmin, zmax = fig.ylim
+    zmin, zmax = fig.zlim
     if where == "back":
         x = [xmin, xmax, xmax, xmin]
         y = [ymin, ymin, ymax, ymax]
