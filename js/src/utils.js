@@ -1,6 +1,6 @@
 var semver_range = '~' + require('../package.json').version;
 
-isTypedArray = require('is-typedarray')
+var isTypedArray = require('is-typedarray')
 
 
 function is_typedarray(obj) {

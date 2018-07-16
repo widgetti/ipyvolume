@@ -1,6 +1,6 @@
-import _ = require('underscore');
-import THREE = require('three');
-import utils = require('./utils.js');
+import * as _  from 'underscore';
+import * as THREE from 'three';
+import * as utils from './utils.js';
 
 /* Manages a list of scalar and arrays for use with WebGL instanced rendering
 */

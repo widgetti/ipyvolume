@@ -6,7 +6,8 @@ var loaders = [
     { test: /\.css$/, loaders: ['style-loader', 'css-loader']},
     { test: /\.json$/, loader: 'json-loader' },
     {test: /\.png$/,loader: 'url-loader?limit=10000000'},
-    { test: /\.ts?$/, loader: 'ts-loader' }
+    { test: /\.js$/, loader: 'babel-loader', exclude: /node_modules/},
+    { test: /\.ts?$/, loader: 'ts-loader', query: { presets: ['es2015']}}
 ];
 
 
@@ -65,6 +66,9 @@ module.exports = [
      //
         entry: './src/embed.js',
         devtool: 'inline-source-map',
+        resolve: {
+            extensions: ['.ts', '.js', '']
+        },
         output: {
             filename: 'index.js',
             path: './dist/',

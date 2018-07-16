@@ -105,7 +105,7 @@ function deserialize_array_or_json(data, manager) {
     }
     arrays.original_data = data;
     return arrays;
-
+    /*
     if(_.isArray(data) && !data.buffer) { // plain json, or list of buffers
         if(data.length == 0) {
             arrays = []
@@ -133,7 +133,7 @@ function deserialize_array_or_json(data, manager) {
         }
     }
     arrays.original_data = data;
-    return arrays;
+    return arrays;*/
 }
 
 function deserialize_color_or_json(data, manager) {
@@ -225,7 +225,7 @@ function serialize_ndarray(data, manager) {
     if(_.isArray(data) && !data.buffer) { // plain list of list
         var ar = require("ndarray-pack")(data)
     }
-    data_json = {'data': ar.data.buffer, dtype:arrayToTypes[ar.data.constructor.name], shape:ar.shape}
+    var data_json = {'data': ar.data.buffer, dtype:arrayToTypes[ar.data.constructor.name], shape:ar.shape}
     console.log('serialize_ndarray')
     return data_json;
 }

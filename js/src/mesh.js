@@ -2,7 +2,7 @@ var _ = require('underscore');
 var widgets = require('@jupyter-widgets/base');
 var THREE = require('three');
 var serialize = require('./serialize.js');
-var values = require('./values.ts');
+import * as values from './values'
 var semver_range = require('./utils.js').semver_range;
 
 var MeshView = widgets.WidgetView.extend( {

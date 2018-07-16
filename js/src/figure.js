@@ -5,7 +5,7 @@ var THREEtext2d = require("three-text2d")
 var glm = require("gl-matrix")
 var d3 = require("d3")
 var screenfull = require("screenfull")
-require('./style.css')
+require('../css/style.css')
 
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
 // so that N.M.x is allowed (we don't care about x, but we assume 0.2.x is not compatible with 0.3.x
@@ -106,7 +106,7 @@ var copy_image_to_clipboard = function(data) {
     document.body.removeChild(div);
 }
 
-ToolIcon = function(className, parent) {
+var ToolIcon = function(className, parent) {
     this.a = document.createElement('a')
     this.a.className = 'ipyvolume-toolicon'
     this.a.setAttribute('href', 'javascript:void(0)')
@@ -125,7 +125,7 @@ ToolIcon = function(className, parent) {
     }
 }
 
-ToolIconDropdown = function(className, parent, text) {
+var ToolIconDropdown = function(className, parent, text) {
     this.a = document.createElement('a')
     this.a.className = 'ipyvolume-toolicon-dropdown'
     this.a.setAttribute('href', 'javascript:void(0)')
@@ -150,7 +150,7 @@ var _scale_point = function(xy, width, height) {
     return [xy[0] / width * 2 - 1, 1 - xy[1] / height * 2]
 }
 
-LassoSelector = function(canvas) {
+var LassoSelector = function(canvas) {
     this.canvas = canvas;
     this.points = []
     this.context = this.canvas.getContext('2d');
@@ -182,7 +182,7 @@ LassoSelector = function(canvas) {
     }
 }
 
-CircleSelector = function(canvas) {
+var CircleSelector = function(canvas) {
     this.canvas = canvas;
     this.points = []
     this.begin = null;
@@ -223,7 +223,7 @@ CircleSelector = function(canvas) {
     }
 }
 
-RectangleSelector = function(canvas) {
+var RectangleSelector = function(canvas) {
     this.canvas = canvas;
     this.points = []
     this.begin = null;
@@ -1367,9 +1367,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         parent_data.object.add(sprite)
         d.object_ticklabel = sprite;
         return sprite
-
-        sprite.text = tick_text[i]
-        sprite.fillStyle = this.model.get("style")[parent_data.name + 'axis.color']
     },
     _d3_update_axis_tick: function(node, d, i) {
         var parent_data = d3.select(d3.select(node).node().parentNode).datum(); // TODO: find the proper way to do so
@@ -1535,7 +1532,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.control_trackball.up0 = this.camera.up.clone()
     },
     update_panorama: function() {
-        material = this.screen_material_cube
+        var material = this.screen_material_cube
         if(this.model.get('panorama_mode') == '360')
             material.defines = {PANORAMA_360: true}
         if(this.model.get('panorama_mode') == '180')

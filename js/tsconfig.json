@@ -1,10 +1,18 @@
 {
-    "compilerOptions": {
-      "outDir": "./dist/",
-      "sourceMap": true,
-      "noImplicitAny": true,
-      "module": "amd",
-      "target": "es5",
-      "allowJs": true
-    }
+"compilerOptions": {
+    "noImplicitAny": true,
+    "lib": ["dom", "es5", "es2015.promise", "es2015.iterable"],
+    "noEmitOnError": true,
+    "strictNullChecks": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES5",
+    "outDir": "lib",
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "allowJs": true
+  },
+  "include": [
+        "./src/**/*"
+]
 }

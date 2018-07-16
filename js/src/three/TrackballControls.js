@@ -137,13 +137,13 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		return function getMouseOnCircle( pageX, pageY ) {
 			return getMouseOnScreen(pageX*2 * Math.PI, -pageY*2 * Math.PI )
-
+			/*
 			vector.set(
 				( ( pageX - _this.screen.width * 0.5 - _this.screen.left ) / ( _this.screen.width * 0.5 ) ),
 				( ( _this.screen.height + 2 * ( _this.screen.top - pageY ) ) / _this.screen.width ) // screen.width intentional
 			);
 
-			return vector;
+			return vector;*/
 
 		};
 
