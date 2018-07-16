@@ -370,6 +370,7 @@ def plot(x, y, z, color=default_color, **kwargs):
                     size=1, connected=True, visible_markers=False)
     kwargs = dict(defaults, **kwargs)
     s = ipv.Scatter(x=x, y=y, z=z, color=color, **kwargs)
+    s.material.visible = False
     fig.scatters = fig.scatters + [s]
     return s
 
