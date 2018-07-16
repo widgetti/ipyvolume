@@ -37,7 +37,7 @@ install:
   - pip install -e .
 
 script:
-  - py.test --cov-report= --cov=ipyvolume
+  - py.test --cov-report= --cov=ipyvolume ipyvolume
   - npm run --prefix js install-test
 #  - runipy examples/examples.ipynb
 
