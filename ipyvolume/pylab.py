@@ -662,7 +662,7 @@ def volshow(volume_data, lighting=False, data_min=None, data_max=None,
         volume_data = volume_data.T
 
     if extent is None:
-        extent = [(0, k) for k in volume_data.shape]
+        extent = [(0, k) for k in volume_data.shape[::-1]]
 
     vol = ipv.Volume(volume_data=volume_data, 
                     data_min = data_min,

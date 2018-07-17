@@ -540,12 +540,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.renderer_stereo = new THREE.StereoEffect(this.renderer);
         this.renderer_selected = this.renderer_stereo;
 
-        this.box_geo = new THREE.BoxBufferGeometry(1, 1, 1)
-        //this.box_material = new THREE.MeshLambertMaterial({color: 0xCC0000});
-
-        this.box_geo_edges = new THREE.EdgesGeometry( this.box_geo )
-        this.box_material_wire = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 1. } );
-
         var make_line = function(x1, y1, z1, x2, y2, z2, material) {
             //var linewidth = 2;
             //var material = new THREE.LineBasicMaterial({color: color, linewidth: linewidth});
@@ -648,9 +642,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         // Render pass targets
         // float texture for better depth data, prev name back_texture
-        this.volume_exit_points_target = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, type: THREE.FloatType, format:THREE.RGBAFormat, generateMipmaps: false});
-        this.volume_geometry_color_depth_target = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format:THREE.RGBAFormat, generateMipmaps: false, depthTexture: new THREE.DepthTexture()} );
-        this.volume_geometry_color_depth_target.depthTexture.type = THREE.UnsignedShortType;
+        this.volume_back_target = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, type: THREE.FloatType, format:THREE.RGBAFormat, generateMipmaps: false});
+        this.geometry_depth_target = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format:THREE.RGBAFormat, generateMipmaps: false, depthTexture: new THREE.DepthTexture()} );
+        this.geometry_depth_target.depthTexture.type = THREE.UnsignedShortType;
         this.color_pass_target = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter});
         this.screen_pass_target = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter});
         this.coordinate_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
@@ -833,55 +827,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
             //console.log('!hover')
             this.hover = false
         }
-    },
-    _update_box_geo: function() {
-        var x = this.model.get('xlim')
-        var y = this.model.get('ylim')
-        var z = this.model.get('zlim')
-        var dx = (x[1] - x[0])
-        var dy = (y[1] - y[0])
-        var dz = (z[1] - z[0])
-
-        // if no extend given, scale it to viewport
-        var extent = this.model.get('extent')
-        if(!extent)
-           extent = [x, y, z]
-
-       // normalized coordinates of the corners of the box
-        var x0 = (extent[0][0]-x[0])/dx
-        var x1 = (extent[0][1]-x[0])/dx
-        var y0 = (extent[1][0]-y[0])/dy
-        var y1 = (extent[1][1]-y[0])/dy
-        var z0 = (extent[2][0]-z[0])/dz
-        var z1 = (extent[2][1]-z[0])/dz
-
-        // clipped coordinates
-        var cx0 = Math.max(x0,  0)
-        var cx1 = Math.min(x1,  1)
-        var cy0 = Math.max(y0,  0)
-        var cy1 = Math.min(y1,  1)
-        var cz0 = Math.max(z0,  0)
-        var cz1 = Math.min(z1,  1)
-
-        // the clipped coordinates back to world space, then normalized to extend
-        // these are example calculations, the transform goes into scale and offset uniforms below
-        // var cwx0 = (cx0 * dx + x[0] - extent[0][0])/(extent[0][1] - extent[0][0])
-        // var cwx1 = (cx1 * dx + x[0] - extent[0][0])/(extent[0][1] - extent[0][0])
-
-        // this.box_geo = new THREE.BoxBufferGeometry(cx1-cx0, cy1-cy0, cz1-cz0)
-        // this.box_geo.translate((cx1-x0)/2, (cy1-cy0)/2, (cz1-cz0)/2)
-        // this.box_geo.translate(cx0, cy0, cz0)
-        // this.box_geo.translate(-0.5, -0.5, -0.5)
-        this.box_geo = new THREE.BoxBufferGeometry(1, 1, 1)
-        this.box_geo.translate(0.5, 0.5, 0.5)
-        this.box_geo.scale((cx1-cx0), (cy1-cy0), (cz1-cz0))
-        this.box_geo.translate(cx0, cy0, cz0)
-        this.box_geo.translate(-0.5, -0.5, -0.5)
-        //this.box_mesh.geometry = this.box_geomox
-        
-        
-        
-        this.update()
     },
     setStyle: function() {
         // ignore original style setting, our style != a style widget
@@ -1673,25 +1618,22 @@ var FigureView = widgets.DOMWidgetView.extend( {
             return
         }
 
-        // clear main render target
-        //this.renderer.clearTarget(this.volr_texture, true, true, true)
-
         // render the back coordinates of the box
         if(has_volumes){
             _.each(this.volume_views, function(volume_view){
                 volume_view.box_material.side = THREE.BackSide;
                 volume_view.box_mesh.material = volume_view.box_material;
-                volume_view.set_exit_points_tex(this.volume_exit_points_target)
+                volume_view.set_back_tex(this.volume_back_target)
                 volume_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
             },this)
-            this.renderer.clearTarget(this.volume_exit_points_target, true, true, true)
-            this.renderer.render(this.scene_volume, camera, this.volume_exit_points_target);
+            this.renderer.clearTarget(this.volume_back_target, true, true, true)
+            this.renderer.render(this.scene_volume, camera, this.volume_back_target);
 
             // Color and depth render pass for volume rendering
             this.renderer.autoClear = false;
-            this.renderer.clearTarget(this.volume_geometry_color_depth_target, true, true, true)
-            this.renderer.render(this.scene_scatter, camera, this.volume_geometry_color_depth_target);
-            this.renderer.render(this.scene_opaque, camera, this.volume_geometry_color_depth_target);
+            this.renderer.clearTarget(this.geometry_depth_target, true, true, true)
+            this.renderer.render(this.scene_scatter, camera, this.geometry_depth_target);
+            this.renderer.render(this.scene_opaque, camera, this.geometry_depth_target);
             this.renderer.autoClear = true;
 
         }
@@ -1707,7 +1649,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             // render the front coordinates
             _.each(this.volume_views, function(volume_view){
                 volume_view.box_material_volr.side = THREE.FrontSide;
-                volume_view.set_geometry_color_depth_tex(this.volume_geometry_color_depth_target)
+                volume_view.set_geometry_depth_tex(this.geometry_depth_target)
                 volume_view.box_mesh.material = volume_view.box_material_volr;
             },this)
             this.renderer.autoClear = false;
@@ -1716,13 +1658,45 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.renderer.autoClear = true;
         }
 
+        // set RGB material for coordinate texture render
+        _.each(this.scatter_views, function(scatter) {
+            scatter.mesh.material = scatter.mesh.material_rgb
+        }, this)
+        _.each(this.mesh_views, function(mesh_view) {
+            _.each(mesh_view.meshes, function(mesh) {
+                mesh.material = mesh.material_rgb
+            }, this);
+        }, this)
+
+        // we also render this for the zoom coordinate
+        this.renderer.setClearAlpha(0)
+        this.renderer.clearTarget(this.coordinate_texture, true, true, true)
+        this.renderer.render(this.scene_scatter, camera, this.coordinate_texture);
+        
+        // now we render the weighted coordinate for the volumetric data
+        // make sure where we don't render, alpha = 0
+        if(has_volumes) {
+            this.renderer.autoClear = false;
+            this.box_mesh.material = this.box_material_volr_depth;
+            this.renderer.render(this.scene, camera, this.coordinate_texture);
+        }
+        this.renderer.autoClear = true;
+
+        // restore materials
+        _.each(this.scatter_views, function(scatter) {
+            scatter.mesh.material = scatter.mesh.material_normal
+        }, this)
+        _.each(this.mesh_views, function(mesh_view) {
+            _.each(mesh_view.meshes, function(mesh) {
+                mesh.material = mesh.material_normal
+            }, this);
+        }, this)
+
         // render to screen
         this.screen_texture = this.color_pass_target;
         this.screen_material.uniforms.tex.value = this.screen_texture.texture
         //this.renderer.clearTarget(this.renderer, true, true, true)
         this.renderer.render(this.screen_scene, this.screen_camera);
-
-
     },
 
     update_light: function() {
@@ -1789,8 +1763,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
             volume_view.set_render_size(render_width, render_height);
         })
 
-        this.volume_exit_points_target.setSize(render_width, render_height);
-        this.volume_geometry_color_depth_target.setSize(render_width, render_height);
+        this.volume_back_target.setSize(render_width, render_height);
+        this.geometry_depth_target.setSize(render_width, render_height);
         this.color_pass_target.setSize(render_width, render_height);
         this.screen_pass_target.setSize(render_width, render_height);
 
@@ -1841,7 +1815,6 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             animation_exponent: 1.0,
             style: styles['light'],
             render_continuous: false,
-            extent: null,
             selector: 'lasso',
             selection_mode: 'replace',
             mouse_mode: 'normal',
@@ -1852,7 +1825,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
     }
 }, {
     serializers: _.extend({
-        tf: { deserialize: widgets.unpack_models },
+
         scatters: { deserialize: widgets.unpack_models },
         meshes: { deserialize: widgets.unpack_models },
         volumes: { deserialize: widgets.unpack_models },

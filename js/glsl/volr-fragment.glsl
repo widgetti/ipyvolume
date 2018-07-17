@@ -1,7 +1,5 @@
 precision highp float;
-varying vec4 vertex_color;
-uniform sampler2D front;
-uniform sampler2D back;
+uniform sampler2D back_tex;
 uniform sampler2D volume;
 //uniform sampler2D colormap;
 //uniform int colormap_index;
@@ -27,9 +25,11 @@ uniform sampler2D transfer_function;
 uniform vec3 scale;
 uniform vec3 offset;
 
+varying vec3 front;
 
 // for lighting
 uniform mat3 mvMatrix;
+uniform mat3 pMatrix;
 
 //uniform float color_index;
 
@@ -81,9 +81,9 @@ void main(void) {
     vec2 pixel = vec2(gl_FragCoord.x, gl_FragCoord.y) / render_size;
     //vec4 textureColor = texture2D(volume, vec2(pixel.x * width + x_index, pixel.y*height + y_index));
     //vec3 ray_begin = vertex_color.xyz;//texture2D(front, pixel).rgb;
-    vec3 ray_end = texture2D(back, pixel).rgb;
+    vec3 ray_end = texture2D(back_tex, pixel).rgb;
     //vec3 ray_end = vertex_color.xyz;//texture2D(front, pixel).rgb;
-    vec3 ray_begin = texture2D(front, pixel).rgb;
+    vec3 ray_begin = front;
     vec3 ray_direction = ray_end - ray_begin;
     vec3 ray_delta = ray_direction * (1./float(steps));
     vec3 ray_pos = ray_begin;
@@ -92,6 +92,7 @@ void main(void) {
     float alpha_total = 0.;
     //float colormap_index_scaled = 0.5/70. + float(colormap_index)/70.;
     float color_index;
+    vec4 geometry_depth;
 
     //mat3 rotation = mat3(mvMatrix);
     mat3 rotation = (mat3(viewMatrix));
@@ -138,6 +139,12 @@ void main(void) {
 #endif
 //#endif
 
+        geometry_depth = texture2D(geometry_depth_tex, pixel); 
+        voxel_view_space_coord = pMatrix*mvMatrix * vec4(pos_relative - vec3(0.5,0.5,0.5),1.0);
+        voxelFragDepth = ((voxel_view_space_coord.z / voxel_view_space_coord.w)+1.0)/2.0;
+        if(geometry_depth.x > 0.0 && voxelFragDepth > geometry_depth.x){
+            break;
+        }
 #if defined(METHOD_MAX_INTENSITY)
         if(data_value > max_value) {
   #ifdef COORDINATE
