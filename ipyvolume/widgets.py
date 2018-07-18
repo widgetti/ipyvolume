@@ -353,7 +353,8 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
             specular_coefficient=0.5, specular_exponent=5,
             downscale=1,
-            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, extent=None, **kwargs):
+            max_shape=256,
+            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, extent=None, memorder='C', **kwargs):
     """
     Visualize a 3d array using volume rendering
 
@@ -419,16 +420,25 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
     if memorder is 'F':
         data = data.T
 
+    if extent is None:
+        extent = [(0, k) for k in data.shape[::-1]]
+
     fig = Figure(stereo=stereo, width=width, height=height, **kwargs)
 
-    vol = Volume(volume_data=data, volume_data_min=data_min, volume_data_max=data_max, stereo=stereo,
-                            width=width, height=height,
+    vol = Volume(volume_data_original=data, 
+                            tf=tf, 
+                            volume_data_min = data_min, 
+                            volume_data_max = data_max,
+                            volume_show_min = data_min,
+                            volume_show_max = data_max,
+                            volume_data_max_shape = max_shape,
+                            extent_original = extent,
                             ambient_coefficient=ambient_coefficient,
                             diffuse_coefficient=diffuse_coefficient,
                             specular_coefficient=specular_coefficient,
                             specular_exponent=specular_exponent,
-                            tf=tf, extent=extent)
-    vol.tf = tf
+                            volume_rendering_lighting=False, **kwargs)
+
     fig.volumes = fig.volumes + [vol]
     box = _volume_widgets(fig, vol, tf, lighting=lighting)
     return box

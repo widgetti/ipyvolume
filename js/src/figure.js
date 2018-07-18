@@ -598,28 +598,19 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.ticks = 5; //hardcoded for now
 
-<<<<<<< 18328005afd25e0b7e560a6f5b47adce134808f1
         // we have our 'private' scene, if we use the real scene, it gives buggy
         // results in the volume rendering when we have two views
-        this.scene = new THREE.Scene();
-        this.shared_scene = this.model.get('scene').obj
-=======
         this.scene_volume = new THREE.Scene();
-        //this.scene = new THREE.Scene();
-        this.scene_volume = this.model.get('scene').obj
->>>>>>> Added separate volume widget:
+        this.shared_scene = this.model.get('scene').obj
+
         // could be removed when https://github.com/jovyan/pythreejs/issues/176 is solved
         // the default for pythreejs is white, which leads the volume rendering pass to make everything white
         this.scene_volume.background = null
         this.model.get('scene').on('rerender', () => this.update())
-<<<<<<< 18328005afd25e0b7e560a6f5b47adce134808f1
-        this.scene.add(this.camera);
+
+        this.scene_volume.add(this.camera);
         // the threejs animation system looks at the parent of the camera and sends rerender msg'es
         this.shared_scene.add(this.camera);
-        this.scene.add(this.box_mesh)
-=======
-        this.scene_volume.add(this.camera);
->>>>>>> Added separate volume widget:
 
         this.scene_scatter = new THREE.Scene();
         //this.scene_scatter.add(this.camera);
@@ -649,6 +640,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.screen_pass_target = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter});
         this.coordinate_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
 
+        this.screen_texture = this.color_pass_target.texture;
         this.screen_scene = new THREE.Scene();
         this.screen_scene_cube = new THREE.Scene();
         this.screen_plane = new THREE.PlaneBufferGeometry( 1.0, 1.0 );
@@ -673,8 +665,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.screen_scene_cube.add(this.screen_mesh_cube)
         this.screen_camera = new THREE.OrthographicCamera( 1 / - 2, 1 / 2, 1 / 2, 1 / - 2, -10000, 10000 );
         this.screen_camera.position.z = 10;
-        //this.update_panorama() // Casperl: There are update functions scattered around which all call the global update in turn,
-        // I don't think this is a wise idea cause that means you already start rendering when not everything is initialized.. 
+        this.update_panorama()
         this.on('change:panorama_mode', this.update_panorama, this)
 
 
@@ -711,17 +702,17 @@ var FigureView = widgets.DOMWidgetView.extend( {
 		window.addEventListener( 'deviceorientation', _.bind(this.on_orientationchange, this), false );
 		//window.addEventListener( 'deviceorientation', _.bind(this.update, this), false );
         //this.controls.
-
+        
         this.model.on('change:scatters', this.update_scatters, this)
         this.update_scatters()
         this.model.on('change:meshes', this.update_meshes, this)
         this.update_meshes()
         this.model.on('change:volumes', this.update_volumes, this)
         this.update_volumes()
-        
+
+
         //this.volume_changed()
         this.update_size()
-        this._update_box_geo()
 
         var that = this;
         //*
@@ -755,7 +746,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this._save_matrices, this);
-        this.model.on('change:xlim change:ylim change:zlim change:extent', this._update_box_geo, this);
         this.model.on('change:downscale', this.update_size, this);
         this.model.on('change:stereo', this.update_size, this);
         
@@ -772,7 +762,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var update_center = () => {
             // WARNING: we cheat a little by setting the scene positions (hence the minus) since it is
             // easier, might get us in trouble later?
-            _.each([this.scene_volume, this.scene_opaque, this.scene_scatter], (scene) => {
+            _.each([this.scene_volume, this.scene_opaque, this.scene_scatter], scene => {
                 var pos = this.model.get('camera_center');
                 scene.position.set(-pos[0], -pos[1], -pos[2])
             })
@@ -792,6 +782,34 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.renderer.domElement.addEventListener( 'resize', _.bind(this.on_canvas_resize, this), false );
         this.update()
 
+        /*new widgets.ViewList(_.bind(function add(model) {
+                console.log("adding")
+                console.log(model)
+                scatter_view = new ScatterView()
+                scatter_view.model = model
+                scatter_view.options = _.pick(this.options, 'register_update', 'renderer_id')
+                scatter_view.initialize({options:scatter_view.options})
+                scatter_view.render()
+                return scatter_view
+                //this.model.widget_manager.
+                var view_promise = this.create_child_view(model, _.pick(this.options, 'register_update', 'renderer_id'))
+                console.log("view promise" +view_promise)
+                return Promose.resolve()
+                /*return view_promise.then(_.bind(function(view) {
+                            console.log("added view")
+                            console.log(view)
+                            this.update();
+                            return view;
+                        }, this));
+            }, this),
+            _.bind(function remove(view) {
+                console.log("removing scatter from scene")
+                view.remove_from_scene()
+                view.remove()
+            }, this)
+
+        )*/
+        
         function onWindowResize(){
 
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -1208,7 +1226,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         if(scatters.length != 0) { // So now check if list has length 0
             var current_sct_cids = []
             // Add new scatter if not already as scatter view in figure
-            _.each(scatters, function(scatter_model) {
+            _.each(scatters, scatter_model => {
                 current_sct_cids.push(scatter_model.cid);
                 if(!(scatter_model.cid in this.scatter_views)){
                     var options = {parent: this}
@@ -1219,7 +1237,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             }, this)
 
             // Remove old scatters not contained in scatters
-            _.each(this.scatter_views, function(sct, cid){
+            _.each(this.scatter_views, (sct, cid) => {
                 if(current_sct_cids.indexOf(cid) == -1){
                     sct.remove_from_scene();
                     delete this.scatter_views[cid];
@@ -1234,7 +1252,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         if(meshes.length != 0) { // So now check if list has length 0
             var current_msh_cids = []
             // Add new meshes if not already as mesh view in figure
-            _.each(meshes, function(mesh_model) {
+            _.each(meshes, mesh_model => {
                 current_msh_cids.push(mesh_model.cid);
                 if(!(mesh_model.cid in this.mesh_views)){
                     var options = {parent: this}
@@ -1245,7 +1263,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             }, this)
 
             // Remove old meshes not contained in meshes
-            _.each(this.mesh_views, function(mv, cid){
+            _.each(this.mesh_views, (mv, cid) => {
                 if(current_msh_cids.indexOf(cid) == -1){
                     mv.remove_from_scene();
                     delete this.mesh_views[cid];
@@ -1260,7 +1278,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         if(volumes.length != 0) { // So now check if list has length 0
             var current_vol_cids = []
             // Add new volumes if not already as volume view in figure
-            _.each(volumes, function(vol_model) {
+            _.each(volumes, vol_model => {
                 current_vol_cids.push(vol_model.cid);
                 if(!(vol_model.cid in this.volume_views)){
                     var options = {parent: this}
@@ -1271,7 +1289,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             }, this)
 
             // Remove old meshes not contained in meshes
-            _.each(this.volume_views, function(vol, cid){
+            _.each(this.volume_views, (vol, cid) => {
                 if(current_vol_cids.indexOf(cid) == -1){
                     vol.remove_from_scene();
                     delete this.volume_views[cid];
@@ -1325,7 +1343,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.box_mesh.rotation.x = -(e.beta * Math.PI / 180 + Math.PI*2);
         this.box_mesh.rotation.y = -(e.gamma * Math.PI / 180 + Math.PI*2);*/
 
-        _.each([this.scene_volume, this.scene_opaque, this.scene_scatter], function(scene){
+        _.each([this.scene_volume, this.scene_opaque, this.scene_scatter], scene => {
             scene.rotation.reorder( "XYZ" );
             scene.rotation.x = (e.gamma * Math.PI / 180 + Math.PI*2);
             scene.rotation.y = -(e.beta * Math.PI / 180 + Math.PI*2);
@@ -1458,7 +1476,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
                         child_data.push({})
                     while(child_data.length > ticks.length) // ticks may return a smaller array, so pop child data
                         child_data.pop()
-                    _.each(ticks, function(tick, i) {
+                    _.each(ticks, (tick, i) => {
                         child_data[i].value = tick;
                     });
                     return child_data
@@ -1557,7 +1575,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
     },
     get_style: function(name) {
         var value = [null]
-        _.each(name.split(" "), function(property) {
+        _.each(name.split(" "), property => {
             var value_found = _.reduce(property.split("."), function(object, property) {
                 if(object != null && object[property] != undefined)
                     return object[property]
@@ -1576,10 +1594,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var panorama = this.model.get('panorama_mode') != 'no';
 
         // set material to rgb
-        _.each(this.scatter_views, function(scatter) {
+        _.each(this.scatter_views, scatter => {
             scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
         }, this)
-        _.each(this.mesh_views, function(mesh_view) {
+        _.each(this.mesh_views, mesh_view => {
             mesh_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
         }, this)
 
@@ -1620,10 +1638,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         // render the back coordinates of the box
         if(has_volumes){
-            _.each(this.volume_views, function(volume_view){
+            _.each(this.volume_views, volume_view => {
                 volume_view.box_material.side = THREE.BackSide;
-                volume_view.box_mesh.material = volume_view.box_material;
-                volume_view.set_back_tex(this.volume_back_target)
+                volume_view.vol_box_mesh.material = volume_view.box_material;
+                volume_view.set_back_tex(this.volume_back_target.texture)
                 volume_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
             },this)
             this.renderer.clearTarget(this.volume_back_target, true, true, true)
@@ -1646,11 +1664,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.renderer.autoClear = true;
 
         if(has_volumes) {
-            // render the front coordinates
-            _.each(this.volume_views, function(volume_view){
+            _.each(this.volume_views, volume_view => {
                 volume_view.box_material_volr.side = THREE.FrontSide;
-                volume_view.set_geometry_depth_tex(this.geometry_depth_target)
-                volume_view.box_mesh.material = volume_view.box_material_volr;
+                volume_view.set_geometry_depth_tex(this.geometry_depth_target.depthTexture)
+                volume_view.vol_box_mesh.material = volume_view.box_material_volr;
             },this)
             this.renderer.autoClear = false;
             this.renderer.clearTarget(this.color_pass_target, false, true, false)
@@ -1659,41 +1676,45 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
 
         // set RGB material for coordinate texture render
-        _.each(this.scatter_views, function(scatter) {
+        _.each(this.scatter_views, scatter => {
             scatter.mesh.material = scatter.mesh.material_rgb
         }, this)
-        _.each(this.mesh_views, function(mesh_view) {
-            _.each(mesh_view.meshes, function(mesh) {
+        _.each(this.mesh_views, mesh_view => {
+            _.each(mesh_view.meshes, mesh => {
                 mesh.material = mesh.material_rgb
             }, this);
         }, this)
 
         // we also render this for the zoom coordinate
+        this.renderer.autoClear = false;
         this.renderer.setClearAlpha(0)
         this.renderer.clearTarget(this.coordinate_texture, true, true, true)
         this.renderer.render(this.scene_scatter, camera, this.coordinate_texture);
-        
+        this.renderer.autoClear = true;
+
         // now we render the weighted coordinate for the volumetric data
         // make sure where we don't render, alpha = 0
         if(has_volumes) {
             this.renderer.autoClear = false;
-            this.box_mesh.material = this.box_material_volr_depth;
-            this.renderer.render(this.scene, camera, this.coordinate_texture);
+            _.each(this.volume_views, volume_view => {
+                volume_view.vol_box_mesh.material = volume_view.box_material_volr_depth;
+            },this)
+            this.renderer.render(this.scene_volume, camera, this.coordinate_texture);
+            this.renderer.autoClear = true;
         }
-        this.renderer.autoClear = true;
 
         // restore materials
-        _.each(this.scatter_views, function(scatter) {
+        _.each(this.scatter_views, scatter => {
             scatter.mesh.material = scatter.mesh.material_normal
         }, this)
-        _.each(this.mesh_views, function(mesh_view) {
-            _.each(mesh_view.meshes, function(mesh) {
+        _.each(this.mesh_views, mesh_view => {
+            _.each(mesh_view.meshes, mesh => {
                 mesh.material = mesh.material_normal
             }, this);
         }, this)
 
         // render to screen
-        this.screen_texture = this.color_pass_target;
+        this.screen_texture = {Volume:this.color_pass_target, Back:this.volume_back_target, Geometry_back:this.geometry_depth_target, Coordinate:this.coordinate_texture}[this.model.get("show")]
         this.screen_material.uniforms.tex.value = this.screen_texture.texture
         //this.renderer.clearTarget(this.renderer, true, true, true)
         this.renderer.render(this.screen_scene, this.screen_camera);
@@ -1759,7 +1780,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         //console.log("render size: ", width, height, render_width, render_height)
         //
         
-        _.each(this.volume_views, function(volume_view){
+        _.each(this.volume_views, volume_view => {
             volume_view.set_render_size(render_width, render_height);
         })
 
@@ -1767,8 +1788,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.geometry_depth_target.setSize(render_width, render_height);
         this.color_pass_target.setSize(render_width, render_height);
         this.screen_pass_target.setSize(render_width, render_height);
+        this.coordinate_texture.setSize(render_width, render_height);
 
-        this.screen_texture = this.volr_texture
+        this.screen_texture = this.color_pass_target.texture;
         if(!skip_update)
             this.update()
     },
@@ -1805,6 +1827,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             scatters: null,
             meshes: null,
             volumes: null,
+            show: 'Volume',
             xlim: [0., 1.],
             ylim: [0., 1.],
             zlim: [0., 1.],

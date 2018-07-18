@@ -214,7 +214,6 @@ function deserialize_texture(data, manager) {
 function deserialize_ndarray(data, manager) {
     if(data === null)
         return null;
-    console.log('deserialize_ndarray')
     return ndarray(deserialize_typed_array(data, manager), data.shape);
 }
 
@@ -226,7 +225,6 @@ function serialize_ndarray(data, manager) {
         var ar = require("ndarray-pack")(data)
     }
     var data_json = {'data': ar.data.buffer, dtype:arrayToTypes[ar.data.constructor.name], shape:ar.shape}
-    console.log('serialize_ndarray')
     return data_json;
 }
 

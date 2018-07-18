@@ -66,7 +66,7 @@
     "screenfull": "^3.3.1",
     "style-loader": "^0.18.2",
     "three": "^0.91.0",
-    "three-text2d": "~0.3.2",
+    "three-text2d": "~0.4.1",
     "underscore": "^1.8.3",
     "webrtc-adapter": "^4.2.2"
   }

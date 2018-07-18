@@ -9,7 +9,6 @@ import ipywidgets
 import ipywebrtc
 import numpy as np
 import PIL.Image
-import scipy.misc
 
 try:
 	from io import BytesIO as StringIO # python3

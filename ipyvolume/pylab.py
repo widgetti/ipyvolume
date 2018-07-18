@@ -664,9 +664,7 @@ def volshow(volume_data, lighting=False, data_min=None, data_max=None,
     if extent is None:
         extent = [(0, k) for k in volume_data.shape[::-1]]
 
-    vol = ipv.Volume(volume_data=volume_data, 
-                    data_min = data_min,
-                    data_max = data_max,
+    vol = ipv.Volume(volume_data_original = volume_data,
                     tf=tf,
                     volume_data_min = data_min,
                     volume_data_max = data_max,
@@ -674,12 +672,11 @@ def volshow(volume_data, lighting=False, data_min=None, data_max=None,
                     volume_show_max = data_max,
                     extent_original = extent,
                     volume_data_max_shape = max_shape,
-                    volume_data_original = volume_data,
-                    stereo = stereo,
                     ambient_coefficient = ambient_coefficient,
                     diffuse_coefficient = diffuse_coefficient,
                     specular_coefficient = specular_coefficient,
-                    specular_exponent = specular_exponent)
+                    specular_exponent = specular_exponent,
+                    volume_rendering_lighting = lighting)
 
     if extent:
         _grow_limits(*extent)

@@ -21,6 +21,8 @@ var VolumeView = widgets.WidgetView.extend( {
 
         window.vol = this;
 
+        var render_size = this.renderer.getRenderSize()
+
         this.vol_box_geo = new THREE.BoxBufferGeometry(1, 1, 1);
         //this.box_material = new THREE.MeshLambertMaterial({color: 0xCC0000});
         this.box_material = new THREE.ShaderMaterial({
@@ -64,7 +66,7 @@ var VolumeView = widgets.WidgetView.extend( {
                 diffuse_coefficient : { type: "f", value: this.model.get("diffuse_coefficient") },
                 specular_coefficient : { type: "f", value: this.model.get("specular_coefficient") },
                 specular_exponent : { type: "f", value: this.model.get("specular_exponent") },
-                render_size : { type: "2f", value: [render_width, render_height] },
+                render_size : { type: "2f", value: render_size },
                 scale: {type: "3f"},
                 offset: {type: "3f"},
             },
@@ -85,7 +87,7 @@ var VolumeView = widgets.WidgetView.extend( {
             fragmentShader: shaders["volr_fragment"],
             vertexShader: shaders["volr_vertex"],
             defines: {COORDINATE: true},
-            side: THREE.BackSide
+            side: THREE.FrontSide
         });
         var update_volr_defines = () => {
             this.box_material_volr.defines = {USE_LIGHTING: this.model.get('volume_rendering_lighting')}
@@ -93,11 +95,10 @@ var VolumeView = widgets.WidgetView.extend( {
             this.box_material_volr.needsUpdate = true
             this.box_material_volr_depth.defines = {COORDINATE: true, USE_LIGHTING: this.model.get('volume_rendering_lighting')}
             this.box_material_volr_depth.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
-            this.box_material_volr_depth.needsUpdate = true
-    
+            this.box_material_volr_depth.needsUpdate = true;
         }
         this.model.on('change:volume_rendering_method change:volume_rendering_lighting', update_volr_defines)
-        this.update_volr_defines()
+        update_volr_defines()
 
         this.tf_set()
         this.data_set()
@@ -195,12 +196,12 @@ var VolumeView = widgets.WidgetView.extend( {
         var extent = this.model.get('extent')
 
        // normalized coordinates of the corners of the box 
-        var x0 = (extent[0][0]-x[0])/dx
-        var x1 = (extent[0][1]-x[0])/dx
-        var y0 = (extent[1][0]-y[0])/dy
-        var y1 = (extent[1][1]-y[0])/dy
-        var z0 = (extent[2][0]-z[0])/dz
-        var z1 = (extent[2][1]-z[0])/dz
+        var x0n = (extent[0][0]-xlim[0])/dx
+        var x1n = (extent[0][1]-xlim[0])/dx
+        var y0n = (extent[1][0]-ylim[0])/dy
+        var y1n = (extent[1][1]-ylim[0])/dy
+        var z0n = (extent[2][0]-zlim[0])/dz
+        var z1n = (extent[2][1]-zlim[0])/dz
 
         // clipped coordinates
         var cx0 = Math.max(x0n,  0)
@@ -224,10 +225,10 @@ var VolumeView = widgets.WidgetView.extend( {
         this.box_geo.scale((cx1-cx0), (cy1-cy0), (cz1-cz0))
         this.box_geo.translate(cx0, cy0, cz0)
         this.box_geo.translate(-0.5, -0.5, -0.5)
-        //this.box_mesh.geometry = this.box_geomox
+        this.vol_box_mesh.geometry = this.box_geo
         
-        this.box_material_volr.uniforms.scale.value = [1/(x1-x0), 1/(y1-y0), 1/(z1-z0)]
-        this.box_material_volr.uniforms.offset.value = [-x0, -y0, -z0]
+        this.box_material_volr.uniforms.scale.value = [1/(x1n-x0n), 1/(y1n-y0n), 1/(z1n-z0n)]
+        this.box_material_volr.uniforms.offset.value = [-x0n, -y0n, -z0n]
     },
     add_to_scene: function() {
         this.renderer.scene_volume.add(this.vol_box_mesh)
@@ -241,8 +242,8 @@ var VolumeView = widgets.WidgetView.extend( {
     set_back_tex: function(tex){
         this.box_material_volr.uniforms.back_tex.value = tex;
     },
-    set_geometry_depth_tex: function(render_target){
-        this.box_material_volr.uniforms.geometry_depth_tex.value = render_target.depthTexture;
+    set_geometry_depth_tex: function(tex){
+        this.box_material_volr.uniforms.geometry_depth_tex.value = tex;
     },
 });
 
@@ -262,6 +263,7 @@ var VolumeModel = widgets.WidgetModel.extend({
             specular_coefficient: 0.5,
             specular_exponent: 5,
             opacity_scale: 1.0,
+            extent: null,
             volume_rendering_lighting: true,
             volume_rendering_method: 'NORMAL',
             volume_clamp_min: false,
