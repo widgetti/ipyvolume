@@ -687,7 +687,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.control_trackball = new THREE.TrackballControls( this.camera, this.renderer.domElement );
         this.control_orbit = new THREE.OrbitControls( this.camera, this.renderer.domElement );
         this.control_trackball.dynamicDampingFactor = 1.
-        this.control_trackball.noPan = false;
+        this.control_trackball.noPan = true;
         this.control_orbit.enablePan = false;
         this.control_orbit.dampingFactor = 1.
         this.update_mouse_mode()
@@ -819,7 +819,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         }
 
-        window.last_volume = this;
         //navigator.wakeLock.request("display")
 
         //ensure initial sync of view with figure model

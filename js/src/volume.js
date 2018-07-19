@@ -136,6 +136,8 @@ var VolumeView = widgets.WidgetView.extend( {
 
         this.model.on('change:tf', this.tf_set, this)        
 
+        window.last_volume = this; // for debugging purposes
+
         this.update_light();
     },
     update_light: function() {
