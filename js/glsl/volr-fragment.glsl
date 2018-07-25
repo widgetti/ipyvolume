@@ -215,7 +215,7 @@ void main(void) {
 #endif
     //gl_FragColor = vec4(ray_begin.xyz, 0.1) * brightness;
     //gl_FragColor = vec4(rotation[0], 1) * brightness;
-    //gl_FragColor = vec4(alpha_total, 0., 0., 1.) * brightness;
+    //gl_FragColor = vec4(alpha_total, 0., 0., 1.);
     //gl_FragColor = texture2D(volume, vec2(ray_begin.x, ray_begin.y));
     //gl_FragColor = vec4(ray_pos.x, ray_pos.y, ray_pos.z, 1);
     //gl_FragColor = texture2D(transfer_function, vec2(pixel.x, 0.5));

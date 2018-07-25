@@ -10,8 +10,6 @@ shaders["box_fragment"] = require('raw-loader!../glsl/box-fragment.glsl');
 shaders["box_vertex"] = require('raw-loader!../glsl/box-vertex.glsl');
 shaders["volr_fragment"] = require('raw-loader!../glsl/volr-fragment.glsl');
 shaders["volr_vertex"] = require('raw-loader!../glsl/volr-vertex.glsl');
-shaders["volume_fragment"] = require('raw-loader!../glsl/volume-fragment.glsl');
-shaders["volume_vertex"] = require('raw-loader!../glsl/volume-vertex.glsl');
 
 var VolumeView = widgets.WidgetView.extend( {
     render: function() {

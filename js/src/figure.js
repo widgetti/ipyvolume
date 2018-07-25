@@ -979,8 +979,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 // normalized GL screen coordinates
                 var right = (pixels_right/canvas.clientWidth) * 2;
                 var up    = (pixels_up/canvas.clientHeight) * 2;
-                var P = last_volume.camera.projectionMatrix
-                var W = last_volume._get_view_matrix()
+                var P = this.camera.projectionMatrix
+                var W = this._get_view_matrix()
                 // M goes from world to screen
                 var M = M = P.clone().multiply(W)
                 var Mi = M.clone().getInverse(M)
