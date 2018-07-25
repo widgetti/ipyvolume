@@ -905,9 +905,7 @@ def view(azimuth, elevation):
     :param float elevation: rotation where +90 means 'up', -90 means 'down', in degrees
     """
     fig = gcf()
-    fig.anglex = np.radians(elevation)
-    fig.angley = np.radians(azimuth)
-
+    fig.camera.rotation = (np.radians(elevation), np.radians(azimuth), 0, 'XYZ')
 
 
 # mimic matplotlib namesace

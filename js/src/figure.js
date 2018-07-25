@@ -529,16 +529,28 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.get('camera').on('change', () => {
             // the threejs' lookAt ignore the quaternion, and uses the up vector
             // we manually set it ourselve
-            var up = new THREE.Vector3( 0, 1, 0 );
-            up.applyQuaternion( this.camera.quaternion );
+            var euler = new THREE.Euler();
+            euler.fromArray(this.camera.ipymodel.attributes.rotation);
+
+            var quat = new THREE.Quaternion().setFromEuler(euler);
+            var up = new THREE.Vector3(0, 1, 0);
+            var eye = new THREE.Vector3(0, 0, 1);
+            var dist = this.camera.position.length();
+            var newDist = dist * this.getTanDeg(this.camera.fov / 2) 
+            / this.getTanDeg(this.model.get('camera_fov') / 2);
+
+            up.applyQuaternion(quat);
+            eye.applyQuaternion(quat);
+            eye.multiplyScalar(newDist);
             this.camera.up = up;
-            this.camera.lookAt(0, 0, 0)
+            this.camera.lookAt(0, 0, 0);
+            this.camera.position.copy(eye);
             // TODO: shouldn't we do the same with the orbit control?
-            this.control_trackball.position0 = this.camera.position.clone()
-            this.control_trackball.up0 = this.camera.up.clone()
+            this.control_trackball.position0 = this.camera.position.clone();
+            this.control_trackball.up0 = this.camera.up.clone();
             // TODO: if we implement figure.look_at, we should update control's target as well
-            this.update()
-        })
+            this.update();
+        });
         this.cube_camera = new THREE.CubeCamera(this.camera.near, this.camera.far, this.model.get('cube_resolution'));
         // this.camera.aspect = 0.8
         // this.camera.cameraP.aspect = 0.8
