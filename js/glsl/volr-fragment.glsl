@@ -145,7 +145,7 @@ void main(void) {
 //#endif
 
         geometry_depth = texture2D(geometry_depth_tex, pixel); 
-        voxel_view_space_coord = projectionMatrix * modelViewMatrix * vec4(pos_relative - vec3(0.5,0.5,0.5),1.0);
+        voxel_view_space_coord = projectionMatrix * modelViewMatrix * vec4(pos+vec3(-0.5, -0.5, -0.5),1.0);
         voxelFragDepth = ((voxel_view_space_coord.z / voxel_view_space_coord.w)+1.0)/2.0;
         if(geometry_depth.x > 0.0 && voxelFragDepth > geometry_depth.x){
             break;
