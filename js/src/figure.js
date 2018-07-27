@@ -910,7 +910,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
             var zlim = this.model.get('zlim')
             var p1 = new THREE.Vector3(xlim[0], ylim[0], zlim[0]);
             var p2 = new THREE.Vector3(xlim[1], ylim[1], zlim[1]);
-            var scale = p2.clone().sub(p1);
+            var ptp = p2.clone().sub(p1);
+            var max_scale = Math.max(ptp.x,ptp.y,ptp.z); 
+            var scale = new THREE.Vector3(max_scale,max_scale,max_scale);
             var new_p1 = np1.clone().multiply(scale).add(p1);
             var new_p2 = np2.clone().multiply(scale).add(p1);
             this.model.set('xlim', [new_p1.x, new_p2.x])
