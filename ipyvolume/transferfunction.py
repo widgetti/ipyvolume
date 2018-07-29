@@ -28,7 +28,7 @@ if 0:
 
 	array_serialization = dict(to_json=array_to_json, from_json=array_from_json)
 
-@widgets.register
+@widgets.register()
 class TransferFunction(widgets.DOMWidget):
 	_model_name = Unicode('TransferFunctionModel').tag(sync=True)
 	_view_name = Unicode('TransferFunctionView').tag(sync=True)
