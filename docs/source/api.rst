@@ -1,7 +1,7 @@
 API docs
 ========
 
-Note that ipyvolume.pylab and ipyvolume.widgets are imported in the ipyvolume namepsace, to you can access ipyvolume.scatter instead of ipyvolume.pylab.scatter.
+Note that ipyvolume.pylab and ipyvolume.widgets are imported in the ipyvolume namespace, to you can access ipyvolume.scatter instead of ipyvolume.pylab.scatter.
 
 
 ipyvolume.pylab
