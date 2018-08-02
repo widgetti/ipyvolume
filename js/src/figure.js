@@ -1334,8 +1334,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 if(!(vol_model.cid in this.volume_views)){
                     var options = {parent: this}
                     var volume_view = new volume.VolumeView({options: options, model: vol_model})
-                    volume_view.render()    
                     this.volume_views[vol_model.cid] = volume_view
+                    volume_view.render()
                 }
             }, this)
 
