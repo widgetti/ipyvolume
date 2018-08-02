@@ -15,7 +15,7 @@ var VolumeView = widgets.WidgetView.extend( {
         this.attributes_changed = {}
         this.volume_data = []
 
-        window.vol = this;
+        window.last_volume_view = this;
 
         var render_size = this.renderer.getRenderSize()
 

@@ -186,7 +186,7 @@ void main(void) {
     //float colormap_index_scaled = 0.5/70. + float(colormap_index)/70.;
     float color_index;
     vec4 voxel_view_space_coord;
-    float voxelFragDepth;
+    float voxel_frag_depth;
     vec4 geometry_depth;
 
     //mat3 rotation = mat3(mvMatrix);
@@ -206,8 +206,8 @@ void main(void) {
     for(int i = 0; i < steps; i++) {
         geometry_depth = texture2D(geometry_depth_tex, pixel); 
         voxel_view_space_coord = projectionMatrix * modelViewMatrix * vec4(ray_pos+vec3(-0.5, -0.5, -0.5),1.0);
-        voxelFragDepth = ((voxel_view_space_coord.z / voxel_view_space_coord.w)+1.0)/2.0;
-        if(geometry_depth.x > 0.0 && voxelFragDepth > geometry_depth.x){
+        voxel_frag_depth = ((voxel_view_space_coord.z / voxel_view_space_coord.w)+1.0)/2.0;
+        if(geometry_depth.x > 0.0 && voxel_frag_depth > geometry_depth.x){
             break;
         }
 

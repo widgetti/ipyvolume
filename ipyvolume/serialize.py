@@ -106,13 +106,13 @@ def cube_to_png(grid, vmin, vmax, file):
 		img.save(file, "png")
 	return (image_width, image_height), tile_shape, rows, columns, slices
 
-def tile_volume(vol, tex_size, nr_of_tiles, vol_size):
+def tile_volume(vol, tex_size, tile_shape, vol_size):
 	# now tiling is always square, if volume is for example a x/y ratio of 2/1 it will create a big texture
 	# which will only be filled for half, needs to be changed based on ratio of x/y
 	tex = np.zeros(tex_size,dtype=vol.dtype)
-	for tileY in range(nr_of_tiles[1]):
-	    for tileX in range(nr_of_tiles[0]):
-	        z = tileX + tileY * nr_of_tiles[0]
+	for tileY in range(tile_shape[1]):
+	    for tileX in range(tile_shape[0]):
+	        z = tileX + tileY * tile_shape[0]
 	        if z >= vol_size[2]:
 	            break
 	        slice_data = vol[z]
@@ -131,27 +131,29 @@ def volume_to_json_volume_tiled(vol, obj=None):
 		return None
 	vol = np.asarray(vol)
 
-	# Keeping things square
-	# x * y * a^2 = z
-	# a = sqrt(z/(x*y))
-	# nrtilex = y*a
-	# nrtiley = x*a
-	vol_size = vol.shape[-3:][::-1]
-	a = math.sqrt(float(vol_size[2])/(float(vol_size[0]*vol_size[1])))
-	nr_of_tiles = [int(math.ceil(vol_size[1]*a)),int(math.ceil(vol_size[0]*a))]
-	tex_size = [vol_size[1]*nr_of_tiles[1], vol_size[0]*nr_of_tiles[0]]
+	# Keeping things square, compute a factor a which both x and y of the volume shape needs to be multiplied to, to get the z.
+	# With this factor you can then compute the number of tiles needed to match both the x and y shape.
+	# a*shape.x  *  a*shape.y = shape.z
+	# shape.x * shape.y * a^2 = shape.z
+	# a = sqrt(shape.z/(shape.x*shape.y))
+	# tile_shape.x = shape.y*a
+	# tile_shape.y = shape.x*a
+	vol_shape = vol.shape[-3:][::-1]
+	a = math.sqrt(float(vol_shape[2])/(float(vol_shape[0]*vol_shape[1])))
+	tile_shape = [int(math.ceil(vol_shape[1]*a)),int(math.ceil(vol_shape[0]*a))]
+	tex_size = [vol_shape[1]*tile_shape[1], vol_shape[0]*tile_shape[0]]
 
-	#print "vol_size: {}, a: {}, nr_of_tiles: {}, tex_size: {}".format(vol_size,a, nr_of_tiles, tex_size)
+	#print "vol_shape: {}, a: {}, tile_shape: {}, tex_size: {}".format(vol_shape,a, tile_shape, tex_size)
 
 	if vol.ndim == 4: #time series
-		return {"volume_data_tiled":[tile_volume(vol[t], tex_size, nr_of_tiles, vol_size) for t in range(vol.shape[0])], 
-				"size":vol_size,
-				"nr_of_tiles": nr_of_tiles,
+		return {"volume_data_tiled":[tile_volume(vol[t], tex_size, tile_shape, vol_shape) for t in range(vol.shape[0])], 
+				"shape":vol_shape,
+				"tile_shape": tile_shape,
 				"vol_tex_size": tex_size}
 	else:
-		return {"volume_data_tiled":[tile_volume(vol, tex_size, nr_of_tiles, vol_size)], 
-				"size":vol_size, 
-				"nr_of_tiles": nr_of_tiles,
+		return {"volume_data_tiled":[tile_volume(vol, tex_size, tile_shape, vol_shape)], 
+				"shape":vol_shape, 
+				"tile_shape": tile_shape,
 				"vol_tex_size": tex_size}
 
 	return None

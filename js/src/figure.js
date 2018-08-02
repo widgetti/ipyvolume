@@ -1851,7 +1851,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var render_height = height;
         var display_width = width * this.model.get('displayscale')
         var display_height = height * this.model.get('displayscale')
-        if(this.is_fullscreen() && this.model.get("volumes")) {
+        if(this.is_fullscreen() && this.model.get("volumes") != 0) {
             // fullscreen volume rendering is slow, respect width and height
             render_width = custom_width || this.model.get("width");
             render_height = custom_height || this.model.get("height");
