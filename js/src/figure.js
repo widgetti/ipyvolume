@@ -35,6 +35,9 @@ function is_ndarray(obj) {
 var shaders = {}
 shaders["screen_fragment"] = require('raw-loader!../glsl/screen-fragment.glsl');
 shaders["screen_vertex"] = require('raw-loader!../glsl/screen-vertex.glsl');
+shaders["volr_fragment"] = require('raw-loader!../glsl/volr-fragment.glsl');
+shaders["volr_vertex"] = require('raw-loader!../glsl/volr-vertex.glsl');
+
 
 function to_rgb(color) {
     color = new THREE.Color(color)
@@ -702,7 +705,50 @@ var FigureView = widgets.DOMWidgetView.extend( {
 		window.addEventListener( 'deviceorientation', _.bind(this.on_orientationchange, this), false );
 		//window.addEventListener( 'deviceorientation', _.bind(this.update, this), false );
         //this.controls.
-        
+        var render_size = this.getRenderSize()
+
+        this.material_multivolume = new THREE.ShaderMaterial({
+            uniforms: {
+                back_tex : { type: 't', value: this.volume_back_target.texture },
+                geometry_depth_tex: { type: 't', value: this.geometry_depth_target.depthTexture },
+
+                volumes: {type: 'tv', value: [{}]},
+                volume_data: {type: 'tv', value: []},
+                volume_transfer_function: {type: 'tv', value: []},
+
+                volumes_max_int: {type: 'tv', value: [{}]},
+                volume_data_max_int: {type: 'tv', value: []},
+                volume_transfer_function_max_int: {type: 'tv', value: []},
+
+                ambient_coefficient : { type: "f", value: this.model.get("ambient_coefficient") },
+                diffuse_coefficient : { type: "f", value: this.model.get("diffuse_coefficient") },
+                specular_coefficient : { type: "f", value: this.model.get("specular_coefficient") },
+                specular_exponent : { type: "f", value: this.model.get("specular_exponent") },
+
+                brightness : { type: "f", value: 2. },
+                render_size : { type: "2f", value: render_size },
+            },
+            blending: THREE.CustomBlending,
+            blendSrc: THREE.SrcAlphaFactor,
+            blendDst: THREE.OneMinusSrcAlphaFactor,
+            blendEquation: THREE.AddEquation,
+            transparent: true,
+            fragmentShader: shaders["volr_fragment"],
+            vertexShader: shaders["volr_vertex"],
+            defines: {},
+            side: THREE.FrontSide
+        });
+        // a clone of the box_material_volr, with a different define (faster to render)
+        this.material_multivolume_depth = new THREE.ShaderMaterial({
+            uniforms: this.material_multivolume.uniforms,
+            blending: THREE.NoBlending,
+            fragmentShader: shaders["volr_fragment"],
+            vertexShader: shaders["volr_vertex"],
+            defines: {COORDINATE: true},
+            side: THREE.FrontSide
+        });
+
+
         this.model.on('change:scatters', this.update_scatters, this)
         this.update_scatters()
         this.model.on('change:meshes', this.update_meshes, this)
@@ -1643,14 +1689,18 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         // render the back coordinates of the box
         if(has_volumes){
+            // to render the back sides of the boxes, we need to invert the z buffer value
+            // and invert the test
+            this.renderer.state.buffers.depth.setClear(0);
             _.each(this.volume_views, volume_view => {
                 volume_view.box_material.side = THREE.BackSide;
+                volume_view.box_material.depthFunc = THREE.GreaterDepth
                 volume_view.vol_box_mesh.material = volume_view.box_material;
-                volume_view.set_back_tex(this.volume_back_target.texture)
                 volume_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
             },this)
             this.renderer.clearTarget(this.volume_back_target, true, true, true)
             this.renderer.render(this.scene_volume, camera, this.volume_back_target);
+            this.renderer.state.buffers.depth.setClear(1);
 
             // Color and depth render pass for volume rendering
             this.renderer.autoClear = false;
@@ -1669,13 +1719,28 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.renderer.autoClear = true;
 
         if(has_volumes) {
+            // render the box front once, without writing the colors
+            // so that once we render the box again, each fragment will be processed
+            // once.
+            this.renderer.context.colorMask(0, 0, 0, 0)
             _.each(this.volume_views, volume_view => {
-                volume_view.box_material_volr.side = THREE.FrontSide;
-                volume_view.set_geometry_depth_tex(this.geometry_depth_target.depthTexture)
-                volume_view.vol_box_mesh.material = volume_view.box_material_volr;
+                volume_view.box_material.side = THREE.FrontSide;
+                volume_view.box_material.depthFunc = THREE.LessEqualDepth
             },this)
             this.renderer.autoClear = false;
             this.renderer.clearTarget(this.color_pass_target, false, true, false)
+            this.renderer.render(this.scene_volume, camera, this.color_pass_target);
+            this.renderer.autoClear = true;
+            this.renderer.context.colorMask(true, true, true, true)
+
+            // TODO: if volume perfectly overlap, we render it twice, use polygonoffset and LESS z test?
+            _.each(this.volume_views, volume_view => {
+                volume_view.vol_box_mesh.material = this.material_multivolume;
+                // volume_view.set_geometry_depth_tex(this.geometry_depth_target.depthTexture)
+            },this)
+            this.renderer.autoClear = false;
+            // we want to keep the colors and z-buffer as they are
+            this.renderer.clearTarget(this.color_pass_target, false, false, false)
             this.renderer.render(this.scene_volume, camera, this.color_pass_target);
             this.renderer.autoClear = true;
         }
@@ -1700,12 +1765,14 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // now we render the weighted coordinate for the volumetric data
         // make sure where we don't render, alpha = 0
         if(has_volumes) {
+            /* TODO: fix coordinates
             this.renderer.autoClear = false;
             _.each(this.volume_views, volume_view => {
                 volume_view.vol_box_mesh.material = volume_view.box_material_volr_depth;
             },this)
             this.renderer.render(this.scene_volume, camera, this.coordinate_texture);
             this.renderer.autoClear = true;
+            */
         }
 
         // restore materials
@@ -1724,7 +1791,38 @@ var FigureView = widgets.DOMWidgetView.extend( {
         //this.renderer.clearTarget(this.renderer, true, true, true)
         this.renderer.render(this.screen_scene, this.screen_camera);
     },
+    rebuild_multivolume_rendering_material: function() {
+        var volumes = this.model.get('volumes'); // This is always a list?
+        if(volumes.length == 0)
+            return;
 
+        var material = this.material_multivolume;
+        var count_normal = 0;
+        var count_max_int = 0;
+        material.uniforms.volumes.value                 = []
+        material.uniforms.volumes_max_int.value         = []
+        material.uniforms.volume_data.value             = []
+        material.uniforms.volume_data_max_int.value     = []
+        material.uniforms.volume_transfer_function.value         = []
+        material.uniforms.volume_transfer_function_max_int.value = []
+
+        _.each(volumes, vol_model => {
+            let volume_view = this.volume_views[vol_model.cid];
+            // could be that the view was not yet created
+            if(volume_view) {
+                var volume = volume_view.model;
+                if(volume_view.is_normal()) {
+                    count_normal++;
+                    material.uniforms.volumes.value.push(volume_view.uniform_volumes_values)
+                    material.uniforms.volume_data.value.push(volume_view.uniform_volume_data.value[0])
+                    material.uniforms.volume_transfer_function.value.push(volume_view.uniform_volume_transfer_function.value[0])
+                }
+            }
+        })
+        material.defines.VOLUME_COUNT = count_normal;
+        material.defines.VOLUME_COUNT_MAX_INT = 0;
+        material.needsUpdate = true;
+    },
     update_light: function() {
         this.material_multivolume.uniforms.ambient_coefficient.value = this.model.get("ambient_coefficient")
         this.material_multivolume.uniforms.diffuse_coefficient.value = this.model.get("diffuse_coefficient")
@@ -1789,9 +1887,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         //console.log("render size: ", width, height, render_width, render_height)
         //
         
-        _.each(this.volume_views, volume_view => {
-            volume_view.set_render_size(render_width, render_height);
-        })
+        this.material_multivolume.uniforms.render_size.value = [render_width, render_height]
 
         this.volume_back_target.setSize(render_width, render_height);
         this.geometry_depth_target.setSize(render_width, render_height);

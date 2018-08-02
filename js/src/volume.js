@@ -8,8 +8,6 @@ var shaders = {}
 
 shaders["box_fragment"] = require('raw-loader!../glsl/box-fragment.glsl');
 shaders["box_vertex"] = require('raw-loader!../glsl/box-vertex.glsl');
-shaders["volr_fragment"] = require('raw-loader!../glsl/volr-fragment.glsl');
-shaders["volr_vertex"] = require('raw-loader!../glsl/volr-vertex.glsl');
 
 var VolumeView = widgets.WidgetView.extend( {
     render: function() {
@@ -41,88 +39,56 @@ var VolumeView = widgets.WidgetView.extend( {
 
         this.texture_tf = null;//new THREE.DataTexture(null, this.model.get("tf").get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
 
-        this.box_material_volr = new THREE.ShaderMaterial({
-            uniforms: {
-                back_tex : { type: 't', value: null },
-                volume : { type: 't', value: null },
-                geometry_depth_tex: { type: 't', value: null },
-                transfer_function : { type: 't', value: this.texture_tf },
-                brightness : { type: "f", value: 2. },
-                data_min : { type: "f", value: 0. },
-                data_max : { type: "f", value: 1. },
-                opacity_scale :  { type: "f", value: 1.0 },
-                volume_rows : { type: "f", value: 8. },
-                volume_columns : { type: "f", value: 16. },
-                volume_slices : { type: "f", value: 128. },
-                volume_size : { type: "2f", value: [2048., 1024.] },
-                volume_slice_size : { type: "2f", value: [128., 128.] },
-                volume_show_range : { type: "2f", value: [0., 1.] },
-                volume_data_range : { type: "2f", value: [0., 1.] },
-                clamp_min : {type: "b", value: false},
-                clamp_max : {type: "b", value: false},
-                ambient_coefficient : { type: "f", value: this.model.get("ambient_coefficient") },
-                diffuse_coefficient : { type: "f", value: this.model.get("diffuse_coefficient") },
-                specular_coefficient : { type: "f", value: this.model.get("specular_coefficient") },
-                specular_exponent : { type: "f", value: this.model.get("specular_exponent") },
-                render_size : { type: "2f", value: render_size },
-                scale: {type: "3f"},
-                offset: {type: "3f"},
-            },
-            blending: THREE.CustomBlending,
-            blendSrc: THREE.SrcAlphaFactor,
-            blendDst: THREE.OneMinusSrcAlphaFactor,
-            blendEquation: THREE.AddEquation,
-            transparent: true,
-            fragmentShader: shaders["volr_fragment"],
-            vertexShader: shaders["volr_vertex"],
-            defines: {},
-            side: THREE.BackSide
-        });
-        // a clone of the box_material_volr, with a different define (faster to render)
-        this.box_material_volr_depth = new THREE.ShaderMaterial({
-            uniforms: this.box_material_volr.uniforms,
-            blending: THREE.NoBlending,
-            fragmentShader: shaders["volr_fragment"],
-            vertexShader: shaders["volr_vertex"],
-            defines: {COORDINATE: true},
-            side: THREE.FrontSide
-        });
-        var update_volr_defines = () => {
-            this.box_material_volr.defines = {USE_LIGHTING: this.model.get('volume_rendering_lighting')}
-            this.box_material_volr.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
-            this.box_material_volr.needsUpdate = true
-            this.box_material_volr_depth.defines = {COORDINATE: true, USE_LIGHTING: this.model.get('volume_rendering_lighting')}
-            this.box_material_volr_depth.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
-            this.box_material_volr_depth.needsUpdate = true;
-        }
-        this.model.on('change:volume_rendering_method change:volume_rendering_lighting', update_volr_defines)
-        update_volr_defines()
+        this.uniform_volumes_values = {}
+        this.uniform_volume_data = {type: 'tv', value: []}
+        this.uniform_volume_transfer_function = {type: 'tv', value: []}
+
+
+        // var update_volr_defines = () => {
+        //     if(this.model.get('volume_rendering_method') )
+        //     this.box_material_volr.defines = {USE_LIGHTING: this.model.get('volume_rendering_lighting')}
+        //     //this.box_material_volr.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
+        //     //this.box_material_volr.defines['VOLUME_COUNT'] = 1
+        //     this.box_material_volr.needsUpdate = true
+        //     this.box_material_volr_depth.defines = {COORDINATE: true, USE_LIGHTING: this.model.get('volume_rendering_lighting')}
+        //     //this.box_material_volr_depth.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
+        //     this.box_material_volr_depth.needsUpdate = true;
+        //     //this.box_material_volr_depth.defines['VOLUME_COUNT'] = 1
+        // }
 
         this.tf_set()
         this.data_set()
+        var update_rendering_method = () => {
+            this.renderer.rebuild_multivolume_rendering_material()
+            this.renderer.update()
+        }
+        this.model.on('change:volume_rendering_method', update_rendering_method)
+        //this.model.on('change:volume_rendering_method change:volume_rendering_lighting', update_volr_defines)
+        update_rendering_method()
+
 
         this.add_to_scene()
 
         this.model.on('change:volume_data', this.data_set, this);
 
         var update_volume_minmax = () => {
-            this.box_material_volr.uniforms.volume_data_range.value = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
-            this.box_material_volr.uniforms.volume_show_range.value = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
+            this.uniform_volumes_values.volume_data_range = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
+            this.uniform_volumes_values.volume_show_range = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
     
         }
         this.model.on('change:volume_data_min change:volume_data_max change:volume_show_min change:volume_show_max', update_volume_minmax, this);
         update_volume_minmax()
 
         var update_volume_clamp = () => {
-            this.box_material_volr.uniforms.clamp_min.value = this.model.get('volume_clamp_min')
-            this.box_material_volr.uniforms.clamp_max.value = this.model.get('volume_clamp_max')
+            this.uniform_volumes_values.clamp_min = this.model.get('volume_clamp_min')
+            this.uniform_volumes_values.clamp_max = this.model.get('volume_clamp_max')
     
         }
         this.model.on('change:volume_clamp_min change:volume_clamp_max', update_volume_clamp, this);
         update_volume_clamp()
 
         var update_opacity_scale = () => {
-            this.box_material_volr.uniforms['opacity_scale'].value = this.model.get('opacity_scale')
+            this.uniform_volumes_values.opacity_scale = this.model.get('opacity_scale')
     
         }
         update_opacity_scale()
@@ -146,14 +112,15 @@ var VolumeView = widgets.WidgetView.extend( {
                                                     THREE.RGBAFormat, THREE.UnsignedByteType)
         this.texture_volume.magFilter = THREE.LinearFilter
         this.texture_volume.minFilter = THREE.LinearFilter
-        this.box_material_volr.uniforms.volume_rows.value = this.volume.rows,
-        this.box_material_volr.uniforms.volume_columns.value = this.volume.columns
-        this.box_material_volr.uniforms.volume_slices.value = this.volume.slices
-        this.box_material_volr.uniforms.volume_size.value = this.volume.image_shape
-        this.box_material_volr.uniforms.volume_slice_size.value = this.volume.slice_shape
-        this.box_material_volr.uniforms.volume.value = this.texture_volume
-        this.box_material_volr.uniforms.volume_data_range.value = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
-        this.box_material_volr.uniforms.volume_show_range.value = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
+        this.uniform_volumes_values.volume_rows = this.volume.rows
+        this.uniform_volumes_values.volume_columns = this.volume.columns
+        this.uniform_volumes_values.volume_slices = this.volume.slices
+        this.uniform_volumes_values.volume_size = this.volume.image_shape
+        this.uniform_volumes_values.volume_slice_size = this.volume.slice_shape
+        this.uniform_volume_data.value = [this.texture_volume]
+        this.uniform_volume_data.value = [this.texture_volume]
+        this.uniform_volumes_values.volume_data_range = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
+        this.uniform_volumes_values.volume_show_range = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
         this.texture_volume.needsUpdate = true // without this it doesn't seem to work
     },
     tf_set: function() {
@@ -174,8 +141,11 @@ var VolumeView = widgets.WidgetView.extend( {
             }*/
             this.texture_tf = new THREE.DataTexture(tf.get_data_array(), tf.get("rgba").shape[0], 1, THREE.RGBAFormat, THREE.UnsignedByteType)
             this.texture_tf.needsUpdate = true // without this it doesn't seem to work
-            this.box_material_volr.uniforms.transfer_function.value = this.texture_tf
+            // this.box_material_volr.uniforms.volume_transfer_function.value = [this.texture_tf]
+            this.uniform_volume_transfer_function.value = [this.texture_tf]
         }
+        this.renderer.rebuild_multivolume_rendering_material()
+        this.renderer.update()
     },
     set_limits: function(limits) {
         var xlim = limits.xlim;
@@ -221,23 +191,14 @@ var VolumeView = widgets.WidgetView.extend( {
         this.box_geo.translate(-0.5, -0.5, -0.5)
         this.vol_box_mesh.geometry = this.box_geo
         
-        this.box_material_volr.uniforms.scale.value = [1/(x1n-x0n), 1/(y1n-y0n), 1/(z1n-z0n)]
-        this.box_material_volr.uniforms.offset.value = [-x0n, -y0n, -z0n]
+        this.uniform_volumes_values.scale = [1/(x1n-x0n), 1/(y1n-y0n), 1/(z1n-z0n)]
+        this.uniform_volumes_values.offset = [-x0n, -y0n, -z0n]
     },
     add_to_scene: function() {
         this.renderer.scene_volume.add(this.vol_box_mesh)
     },
     remove_from_scene: function() {
         this.renderer.scene_volume.remove(this.vol_box_mesh)
-    },
-    set_render_size: function(render_width, render_height){
-        this.box_material_volr.uniforms.render_size.value = [render_width, render_height]
-    },
-    set_back_tex: function(tex){
-        this.box_material_volr.uniforms.back_tex.value = tex;
-    },
-    set_geometry_depth_tex: function(tex){
-        this.box_material_volr.uniforms.geometry_depth_tex.value = tex;
     },
 });
 
