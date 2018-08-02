@@ -757,6 +757,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:height', this.update_size, this);
         this.model.on('change:displayscale', this.update_size, this);
 
+        this.model.on('change:ambient_coefficient', this.update_light, this);
+        this.model.on('change:diffuse_coefficient', this.update_light, this);
+        this.model.on('change:specular_coefficient', this.update_light, this);
+        this.model.on('change:specular_exponent', this.update_light, this);
 
 
         var update_center = () => {
@@ -1722,6 +1726,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
     },
 
     update_light: function() {
+        this.material_multivolume.uniforms.ambient_coefficient.value = this.model.get("ambient_coefficient")
+        this.material_multivolume.uniforms.diffuse_coefficient.value = this.model.get("diffuse_coefficient")
+        this.material_multivolume.uniforms.specular_coefficient.value = this.model.get("specular_coefficient")
+        this.material_multivolume.uniforms.specular_exponent.value = this.model.get("specular_exponent")
         this.update()
     },
     update_size: function() {

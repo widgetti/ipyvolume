@@ -137,11 +137,6 @@ class Volume(widgets.DOMWidget):
     volume_rendering_method = traitlets.Enum(values=['NORMAL', 'MAX_INTENSITY'], default_value='NORMAL').tag(sync=True)
     volume_rendering_lighting = traitlets.Bool(True).tag(sync=True)
 
-    ambient_coefficient = traitlets.Float(0.5).tag(sync=True)
-    diffuse_coefficient = traitlets.Float(0.8).tag(sync=True)
-    specular_coefficient = traitlets.Float(0.5).tag(sync=True)
-    specular_exponent = traitlets.Float(5).tag(sync=True)
-
     extent = traitlets.Any().tag(sync=True)
     extent_original = traitlets.Any()
 
@@ -196,6 +191,11 @@ class Figure(ipywebrtc.MediaStream):
 
     animation = traitlets.Float(1000.0).tag(sync=True)
     animation_exponent = traitlets.Float(1.0).tag(sync=True)
+
+    ambient_coefficient = traitlets.Float(0.5).tag(sync=True)
+    diffuse_coefficient = traitlets.Float(0.8).tag(sync=True)
+    specular_coefficient = traitlets.Float(0.5).tag(sync=True)
+    specular_exponent = traitlets.Float(5).tag(sync=True)
 
     stereo = traitlets.Bool(False).tag(sync=True)
 

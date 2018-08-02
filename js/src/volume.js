@@ -105,10 +105,6 @@ var VolumeView = widgets.WidgetView.extend( {
 
         this.model.on('change:volume_data', this.data_set, this);
 
-        this.model.on('change:ambient_coefficient', this.update_light, this);
-        this.model.on('change:diffuse_coefficient', this.update_light, this);
-        this.model.on('change:specular_coefficient', this.update_light, this);
-        this.model.on('change:specular_exponent', this.update_light, this);
         var update_volume_minmax = () => {
             this.box_material_volr.uniforms.volume_data_range.value = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
             this.box_material_volr.uniforms.volume_show_range.value = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
@@ -136,14 +132,12 @@ var VolumeView = widgets.WidgetView.extend( {
 
         window.last_volume = this; // for debugging purposes
 
-        this.update_light();
     },
-    update_light: function() {
-        this.box_material_volr.uniforms.ambient_coefficient.value = this.model.get("ambient_coefficient")
-        this.box_material_volr.uniforms.diffuse_coefficient.value = this.model.get("diffuse_coefficient")
-        this.box_material_volr.uniforms.specular_coefficient.value = this.model.get("specular_coefficient")
-        this.box_material_volr.uniforms.specular_exponent.value = this.model.get("specular_exponent")
-
+    is_max_intensity() {
+        return this.model.get('volume_rendering_method') == 'MAX_INTENSITY';
+    },
+    is_normal() {
+        return this.model.get('volume_rendering_method') == 'NORMAL';
     },
     data_set: function() {
         this.volume = this.model.get("volume_data")
