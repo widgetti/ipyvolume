@@ -32,11 +32,20 @@ uniform Volume volumes_max_int[VOLUME_COUNT_MAX_INT];
 uniform sampler2D volume_data_max_int[VOLUME_COUNT_MAX_INT];
 uniform sampler2D volume_transfer_function_max_int[VOLUME_COUNT_MAX_INT];
 float max_values[VOLUME_COUNT_MAX_INT];
+float max_depth[VOLUME_COUNT_MAX_INT];
 bool  has_values[VOLUME_COUNT_MAX_INT];
 // for MAX_INT, we cannot add the coordinate directly, we do it after we found the max
 vec4  max_weighted_coordinate[VOLUME_COUNT_MAX_INT];
 vec4  max_colors[VOLUME_COUNT_MAX_INT];
 #endif
+
+struct Layer {
+    float depth;
+    vec4 color;
+    bool skip;
+};
+
+Layer layers[VOLUME_COUNT_MAX_INT+1];
 
 
 //uniform float brightness;
@@ -176,18 +185,10 @@ vec4 blend_pre_multiplied(vec4 dst, vec4 src) {
     return dst * (1.0-src.a) + src;
 }
 
-void main(void) {
-#ifdef METHOD_MAX_INTENSITY
-    float max_value = 0.;
-    float max_cosangle_light = 0.;
-    float max_cosangle_eye = 0.;
-#endif
-    const int MAX_STEPS = 1000;
+const int MAX_STEPS = 1000;
+vec2 pixel;
 
-    vec2 pixel = vec2(gl_FragCoord.x, gl_FragCoord.y) / render_size;
-
-    vec3 ray_begin = front;
-    vec3 ray_end = texture2D(back_tex, pixel).rgb;
+vec4 cast_ray(vec3 ray_begin, vec3 ray_end, vec4 color) {
     vec3 ray_direction = ray_end - ray_begin;
     vec3 ray_delta = normalize(ray_direction) * (1./float(steps));
     vec3 ray_pos = ray_begin;
@@ -196,25 +197,10 @@ void main(void) {
     float ray_length_delta = length(ray_delta);
     float ray_length_traveled = 0.;
 
-    vec4 color = vec4(0, 0, 0, 0);
-    float color_index;
+    vec2 pixel = vec2(gl_FragCoord.x, gl_FragCoord.y) / render_size;
     vec4 voxel_view_space_coord;
     float voxel_frag_depth;
     vec4 geometry_depth;
-
-    //mat3 rotation = mat3(mvMatrix);
-    mat3 rotation = (mat3(viewMatrix));
-    vec3 light_dir = normalize(vec3(-1,-1,1) * rotation);
-    vec3 eye = vec3(0, 0, 1) * rotation;
-
-    float delta = 1.0/256./2.;
-
-#ifdef COORDINATE
-    // contains the weighted coordinate, where the last component is the weight
-    // diving by w gives it the average value
-    vec4 weighted_coordinate = vec4(0., 0., 0., 0.);
-#endif
-
 
     for(int i = 0; i < MAX_STEPS; i++) {
         geometry_depth = texture2D(geometry_depth_tex, pixel); 
@@ -230,53 +216,89 @@ void main(void) {
                 weighted_coordinate += color;
             #endif
         {{/volumes}}
-
-
-        {{#volumes_max_int}}
-        {
-            vec2 sample = volume_sample(volume_data_max_int[{{.}}], volumes_max_int[{{.}}], ray_pos);
-            if(sample.x > max_values[{{.}}] && sample.y > 0.0) {
-                max_values[{{.}}] = sample.x;
-                has_values[{{.}}] = true;
-                // the weight of the coordinate equals its opacity
-                max_colors[{{.}}] = texture2D(volume_transfer_function_max_int[{{.}}], vec2(max_values[{{.}}], 0.5));
-                float alpha = clamp(max_colors[{{.}}].a * volumes_max_int[{{.}}].opacity_scale, 0., 1.);
-                max_colors[{{.}}].a = alpha;
-                max_colors[{{.}}].rgb *= alpha * volumes_max_int[{{.}}].brightness; // pre-blend
-                max_weighted_coordinate[{{.}}].xyz = ray_pos * alpha;
-                max_weighted_coordinate[{{.}}].a = alpha;
-            }
-        }
-        {{/volumes_max_int}}
-
-        #if (VOLUME_COUNT_MAX_INT == 0)
-            // we cannot exit early if we have max intensity algo, is it maybe more efficient to do this in a separate loop?
-            if(color.a >= 1.)
-                break;
-        #endif
-
+        if(color.a >= 1.)
+            break;
         ray_pos += ray_delta;
         ray_length_traveled += ray_length_delta;
         if(ray_length_traveled >= ray_length)
             break;
-
     }
+    return color;
+}
 
-    // for max int we do the transfer function looking after we found the max
-    #if (VOLUME_COUNT_MAX_INT > 0)
-        #ifdef COORDINATE
-            for(int i = 0; i < VOLUME_COUNT_MAX_INT; i++) {
-                weighted_coordinate += max_weighted_coordinate[i];
-            }
-        #else
-            for(int i = 0; i < VOLUME_COUNT_MAX_INT; i++) {
-                if(has_values[i])
-                    color = blend_pre_multiplied(color, max_colors[i]);
-            }
-        #endif
+void cast_ray_max(vec3 ray_begin, vec3 ray_end);
 
+void main(void) {
+#ifdef METHOD_MAX_INTENSITY
+    float max_value = 0.;
+    float max_cosangle_light = 0.;
+    float max_cosangle_eye = 0.;
+#endif
+
+
+    pixel = vec2(gl_FragCoord.x, gl_FragCoord.y) / render_size;
+    vec4 color = vec4(0, 0, 0, 0);
+    // float color_index;
+
+    //mat3 rotation = mat3(mvMatrix);
+    mat3 rotation = (mat3(viewMatrix));
+    vec3 light_dir = normalize(vec3(-1,-1,1) * rotation);
+    vec3 eye = vec3(0, 0, 1) * rotation;
+
+    float delta = 1.0/256./2.;
+
+#ifdef COORDINATE
+    // contains the weighted coordinate, where the last component is the weight
+    // diving by w gives it the average value
+    vec4 weighted_coordinate = vec4(0., 0., 0., 0.);
+#endif 
+    vec3 ray_begin = front;
+    vec3 ray_end = texture2D(back_tex, pixel).rgb;
+    vec3 ray_begin0 = ray_begin;
+    vec3 ray_end0 = ray_end;
+    cast_ray_max(ray_begin, ray_end);
+    #if (VOLUME_COUNT_MAX_INT > 1)
+        // TODO: horrible sort, fix!!
+        for(int i = 0; i < VOLUME_COUNT_MAX_INT-1; i++) {
+            for(int j = 1; j < VOLUME_COUNT_MAX_INT; j++) {
+                if(has_values[i] && has_values[j] && (i < j)) {
+                    if(max_depth[j] < max_depth[i]) {
+                        float depth = max_depth[i];
+                        max_depth[i] = max_depth[j];
+                        max_depth[j] = depth;
+                        vec4 color = max_colors[i];
+                        max_colors[i] = max_colors[j];
+                        max_colors[j] = color;
+                    }
+                }
+            }
+        }
     #endif
-    // alpha_total = clamp(alpha_total, 0.0, 1.0);
+    #if (VOLUME_COUNT_MAX_INT > 0)
+        for(int i = 0; i < VOLUME_COUNT_MAX_INT; i++) {
+            layers[i].depth = 0.0;
+            layers[i].color = vec4(0.0);
+            if(has_values[i]) {
+                layers[i].depth = max_depth[i];
+                layers[i].color = max_colors[i];
+            }
+        }
+    #endif
+    // last layer is the absolute end of the volume, its color is fully transparant
+    layers[VOLUME_COUNT_MAX_INT].depth = 1.0;
+    layers[VOLUME_COUNT_MAX_INT].color = vec4(0.0);
+    float depth = -100.0;
+    ray_begin = ray_begin0;
+    for(int i = 0; i < VOLUME_COUNT_MAX_INT+1; i++) {
+        if(layers[i].depth > depth)
+        {
+            ray_end = ray_begin0 + (ray_end0 - ray_begin0) * layers[i].depth;
+            color = cast_ray(ray_begin, ray_end, color);
+            color = blend_pre_multiplied(layers[i].color, color);
+            ray_begin = ray_end;
+            depth = layers[i].depth;
+        }
+    }
 
     #ifdef COORDINATE
         vec3 average_coordinate = weighted_coordinate.xyz/weighted_coordinate.w;
@@ -302,4 +324,46 @@ void main(void) {
     //float tintensity = texture2D(transfer_function, vec2(pixel.x / 1., 0.5)).a;
     //gl_FragColor = vec4(0, tintensity, 0., 1.);
     //gl_FragColor = vec4(ray_e, 1);
+}
+
+
+
+
+void cast_ray_max(vec3 ray_begin, vec3 ray_end) {
+    vec3 ray_direction = ray_end - ray_begin;
+    vec3 ray_delta = normalize(ray_direction) * (1./float(steps));
+    vec3 ray_pos = ray_begin;
+
+    float ray_length = length(ray_direction);
+    float ray_length_delta = length(ray_delta);
+    float ray_length_traveled = 0.;
+
+    vec4 voxel_view_space_coord;
+    float voxel_frag_depth;
+    vec4 geometry_depth;
+    for(int i = 0; i < MAX_STEPS; i++) {
+
+        {{#volumes_max_int}}
+        {
+            vec2 sample = volume_sample(volume_data_max_int[{{.}}], volumes_max_int[{{.}}], ray_pos);
+            if(sample.x > max_values[{{.}}] && sample.y > 0.0) {
+                max_values[{{.}}] = sample.x;
+                has_values[{{.}}] = true;
+                // the weight of the coordinate equals its opacity
+                max_colors[{{.}}] = texture2D(volume_transfer_function_max_int[{{.}}], vec2(max_values[{{.}}], 0.5));
+                float alpha = clamp(max_colors[{{.}}].a * volumes_max_int[{{.}}].opacity_scale, 0., 1.);
+                max_colors[{{.}}].a = alpha;
+                max_colors[{{.}}].rgb *= alpha * volumes_max_int[{{.}}].brightness; // pre-blend
+                max_weighted_coordinate[{{.}}].xyz = ray_pos * alpha;
+                max_weighted_coordinate[{{.}}].a = alpha;
+                max_depth[{{.}}] = ray_length_traveled/ray_length;
+            }
+        }
+        {{/volumes_max_int}}
+
+        ray_pos += ray_delta;
+        ray_length_traveled += ray_length_delta;
+        if(ray_length_traveled >= ray_length)
+            break;
+    }
 }
