@@ -31,11 +31,13 @@ uniform Volume volumes_max_int[VOLUME_COUNT_MAX_INT];
 uniform sampler2D volume_data_max_int[VOLUME_COUNT_MAX_INT];
 uniform sampler2D volume_transfer_function_max_int[VOLUME_COUNT_MAX_INT];
 float max_values[VOLUME_COUNT_MAX_INT];
+bool  has_values[VOLUME_COUNT_MAX_INT];
 #ifdef COORDINATE
 // for MAX_INT, we cannot add the coordinate directly, we do it after we found the max
 vec4  max_weighted_coordinate[VOLUME_COUNT_MAX_INT];
 #else
 vec4  max_colors[VOLUME_COUNT_MAX_INT];
+
 #endif
 #endif
 
@@ -100,8 +102,10 @@ mat3 transpose3(mat3 m) {
         );
 }
 
-float volume_sample(sampler2D volume_data, Volume volume, vec3 ray_pos) {
+vec2 volume_sample(sampler2D volume_data, Volume volume, vec3 ray_pos) {
     vec3 pos_relative = (ray_pos+volume.offset)*volume.scale;
+    if(any(lessThan(pos_relative, vec3(0.))) || any(greaterThan(pos_relative, vec3(1.))))
+        return vec2(0.0);
     vec4 sample = sample_as_3d_texture(volume_data, volume.volume_size, pos_relative, volume.volume_slice_size, volume.volume_slices, volume.volume_rows, volume.volume_columns);
     float raw_data_value = sample.a; //(sample.a - data_min) * data_scale;
     float scaled_data_value = (raw_data_value*(volume.volume_data_range[1] - volume.volume_data_range[0])) + volume.volume_data_range[0];
@@ -112,14 +116,12 @@ float volume_sample(sampler2D volume_data, Volume volume, vec3 ray_pos) {
     //     continue;
     // }
     data_value = clamp(data_value, 0., 1.);
-    return data_value;
+    return vec2(data_value, 1);
 }
 
 vec4 add_volume_sample(sampler2D volume_data, sampler2D volume_transfer_function, Volume volume, vec3 ray_pos, vec4 color_in) {
     vec4 color;
     vec3 pos_relative = (ray_pos+volume.offset)*volume.scale;
-    if(any(lessThan(pos_relative, vec3(0.))) || any(greaterThan(pos_relative, vec3(1.))))
-        return color_in;
     /*vec4 sample_x = sample_as_3d_texture(volume, volume_size, pos + vec3(delta, 0, 0), volume_slice_size, volume_slices, volume_rows, volume_columns);
     vec4 sample_y = sample_as_3d_texture(volume, volume_size, pos + vec3(0, delta, 0), volume_slice_size, volume_slices, volume_rows, volume_columns);
     vec4 sample_z = sample_as_3d_texture(volume, volume_size, pos + vec3(0, 0, delta), volume_slice_size, volume_slices, volume_rows, volume_columns);
@@ -129,7 +131,10 @@ vec4 add_volume_sample(sampler2D volume_data, sampler2D volume_transfer_function
     float cosangle_light = max((dot(light_dir, normal)), 0.);
     float cosangle_eye = max((dot(eye, normal)), 0.);*/
 
-    float data_value = volume_sample(volume_data, volume, ray_pos);
+    vec2 sample = volume_sample(volume_data, volume, ray_pos);
+    float data_value = sample[0];
+    if(sample[1] == 0.0)
+        return color_in;
     #ifdef USE_LIGHTING
         vec3 normal = (-sample.xyz)*2.+1.;
         //normal = -vec3(normal.x, normal.y, normal.z);
@@ -162,6 +167,10 @@ vec4 add_volume_sample(sampler2D volume_data, sampler2D volume_transfer_function
         color.a = weight_coordinate;
     #endif
     return color;
+}
+
+vec4 blend_pre_multiplied(vec4 dst, vec4 src) {
+    return dst * (1.0-src.a) + src;
 }
 
 void main(void) {
@@ -227,10 +236,11 @@ void main(void) {
 
 
         #if (VOLUME_COUNT_MAX_INT >= 1)
-            float value = volume_sample(volume_data_max_int[0], volumes_max_int[0], ray_pos);
+            vec2 sample = volume_sample(volume_data_max_int[0], volumes_max_int[0], ray_pos);
             #ifdef COORDINATE
-                if(value > max_values[0]) {
+                if(sample.x > max_values[0] && sample.y > 0.0) {
                     max_values[0] = value;
+                    has_values[0] = true;
                     // the weight of the coordinate equals its opacity
                     float alpha = texture2D(volume_transfer_function_max_int[0], vec2(max_values[0], 0.5)).a;
                     alpha = clamp(alpha * volumes_max_int[0].opacity_scale, 0.0, 1.0);
@@ -238,7 +248,10 @@ void main(void) {
                     max_weighted_coordinate[0].a = alpha;
                 }
             #else
-                max_values[0] = max(max_values[0], value);
+                if(sample.y > 0.0) {
+                    max_values[0] = max(max_values[0], sample.x);
+                    has_values[0] = true;
+                }
                 // #ifdef USE_LIGHTING
                 //     max_cosangle_light = cosangle_light;
                 //     max_cosangle_eye = cosangle_eye;
@@ -268,8 +281,8 @@ void main(void) {
         #else
             max_colors[0] = texture2D(volume_transfer_function_max_int[0], vec2(max_values[0], 0.5));
             for(int i = 0; i < VOLUME_COUNT_MAX_INT; i++) {
-                // TODO: blend
-                color = max_colors[i];
+                if(has_values[i])
+                    color = blend_pre_multiplied(color, max_colors[i]);
             }
         #endif
 

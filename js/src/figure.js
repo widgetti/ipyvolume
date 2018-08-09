@@ -1816,11 +1816,16 @@ var FigureView = widgets.DOMWidgetView.extend( {
                     material.uniforms.volumes.value.push(volume_view.uniform_volumes_values)
                     material.uniforms.volume_data.value.push(volume_view.uniform_volume_data.value[0])
                     material.uniforms.volume_transfer_function.value.push(volume_view.uniform_volume_transfer_function.value[0])
+                } else {
+                    count_max_int++;
+                    material.uniforms.volumes_max_int.value.push(volume_view.uniform_volumes_values)
+                    material.uniforms.volume_data_max_int.value.push(volume_view.uniform_volume_data.value[0])
+                    material.uniforms.volume_transfer_function_max_int.value.push(volume_view.uniform_volume_transfer_function.value[0])
                 }
             }
         })
         material.defines.VOLUME_COUNT = count_normal;
-        material.defines.VOLUME_COUNT_MAX_INT = 0;
+        material.defines.VOLUME_COUNT_MAX_INT = count_max_int;
         material.needsUpdate = true;
     },
     update_light: function() {
