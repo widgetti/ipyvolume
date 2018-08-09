@@ -95,7 +95,12 @@ var VolumeView = widgets.WidgetView.extend( {
         update_opacity_scale()
         this.model.on('change:opacity_scale', update_opacity_scale)
 
-        this.model.on('change:tf', this.tf_set, this)        
+        this.model.on('change:tf', this.tf_set, this)
+
+        this.model.on('change:extent', () => {
+            this.renderer.rebuild_multivolume_rendering_material()
+            this.renderer.update()
+        })
 
         window.last_volume = this; // for debugging purposes
 
