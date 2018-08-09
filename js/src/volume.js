@@ -89,7 +89,8 @@ var VolumeView = widgets.WidgetView.extend( {
 
         var update_opacity_scale = () => {
             this.uniform_volumes_values.opacity_scale = this.model.get('opacity_scale')
-    
+            this.renderer.rebuild_multivolume_rendering_material()
+            this.renderer.update()
         }
         update_opacity_scale()
         this.model.on('change:opacity_scale', update_opacity_scale)
