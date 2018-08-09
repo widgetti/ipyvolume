@@ -636,7 +636,7 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     return mesh
 
 
-def volshow(volume_data, lighting=False, data_min=None, data_max=None,
+def volshow(data, lighting=False, data_min=None, data_max=None,
             max_shape=256, tf=None, stereo=False,
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
             specular_coefficient=0.5, specular_exponent=5,
@@ -648,7 +648,7 @@ def volshow(volume_data, lighting=False, data_min=None, data_max=None,
     Currently only 1 volume can be rendered.
 
 
-    :param volume_data: 3d numpy array
+    :param data: 3d numpy array
     :param origin: origin of the volume data, this is to match meshes which have a different origin
     :param domain_size: domain size is the size of the volume 
     :param bool lighting: use lighting or not, if set to false, lighting parameters will be overriden
@@ -675,16 +675,16 @@ def volshow(volume_data, lighting=False, data_min=None, data_max=None,
     if tf is None:
         tf = transfer_function(level, opacity, level_width, controls=controls, max_opacity=max_opacity)
     if data_min is None:
-        data_min = np.nanmin(volume_data)
+        data_min = np.nanmin(data)
     if data_max is None:
-        data_max = np.nanmax(volume_data)
+        data_max = np.nanmax(data)
     if memorder is 'F':
-        volume_data = volume_data.T
+        data = data.T
 
     if extent is None:
-        extent = [(0, k) for k in volume_data.shape[::-1]]
+        extent = [(0, k) for k in data.shape[::-1]]
 
-    vol = ipv.Volume(volume_data_original = volume_data,
+    vol = ipv.Volume(volume_data_original = data,
                     tf=tf,
                     volume_data_min = data_min,
                     volume_data_max = data_max,
