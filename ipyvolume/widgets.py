@@ -132,6 +132,7 @@ class Volume(widgets.DOMWidget):
     volume_clamp_min = traitlets.CBool(False).tag(sync=True)
     volume_clamp_max = traitlets.CBool(False).tag(sync=True)
     opacity_scale = traitlets.CFloat(1.0).tag(sync=True)
+    brightness = traitlets.CFloat(1.0).tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
 
     volume_rendering_method = traitlets.Enum(values=['NORMAL', 'MAX_INTENSITY'], default_value='NORMAL').tag(sync=True)

@@ -94,6 +94,13 @@ var VolumeView = widgets.WidgetView.extend( {
         }
         update_opacity_scale()
         this.model.on('change:opacity_scale', update_opacity_scale)
+        var update_brightness = () => {
+            this.uniform_volumes_values.brightness = this.model.get('brightness')
+            this.renderer.rebuild_multivolume_rendering_material()
+            this.renderer.update()
+        }
+        update_brightness()
+        this.model.on('change:brightness', update_brightness)
 
         this.model.on('change:tf', this.tf_set, this)
 

@@ -703,9 +703,12 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
 
     if controls:
         widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2, 
-                                                     description="ambient")
+                                                     description="opacity")
+        widget_brightness = ipywidgets.FloatLogSlider(base=10, min=-1, max=1,
+                                                     description="brightness")
         ipywidgets.jslink((vol, 'opacity_scale'), (widget_opacity_scale, 'value'))
-        widgets_bottom = [ipywidgets.HBox([widget_opacity_scale])]
+        ipywidgets.jslink((vol, 'brightness'), (widget_brightness, 'value'))
+        widgets_bottom = [ipywidgets.HBox([widget_opacity_scale, widget_brightness])]
         current.container.children += tuple(widgets_bottom, )
 
     fig.volumes = fig.volumes + [vol]

@@ -7,6 +7,7 @@ uniform sampler2D geometry_depth_tex;
 struct Volume
 {
     float opacity_scale;
+    float brightness;
     vec2 volume_data_range;
     vec2 volume_show_range;
     float volume_rows;
@@ -32,16 +33,13 @@ uniform sampler2D volume_data_max_int[VOLUME_COUNT_MAX_INT];
 uniform sampler2D volume_transfer_function_max_int[VOLUME_COUNT_MAX_INT];
 float max_values[VOLUME_COUNT_MAX_INT];
 bool  has_values[VOLUME_COUNT_MAX_INT];
-#ifdef COORDINATE
 // for MAX_INT, we cannot add the coordinate directly, we do it after we found the max
 vec4  max_weighted_coordinate[VOLUME_COUNT_MAX_INT];
-#else
 vec4  max_colors[VOLUME_COUNT_MAX_INT];
-
-#endif
 #endif
 
-uniform float brightness;
+
+//uniform float brightness;
 
 //uniform sampler2D colormap;
 //uniform int colormap_index;
