@@ -301,47 +301,20 @@ class Figure(ipywebrtc.MediaStream):
         xy = screen_h[:2] / screen_h[3]
         return xy
 
-def _volume_widgets(fig, v, tf, lighting=False):
-    import ipywidgets
-    #angle1 = ipywidgets.FloatSlider(min=0, max=np.pi*2, value=v.angle1, description="angle1")
-    #angle2 = ipywidgets.FloatSlider(min=0, max=np.pi*2, value=v.angle2, description="angle2")
-    #ipywidgets.jslink((v, 'angle1'), (angle1, 'value'))
-    #ipywidgets.jslink((v, 'angle2'), (angle2, 'value'))
-    if lighting:
-        ambient_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=v.ambient_coefficient, description="ambient")
-        diffuse_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=v.diffuse_coefficient, description="diffuse")
-        specular_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=v.specular_coefficient, description="specular")
-        specular_exponent = ipywidgets.FloatSlider(min=0, max=10, step=0.001, value=v.specular_exponent, description="specular exp")
-        #angle2 = ipywidgets.FloatSlider(min=0, max=np.pi*2, value=v.angle2, description="angle2")
-        ipywidgets.jslink((v, 'ambient_coefficient'), (ambient_coefficient, 'value'))
-        ipywidgets.jslink((v, 'diffuse_coefficient'), (diffuse_coefficient, 'value'))
-        ipywidgets.jslink((v, 'specular_coefficient'), (specular_coefficient, 'value'))
-        ipywidgets.jslink((v, 'specular_exponent'), (specular_exponent, 'value'))
-        widgets_bottom = [ipywidgets.HBox([ambient_coefficient, diffuse_coefficient]),
-         ipywidgets.HBox([specular_coefficient, specular_exponent])]
-    else:
-        widgets_bottom = []
-        v.ambient_coefficient = 1
-        v.diffuse_coefficient = 0
-        v.specular_coefficient = 0
-
-    return ipywidgets.VBox(
-        [tf.control(), fig,
-         ] + widgets_bottom# , ipywidgets.HBox([angle1, angle2])
-    )
-
 def volshow(*args, **kwargs):
     """Deprecated: please use ipyvolume.quickvolshow or use the ipyvolume.pylab interface"""
     warnings.warn("Please use ipyvolume.quickvolshow or use the ipyvolume.pylab interface", DeprecationWarning, stacklevel=2)
     return quickvolshow(*args, **kwargs)
 
 def quickquiver(x, y, z, u, v, w, **kwargs):
+    warnings.warn("Please use ipyvolume.quiver", DeprecationWarning, stacklevel=2)
     import ipyvolume.pylab as p3
     p3.figure()
     p3.quiver(x, y, z, u, v, w, **kwargs)
     return p3.current.container
 
 def quickscatter(x, y, z, **kwargs):
+    warnings.warn("Please use ipyvolume.scatter", DeprecationWarning, stacklevel=2)
     import ipyvolume.pylab as p3
     p3.figure()
     p3.scatter(x, y, z, **kwargs)
@@ -379,6 +352,7 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
     :return:
 
     """
+    warnings.warn("Please use ipyvolume.volshow", DeprecationWarning, stacklevel=2)
     if tf is None: # TODO: should this just call the pylab interface?
         #tf = TransferFunctionJsBumps(**kwargs)
         tf_kwargs = {}
@@ -440,8 +414,7 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
                             volume_rendering_lighting=False, **kwargs)
 
     fig.volumes = fig.volumes + [vol]
-    box = _volume_widgets(fig, vol, tf, lighting=lighting)
-    return box
+    return fig
 
 def scatter(x, y, z, color=(1,0,0), s=0.01):
     global _last_figure;

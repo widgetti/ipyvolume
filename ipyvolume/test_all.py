@@ -118,7 +118,8 @@ def test_figure():
     
     for controls in [True, False]:
         for debug in [True, False]:
-            p3.figure(debug=debug, controls=controls)
+            for controls_light in [True, False]:
+                p3.figure(debug=debug, controls=controls, controls_light=controls_light)
 
 def test_context():
     f1 = ipv.figure(1)
