@@ -59,7 +59,7 @@ uniform mat4 projectionMatrix;
 
 //uniform float color_index;
 
-float ray_length;
+int steps = 150;
 
 
 vec2 compute_slice_offset(float slice, float columns, vec2 uv_slice_spacing) {
@@ -115,7 +115,7 @@ float volume_sample(sampler2D volume_data, Volume volume, vec3 ray_pos) {
     return data_value;
 }
 
-vec4 add_volume_sample(sampler2D volume_data, sampler2D volume_transfer_function, Volume volume, vec3 ray_pos, int steps, float alpha_total, vec4 color_in) {
+vec4 add_volume_sample(sampler2D volume_data, sampler2D volume_transfer_function, Volume volume, vec3 ray_pos, vec4 color_in) {
     vec4 color;
     vec3 pos_relative = (ray_pos+volume.offset)*volume.scale;
     if(any(lessThan(pos_relative, vec3(0.))) || any(greaterThan(pos_relative, vec3(1.))))
@@ -144,16 +144,17 @@ vec4 add_volume_sample(sampler2D volume_data, sampler2D volume_transfer_function
 
     float intensity = color_sample.a;
     //float alpha_sample = intensity * sign(data_value) * sign(1.-data_value) * 100. / float(steps) * ray_length;//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
-    float alpha_sample = intensity * 100. / float(steps) * ray_length;//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
+    float alpha_sample = intensity * 100. / float(steps);//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
+    alpha_sample = clamp(alpha_sample * volume.opacity_scale, 0., 1.);
 
     //float intensity = texture2D(transfer_function, vec2(data_value, 0.5)).a;
     //color_sample = texture2D(transfer_function, data_value);
     //vec4 color_sample = texture2D(colormap, vec2(sample.a, colormap_index_scaled));
     //color_sample = texture2D(volume, ray_pos.yz);
     //float alpha_sample = opacity*intensity;//1./128.* length(color_sample) * 100.;
-    alpha_sample = clamp(alpha_sample * volume.opacity_scale, 0., 1.);
-    color = color_in + (1.0 - alpha_total) * color_sample * alpha_sample;
-    color.a = alpha_sample;
+    float alpha_total = color_in.a + alpha_sample;
+    color.rgb = color_in.rgb + (1.0 - alpha_total) * color_sample.rgb * alpha_sample;
+    color.a = alpha_total;
     #ifdef COORDINATE
         vec3 weighted_coordinate = ray_pos * (alpha_sample);
         float weight_coordinate = (alpha_sample);
@@ -169,21 +170,21 @@ void main(void) {
     float max_cosangle_light = 0.;
     float max_cosangle_eye = 0.;
 #endif
-    const int steps = 150;
+    const int MAX_STEPS = 1000;
 
     vec2 pixel = vec2(gl_FragCoord.x, gl_FragCoord.y) / render_size;
-    //vec4 textureColor = texture2D(volume, vec2(pixel.x * width + x_index, pixel.y*height + y_index));
-    //vec3 ray_begin = vertex_color.xyz;//texture2D(front, pixel).rgb;
-    vec3 ray_end = texture2D(back_tex, pixel).rgb;
-    //vec3 ray_end = vertex_color.xyz;//texture2D(front, pixel).rgb;
+
     vec3 ray_begin = front;
+    vec3 ray_end = texture2D(back_tex, pixel).rgb;
     vec3 ray_direction = ray_end - ray_begin;
-    vec3 ray_delta = ray_direction * (1./float(steps));
+    vec3 ray_delta = normalize(ray_direction) * (1./float(steps));
     vec3 ray_pos = ray_begin;
-    ray_length = sqrt(ray_direction.x*ray_direction.x + ray_direction.y*ray_direction.y + ray_direction.z*ray_direction.z);
+
+    float ray_length = length(ray_direction);
+    float ray_length_delta = length(ray_delta);
+    float ray_length_traveled = 0.;
+
     vec4 color = vec4(0, 0, 0, 0);
-    float alpha_total = 0.;
-    //float colormap_index_scaled = 0.5/70. + float(colormap_index)/70.;
     float color_index;
     vec4 voxel_view_space_coord;
     float voxel_frag_depth;
@@ -203,7 +204,7 @@ void main(void) {
 #endif
 
 
-    for(int i = 0; i < steps; i++) {
+    for(int i = 0; i < MAX_STEPS; i++) {
         geometry_depth = texture2D(geometry_depth_tex, pixel); 
         voxel_view_space_coord = projectionMatrix * modelViewMatrix * vec4(ray_pos+vec3(-0.5, -0.5, -0.5),1.0);
         voxel_frag_depth = ((voxel_view_space_coord.z / voxel_view_space_coord.w)+1.0)/2.0;
@@ -212,26 +213,18 @@ void main(void) {
         }
 
         #if (VOLUME_COUNT >= 1)
-            color = add_volume_sample(volume_data[0], volume_transfer_function[0], volumes[0], ray_pos, steps, alpha_total, color);
-            alpha_total = clamp(alpha_total + color.a, 0., 1.);
+            color = add_volume_sample(volume_data[0], volume_transfer_function[0], volumes[0], ray_pos, color);
             #ifdef COORDINATE
                 weighted_coordinate += color;
             #endif
         #endif
         #if (VOLUME_COUNT >= 2)
-            color = add_volume_sample(volume_data[1], volume_transfer_function[1], volumes[1], ray_pos, steps, alpha_total, color);
-            alpha_total = clamp(alpha_total + color.a, 0., 1.);
+            color = add_volume_sample(volume_data[1], volume_transfer_function[1], volumes[1], ray_pos, color);
             #ifdef COORDINATE
                 weighted_coordinate += color;
             #endif
         #endif
 
-
-        #if (VOLUME_COUNT_MAX_INT == 0)
-            // we cannot exit early if we have max intensity algo, is it maybe more efficient to do this in a separate loop?
-            if(alpha_total >= 1.)
-                break;
-        #endif
 
         #if (VOLUME_COUNT_MAX_INT >= 1)
             float value = volume_sample(volume_data_max_int[0], volumes_max_int[0], ray_pos);
@@ -252,7 +245,18 @@ void main(void) {
                 // #endif
             #endif
         #endif
+
+        #if (VOLUME_COUNT_MAX_INT == 0)
+            // we cannot exit early if we have max intensity algo, is it maybe more efficient to do this in a separate loop?
+            if(color.a >= 1.)
+                break;
+        #endif
+
         ray_pos += ray_delta;
+        ray_length_traveled += ray_length_delta;
+        if(ray_length_traveled >= ray_length)
+            break;
+
     }
 
     // for max int we do the transfer function looking after we found the max
@@ -260,7 +264,6 @@ void main(void) {
         #ifdef COORDINATE
             for(int i = 0; i < VOLUME_COUNT_MAX_INT; i++) {
                 weighted_coordinate += max_weighted_coordinate[i];
-                alpha_total += max_weighted_coordinate[i].a;
             }
         #else
             max_colors[0] = texture2D(volume_transfer_function_max_int[0], vec2(max_values[0], 0.5));
@@ -268,22 +271,21 @@ void main(void) {
                 // TODO: blend
                 color = max_colors[i];
             }
-            alpha_total += color.a;
         #endif
 
     #endif
-    alpha_total = clamp(alpha_total, 0.0, 1.0);
+    // alpha_total = clamp(alpha_total, 0.0, 1.0);
 
     #ifdef COORDINATE
         vec3 average_coordinate = weighted_coordinate.xyz/weighted_coordinate.w;
-        gl_FragColor = vec4(average_coordinate, alpha_total);
+        gl_FragColor = vec4(average_coordinate, weighted_coordinate.w);
     #else
         #if defined(METHOD_MAX_INTENSITY)
             #ifdef USE_LIGHTING
                 color.rgb = color.rgb * (ambient_coefficient + diffuse_coefficient*max_cosangle_light + specular_coefficient * pow(max_cosangle_eye, specular_exponent));
             #endif
         #endif
-        gl_FragColor = vec4(color.rgb, alpha_total) * brightness;
+        gl_FragColor = color * brightness;
     #endif
     //gl_FragColor = vec4(ray_begin.xyz, 0.1) * brightness;
     //gl_FragColor = vec4(rotation[0], 1) * brightness;
