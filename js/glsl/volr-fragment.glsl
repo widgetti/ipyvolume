@@ -147,19 +147,24 @@ vec4 add_volume_sample(sampler2D volume_data, sampler2D volume_transfer_function
         color_sample = color_sample * (ambient_coefficient + diffuse_coefficient*cosangle_light + specular_coefficient * pow(cosangle_eye, specular_exponent));
     #endif
 
-    float intensity = color_sample.a;
+    // float intensity = color_sample.a;
     //float alpha_sample = intensity * sign(data_value) * sign(1.-data_value) * 100. / float(steps) * ray_length;//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
-    float alpha_sample = intensity * 100. / float(steps);//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
-    alpha_sample = clamp(alpha_sample * volume.opacity_scale, 0., 1.);
+    // float alpha_sample = intensity * 100. / float(steps);//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
+    // alpha_sample = clamp(alpha_sample * volume.opacity_scale, 0., 1.);
 
     //float intensity = texture2D(transfer_function, vec2(data_value, 0.5)).a;
     //color_sample = texture2D(transfer_function, data_value);
     //vec4 color_sample = texture2D(colormap, vec2(sample.a, colormap_index_scaled));
     //color_sample = texture2D(volume, ray_pos.yz);
     //float alpha_sample = opacity*intensity;//1./128.* length(color_sample) * 100.;
-    float alpha_total = color_in.a + alpha_sample;
-    color.rgb = color_in.rgb + (1.0 - alpha_total) * color_sample.rgb * alpha_sample;
-    color.a = alpha_total;
+    // float alpha_total = color_in.a + alpha_sample;
+    // color.rgb = color_in.rgb + (1.0 - alpha_total) * color_sample.rgb * alpha_sample;
+    // color.a = alpha_total;
+    vec4 dst = color_in;
+    vec4 src = color_sample;
+    src.a *= clamp(100./float(steps) * volume.opacity_scale, 0.0, 1.0);
+    color.rgb = (1.0-dst.a) * src.rgb * src.a * volume.brightness + dst.rgb;
+    color.a   = src.a  + dst.a;
     #ifdef COORDINATE
         vec3 weighted_coordinate = ray_pos * (alpha_sample);
         float weight_coordinate = (alpha_sample);
@@ -221,43 +226,30 @@ void main(void) {
             break;
         }
 
-        #if (VOLUME_COUNT >= 1)
-            color = add_volume_sample(volume_data[0], volume_transfer_function[0], volumes[0], ray_pos, color);
+        {{#volumes}}
+            color = add_volume_sample(volume_data[{{.}}], volume_transfer_function[{{.}}], volumes[{{.}}], ray_pos, color);
             #ifdef COORDINATE
                 weighted_coordinate += color;
             #endif
-        #endif
-        #if (VOLUME_COUNT >= 2)
-            color = add_volume_sample(volume_data[1], volume_transfer_function[1], volumes[1], ray_pos, color);
-            #ifdef COORDINATE
-                weighted_coordinate += color;
-            #endif
-        #endif
+        {{/volumes}}
 
 
-        #if (VOLUME_COUNT_MAX_INT >= 1)
-            vec2 sample = volume_sample(volume_data_max_int[0], volumes_max_int[0], ray_pos);
-            #ifdef COORDINATE
-                if(sample.x > max_values[0] && sample.y > 0.0) {
-                    max_values[0] = value;
-                    has_values[0] = true;
-                    // the weight of the coordinate equals its opacity
-                    float alpha = texture2D(volume_transfer_function_max_int[0], vec2(max_values[0], 0.5)).a;
-                    alpha = clamp(alpha * volumes_max_int[0].opacity_scale, 0.0, 1.0);
-                    max_weighted_coordinate[0].xyz = ray_pos * alpha;
-                    max_weighted_coordinate[0].a = alpha;
-                }
-            #else
-                if(sample.y > 0.0) {
-                    max_values[0] = max(max_values[0], sample.x);
-                    has_values[0] = true;
-                }
-                // #ifdef USE_LIGHTING
-                //     max_cosangle_light = cosangle_light;
-                //     max_cosangle_eye = cosangle_eye;
-                // #endif
-            #endif
-        #endif
+        {{#volumes_max_int}}
+        {
+            vec2 sample = volume_sample(volume_data_max_int[{{.}}], volumes_max_int[{{.}}], ray_pos);
+            if(sample.x > max_values[{{.}}] && sample.y > 0.0) {
+                max_values[{{.}}] = sample.x;
+                has_values[{{.}}] = true;
+                // the weight of the coordinate equals its opacity
+                max_colors[{{.}}] = texture2D(volume_transfer_function_max_int[{{.}}], vec2(max_values[{{.}}], 0.5));
+                float alpha = clamp(max_colors[{{.}}].a * volumes_max_int[{{.}}].opacity_scale, 0., 1.);
+                max_colors[{{.}}].a = alpha;
+                max_colors[{{.}}].rgb *= alpha * volumes_max_int[{{.}}].brightness; // pre-blend
+                max_weighted_coordinate[{{.}}].xyz = ray_pos * alpha;
+                max_weighted_coordinate[{{.}}].a = alpha;
+            }
+        }
+        {{/volumes_max_int}}
 
         #if (VOLUME_COUNT_MAX_INT == 0)
             // we cannot exit early if we have max intensity algo, is it maybe more efficient to do this in a separate loop?
@@ -279,7 +271,6 @@ void main(void) {
                 weighted_coordinate += max_weighted_coordinate[i];
             }
         #else
-            max_colors[0] = texture2D(volume_transfer_function_max_int[0], vec2(max_values[0], 0.5));
             for(int i = 0; i < VOLUME_COUNT_MAX_INT; i++) {
                 if(has_values[i])
                     color = blend_pre_multiplied(color, max_colors[i]);
@@ -298,7 +289,7 @@ void main(void) {
                 color.rgb = color.rgb * (ambient_coefficient + diffuse_coefficient*max_cosangle_light + specular_coefficient * pow(max_cosangle_eye, specular_exponent));
             #endif
         #endif
-        gl_FragColor = color * brightness;
+        gl_FragColor = color;
     #endif
     //gl_FragColor = vec4(ray_begin.xyz, 0.1) * brightness;
     //gl_FragColor = vec4(rotation[0], 1) * brightness;

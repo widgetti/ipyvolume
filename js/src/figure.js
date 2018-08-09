@@ -5,6 +5,7 @@ var THREEtext2d = require("three-text2d")
 var glm = require("gl-matrix")
 var d3 = require("d3")
 var screenfull = require("screenfull")
+var Mustache = require("mustache");
 require('../css/style.css')
 
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
@@ -733,8 +734,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
             blendDst: THREE.OneMinusSrcAlphaFactor,
             blendEquation: THREE.AddEquation,
             transparent: true,
-            fragmentShader: shaders["volr_fragment"],
-            vertexShader: shaders["volr_vertex"],
             defines: {},
             side: THREE.FrontSide
         });
@@ -1826,6 +1825,16 @@ var FigureView = widgets.DOMWidgetView.extend( {
         })
         material.defines.VOLUME_COUNT = count_normal;
         material.defines.VOLUME_COUNT_MAX_INT = count_max_int;
+
+        let mustache_render = (template_shader) => {
+            var view = {
+                volumes: _.range(count_normal),
+                volumes_max_int: _.range(count_max_int)
+            };
+            return Mustache.render(template_shader, view)
+        }
+        material.fragmentShader = mustache_render(shaders["volr_fragment"])
+        material.vertexShader = shaders["volr_vertex"]
         material.needsUpdate = true;
     },
     update_light: function() {
