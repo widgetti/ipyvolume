@@ -290,7 +290,9 @@ void main(void) {
     float depth = -100.0;
     ray_begin = ray_begin0;
     for(int i = 0; i < VOLUME_COUNT_MAX_INT+1; i++) {
-        if(layers[i].depth > depth)
+        // TODO: debug this, it seems that > makes more sense, but gives artifacts in the situation of
+        // having 2 max int volr, 1 normal, the 2nd will have holes when it's the only volume in the los.
+        if(layers[i].depth >= depth)
         {
             ray_end = ray_begin0 + (ray_end0 - ray_begin0) * layers[i].depth;
             color = cast_ray(ray_begin, ray_end, color);
