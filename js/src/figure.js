@@ -730,7 +730,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 render_size : { type: "2f", value: render_size },
             },
             blending: THREE.CustomBlending,
-            blendSrc: THREE.SrcAlphaFactor,
+            blendSrc: THREE.OneFactor,
             blendDst: THREE.OneMinusSrcAlphaFactor,
             blendEquation: THREE.AddEquation,
             transparent: true,
