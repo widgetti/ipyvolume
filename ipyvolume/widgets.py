@@ -134,6 +134,7 @@ class Volume(widgets.DOMWidget):
     opacity_scale = traitlets.CFloat(1.0).tag(sync=True)
     brightness = traitlets.CFloat(1.0).tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
+    ray_steps = traitlets.CInt(None, allow_none=True, help='defines the length of the ray (1/ray_steps) for each step, in normalized coordintes.').tag(sync=True)
 
     rendering_method = traitlets.Enum(values=['NORMAL', 'MAX_INTENSITY'], default_value='NORMAL').tag(sync=True)
     lighting = traitlets.Bool(True).tag(sync=True)

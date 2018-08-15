@@ -103,6 +103,13 @@ var VolumeView = widgets.WidgetView.extend( {
         update_lighting()
         this.model.on('change:lighting', update_lighting)
 
+        var update_ray_steps = () => {
+            this.renderer.rebuild_multivolume_rendering_material()
+            this.renderer.update()
+        }
+        update_ray_steps()
+        this.model.on('change:ray_steps', update_ray_steps)
+
 
         var update_brightness = () => {
             this.uniform_volumes_values.brightness = this.model.get('brightness')
@@ -121,6 +128,13 @@ var VolumeView = widgets.WidgetView.extend( {
 
         window.last_volume = this; // for debugging purposes
 
+    },
+    get_ray_steps: function() {
+        var ray_steps = this.model.get('ray_steps');
+        if(ray_steps == null) {
+            ray_steps = _.max(this.data_shape)
+        }
+        return ray_steps;
     },
     is_max_intensity() {
         return this.model.get('rendering_method') == 'MAX_INTENSITY';
@@ -145,6 +159,7 @@ var VolumeView = widgets.WidgetView.extend( {
         this.uniform_volumes_values.data_range = [this.model.get('data_min'), this.model.get('data_max')]
         this.uniform_volumes_values.show_range = [this.model.get('show_min'), this.model.get('show_max')]
         this.texture_volume.needsUpdate = true // without this it doesn't seem to work
+        this.data_shape = [this.volume.image_shape[0], this.volume.image_shape[1], this.volume.slices]
     },
     tf_set: function() {
         // TODO: remove listeners from previous
@@ -248,6 +263,7 @@ var VolumeModel = widgets.WidgetModel.extend({
             clamp_max: false,
             data_range: null,
             show_range: null,
+            ray_steps: null
         })
     }}, {
     serializers: _.extend({

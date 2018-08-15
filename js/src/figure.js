@@ -728,6 +728,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
                 brightness : { type: "f", value: 2. },
                 render_size : { type: "2f", value: render_size },
+
+                steps : {type: 'f', value: 10}
             },
             blending: THREE.CustomBlending,
             blendSrc: THREE.OneFactor,
@@ -1820,6 +1822,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         material.uniforms.data_max_int.value     = []
         material.uniforms.transfer_function.value         = []
         material.uniforms.transfer_function_max_int.value = []
+        material.uniforms.steps.value = _.max(volumes.map(volume => {
+            let volume_view = this.volume_views[volume.cid];
+            return volume_view ? volume_view.get_ray_steps() : 0;
+        }))
 
         _.each(volumes, vol_model => {
             let volume_view = this.volume_views[vol_model.cid];

@@ -71,7 +71,8 @@ vec3 light_dir;
 vec3 eye;
 //uniform float color_index;
 
-int steps = 150;
+uniform int steps;
+
 
 
 vec2 compute_slice_offset(float slice, float columns, vec2 uv_slice_spacing) {
