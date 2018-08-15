@@ -74,7 +74,8 @@ var VolumeView = widgets.WidgetView.extend( {
         var update_minmax = () => {
             this.uniform_volumes_values.data_range = [this.model.get('data_min'), this.model.get('data_max')]
             this.uniform_volumes_values.show_range = [this.model.get('show_min'), this.model.get('show_max')]
-    
+            this.renderer.rebuild_multivolume_rendering_material()
+            this.renderer.update()
         }
         this.model.on('change:data_min change:data_max change:show_min change:show_max', update_minmax, this);
         update_minmax()
@@ -82,7 +83,8 @@ var VolumeView = widgets.WidgetView.extend( {
         var update_clamp = () => {
             this.uniform_volumes_values.clamp_min = this.model.get('clamp_min')
             this.uniform_volumes_values.clamp_max = this.model.get('clamp_max')
-    
+            this.renderer.rebuild_multivolume_rendering_material()
+            this.renderer.update()
         }
         this.model.on('change:clamp_min change:clamp_max', update_clamp, this);
         update_clamp()

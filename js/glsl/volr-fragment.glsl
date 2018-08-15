@@ -155,6 +155,8 @@ vec4 add_sample(sampler2D data, sampler2D transfer_function, Volume volume, vec3
     float data_value = sample[0];
     if(sample[1] == 0.0)
         return color_in;
+    if(((data_value < 0.) && !volume.clamp_min) || ((data_value > 1.) && !volume.clamp_max))
+        return color_in;
 
     vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
     if(volume.lighting) {
