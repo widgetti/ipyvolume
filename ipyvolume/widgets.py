@@ -136,7 +136,7 @@ class Volume(widgets.DOMWidget):
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
 
     rendering_method = traitlets.Enum(values=['NORMAL', 'MAX_INTENSITY'], default_value='NORMAL').tag(sync=True)
-    rendering_lighting = traitlets.Bool(True).tag(sync=True)
+    lighting = traitlets.Bool(True).tag(sync=True)
 
     extent = traitlets.Any().tag(sync=True)
     extent_original = traitlets.Any()

@@ -94,6 +94,16 @@ var VolumeView = widgets.WidgetView.extend( {
         }
         update_opacity_scale()
         this.model.on('change:opacity_scale', update_opacity_scale)
+
+        var update_lighting = () => {
+            this.uniform_volumes_values.lighting = this.model.get('lighting')
+            this.renderer.rebuild_multivolume_rendering_material()
+            this.renderer.update()
+        }
+        update_lighting()
+        this.model.on('change:lighting', update_lighting)
+
+
         var update_brightness = () => {
             this.uniform_volumes_values.brightness = this.model.get('brightness')
             this.renderer.rebuild_multivolume_rendering_material()
@@ -232,12 +242,12 @@ var VolumeModel = widgets.WidgetModel.extend({
             specular_exponent: 5,
             opacity_scale: 1.0,
             extent: null,
-            volume_rendering_lighting: true,
-            volume_rendering_method: 'NORMAL',
-            volume_clamp_min: false,
-            volume_clamp_max: false,
-            volume_data_range: null,
-            volume_show_range: null,
+            lighting: true,
+            rendering_method: 'NORMAL',
+            clamp_min: false,
+            clamp_max: false,
+            data_range: null,
+            show_range: null,
         })
     }}, {
     serializers: _.extend({

@@ -19,6 +19,7 @@ struct Volume
     bool clamp_max;
     vec3 scale;
     vec3 offset;
+    bool lighting;
 };
 
 #if (VOLUME_COUNT > 0)
@@ -66,6 +67,8 @@ uniform mat3 mvMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 
+vec3 light_dir;
+vec3 eye;
 //uniform float color_index;
 
 int steps = 150;
@@ -127,7 +130,12 @@ vec2 sample(sampler2D data, Volume volume, vec3 ray_pos, inout vec3 normal) {
     return vec2(data_value, 1);
 }
 
-#define USE_LIGHTING 1
+vec4 apply_lighting(vec4 color, vec3 normal) {
+    float cosangle_light = max((dot(light_dir, normal)), 0.);
+    float cosangle_eye = max((dot(eye, normal)), 0.);
+    vec4 result = vec4(color.rgb * (ambient_coefficient + diffuse_coefficient*cosangle_light + specular_coefficient * pow(cosangle_eye, specular_exponent)), color.a);
+    return result;
+}
 
 vec4 add_sample(sampler2D data, sampler2D transfer_function, Volume volume, vec3 ray_pos, vec4 color_in) {
     vec4 color;
@@ -146,17 +154,11 @@ vec4 add_sample(sampler2D data, sampler2D transfer_function, Volume volume, vec3
     float data_value = sample[0];
     if(sample[1] == 0.0)
         return color_in;
-    #ifdef USE_LIGHTING
-        // vec3 normal = (-sample.xyz)*2.+1.;
-        //normal = -vec3(normal.x, normal.y, normal.z);
-        float cosangle_light = max((dot(light_dir, normal)), 0.);
-        float cosangle_eye = max((dot(eye, normal)), 0.);
-    #endif
 
     vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
-    #ifdef USE_LIGHTING
-        color_sample = color_sample * (ambient_coefficient + diffuse_coefficient*cosangle_light + specular_coefficient * pow(cosangle_eye, specular_exponent));
-    #endif
+    if(volume.lighting) {
+        color_sample = apply_lighting(color_sample, normal);
+    }
 
     // float intensity = color_sample.a;
     //float alpha_sample = intensity * sign(data_value) * sign(1.-data_value) * 100. / float(steps) * ray_length;//clamp(1.-chisq, 0., 1.) * 0.5;//1./128.* length(color_sample) * 100.;
@@ -242,8 +244,8 @@ void main(void) {
 
     //mat3 rotation = mat3(mvMatrix);
     mat3 rotation = (mat3(viewMatrix));
-    vec3 light_dir = normalize(vec3(-1,-1,1) * rotation);
-    vec3 eye = vec3(0, 0, 1) * rotation;
+    light_dir = normalize(vec3(-1,-1,1) * rotation);
+    eye = vec3(0, 0, 1) * rotation;
 
     float delta = 1.0/256./2.;
 
@@ -311,11 +313,6 @@ void main(void) {
         vec3 average_coordinate = color.xyz/color.a;
         gl_FragColor = vec4(average_coordinate, color.a);
     #else
-        #if defined(METHOD_MAX_INTENSITY)
-            #ifdef USE_LIGHTING
-                color.rgb = color.rgb * (ambient_coefficient + diffuse_coefficient*max_cosangle_light + specular_coefficient * pow(max_cosangle_eye, specular_exponent));
-            #endif
-        #endif
         gl_FragColor = color;
     #endif
     //gl_FragColor = vec4(ray_begin.xyz, 0.1) * brightness;
@@ -359,6 +356,8 @@ void cast_ray_max(vec3 ray_begin, vec3 ray_end) {
                 has_values[{{.}}] = true;
                 // the weight of the coordinate equals its opacity
                 max_colors[{{.}}] = texture2D(transfer_function_max_int[{{.}}], vec2(max_values[{{.}}], 0.5));
+                if(volumes_max_int[{{.}}].lighting)
+                    max_colors[{{.}}] = apply_lighting(max_colors[{{.}}], normal);
                 float alpha = clamp(max_colors[{{.}}].a * volumes_max_int[{{.}}].opacity_scale, 0., 1.);
                 max_colors[{{.}}].a = alpha;
                 #ifdef COORDINATE
