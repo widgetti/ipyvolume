@@ -741,8 +741,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.material_multivolume_depth = new THREE.ShaderMaterial({
             uniforms: this.material_multivolume.uniforms,
             blending: THREE.NoBlending,
-            fragmentShader: shaders["volr_fragment"],
-            vertexShader: shaders["volr_vertex"],
             defines: {COORDINATE: true},
             side: THREE.FrontSide
         });
@@ -1764,14 +1762,31 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // now we render the weighted coordinate for the volumetric data
         // make sure where we don't render, alpha = 0
         if(has_volumes) {
-            /* TODO: fix coordinates
-            this.renderer.autoClear = false;
+            // render again, but now with depth material
+            // TODO: this render pass is only needed when the coordinate is required
+            // we slow down by a factor of 2 by always doing this
+            this.renderer.context.colorMask(0, 0, 0, 0)
             _.each(this.volume_views, volume_view => {
-                volume_view.vol_box_mesh.material = volume_view.box_material_volr_depth;
+                volume_view.box_material.side = THREE.FrontSide;
+                volume_view.box_material.depthFunc = THREE.LessEqualDepth
             },this)
+            this.renderer.autoClear = false;
+            this.renderer.clearTarget(this.color_pass_target, false, true, false)
+            this.renderer.render(this.scene_volume, camera, this.color_pass_target);
+            this.renderer.autoClear = true;
+            this.renderer.context.colorMask(true, true, true, true)
+
+            // TODO: if volume perfectly overlap, we render it twice, use polygonoffset and LESS z test?
+            _.each(this.volume_views, volume_view => {
+                volume_view.vol_box_mesh.material = this.material_multivolume_depth;
+                // volume_view.set_geometry_depth_tex(this.geometry_depth_target.depthTexture)
+            },this)
+            this.renderer.autoClear = false;
+            // we want to keep the colors and z-buffer as they are
+            this.renderer.clearTarget(this.color_pass_target, false, false, false)
             this.renderer.render(this.scene_volume, camera, this.coordinate_texture);
             this.renderer.autoClear = true;
-            */
+
         }
 
         // restore materials
@@ -1826,6 +1841,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         })
         material.defines.VOLUME_COUNT = count_normal;
         material.defines.VOLUME_COUNT_MAX_INT = count_max_int;
+        material_depth.defines.VOLUME_COUNT = count_normal;
+        material_depth.defines.VOLUME_COUNT_MAX_INT = count_max_int;
 
         let mustache_render = (template_shader) => {
             var view = {
@@ -1834,9 +1851,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
             };
             return Mustache.render(template_shader, view)
         }
-        material.fragmentShader = mustache_render(shaders["volr_fragment"])
-        material.vertexShader = shaders["volr_vertex"]
-        material.needsUpdate = true;
+        material_depth.fragmentShader = material.fragmentShader = mustache_render(shaders["volr_fragment"])
+        material_depth.vertexShader = material.vertexShader = shaders["volr_vertex"]
+        material_depth.needsUpdate = material.needsUpdate = true;
     },
     update_light: function() {
         this.material_multivolume.uniforms.ambient_coefficient.value = this.model.get("ambient_coefficient")

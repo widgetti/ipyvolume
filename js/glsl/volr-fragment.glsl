@@ -174,13 +174,12 @@ vec4 add_sample(sampler2D data, sampler2D transfer_function, Volume volume, vec3
     vec4 dst = color_in;
     vec4 src = color_sample;
     src.a *= clamp(100./float(steps) * volume.opacity_scale, 0.0, 1.0);
-    color.rgb = (1.0-dst.a) * src.rgb * src.a * volume.brightness + dst.rgb;
-    color.a   = src.a  + dst.a;
     #ifdef COORDINATE
-        vec3 weighted_coordinate = ray_pos * (alpha_sample);
-        float weight_coordinate = (alpha_sample);
-        color.rgb = weighted_coordinate;
-        color.a = weight_coordinate;
+        color.a   = src.a  + dst.a;
+        color.rgb = dst.xyz + ray_pos * src.a;
+    #else
+        color.rgb = (1.0-dst.a) * src.rgb * src.a * volume.brightness + dst.rgb;
+        color.a   = src.a  + dst.a;
     #endif
     return color;
 }
@@ -297,15 +296,20 @@ void main(void) {
         {
             ray_end = ray_begin0 + (ray_end0 - ray_begin0) * layers[i].depth;
             color = cast_ray(ray_begin, ray_end, color);
-            color = blend_pre_multiplied(layers[i].color, color);
+            #ifdef COORDINATE
+                // color += layers[i].color;
+                color = blend_pre_multiplied(layers[i].color, color);
+            #else
+                color = blend_pre_multiplied(layers[i].color, color);
+            #endif
             ray_begin = ray_end;
             depth = layers[i].depth;
         }
     }
 
     #ifdef COORDINATE
-        vec3 average_coordinate = weighted_coordinate.xyz/weighted_coordinate.w;
-        gl_FragColor = vec4(average_coordinate, weighted_coordinate.w);
+        vec3 average_coordinate = color.xyz/color.a;
+        gl_FragColor = vec4(average_coordinate, color.a);
     #else
         #if defined(METHOD_MAX_INTENSITY)
             #ifdef USE_LIGHTING
@@ -357,7 +361,11 @@ void cast_ray_max(vec3 ray_begin, vec3 ray_end) {
                 max_colors[{{.}}] = texture2D(transfer_function_max_int[{{.}}], vec2(max_values[{{.}}], 0.5));
                 float alpha = clamp(max_colors[{{.}}].a * volumes_max_int[{{.}}].opacity_scale, 0., 1.);
                 max_colors[{{.}}].a = alpha;
-                max_colors[{{.}}].rgb *= alpha * volumes_max_int[{{.}}].brightness; // pre-blend
+                #ifdef COORDINATE
+                    max_colors[{{.}}].rgb = ray_pos * alpha; // no need to use brightness for the coordinates
+                #else
+                    max_colors[{{.}}].rgb *= alpha * volumes_max_int[{{.}}].brightness; // pre-blend
+                #endif
                 max_weighted_coordinate[{{.}}].xyz = ray_pos * alpha;
                 max_weighted_coordinate[{{.}}].a = alpha;
                 max_depth[{{.}}] = ray_length_traveled/ray_length;
