@@ -122,39 +122,39 @@ class Volume(widgets.DOMWidget):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_tile_serialization)
-    volume_data_original = Array(default_value=None, allow_none=True)
-    volume_data_max_shape = traitlets.CInt(None, allow_none=True)  # TODO: allow this to be a list
-    volume_data_min = traitlets.CFloat().tag(sync=True)
-    volume_data_max = traitlets.CFloat().tag(sync=True)
-    volume_show_min = traitlets.CFloat().tag(sync=True)
-    volume_show_max = traitlets.CFloat().tag(sync=True)
-    volume_clamp_min = traitlets.CBool(False).tag(sync=True)
-    volume_clamp_max = traitlets.CBool(False).tag(sync=True)
+    data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_tile_serialization)
+    data_original = Array(default_value=None, allow_none=True)
+    data_max_shape = traitlets.CInt(None, allow_none=True)  # TODO: allow this to be a list
+    data_min = traitlets.CFloat().tag(sync=True)
+    data_max = traitlets.CFloat().tag(sync=True)
+    show_min = traitlets.CFloat().tag(sync=True)
+    show_max = traitlets.CFloat().tag(sync=True)
+    clamp_min = traitlets.CBool(False).tag(sync=True)
+    clamp_max = traitlets.CBool(False).tag(sync=True)
     opacity_scale = traitlets.CFloat(1.0).tag(sync=True)
     brightness = traitlets.CFloat(1.0).tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
 
-    volume_rendering_method = traitlets.Enum(values=['NORMAL', 'MAX_INTENSITY'], default_value='NORMAL').tag(sync=True)
-    volume_rendering_lighting = traitlets.Bool(True).tag(sync=True)
+    rendering_method = traitlets.Enum(values=['NORMAL', 'MAX_INTENSITY'], default_value='NORMAL').tag(sync=True)
+    rendering_lighting = traitlets.Bool(True).tag(sync=True)
 
     extent = traitlets.Any().tag(sync=True)
     extent_original = traitlets.Any()
 
     def __init__(self, **kwargs):
         super(Volume, self).__init__(**kwargs)
-        self._update_volume_data()
-        self.observe(self.update_volume_data, ['volume_data_original', 'volume_data_max_shape'])
+        self._update_data()
+        self.observe(self.update_data, ['data_original', 'data_max_shape'])
 
     @debounced(method=True)
-    def update_volume_data(self, change=None):
-        self._update_volume_data()
+    def update_data(self, change=None):
+        self._update_data()
 
-    def _update_volume_data(self):
-        if self.volume_data_original is None:
+    def _update_data(self):
+        if self.data_original is None:
             return
-        if all([k <= self.volume_data_max_shape for k in self.volume_data_original.shape]):
-            self.volume_data = self.volume_data_original
+        if all([k <= self.data_max_shape for k in self.data_original.shape]):
+            self.data = self.data_original
             self.extent = self.extent_original
             return
         import ipyvolume as ipv
@@ -162,16 +162,16 @@ class Volume(widgets.DOMWidget):
         xlim = current_figure.xlim
         ylim = current_figure.ylim
         zlim = current_figure.zlim
-        shape = self.volume_data_original.shape
+        shape = self.data_original.shape
         ex = self.extent_original
         viewx, xt = grid_slice(ex[0][0], ex[0][1], shape[2], *xlim)
         viewy, yt = grid_slice(ex[1][0], ex[1][1], shape[1], *ylim)
         viewz, zt = grid_slice(ex[2][0], ex[2][1], shape[0], *zlim)
         view = [slice(*viewz), slice(*viewy), slice(*viewx)]
-        data_view = self.volume_data_original[view]
+        data_view = self.data_original[view]
         extent = [xt, yt, zt]
-        data_view, extent = reduce_size(data_view, self.volume_data_max_shape, extent)
-        self.volume_data = np.array(data_view)
+        data_view, extent = reduce_size(data_view, self.data_max_shape, extent)
+        self.data = np.array(data_view)
         self.extent = extent
 
 @widgets.register

@@ -714,12 +714,12 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 geometry_depth_tex: { type: 't', value: this.geometry_depth_target.depthTexture },
 
                 volumes: {type: 'tv', value: [{}]},
-                volume_data: {type: 'tv', value: []},
-                volume_transfer_function: {type: 'tv', value: []},
+                data: {type: 'tv', value: []},
+                transfer_function: {type: 'tv', value: []},
 
                 volumes_max_int: {type: 'tv', value: [{}]},
-                volume_data_max_int: {type: 'tv', value: []},
-                volume_transfer_function_max_int: {type: 'tv', value: []},
+                data_max_int: {type: 'tv', value: []},
+                transfer_function_max_int: {type: 'tv', value: []},
 
                 ambient_coefficient : { type: "f", value: this.model.get("ambient_coefficient") },
                 diffuse_coefficient : { type: "f", value: this.model.get("diffuse_coefficient") },
@@ -1796,14 +1796,15 @@ var FigureView = widgets.DOMWidgetView.extend( {
             return;
 
         var material = this.material_multivolume;
+        var material_depth = this.material_multivolume_depth;
         var count_normal = 0;
         var count_max_int = 0;
         material.uniforms.volumes.value                 = []
         material.uniforms.volumes_max_int.value         = []
-        material.uniforms.volume_data.value             = []
-        material.uniforms.volume_data_max_int.value     = []
-        material.uniforms.volume_transfer_function.value         = []
-        material.uniforms.volume_transfer_function_max_int.value = []
+        material.uniforms.data.value             = []
+        material.uniforms.data_max_int.value     = []
+        material.uniforms.transfer_function.value         = []
+        material.uniforms.transfer_function_max_int.value = []
 
         _.each(volumes, vol_model => {
             let volume_view = this.volume_views[vol_model.cid];
@@ -1813,13 +1814,13 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 if(volume_view.is_normal()) {
                     count_normal++;
                     material.uniforms.volumes.value.push(volume_view.uniform_volumes_values)
-                    material.uniforms.volume_data.value.push(volume_view.uniform_volume_data.value[0])
-                    material.uniforms.volume_transfer_function.value.push(volume_view.uniform_volume_transfer_function.value[0])
+                    material.uniforms.data.value.push(volume_view.uniform_data.value[0])
+                    material.uniforms.transfer_function.value.push(volume_view.uniform_transfer_function.value[0])
                 } else {
                     count_max_int++;
                     material.uniforms.volumes_max_int.value.push(volume_view.uniform_volumes_values)
-                    material.uniforms.volume_data_max_int.value.push(volume_view.uniform_volume_data.value[0])
-                    material.uniforms.volume_transfer_function_max_int.value.push(volume_view.uniform_volume_transfer_function.value[0])
+                    material.uniforms.data_max_int.value.push(volume_view.uniform_data.value[0])
+                    material.uniforms.transfer_function_max_int.value.push(volume_view.uniform_transfer_function.value[0])
                 }
             }
         })

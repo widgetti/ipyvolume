@@ -8,13 +8,13 @@ struct Volume
 {
     float opacity_scale;
     float brightness;
-    vec2 volume_data_range;
-    vec2 volume_show_range;
-    float volume_rows;
-    float volume_columns;
-    float volume_slices;
-    vec2 volume_size;
-    vec2 volume_slice_size;
+    vec2 data_range;
+    vec2 show_range;
+    float rows;
+    float columns;
+    float slices;
+    vec2 size;
+    vec2 slice_size;
     bool clamp_min;
     bool clamp_max;
     vec3 scale;
@@ -22,15 +22,15 @@ struct Volume
 };
 
 #if (VOLUME_COUNT > 0)
-uniform sampler2D volume_data[VOLUME_COUNT];
-uniform sampler2D volume_transfer_function[VOLUME_COUNT];
+uniform sampler2D data[VOLUME_COUNT];
+uniform sampler2D transfer_function[VOLUME_COUNT];
 uniform Volume volumes[VOLUME_COUNT];
 #endif
 
 #if (VOLUME_COUNT_MAX_INT > 0)
 uniform Volume volumes_max_int[VOLUME_COUNT_MAX_INT];
-uniform sampler2D volume_data_max_int[VOLUME_COUNT_MAX_INT];
-uniform sampler2D volume_transfer_function_max_int[VOLUME_COUNT_MAX_INT];
+uniform sampler2D data_max_int[VOLUME_COUNT_MAX_INT];
+uniform sampler2D transfer_function_max_int[VOLUME_COUNT_MAX_INT];
 float max_values[VOLUME_COUNT_MAX_INT];
 float max_depth[VOLUME_COUNT_MAX_INT];
 bool  has_values[VOLUME_COUNT_MAX_INT];
@@ -54,8 +54,8 @@ Layer layers[VOLUME_COUNT_MAX_INT+1];
 //uniform int colormap_index;
 //uniform int surfaces;
 //uniform float opacity[4];
-//uniform float volume_level[4];
-//uniform float volume_width[4];
+//uniform float level[4];
+//uniform float width[4];
 uniform vec2 render_size;
 
 varying vec3 front;
@@ -109,14 +109,15 @@ mat3 transpose3(mat3 m) {
         );
 }
 
-vec2 volume_sample(sampler2D volume_data, Volume volume, vec3 ray_pos) {
+vec2 sample(sampler2D data, Volume volume, vec3 ray_pos, inout vec3 normal) {
     vec3 pos_relative = (ray_pos+volume.offset)*volume.scale;
     if(any(lessThan(pos_relative, vec3(0.))) || any(greaterThan(pos_relative, vec3(1.))))
         return vec2(0.0);
-    vec4 sample = sample_as_3d_texture(volume_data, volume.volume_size, pos_relative, volume.volume_slice_size, volume.volume_slices, volume.volume_rows, volume.volume_columns);
+    vec4 sample = sample_as_3d_texture(data, volume.size, pos_relative, volume.slice_size, volume.slices, volume.rows, volume.columns);
+    normal = (-sample.xyz)*2.+1.;
     float raw_data_value = sample.a; //(sample.a - data_min) * data_scale;
-    float scaled_data_value = (raw_data_value*(volume.volume_data_range[1] - volume.volume_data_range[0])) + volume.volume_data_range[0];
-    float data_value = (scaled_data_value - volume.volume_show_range[0])/(volume.volume_show_range[1] - volume.volume_show_range[0]);
+    float scaled_data_value = (raw_data_value*(volume.data_range[1] - volume.data_range[0])) + volume.data_range[0];
+    float data_value = (scaled_data_value - volume.show_range[0])/(volume.show_range[1] - volume.show_range[0]);
     // TODO: how do we deal with this with multivolume rendering
     // if(((data_value < 0.) && !volume.clamp_min) || ((data_value > 1.) && !volume.clamp_max)) {
     //     ray_pos += ray_delta;
@@ -126,30 +127,33 @@ vec2 volume_sample(sampler2D volume_data, Volume volume, vec3 ray_pos) {
     return vec2(data_value, 1);
 }
 
-vec4 add_volume_sample(sampler2D volume_data, sampler2D volume_transfer_function, Volume volume, vec3 ray_pos, vec4 color_in) {
+#define USE_LIGHTING 1
+
+vec4 add_sample(sampler2D data, sampler2D transfer_function, Volume volume, vec3 ray_pos, vec4 color_in) {
     vec4 color;
     vec3 pos_relative = (ray_pos+volume.offset)*volume.scale;
-    /*vec4 sample_x = sample_as_3d_texture(volume, volume_size, pos + vec3(delta, 0, 0), volume_slice_size, volume_slices, volume_rows, volume_columns);
-    vec4 sample_y = sample_as_3d_texture(volume, volume_size, pos + vec3(0, delta, 0), volume_slice_size, volume_slices, volume_rows, volume_columns);
-    vec4 sample_z = sample_as_3d_texture(volume, volume_size, pos + vec3(0, 0, delta), volume_slice_size, volume_slices, volume_rows, volume_columns);
+    /*vec4 sample_x = sample_as_3d_texture(volume, size, pos + vec3(delta, 0, 0), slice_size, slices, rows, columns);
+    vec4 sample_y = sample_as_3d_texture(volume, size, pos + vec3(0, delta, 0), slice_size, slices, rows, columns);
+    vec4 sample_z = sample_as_3d_texture(volume, size, pos + vec3(0, 0, delta), slice_size, slices, rows, columns);
 
     vec3 normal = normalize(vec3((sample_x[0]-sample[0])/delta, (sample_y[0]-sample[0])/delta, (sample_z[0]-sample[0])/delta));
     normal = -vec3(normal.x, normal.y, normal.z);
     float cosangle_light = max((dot(light_dir, normal)), 0.);
     float cosangle_eye = max((dot(eye, normal)), 0.);*/
 
-    vec2 sample = volume_sample(volume_data, volume, ray_pos);
+    vec3 normal;
+    vec2 sample = sample(data, volume, ray_pos, normal);
     float data_value = sample[0];
     if(sample[1] == 0.0)
         return color_in;
     #ifdef USE_LIGHTING
-        vec3 normal = (-sample.xyz)*2.+1.;
+        // vec3 normal = (-sample.xyz)*2.+1.;
         //normal = -vec3(normal.x, normal.y, normal.z);
         float cosangle_light = max((dot(light_dir, normal)), 0.);
         float cosangle_eye = max((dot(eye, normal)), 0.);
     #endif
 
-    vec4 color_sample = texture2D(volume_transfer_function, vec2(data_value, 0.5));
+    vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
     #ifdef USE_LIGHTING
         color_sample = color_sample * (ambient_coefficient + diffuse_coefficient*cosangle_light + specular_coefficient * pow(cosangle_eye, specular_exponent));
     #endif
@@ -211,10 +215,7 @@ vec4 cast_ray(vec3 ray_begin, vec3 ray_end, vec4 color) {
         }
 
         {{#volumes}}
-            color = add_volume_sample(volume_data[{{.}}], volume_transfer_function[{{.}}], volumes[{{.}}], ray_pos, color);
-            #ifdef COORDINATE
-                weighted_coordinate += color;
-            #endif
+            color = add_sample(data[{{.}}], transfer_function[{{.}}], volumes[{{.}}], ray_pos, color);
         {{/volumes}}
         if(color.a >= 1.)
             break;
@@ -347,12 +348,13 @@ void cast_ray_max(vec3 ray_begin, vec3 ray_end) {
 
         {{#volumes_max_int}}
         {
-            vec2 sample = volume_sample(volume_data_max_int[{{.}}], volumes_max_int[{{.}}], ray_pos);
+            vec3 normal;
+            vec2 sample = sample(data_max_int[{{.}}], volumes_max_int[{{.}}], ray_pos, normal);
             if(sample.x > max_values[{{.}}] && sample.y > 0.0) {
                 max_values[{{.}}] = sample.x;
                 has_values[{{.}}] = true;
                 // the weight of the coordinate equals its opacity
-                max_colors[{{.}}] = texture2D(volume_transfer_function_max_int[{{.}}], vec2(max_values[{{.}}], 0.5));
+                max_colors[{{.}}] = texture2D(transfer_function_max_int[{{.}}], vec2(max_values[{{.}}], 0.5));
                 float alpha = clamp(max_colors[{{.}}].a * volumes_max_int[{{.}}].opacity_scale, 0., 1.);
                 max_colors[{{.}}].a = alpha;
                 max_colors[{{.}}].rgb *= alpha * volumes_max_int[{{.}}].brightness; // pre-blend

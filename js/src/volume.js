@@ -13,7 +13,7 @@ var VolumeView = widgets.WidgetView.extend( {
     render: function() {
         this.renderer = this.options.parent;
         this.attributes_changed = {}
-        this.volume_data = []
+        this.data = []
 
         window.last_volume_view = this;
 
@@ -40,18 +40,18 @@ var VolumeView = widgets.WidgetView.extend( {
         this.texture_tf = null;//new THREE.DataTexture(null, this.model.get("tf").get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
 
         this.uniform_volumes_values = {}
-        this.uniform_volume_data = {type: 'tv', value: []}
-        this.uniform_volume_transfer_function = {type: 'tv', value: []}
+        this.uniform_data = {type: 'tv', value: []}
+        this.uniform_transfer_function = {type: 'tv', value: []}
 
 
         // var update_volr_defines = () => {
-        //     if(this.model.get('volume_rendering_method') )
-        //     this.box_material_volr.defines = {USE_LIGHTING: this.model.get('volume_rendering_lighting')}
-        //     //this.box_material_volr.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
+        //     if(this.model.get('rendering_method') )
+        //     this.box_material_volr.defines = {USE_LIGHTING: this.model.get('rendering_lighting')}
+        //     //this.box_material_volr.defines['METHOD_' + this.model.get('rendering_method')] = true;
         //     //this.box_material_volr.defines['VOLUME_COUNT'] = 1
         //     this.box_material_volr.needsUpdate = true
-        //     this.box_material_volr_depth.defines = {COORDINATE: true, USE_LIGHTING: this.model.get('volume_rendering_lighting')}
-        //     //this.box_material_volr_depth.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
+        //     this.box_material_volr_depth.defines = {COORDINATE: true, USE_LIGHTING: this.model.get('rendering_lighting')}
+        //     //this.box_material_volr_depth.defines['METHOD_' + this.model.get('rendering_method')] = true;
         //     this.box_material_volr_depth.needsUpdate = true;
         //     //this.box_material_volr_depth.defines['VOLUME_COUNT'] = 1
         // }
@@ -62,30 +62,30 @@ var VolumeView = widgets.WidgetView.extend( {
             this.renderer.rebuild_multivolume_rendering_material()
             this.renderer.update()
         }
-        this.model.on('change:volume_rendering_method', update_rendering_method)
-        //this.model.on('change:volume_rendering_method change:volume_rendering_lighting', update_volr_defines)
+        this.model.on('change:rendering_method', update_rendering_method)
+        //this.model.on('change:rendering_method change:rendering_lighting', update_volr_defines)
         update_rendering_method()
 
 
         this.add_to_scene()
 
-        this.model.on('change:volume_data', this.data_set, this);
+        this.model.on('change:data', this.data_set, this);
 
-        var update_volume_minmax = () => {
-            this.uniform_volumes_values.volume_data_range = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
-            this.uniform_volumes_values.volume_show_range = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
+        var update_minmax = () => {
+            this.uniform_volumes_values.data_range = [this.model.get('data_min'), this.model.get('data_max')]
+            this.uniform_volumes_values.show_range = [this.model.get('show_min'), this.model.get('show_max')]
     
         }
-        this.model.on('change:volume_data_min change:volume_data_max change:volume_show_min change:volume_show_max', update_volume_minmax, this);
-        update_volume_minmax()
+        this.model.on('change:data_min change:data_max change:show_min change:show_max', update_minmax, this);
+        update_minmax()
 
-        var update_volume_clamp = () => {
-            this.uniform_volumes_values.clamp_min = this.model.get('volume_clamp_min')
-            this.uniform_volumes_values.clamp_max = this.model.get('volume_clamp_max')
+        var update_clamp = () => {
+            this.uniform_volumes_values.clamp_min = this.model.get('clamp_min')
+            this.uniform_volumes_values.clamp_max = this.model.get('clamp_max')
     
         }
-        this.model.on('change:volume_clamp_min change:volume_clamp_max', update_volume_clamp, this);
-        update_volume_clamp()
+        this.model.on('change:clamp_min change:clamp_max', update_clamp, this);
+        update_clamp()
 
         var update_opacity_scale = () => {
             this.uniform_volumes_values.opacity_scale = this.model.get('opacity_scale')
@@ -113,27 +113,27 @@ var VolumeView = widgets.WidgetView.extend( {
 
     },
     is_max_intensity() {
-        return this.model.get('volume_rendering_method') == 'MAX_INTENSITY';
+        return this.model.get('rendering_method') == 'MAX_INTENSITY';
     },
     is_normal() {
-        return this.model.get('volume_rendering_method') == 'NORMAL';
+        return this.model.get('rendering_method') == 'NORMAL';
     },
     data_set: function() {
-        this.volume = this.model.get("volume_data")
+        this.volume = this.model.get("data")
         var data = new Uint8Array(this.volume.tiles.buffer)
         this.texture_volume = new THREE.DataTexture(data, this.volume.image_shape[0], this.volume.image_shape[1],
                                                     THREE.RGBAFormat, THREE.UnsignedByteType)
         this.texture_volume.magFilter = THREE.LinearFilter
         this.texture_volume.minFilter = THREE.LinearFilter
-        this.uniform_volumes_values.volume_rows = this.volume.rows
-        this.uniform_volumes_values.volume_columns = this.volume.columns
-        this.uniform_volumes_values.volume_slices = this.volume.slices
-        this.uniform_volumes_values.volume_size = this.volume.image_shape
-        this.uniform_volumes_values.volume_slice_size = this.volume.slice_shape
-        this.uniform_volume_data.value = [this.texture_volume]
-        this.uniform_volume_data.value = [this.texture_volume]
-        this.uniform_volumes_values.volume_data_range = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
-        this.uniform_volumes_values.volume_show_range = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
+        this.uniform_volumes_values.rows = this.volume.rows
+        this.uniform_volumes_values.columns = this.volume.columns
+        this.uniform_volumes_values.slices = this.volume.slices
+        this.uniform_volumes_values.size = this.volume.image_shape
+        this.uniform_volumes_values.slice_size = this.volume.slice_shape
+        this.uniform_data.value = [this.texture_volume]
+        this.uniform_data.value = [this.texture_volume]
+        this.uniform_volumes_values.data_range = [this.model.get('data_min'), this.model.get('data_max')]
+        this.uniform_volumes_values.show_range = [this.model.get('show_min'), this.model.get('show_max')]
         this.texture_volume.needsUpdate = true // without this it doesn't seem to work
     },
     tf_set: function() {
@@ -154,8 +154,8 @@ var VolumeView = widgets.WidgetView.extend( {
             }*/
             this.texture_tf = new THREE.DataTexture(tf.get_data_array(), tf.get("rgba").shape[0], 1, THREE.RGBAFormat, THREE.UnsignedByteType)
             this.texture_tf.needsUpdate = true // without this it doesn't seem to work
-            // this.box_material_volr.uniforms.volume_transfer_function.value = [this.texture_tf]
-            this.uniform_volume_transfer_function.value = [this.texture_tf]
+            // this.box_material_volr.uniforms.transfer_function.value = [this.texture_tf]
+            this.uniform_transfer_function.value = [this.texture_tf]
         }
         this.renderer.rebuild_multivolume_rendering_material()
         this.renderer.update()
