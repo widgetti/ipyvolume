@@ -33,9 +33,9 @@ _seq_snm = "If an (S, N, M) array, the first dimension will be used for frames i
 
 _doc_snippets = {}
 _doc_snippets[
-    "color"] = "color for each point/vertex/symbol, can be string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (N, 3) or (S, N, 3)"
+    "color"] = "color for each point/vertex/symbol, can be string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (N, 3 or 4) or (S, N, 3 or 4)"
 _doc_snippets[
-    "color2d"] = "color for each point/vertex string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (2, N, 3) or (S, 2, N, 3)"
+    "color2d"] = "color for each point/vertex string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (2, N, 3 or 4) or (S, 2, N, 3 or 4)"
 _doc_snippets[
     "size"] = "float representing the size of the glyph in percentage of the viewport, where 100 is the full size of the viewport"
 _doc_snippets["marker"] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere', 'point_2d', 'square_2d', 'triangle_2d', 'circle_2d'"
