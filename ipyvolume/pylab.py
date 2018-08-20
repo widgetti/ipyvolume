@@ -744,11 +744,12 @@ def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
                                offline_cors=offline_cors)
 
 
-def _change_y_angle(fig, frame, fraction):
-    fig.angley = fraction * np.pi * 2
+def _change_azimuth_angle(fig, frame, fraction):
+    with fig:
+        view(azimuth=fraction*360)
 
 
-def movie(f="movie.mp4", function=_change_y_angle, fps=30, frames=30, endpoint=False, \
+def movie(f="movie.mp4", function=_change_azimuth_angle, fps=30, frames=30, endpoint=False, \
           cmd_template_ffmpeg="ffmpeg -y -r {fps} -i {tempdir}/frame-%5d.png -vcodec h264 -pix_fmt yuv420p {filename}",
           cmd_template_gif="convert -delay {delay} {loop} {tempdir}/frame-*.png {filename}",
           gif_loop=0):
