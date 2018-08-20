@@ -217,15 +217,16 @@ class Values {
         let sizes = this.array['size'] = this.array['size'].slice();
         let size_selected = this.array['size_selected'];
         // copy since we will modify
-        let color = this.array_vec3['color'] = this.array_vec3['color'].slice();
-        let color_selected = this.array_vec3['color_selected'];
+        let color = this.array_vec4['color'] = this.array_vec4['color'].slice();
+        let color_selected = this.array_vec4['color_selected'];
         // this assumes, and requires that color_selected is an array, maybe a bit inefficient
         _.each(selected, (index) => {
             if(index < this.length) {
                 sizes[index] = size_selected[index];
-                color[index*3+0] = color_selected[index*3+0];
-                color[index*3+1] = color_selected[index*3+1];
-                color[index*3+2] = color_selected[index*3+2];
+                color[index*4+0] = color_selected[index*4+0];
+                color[index*4+1] = color_selected[index*4+1];
+                color[index*4+2] = color_selected[index*4+2];
+                color[index*4+3] = color_selected[index*4+3];
             }
         });
     };
