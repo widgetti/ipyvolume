@@ -266,6 +266,10 @@ var ScatterView = widgets.WidgetView.extend( {
                 this.material.defines['USE_TEXTURE'] = true;
             }
         }
+        this.material.needsUpdate = true;
+        this.material_rgb.needsUpdate = true;
+        this.line_material.needsUpdate = true;
+        this.line_material_rgb.needsUpdate = true;
     },
     create_mesh: function() {
         var geo = this.model.get("geo")

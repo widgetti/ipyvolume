@@ -208,8 +208,8 @@ var MeshView = widgets.WidgetView.extend( {
         this.line_material.copy(this.model.get('line_material').obj)
         this.line_material_rgb.copy(this.model.get('line_material').obj)
         this.material_rgb.defines = {USE_RGB: true}
-        this.line_material.defines = {USE_RGB: true, AS_LINE: true}
-        this.line_material_rgb.defines = {USE_RGB: true}
+        this.line_material.defines = {AS_LINE: true}
+        this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true}
         this.material.extensions = {derivatives: true}
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get('visible');
@@ -230,6 +230,8 @@ var MeshView = widgets.WidgetView.extend( {
         }
         this.material.needsUpdate = true;
         this.material_rgb.needsUpdate = true;
+        this.line_material.needsUpdate = true;
+        this.line_material_rgb.needsUpdate = true;
     },
     create_mesh: function() {
         /*console.log("previous values: ")
