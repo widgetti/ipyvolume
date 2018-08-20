@@ -209,32 +209,32 @@ def reduce_size(data, max_size, extent):
         new_extent.append((xmin, xmax))
     return data, new_extent[::-1]
 
-def grid_slice(xmin, xmax, shape, ymin, ymax):
-    '''Given a grid with shape, and begin and end coordinates xmin, xmax, what slice
-    do we need to take such that it minimally covers ymin, ymax.
-    xmin, xmax = 0, 1; shape = 4
+def grid_slice(amin, amax, shape, bmin, bmax):
+    '''Given a grid with shape, and begin and end coordinates amin, amax, what slice
+    do we need to take such that it minimally covers bmin, bmax.
+    amin, amax = 0, 1; shape = 4
     0  0.25  0.5  0.75  1
     |    |    |    |    |
-    ymin, ymax = 0.5, 1.0 should give 2,4, 0.5, 1.0
-    ymin, ymax = 0.4, 1.0 should give 1,4, 0.25, 1.0
+    bmin, bmax = 0.5, 1.0 should give 2,4, 0.5, 1.0
+    bmin, bmax = 0.4, 1.0 should give 1,4, 0.25, 1.0
 
-    ymin, ymax = -1, 1.0 should give 0,4, 0, 1.0
+    bmin, bmax = -1, 1.0 should give 0,4, 0, 1.0
 
-    what about negative ymin and ymax ?
-    It will just flip ymin and ymax
-    ymin, ymax = 1.0, 0.5 should give 2,4, 0.5, 1.5
+    what about negative bmin and bmax ?
+    It will just flip bmin and bmax
+    bmin, bmax = 1.0, 0.5 should give 2,4, 0.5, 1.5
 
-    xmin, xmax = 1, 0; shape = 4
+    amin, amax = 1, 0; shape = 4
     1  0.75  0.5  0.25  0
     |    |    |    |    |
-    ymin, ymax = 0.5, 1.0 should give 0,2, 1.0, 0.5
-    ymin, ymax = 0.4, 1.0 should give 0,3, 1.0, 0.25
+    bmin, bmax = 0.5, 1.0 should give 0,2, 1.0, 0.5
+    bmin, bmax = 0.4, 1.0 should give 0,3, 1.0, 0.25
     '''
-    width = (xmax - xmin)
-    ymin, ymax = min(ymin, ymax), max(ymin, ymax)
+    width = (amax - amin)
+    bmin, bmax = min(bmin, bmax), max(bmin, bmax)
     # normalize the coordinates
-    nmin = (ymin - xmin) / width
-    nmax = (ymax - xmin) / width
+    nmin = (bmin - amin) / width
+    nmax = (bmax - amin) / width
     # grid indices
     if width < 0:
         imin = max(0, int(np.floor(nmax * shape)))
@@ -246,9 +246,9 @@ def grid_slice(xmin, xmax, shape, ymin, ymax):
     nmin = imin / shape
     nmax = imax / shape
 #     if width < 0:
-#         return imin, imax, xmin + nmax * width, xmin + nmin * width
+#         return imin, imax, amin + nmax * width, amin + nmin * width
 #     else:
-    return (imin, imax), (xmin + nmin * width, xmin + nmax * width)
+    return (imin, imax), (amin + nmin * width, amin + nmax * width)
 
 def get_ioloop():
     import IPython
