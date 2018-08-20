@@ -23,7 +23,7 @@ import ipyvolume._version
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
 
 @widgets.register
-class Mesh(widgets.DOMWidget):
+class Mesh(widgets.Widget):
     _view_name = Unicode('MeshView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
     _model_name = Unicode('MeshModel').tag(sync=True)
@@ -65,7 +65,7 @@ class Mesh(widgets.DOMWidget):
         return pythreejs.ShaderMaterial()
 
 @widgets.register
-class Scatter(widgets.DOMWidget):
+class Scatter(widgets.Widget):
     _view_name = Unicode('ScatterView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
     _model_name = Unicode('ScatterModel').tag(sync=True)
@@ -113,7 +113,7 @@ class Scatter(widgets.DOMWidget):
         return pythreejs.ShaderMaterial()
 
 @widgets.register
-class Volume(widgets.DOMWidget):
+class Volume(widgets.Widget):
     """Widget class representing a volume (rendering) using three.js"""
     _view_name = Unicode('VolumeView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
