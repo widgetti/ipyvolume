@@ -237,6 +237,7 @@ var MeshView = widgets.WidgetView.extend( {
         console.log("attributes changed: ")
         console.log(this.attributes_changed)*/
         this.meshes = []
+        var sequence_index_original, sequence_index_previous_original;
 
         var sequence_index = sequence_index_original = this.model.get("sequence_index");
         var sequence_index_previous = sequence_index_previous_original = sequence_index;
