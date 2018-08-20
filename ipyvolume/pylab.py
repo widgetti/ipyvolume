@@ -920,14 +920,31 @@ def xyzlabel(labelx, labely, labelz):
     ylabel(labely)
     zlabel(labelz)
 
-def view(azimuth, elevation):
-    """Sets camera angles
+def view(azimuth=None, elevation=None, distance=None):
+    """Sets camera angles and distance and returns the current.
 
     :param float azimuth: rotation around the axis pointing up in degrees
     :param float elevation: rotation where +90 means 'up', -90 means 'down', in degrees
+    :param float distance: radial distance from the center to the camera.
     """
     fig = gcf()
-    fig.camera.rotation = (np.radians(elevation), np.radians(azimuth), 0, 'XYZ')
+    # first calculate the current values
+    x, y, z = fig.camera.position
+    r = np.sqrt(x**2 + y**2 + z**2)
+    az = np.degrees(np.arctan2(x, z))
+    el = np.degrees(np.arcsin(y/r))
+    if azimuth is None:
+        azimuth = az
+    if elevation is None:
+        elevation = el
+    if distance is None:
+        distance = r
+    cosaz = np.cos(np.radians(azimuth))
+    sinaz = np.sin(np.radians(azimuth))
+    sine = np.sin(np.radians(elevation))
+    cose = np.cos(np.radians(elevation))
+    fig.camera.position = (distance*sinaz*cose, distance*sine, distance*cosaz*cose)
+    return azimuth, elevation, distance
 
 
 # mimic matplotlib namesace
