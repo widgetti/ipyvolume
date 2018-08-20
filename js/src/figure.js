@@ -427,6 +427,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
             }
         }
         add_resolution('default', this.model.get('width'), this.model.get('height'))
+        add_resolution('small', 500, 400)
+        add_resolution('medium', 640, 480)
+        add_resolution('large', 800, 600)
         add_resolution('HD 720', 1280, 720)
         add_resolution('HD', 1920, 1080)
         add_resolution('2k', 2048, 1080)
