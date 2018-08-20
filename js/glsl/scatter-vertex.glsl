@@ -14,7 +14,7 @@ uniform vec2 xlim;
 uniform vec2 ylim;
 uniform vec2 zlim;
 
-varying vec3 vertex_color;
+varying vec4 vertex_color;
 varying vec3 vertex_position;
 varying vec2 vertex_uv;
 
@@ -36,8 +36,8 @@ attribute float size;
 attribute float size_previous;
 #endif
 
-attribute vec3 color;
-attribute vec3 color_previous;
+attribute vec4 color;
+attribute vec4 color_previous;
 
 
 
@@ -87,7 +87,7 @@ void main(void) {
     vertex_position = positionEye;
     vertex_uv = position.xy / 2. - 0.5;
 #ifdef USE_RGB
-    vertex_color = vec3(model_pos + vec3(0.5, 0.5, 0.5));
+    vertex_color = vec4(model_pos + vec3(0.5, 0.5, 0.5), 1.0);
 #else
     vertex_color = mix(color_previous, color, animation_time_color);
 #endif

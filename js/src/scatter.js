@@ -285,9 +285,9 @@ var ScatterView = widgets.WidgetView.extend( {
             sequence_index_previous = sequence_index;
 
         var scalar_names = ['x', 'y', 'z', 'vx', 'vy', 'vz', 'size', 'size_selected'];
-        var vector3_names = ['color', 'color_selected']
-        var current  = new values.Values(scalar_names, vector3_names, _.bind(this.get_current, this), sequence_index)
-        var previous = new values.Values(scalar_names, vector3_names, _.bind(this.get_previous, this), sequence_index_previous)
+        var vector4_names = ['color', 'color_selected'];
+        var current  = new values.Values(scalar_names, [], _.bind(this.get_current, this), sequence_index, vector4_names);
+        var previous = new values.Values(scalar_names, [], _.bind(this.get_previous, this), sequence_index_previous, vector4_names);
 
         var length = Math.max(current.length, previous.length)
         if(length == 0) {
@@ -354,8 +354,8 @@ var ScatterView = widgets.WidgetView.extend( {
 
             current.ensure_array(['color'])
             previous.ensure_array(['color'])
-            geometry.addAttribute('color', new THREE.BufferAttribute(current.array_vec3['color'], 3))
-            geometry.addAttribute('color_previous', new THREE.BufferAttribute(previous.array_vec3['color'], 3))
+            geometry.addAttribute('color', new THREE.BufferAttribute(current.array_vec4['color'], 4))
+            geometry.addAttribute('color_previous', new THREE.BufferAttribute(previous.array_vec4['color'], 4))
             
             this.line_segments = new THREE.Line(geometry, this.line_material);
             this.line_segments.frustumCulled = false;

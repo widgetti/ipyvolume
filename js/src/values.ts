@@ -277,7 +277,15 @@ class Values {
                 geometry.addAttribute(name+postfix, attr);
             }
         });
-    
+
+        _.each(this.array_vec4, (array, name) => {
+            if(name.indexOf("selected") === -1) { // selected attributes should not be send to the shader
+                let attr = new THREE.InstancedBufferAttribute(array, 4, 1);
+                attr.normalized = name.indexOf("color") === -1 ? false : true; // color should be normalized
+                geometry.addAttribute(name+postfix, attr);
+            }
+        });
+
         _.each(this.scalar, (scalar, name) => {
             if(name.indexOf("selected") === -1) { // selected attributes should not be send to the shader
                 let attr = new THREE.InstancedBufferAttribute(new Float32Array([scalar]), 1, this.length);
@@ -288,6 +296,13 @@ class Values {
         _.each(this.scalar_vec3, (scalar_vec3, name) => {
             if(name.indexOf("selected") === -1) { // selected attributes should not be send to the shader
                 let attr = new THREE.InstancedBufferAttribute(scalar_vec3, 3, this.length);
+                attr.normalized = name.indexOf("color") == -1 ? false : true; // color should be normalized
+                geometry.addAttribute(name+postfix, attr);
+            }
+        });
+        _.each(this.scalar_vec4, (scalar_vec4, name) => {
+            if(name.indexOf("selected") === -1) { // selected attributes should not be send to the shader
+                let attr = new THREE.InstancedBufferAttribute(scalar_vec4, 4, this.length);
                 attr.normalized = name.indexOf("color") == -1 ? false : true; // color should be normalized
                 geometry.addAttribute(name+postfix, attr);
             }
