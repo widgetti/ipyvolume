@@ -195,17 +195,15 @@ var VolumeView = widgets.WidgetView.extend( {
         var dy = (ylim[1] - ylim[0])
         var dz = (zlim[1] - zlim[0])
 
-        var dmax = Math.max(dx,dy,dz); 
-
         var extent = this.model.get('extent')
 
        // normalized coordinates of the corners of the box 
-        var x0n = (extent[0][0]-xlim[0])/dmax
-        var x1n = (extent[0][1]-xlim[0])/dmax
-        var y0n = (extent[1][0]-ylim[0])/dmax
-        var y1n = (extent[1][1]-ylim[0])/dmax
-        var z0n = (extent[2][0]-zlim[0])/dmax
-        var z1n = (extent[2][1]-zlim[0])/dmax
+        var x0n = (extent[0][0]-xlim[0])/dx
+        var x1n = (extent[0][1]-xlim[0])/dx
+        var y0n = (extent[1][0]-ylim[0])/dy
+        var y1n = (extent[1][1]-ylim[0])/dy
+        var z0n = (extent[2][0]-zlim[0])/dz
+        var z1n = (extent[2][1]-zlim[0])/dz
 
         // clipped coordinates
         var cx0 = Math.max(x0n,  0)
