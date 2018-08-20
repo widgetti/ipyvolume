@@ -48,14 +48,23 @@ class UrlCached(object):
 
 	def download_urlretrieve(self):
 		urlretrieve(self.url, self.path)
+
+
 class Dataset(object):
-	def __init__(self, name, density=True, numpy=False):
+	def __init__(self, name, density=True, numpy=False, raw=False, shape=None, dtype=None):
 		self.name = name
 		self.density = density
 		self.numpy = numpy
+		self.raw = raw
+		self.shape = shape
+		self.dtype = dtype
 		if density:
-			self.url = "https://github.com/maartenbreddels/ipyvolume/raw/master/datasets/%s.npy.bz2" % name
-			self.path = os.path.join(data_dir, name+".npy.bz2")
+			if raw:
+				self.url = "https://github.com/maartenbreddels/ipyvolume/raw/master/datasets/%s.raw.bz2" % name
+				self.path = os.path.join(data_dir, name+".raw.bz2")
+			else:
+				self.url = "https://github.com/maartenbreddels/ipyvolume/raw/master/datasets/%s.npy.bz2" % name
+				self.path = os.path.join(data_dir, name+".npy.bz2")
 		else:
 			if numpy:
 				self.url = "https://github.com/maartenbreddels/ipyvolume/raw/master/datasets/%s.npy.bz2" % name
@@ -79,8 +88,11 @@ class Dataset(object):
 		self.download()
 		if os.path.exists(self.path):
 			if self.density:
-				f = bz2.BZ2File(self.path)
-				self.data = np.load(f)
+				with bz2.BZ2File(self.path) as f:
+					if self.raw:
+						self.data = np.fromstring(f.read(), self.dtype).reshape(self.shape)
+					else:
+						self.data = np.load(f)
 			else:
 				if self.numpy:
 					with bz2.BZ2File(self.path) as f:
@@ -109,5 +121,6 @@ aquariusA2 = Dataset("aquarius-A2")
 egpbosLCDM  = Dataset("egpbos-LCDM")
 zeldovich  = Dataset("zeldovich", density=False)
 animated_stream = Dataset("stream-animation", density=False, numpy=True)
+head = Dataset('male', raw=True, shape=(256, 256, 128), dtype=np.uint8)
 
 # low poly cat from: https://sketchfab.com/models/1e7143dfafd04ff4891efcb06949a0b4#

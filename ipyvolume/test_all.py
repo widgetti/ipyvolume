@@ -437,9 +437,16 @@ def test_animation_control():
     assert slider.max == n_frames - 1
 
 # just cover and call
-ipyvolume.examples.ball()
-ipyvolume.examples.example_ylm()
+def test_example_head():
+    ipyvolume.examples.head()
 
-ipyvolume.datasets.aquariusA2.fetch()
-ipyvolume.datasets.hdz2000.fetch()
-ipyvolume.datasets.zeldovich.fetch()
+def test_example_ball():
+    ipyvolume.examples.ball()
+
+def test_example_ylm():
+    ipyvolume.examples.example_ylm()
+
+def test_datasets():
+    ipyvolume.datasets.aquariusA2.fetch()
+    ipyvolume.datasets.hdz2000.fetch()
+    ipyvolume.datasets.zeldovich.fetch()

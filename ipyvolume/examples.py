@@ -175,6 +175,52 @@ def brain(draw=True, show=True, fiducial=True, flat=True, inflated=True, subject
     else:
         return xlist, ylist, zlist, polys
 
+
+def head(draw=True, show=True, max_shape=256):
+    # inspired by http://graphicsrunner.blogspot.com/2009/01/volume-rendering-102-transfer-functions.html
+    import ipyvolume as ipv
+    from scipy.interpolate import splrep, splev, interp1d
+    # First part is a simpler version of setting up the transfer function. Interpolation with higher order
+    # splines does not work well, the original must do sth different
+    colors = [[.91, .7, .61, 0.],
+              [.91, .7, .61, 80.],
+              [1.0, 1.0, .85, 82.],
+              [1.0, 1.0, .85, 256]]
+    x = np.array([k[-1] for k in colors])
+    rgb = np.array([k[:3] for k in colors])
+    N = 256
+    xnew = np.linspace(0, 256, N)
+    tf_data = np.zeros((N, 4))
+    k = 1
+    s = 1
+    # kind = 'quadratic'
+    kind = 'linear'
+    for channel in range(3):
+    #     spline_data = splrep(x, rgb[:,channel], k=k, s=s)
+    #     ynew = splev(xnew, spline_data)
+        f = interp1d(x, rgb[:,channel], kind=kind)
+        ynew = f(xnew)
+        tf_data[:,channel] = ynew
+    alphas = [[0, 0], [0, 40], [0.2, 60], [0.05, 63], [0, 80], [0.9, 82], [1., 256]]
+    x = np.array([k[1]*1. for k in alphas])
+    y = np.array([k[0]*1. for k in alphas])
+    # spline_data = splrep(x, y, k=k, s=s)
+    # ynew = splev(xnew, spline_data)
+    f = interp1d(x, y, kind=kind)
+    ynew = f(xnew)
+    tf_data[:,3] = ynew
+    tf = ipv.TransferFunction(rgba=tf_data.astype(np.float32))
+
+    head_data = ipv.datasets.head.fetch().data
+    if draw:
+        vol = ipv.volshow(head_data, tf=tf, max_shape=max_shape)
+        if show:
+            ipv.show()
+        return vol
+    else:
+        return head_data
+
+
 def gaussian(N=1000, draw=True, show=True, seed=42, color=None, marker='sphere'):
     import ipyvolume as ipv
     rng = np.random.RandomState(seed)
