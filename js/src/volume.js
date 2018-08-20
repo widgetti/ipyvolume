@@ -161,7 +161,7 @@ var VolumeView = widgets.WidgetView.extend( {
         this.uniform_volumes_values.data_range = [this.model.get('data_min'), this.model.get('data_max')]
         this.uniform_volumes_values.show_range = [this.model.get('show_min'), this.model.get('show_max')]
         this.texture_volume.needsUpdate = true // without this it doesn't seem to work
-        this.data_shape = [this.volume.image_shape[0], this.volume.image_shape[1], this.volume.slices]
+        this.data_shape = [this.volume.slice_shape[0], this.volume.slice_shape[1], this.volume.slices]
     },
     tf_set: function() {
         // TODO: remove listeners from previous
