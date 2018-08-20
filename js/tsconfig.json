@@ -6,7 +6,7 @@
     "strictNullChecks": true,
     "module": "commonjs",
     "moduleResolution": "node",
-    "target": "ES5",
+    "target": "es2015",
     "outDir": "lib",
     "skipLibCheck": true,
     "sourceMap": true,
@@ -16,6 +16,7 @@
         "./src/**/*"
   ],
   "exclude": [
-    "node_modules"
+        "node_modules",
+        "**/*.spec.ts"
   ]
 }

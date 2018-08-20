@@ -19,7 +19,10 @@
     "install-test": "npm install && karma start --single-run",
     "test": "karma start --single-run",
     "build:lib": "tsc --project .",
-    "prepare": "npm run build:lib"
+    "prepare": "npm run build:lib",
+    "watch": "npm-run-all -p watch:*",
+    "watch:lib": "tsc -w --project .",
+    "watch:nbextension": "webpack --watch"
   },
   "jupyterlab": {
     "extension": "lib/labplugin"
@@ -33,6 +36,7 @@
     "babel-loader": "7.1.1",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-es2015-without-strict": "0.0.4",
+    "cache-loader": "^1.2.2",
     "chai": "^4.1.2",
     "json-loader": "^0.5.4",
     "karma": "^2.0.5",
@@ -45,13 +49,16 @@
     "karma-typescript-es6-transform": "^1.0.4",
     "karma-webpack": "^2.0.3",
     "mocha": "^3.5.3",
+    "npm-run-all": "^4.1.3",
     "raw-loader": "^0.5.1",
     "sinon": "^2.4.1",
     "sinon-chai": "^2.11.0",
-    "ts-loader": "~2.2.2",
-    "typescript": "~2.3.1",
+    "thread-loader": "^1.2.0",
+    "ts-loader": "^4.4.2",
+    "typescript": "~3.0.0",
     "url-loader": "^0.5.7",
-    "webpack": "^1.12.14"
+    "webpack": "^4.16.1",
+    "webpack-cli": "^3.0.8"
   },
   "dependencies": {
     "@jupyter-widgets/base": "^1.0.0",

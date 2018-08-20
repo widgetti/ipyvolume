@@ -1,14 +1,29 @@
 var version = require('./package.json').version;
+const path = require('path');
+var pyname = 'ipyvolume'
 
 // Custom webpack loaders are generally the same for all webpack bundles, hence
 // stored in a separate local variable.
-var loaders = [
-    { test: /\.css$/, loaders: ['style-loader', 'css-loader']},
-    { test: /\.json$/, loader: 'json-loader' },
-    {test: /\.png$/,loader: 'url-loader?limit=10000000'},
-    { test: /\.js$/, loader: 'babel-loader', exclude: /node_modules/},
-    { test: /\.ts?$/, loader: 'ts-loader', query: { presets: ['es2015']}}
+var rules = [
+    { test: /\.css$/, use: ['style-loader', 'css-loader']},
+    {test: /\.png$/,use: 'url-loader?limit=10000000'},
+    // { test: /\.js$/, loader: 'babel-loader', exclude: /node_modules/},
+    { test: /\.(ts|js)?$/, use: [
+         { loader: 'cache-loader' },
+         {
+                    loader: 'thread-loader',
+                    options: {
+                        // there should be 1 cpu for the fork-ts-checker-webpack-plugin
+                        workers: require('os').cpus().length - 1,
+                    },
+         },
+         { loader: "ts-loader", options: {transpileOnly: true,happyPackMode: true} }
+        ]}
 ];
+
+var resolve =  {
+    extensions: ['.ts', '.js']
+};
 
 
 module.exports = [
@@ -24,9 +39,10 @@ module.exports = [
         devtool: 'inline-source-map',
         output: {
             filename: 'extension.js',
-            path: '../ipyvolume/static',
+            path: path.resolve(__dirname, `../${pyname}/static`),
             libraryTarget: 'amd'
-        }
+        },
+        resolve: resolve
     },
     {// Bundle for the notebook containing the custom widget views and models
      //
@@ -36,19 +52,17 @@ module.exports = [
      //
         entry: './src/index.js',
         devtool: 'inline-source-map',
-        resolve: {
-            extensions: ['.ts', '.js', '']
-        },
         output: {
             filename: 'index.js',
-            path: '../ipyvolume/static',
+            path: path.resolve(__dirname, `../${pyname}/static`),
             libraryTarget: 'amd'
         },
         devtool: 'source-map',
         module: {
-            loaders: loaders
+            rules: rules
         },
-        externals: ['three', 'jupyter-js-widgets', '@jupyter-widgets/base', '@jupyter-widgets/controls']
+        externals: ['three', 'jupyter-js-widgets', '@jupyter-widgets/base', '@jupyter-widgets/controls'],
+        resolve: resolve
     },
     {// Embeddable ipyvolume bundle
      //
@@ -71,26 +85,27 @@ module.exports = [
         },
         output: {
             filename: 'index.js',
-            path: './dist/',
+            path: path.resolve(__dirname, './dist/'),
             libraryTarget: 'amd',
             publicPath: 'https://unpkg.com/ipyvolume@' + version + '/dist/'
         },
         devtool: 'source-map',
         module: {
-            loaders: loaders
+            rules: rules
         },
-        externals: ['jupyter-js-widgets', '@jupyter-widgets/base', '@jupyter-widgets/controls']
+        externals: ['jupyter-js-widgets', '@jupyter-widgets/base', '@jupyter-widgets/controls'],
+        resolve: resolve
     },
     {
         entry: 'three',
         output: {
             filename: 'three.js',
-            path: '../ipyvolume/static',
+            path: path.resolve(__dirname, `../${pyname}/static`),
             libraryTarget: 'amd'
         },
         devtool: 'source-map',
         module: {
-            loaders: loaders
+            rules: rules
         }
     },
 ];
