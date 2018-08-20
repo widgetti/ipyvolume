@@ -31,10 +31,9 @@ attribute vec4 color_previous;
 void main(void) {
     vec3 origin = vec3(xlim.x, ylim.x, zlim.x);
     vec3 size_viewport = vec3(xlim.y, ylim.y, zlim.y) - origin;
-    float max_scale = (max(size_viewport.x,size_viewport.y),size_viewport.z);
 
     vec3 pos = (mix(position_previous, position, vec3(animation_time_x, animation_time_y, animation_time_z))
-                - origin) / max_scale - 0.5;
+                - origin) / size_viewport - 0.5;
     gl_Position = projectionMatrix *
                 modelViewMatrix *
                 vec4(pos,1.0);
