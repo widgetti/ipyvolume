@@ -220,6 +220,9 @@ var MeshView = widgets.WidgetView.extend( {
             material.vertexShader = require('raw-loader!../glsl/mesh-vertex.glsl');
             material.fragmentShader = require('raw-loader!../glsl/mesh-fragment.glsl');
             material.uniforms = this.uniforms;
+            material.depthWrite = true;
+            material.transparant = true;
+            material.depthTest = true;
         })
         var texture = this.model.get('texture');
         if(texture && this.textures) {

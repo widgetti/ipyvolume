@@ -64,8 +64,26 @@ def clear():
     current.container = None
     current.figure = None
 
+def controls_light(return_widget=False):
+    fig = gcf()
+    ambient_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=fig.ambient_coefficient,
+                                                 description="ambient")
+    diffuse_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=fig.diffuse_coefficient,
+                                                 description="diffuse")
+    specular_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=fig.specular_coefficient,
+                                                  description="specular")
+    specular_exponent = ipywidgets.FloatSlider(min=0, max=10, step=0.001, value=fig.specular_exponent,
+                                               description="specular exp")
+    ipywidgets.jslink((fig, 'ambient_coefficient'), (ambient_coefficient, 'value'))
+    ipywidgets.jslink((fig, 'diffuse_coefficient'), (diffuse_coefficient, 'value'))
+    ipywidgets.jslink((fig, 'specular_coefficient'), (specular_coefficient, 'value'))
+    ipywidgets.jslink((fig, 'specular_exponent'), (specular_exponent, 'value'))
+    widgets_bottom = [ipywidgets.HBox([ambient_coefficient, diffuse_coefficient]),
+                      ipywidgets.HBox([specular_coefficient, specular_exponent])]
+    current.container.children += tuple(widgets_bottom, )
+    if return_widget: return widgets_bottom
 
-def figure(key=None, width=400, height=500, lighting=True, controls=True, controls_vr=False, debug=False, **kwargs):
+def figure(key=None, width=400, height=500, lighting=True, controls=True, controls_vr=False, controls_light=False, debug=False, **kwargs):
     """Create a new figure (if no key is given) or return the figure associated with key
 
     :param key: Python object that identifies this figure
@@ -86,7 +104,7 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, contro
         current.figure = current.figures[key]
         current.container = current.containers[key]
     else:
-        current.figure = ipv.Figure(volume_data=None, width=width, height=height, **kwargs)
+        current.figure = ipv.Figure(width=width, height=height, **kwargs)
         current.container = ipywidgets.VBox()
         current.container.children = [current.figure]
         if key is None:
@@ -102,6 +120,8 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, contro
             eye_separation = ipywidgets.FloatSlider(value=current.figure.eye_separation, min=-10, max=10, icon='eye')
             ipywidgets.jslink((eye_separation, 'value'), (current.figure, 'eye_separation'))
             current.container.children += (eye_separation,)
+        if controls_light:
+            globals()['controls_light']()
         if debug:
             show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front", "Coordinate"])
             current.container.children += (show,)
@@ -622,13 +642,15 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
             specular_coefficient=0.5, specular_exponent=5,
             downscale=1,
             level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1,
-            controls=True, max_opacity=0.2, extent=None):
+            controls=True, max_opacity=0.2, memorder='C', extent=None):
     """Visualize a 3d array using volume rendering.
 
     Currently only 1 volume can be rendered.
 
 
     :param data: 3d numpy array
+    :param origin: origin of the volume data, this is to match meshes which have a different origin
+    :param domain_size: domain size is the size of the volume 
     :param bool lighting: use lighting or not, if set to false, lighting parameters will be overriden
     :param float data_min: minimum value to consider for data, if None, computed using np.nanmin
     :param float data_max: maximum value to consider for data, if None, computed using np.nanmax
@@ -648,48 +670,48 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume, otherwise the viewport is used
     :return:
     """
-    vol = gcf()
+    fig = gcf()
+
     if tf is None:
-        tf = vol.tf or transfer_function(level, opacity, level_width, controls=controls, max_opacity=max_opacity)
+        tf = transfer_function(level, opacity, level_width, controls=controls, max_opacity=max_opacity)
     if data_min is None:
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
-    vol.tf = tf
-    vol.volume_data_min = data_min
-    vol.volume_data_max = data_max
-    vol.volume_show_min = data_min
-    vol.volume_show_max = data_max
+    if memorder is 'F':
+        data = data.T
+
     if extent is None:
-        extent = [(0, k) for k in data.shape]
-    vol.extent_original = extent
-    vol.volume_data_max_shape = max_shape
-    vol.volume_data_original = data
-    vol.stereo = stereo
-    vol.ambient_coefficient = ambient_coefficient
-    vol.diffuse_coefficient = diffuse_coefficient
-    vol.specular_coefficient = specular_coefficient
-    vol.specular_exponent = specular_exponent
+        extent = [(0, k) for k in data.shape[::-1]]
+
+    vol = ipv.Volume(data_original = data,
+                    tf=tf,
+                    data_min = data_min,
+                    data_max = data_max,
+                    show_min = data_min,
+                    show_max = data_max,
+                    extent_original = extent,
+                    data_max_shape = max_shape,
+                    ambient_coefficient = ambient_coefficient,
+                    diffuse_coefficient = diffuse_coefficient,
+                    specular_coefficient = specular_coefficient,
+                    specular_exponent = specular_exponent,
+                    rendering_lighting = lighting)
+
     if extent:
         _grow_limits(*extent)
 
     if controls:
-        ambient_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=vol.ambient_coefficient,
-                                                     description="ambient")
-        diffuse_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=vol.diffuse_coefficient,
-                                                     description="diffuse")
-        specular_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=vol.specular_coefficient,
-                                                      description="specular")
-        specular_exponent = ipywidgets.FloatSlider(min=0, max=10, step=0.001, value=vol.specular_exponent,
-                                                   description="specular exp")
-        # angle2 = ipywidgets.FloatSlider(min=0, max=np.pi*2, value=v.angle2, description="angle2")
-        ipywidgets.jslink((vol, 'ambient_coefficient'), (ambient_coefficient, 'value'))
-        ipywidgets.jslink((vol, 'diffuse_coefficient'), (diffuse_coefficient, 'value'))
-        ipywidgets.jslink((vol, 'specular_coefficient'), (specular_coefficient, 'value'))
-        ipywidgets.jslink((vol, 'specular_exponent'), (specular_exponent, 'value'))
-        widgets_bottom = [ipywidgets.HBox([ambient_coefficient, diffuse_coefficient]),
-                          ipywidgets.HBox([specular_coefficient, specular_exponent])]
+        widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2, 
+                                                     description="opacity")
+        widget_brightness = ipywidgets.FloatLogSlider(base=10, min=-1, max=1,
+                                                     description="brightness")
+        ipywidgets.jslink((vol, 'opacity_scale'), (widget_opacity_scale, 'value'))
+        ipywidgets.jslink((vol, 'brightness'), (widget_brightness, 'value'))
+        widgets_bottom = [ipywidgets.HBox([widget_opacity_scale, widget_brightness])]
         current.container.children += tuple(widgets_bottom, )
+
+    fig.volumes = fig.volumes + [vol]
 
     return vol
 

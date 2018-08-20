@@ -5,6 +5,7 @@ var THREEtext2d = require("three-text2d")
 var glm = require("gl-matrix")
 var d3 = require("d3")
 var screenfull = require("screenfull")
+var Mustache = require("mustache");
 require('../css/style.css')
 
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
@@ -15,6 +16,7 @@ var styles = require('../data/style.json')
 
 var scatter = require('./scatter.js')
 var mesh = require('./mesh.js')
+var volume = require('./volume.js')
 //
 window.THREE = THREE;
 //window.THREEx = {};
@@ -32,17 +34,10 @@ function is_ndarray(obj) {
 }
 
 var shaders = {}
-shaders["cube_fragment"] = require('raw-loader!../glsl/cube-fragment.glsl');
-shaders["cube_vertex"] = require('raw-loader!../glsl/cube-vertex.glsl');
-shaders["box_fragment"] = require('raw-loader!../glsl/box-fragment.glsl');
-shaders["box_vertex"] = require('raw-loader!../glsl/box-vertex.glsl');
-shaders["texture_fragment"] = require('raw-loader!../glsl/texture-fragment.glsl');
-shaders["texture_vertex"] = require('raw-loader!../glsl/texture-vertex.glsl');
-shaders["volr_fragment"] = require('raw-loader!../glsl/volr-fragment.glsl');
-shaders["volr_vertex"] = require('raw-loader!../glsl/volr-vertex.glsl');
 shaders["screen_fragment"] = require('raw-loader!../glsl/screen-fragment.glsl');
 shaders["screen_vertex"] = require('raw-loader!../glsl/screen-vertex.glsl');
-
+shaders["volr_fragment"] = require('raw-loader!../glsl/volr-fragment.glsl');
+shaders["volr_vertex"] = require('raw-loader!../glsl/volr-vertex.glsl');
 
 
 function to_rgb(color) {
@@ -561,26 +556,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.renderer_stereo = new THREE.StereoEffect(this.renderer);
         this.renderer_selected = this.renderer_stereo;
 
-        this.box_geo = new THREE.BoxBufferGeometry(1, 1, 1)
-        //this.box_material = new THREE.MeshLambertMaterial({color: 0xCC0000});
-        this.box_material = new THREE.ShaderMaterial({
-            uniforms: {
-                offset: { type: '3f', value: [0, 0, 0] },
-                scale : { type: '3f', value: [1, 1, 1] },
-            },
-            fragmentShader: shaders["box_fragment"],
-            vertexShader: shaders["box_vertex"],
-            side: THREE.BackSide
-        });
-        this.box_mesh = new THREE.Mesh(this.box_geo, this.box_material)
-        //this.box_mesh.position.z = -5;
-        this.box_mesh.updateMatrix()
-        this.box_mesh.matrixAutoUpdate = true
-
-        this.box_geo_edges = new THREE.EdgesGeometry( this.box_geo )
-        this.box_material_wire = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 1. } );
-        this.box_mesh_wire = new THREE.LineSegments(this.box_geo, this.box_material)
-
         var make_line = function(x1, y1, z1, x2, y2, z2, material) {
             //var linewidth = 2;
             //var material = new THREE.LineBasicMaterial({color: color, linewidth: linewidth});
@@ -641,16 +616,17 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         // we have our 'private' scene, if we use the real scene, it gives buggy
         // results in the volume rendering when we have two views
-        this.scene = new THREE.Scene();
+        this.scene_volume = new THREE.Scene();
         this.shared_scene = this.model.get('scene').obj
+
         // could be removed when https://github.com/jovyan/pythreejs/issues/176 is solved
         // the default for pythreejs is white, which leads the volume rendering pass to make everything white
-        this.scene.background = null
+        this.scene_volume.background = null
         this.model.get('scene').on('rerender', () => this.update())
-        this.scene.add(this.camera);
+
+        this.scene_volume.add(this.camera);
         // the threejs animation system looks at the parent of the camera and sends rerender msg'es
         this.shared_scene.add(this.camera);
-        this.scene.add(this.box_mesh)
 
         this.scene_scatter = new THREE.Scene();
         //this.scene_scatter.add(this.camera);
@@ -660,6 +636,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.scene_opaque.add(this.wire_box)
         this.scene_opaque.add(this.axes)
 
+        this.mesh_views = {};
+        this.scatter_views = {};
+        this.volume_views = {};
+
         var render_width = width;
         var render_height = height;
         if(this.model.get("stereo"))
@@ -667,17 +647,21 @@ var FigureView = widgets.DOMWidgetView.extend( {
         render_width /= this.model.get("downscale")
         render_height /= this.model.get("downscale")
 
-        this.back_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
-        this.front_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
-        this.volr_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+        // Render pass targets
+        // float texture for better depth data, prev name back_texture
+        this.volume_back_target = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, type: THREE.FloatType, format:THREE.RGBAFormat, generateMipmaps: false});
+        this.geometry_depth_target = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format:THREE.RGBAFormat, generateMipmaps: false, depthTexture: new THREE.DepthTexture()} );
+        this.geometry_depth_target.depthTexture.type = THREE.UnsignedShortType;
+        this.color_pass_target = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter});
+        this.screen_pass_target = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter});
         this.coordinate_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
 
-        this.screen_texture = this.volr_texture
+        this.screen_texture = this.color_pass_target.texture;
         this.screen_scene = new THREE.Scene();
         this.screen_scene_cube = new THREE.Scene();
         this.screen_plane = new THREE.PlaneBufferGeometry( 1.0, 1.0 );
         this.screen_material = new THREE.ShaderMaterial( {
-                    uniforms: { tex: { type: 't', value: this.front_texture.texture } },
+                    uniforms: { tex: { type: 't', value: this.screen_pass_target.texture } },
                     vertexShader: shaders["screen_vertex"],
                     fragmentShader: shaders["screen_fragment"],
                     depthWrite: false
@@ -734,75 +718,58 @@ var FigureView = widgets.DOMWidgetView.extend( {
 		window.addEventListener( 'deviceorientation', _.bind(this.on_orientationchange, this), false );
 		//window.addEventListener( 'deviceorientation', _.bind(this.update, this), false );
         //this.controls.
+        var render_size = this.getRenderSize()
 
-
-        this.texture_loader = new THREE.TextureLoader()
-
-        this.texture_tf = null;//new THREE.DataTexture(null, this.model.get("tf").get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
-
-        this.box_material_volr = new THREE.ShaderMaterial({
+        this.material_multivolume = new THREE.ShaderMaterial({
             uniforms: {
-                front: { type: 't', value: null },
-                back : { type: 't', value: null },
-                volume : { type: 't', value: null },
-                transfer_function : { type: 't', value: this.texture_tf },
-                brightness : { type: "f", value: 2. },
-                data_min : { type: "f", value: 0. },
-                data_max : { type: "f", value: 1. },
-                opacity_scale :  { type: "f", value: 1.0 },
-                volume_rows : { type: "f", value: 8. },
-                volume_columns : { type: "f", value: 16. },
-                volume_slices : { type: "f", value: 128. },
-                volume_size : { type: "2f", value: [2048., 1024.] },
-                volume_slice_size : { type: "2f", value: [128., 128.] },
-                volume_show_range : { type: "2f", value: [0., 1.] },
-                volume_data_range : { type: "2f", value: [0., 1.] },
-                clamp_min : {type: "b", value: false},
-                clamp_max : {type: "b", value: false},
+                back_tex : { type: 't', value: this.volume_back_target.texture },
+                geometry_depth_tex: { type: 't', value: this.geometry_depth_target.depthTexture },
+
+                volumes: {type: 'tv', value: [{}]},
+                data: {type: 'tv', value: []},
+                transfer_function: {type: 'tv', value: []},
+
+                volumes_max_int: {type: 'tv', value: [{}]},
+                data_max_int: {type: 'tv', value: []},
+                transfer_function_max_int: {type: 'tv', value: []},
+
                 ambient_coefficient : { type: "f", value: this.model.get("ambient_coefficient") },
                 diffuse_coefficient : { type: "f", value: this.model.get("diffuse_coefficient") },
                 specular_coefficient : { type: "f", value: this.model.get("specular_coefficient") },
                 specular_exponent : { type: "f", value: this.model.get("specular_exponent") },
-                render_size : { type: "2f", value: [render_width, render_height] },
-                scale: {type: "3f"},
-                offset: {type: "3f"},
+
+                brightness : { type: "f", value: 2. },
+                render_size : { type: "2f", value: render_size },
+
+                steps : {type: 'f', value: 10}
             },
             blending: THREE.CustomBlending,
-            blendSrc: THREE.SrcAlphaFactor,
+            blendSrc: THREE.OneFactor,
             blendDst: THREE.OneMinusSrcAlphaFactor,
             blendEquation: THREE.AddEquation,
             transparent: true,
-            fragmentShader: shaders["volr_fragment"],
-            vertexShader: shaders["volr_vertex"],
             defines: {},
-            side: THREE.BackSide
+            side: THREE.FrontSide
         });
         // a clone of the box_material_volr, with a different define (faster to render)
-        this.box_material_volr_depth = new THREE.ShaderMaterial({
-            uniforms: this.box_material_volr.uniforms,
+        this.material_multivolume_depth = new THREE.ShaderMaterial({
+            uniforms: this.material_multivolume.uniforms,
             blending: THREE.NoBlending,
-            fragmentShader: shaders["volr_fragment"],
-            vertexShader: shaders["volr_vertex"],
             defines: {COORDINATE: true},
-            side: THREE.BackSide
+            side: THREE.FrontSide
         });
-        var update_volr_defines = () => {
-            this.box_material_volr.defines = {USE_LIGHTING: this.model.get('volume_rendering_lighting')}
-            this.box_material_volr.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
-            this.box_material_volr.needsUpdate = true
-            this.box_material_volr_depth.defines = {COORDINATE: true, USE_LIGHTING: this.model.get('volume_rendering_lighting')}
-            this.box_material_volr_depth.defines['METHOD_' + this.model.get('volume_rendering_method')] = true;
-            this.box_material_volr_depth.needsUpdate = true
-            this.update()
-        }
-        this.model.on('change:volume_rendering_method change:volume_rendering_lighting', update_volr_defines)
-        update_volr_defines()
+
+
+        this.model.on('change:scatters', this.update_scatters, this)
+        this.update_scatters()
+        this.model.on('change:meshes', this.update_meshes, this)
+        this.update_meshes()
+        this.model.on('change:volumes', this.update_volumes, this)
+        this.update_volumes()
+
 
         //this.volume_changed()
         this.update_size()
-        this.tf_set()
-        this.data_set()
-        this._update_box_geo()
 
         var that = this;
         //*
@@ -836,10 +803,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this._save_matrices, this);
-        this.model.on('change:xlim change:ylim change:zlim change:extent', this._update_box_geo, this);
         this.model.on('change:downscale', this.update_size, this);
         this.model.on('change:stereo', this.update_size, this);
-        this.model.on('change:volume_data', this.data_set, this);
+        
         this.model.on('change:eye_separation', this.update, this)
 
         this.model.on('change:camera_fov', this.update_current_control, this)
@@ -852,34 +818,12 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:diffuse_coefficient', this.update_light, this);
         this.model.on('change:specular_coefficient', this.update_light, this);
         this.model.on('change:specular_exponent', this.update_light, this);
-        var update_volume_minmax = () => {
-            this.box_material_volr.uniforms.volume_data_range.value = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
-            this.box_material_volr.uniforms.volume_show_range.value = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
-            this.update()
-        }
-        this.model.on('change:volume_data_min change:volume_data_max change:volume_show_min change:volume_show_max', update_volume_minmax, this);
-        update_volume_minmax()
 
-        var update_volume_clamp = () => {
-            this.box_material_volr.uniforms.clamp_min.value = this.model.get('volume_clamp_min')
-            this.box_material_volr.uniforms.clamp_max.value = this.model.get('volume_clamp_max')
-            this.update()
-        }
-        this.model.on('change:volume_clamp_min change:volume_clamp_max', update_volume_clamp, this);
-        update_volume_clamp()
-
-
-        var update_opacity_scale = () => {
-            this.box_material_volr.uniforms['opacity_scale'].value = this.model.get('opacity_scale')
-            this.update()
-        }
-        update_opacity_scale()
-        this.model.on('change:opacity_scale', update_opacity_scale)
 
         var update_center = () => {
             // WARNING: we cheat a little by setting the scene positions (hence the minus) since it is
             // easier, might get us in trouble later?
-            _.each([this.scene_opaque, this.scene_scatter, this.scene], (scene) => {
+            _.each([this.scene_volume, this.scene_opaque, this.scene_scatter], scene => {
                 var pos = this.model.get('camera_center');
                 scene.position.set(-pos[0], -pos[1], -pos[2])
             })
@@ -899,8 +843,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.renderer.domElement.addEventListener( 'resize', _.bind(this.on_canvas_resize, this), false );
         this.update()
 
-        this.meshes = []
-        this.scatters = [] /*new widgets.ViewList(_.bind(function add(model) {
+        /*new widgets.ViewList(_.bind(function add(model) {
                 console.log("adding")
                 console.log(model)
                 scatter_view = new ScatterView()
@@ -927,12 +870,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             }, this)
 
         )*/
-         this.model.on('change:scatters', this.update_scatters, this)
-         this.update_scatters()
-         this.model.on('change:meshes', this.update_meshes, this)
-         this.update_meshes()
-
-
+        
         function onWindowResize(){
 
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -942,7 +880,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         }
 
-        window.last_volume = this;
         //navigator.wakeLock.request("display")
 
         //ensure initial sync of view with figure model
@@ -968,58 +905,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
             //console.log('!hover')
             this.hover = false
         }
-    },
-    _update_box_geo: function() {
-        var x = this.model.get('xlim')
-        var y = this.model.get('ylim')
-        var z = this.model.get('zlim')
-        var dx = (x[1] - x[0])
-        var dy = (y[1] - y[0])
-        var dz = (z[1] - z[0])
-
-        // if no extend given, scale it to viewport
-        var extent = this.model.get('extent')
-        if(!extent)
-           extent = [x, y, z]
-
-       // normalized coordinates of the corners of the box
-        var x0 = (extent[0][0]-x[0])/dx
-        var x1 = (extent[0][1]-x[0])/dx
-        var y0 = (extent[1][0]-y[0])/dy
-        var y1 = (extent[1][1]-y[0])/dy
-        var z0 = (extent[2][0]-z[0])/dz
-        var z1 = (extent[2][1]-z[0])/dz
-
-        // clipped coordinates
-        var cx0 = Math.max(x0,  0)
-        var cx1 = Math.min(x1,  1)
-        var cy0 = Math.max(y0,  0)
-        var cy1 = Math.min(y1,  1)
-        var cz0 = Math.max(z0,  0)
-        var cz1 = Math.min(z1,  1)
-
-        // the clipped coordinates back to world space, then normalized to extend
-        // these are example calculations, the transform goes into scale and offset uniforms below
-        // var cwx0 = (cx0 * dx + x[0] - extent[0][0])/(extent[0][1] - extent[0][0])
-        // var cwx1 = (cx1 * dx + x[0] - extent[0][0])/(extent[0][1] - extent[0][0])
-
-        // this.box_geo = new THREE.BoxBufferGeometry(cx1-cx0, cy1-cy0, cz1-cz0)
-        // this.box_geo.translate((cx1-x0)/2, (cy1-cy0)/2, (cz1-cz0)/2)
-        // this.box_geo.translate(cx0, cy0, cz0)
-        // this.box_geo.translate(-0.5, -0.5, -0.5)
-        this.box_geo = new THREE.BoxBufferGeometry(1, 1, 1)
-        this.box_geo.translate(0.5, 0.5, 0.5)
-        this.box_geo.scale((cx1-cx0), (cy1-cy0), (cz1-cz0))
-        this.box_geo.translate(cx0, cy0, cz0)
-        this.box_geo.translate(-0.5, -0.5, -0.5)
-        this.box_mesh.geometry = this.box_geo
-        // this.box_material_volr.uniforms.scale.value = [dx/(extent[0][1] - extent[0][0]), dy/(extent[1][1] - extent[1][0]), dz/(extent[2][1] - extent[2][0])]
-        // this.box_material_volr.uniforms.offset.value = [(x[0] - extent[0][0])/(extent[0][1] - extent[0][0]),
-        //                                            (y[0] - extent[1][0])/(extent[1][1] - extent[1][0]),
-        //                                            (z[0] - extent[2][0])/(extent[2][1] - extent[2][0])]
-        this.box_material_volr.uniforms.scale.value = [1/(x1-x0), 1/(y1-y0), 1/(z1-z0)]
-        this.box_material_volr.uniforms.offset.value = [-x0, -y0, -z0]
-        this.update()
     },
     setStyle: function() {
         // ignore original style setting, our style != a style widget
@@ -1086,7 +971,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
             var zlim = this.model.get('zlim')
             var p1 = new THREE.Vector3(xlim[0], ylim[0], zlim[0]);
             var p2 = new THREE.Vector3(xlim[1], ylim[1], zlim[1]);
-            var scale = p2.clone().sub(p1);
+            var ptp = p2.clone().sub(p1);
+            var max_scale = Math.max(ptp.x,ptp.y,ptp.z); 
+            var scale = new THREE.Vector3(max_scale,max_scale,max_scale);
             var new_p1 = np1.clone().multiply(scale).add(p1);
             var new_p2 = np2.clone().multiply(scale).add(p1);
             this.model.set('xlim', [new_p1.x, new_p2.x])
@@ -1155,8 +1042,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 // normalized GL screen coordinates
                 var right = (pixels_right/canvas.clientWidth) * 2;
                 var up    = (pixels_up/canvas.clientHeight) * 2;
-                var P = last_volume.camera.projectionMatrix
-                var W = last_volume._get_view_matrix()
+                var P = this.camera.projectionMatrix
+                var W = this._get_view_matrix()
                 // M goes from world to screen
                 var M = M = P.clone().multiply(W)
                 var Mi = M.clone().getInverse(M)
@@ -1336,7 +1223,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var aligns = {x: THREEtext2d.textAlign.topRight, y:THREEtext2d.textAlign.topRight, z:THREEtext2d.textAlign.center}
         var label = new THREEtext2d.SpriteText2D(d.label, { align: aligns[d.name], font: '30px Arial', fillStyle: '#00FF00', antialias: true })
         label.material.transparent = true
-        label.material.alphaTest = 0.01
+        label.material.alphaTest = 0.3
         label.scale.set(s,s,s)
         axis.add(label)
         d.object_label = label;
@@ -1365,7 +1252,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var aligns = {x: THREEtext2d.textAlign.topRight, y:THREEtext2d.textAlign.topRight, z:THREEtext2d.textAlign.center}
         var sprite =  new THREEtext2d.SpriteText2D(tick_text, { align: aligns[parent_data.name], font: '30px Arial', fillStyle: '#00FF00', antialias: true })
         sprite.material.transparent = true
-        //sprite.material.alphaTest = 0.1
+        sprite.material.alphaTest = 0.3
         sprite.blending = THREE.CustomBlending
         sprite.blendSrc = THREE.SrcAlphaFactor
         sprite.blendDst = THREE.OneMinusSrcAlphaFactor
@@ -1397,44 +1284,82 @@ var FigureView = widgets.DOMWidgetView.extend( {
         d.object_ticklabel.parent.remove(d.object_ticklabel)
     },
     update_scatters: function() {
-        if(this.scatter_views) {
-            this.scatter_views.forEach((scatter) => {
-                scatter.remove_from_scene();
-                scatter.remove();
-            })
-        }
-        var scatters = this.model.get('scatters');
-        if(scatters) {
-            //this.scatters.update(scatters);
-            this.scatter_views = _.map(scatters, function(model) {
-                var options = {parent: this}
-                var scatter_view = new scatter.ScatterView({options: options, model: model})
-                scatter_view.render()
-                return scatter_view
+        var scatters = this.model.get('scatters'); // This is always a list?
+        if(scatters.length != 0) { // So now check if list has length 0
+            var current_sct_cids = []
+            // Add new scatter if not already as scatter view in figure
+            _.each(scatters, scatter_model => {
+                current_sct_cids.push(scatter_model.cid);
+                if(!(scatter_model.cid in this.scatter_views)){
+                    var options = {parent: this}
+                    var scatter_view = new scatter.ScatterView({options: options, model: scatter_model})
+                    scatter_view.render()    
+                    this.scatter_views[scatter_model.cid] = scatter_view
+                }
             }, this)
-         } else {
-            scatter_views = []
-         }
+
+            // Remove old scatters not contained in scatters
+            _.each(this.scatter_views, (sct, cid) => {
+                if(current_sct_cids.indexOf(cid) == -1){
+                    sct.remove_from_scene();
+                    delete this.scatter_views[cid];
+                }
+            },this)
+        } else {
+            this.scatter_views = {}
+        }
     },
     update_meshes: function() {
-        if(this.mesh_views) {
-            this.mesh_views.forEach((mesh) => {
-                mesh.remove_from_scene();
-                mesh.remove();
-            })
-        }
-        var meshes = this.model.get('meshes');
-        if(meshes) {
-            //this.meshes.update(meshes);
-            this.mesh_views = _.map(meshes, function(model) {
-                var options = {parent: this}
-                var mesh_view = new mesh.MeshView({options: options, model: model})
-                mesh_view.render()
-                return mesh_view
+        var meshes = this.model.get('meshes'); // This is always a list?
+        if(meshes.length != 0) { // So now check if list has length 0
+            var current_msh_cids = []
+            // Add new meshes if not already as mesh view in figure
+            _.each(meshes, mesh_model => {
+                current_msh_cids.push(mesh_model.cid);
+                if(!(mesh_model.cid in this.mesh_views)){
+                    var options = {parent: this}
+                    var mesh_view = new mesh.MeshView({options: options, model: mesh_model})
+                    mesh_view.render()    
+                    this.mesh_views[mesh_model.cid] = mesh_view
+                }
             }, this)
-         } else {
-            mesh_views = []
-         }
+
+            // Remove old meshes not contained in meshes
+            _.each(this.mesh_views, (mv, cid) => {
+                if(current_msh_cids.indexOf(cid) == -1){
+                    mv.remove_from_scene();
+                    delete this.mesh_views[cid];
+                }
+            },this)
+        } else {
+            this.mesh_views = {}
+        }
+    },
+    update_volumes: function() {
+        var volumes = this.model.get('volumes'); // This is always a list?
+        if(volumes.length != 0) { // So now check if list has length 0
+            var current_vol_cids = []
+            // Add new volumes if not already as volume view in figure
+            _.each(volumes, vol_model => {
+                current_vol_cids.push(vol_model.cid);
+                if(!(vol_model.cid in this.volume_views)){
+                    var options = {parent: this}
+                    var volume_view = new volume.VolumeView({options: options, model: vol_model})
+                    this.volume_views[vol_model.cid] = volume_view
+                    volume_view.render()
+                }
+            }, this)
+
+            // Remove old meshes not contained in meshes
+            _.each(this.volume_views, (vol, cid) => {
+                if(current_vol_cids.indexOf(cid) == -1){
+                    vol.remove_from_scene();
+                    delete this.volume_views[cid];
+                }
+            },this)
+        } else {
+            this.volume_views = {}
+        }
     },
     transition: function(f, on_done, context) {
         var that = this;
@@ -1480,7 +1405,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.box_mesh.rotation.x = -(e.beta * Math.PI / 180 + Math.PI*2);
         this.box_mesh.rotation.y = -(e.gamma * Math.PI / 180 + Math.PI*2);*/
 
-        _.each([this.scene, this.scene_opaque, this.scene_scatter], function(scene){
+        _.each([this.scene_volume, this.scene_opaque, this.scene_scatter], scene => {
             scene.rotation.reorder( "XYZ" );
             scene.rotation.x = (e.gamma * Math.PI / 180 + Math.PI*2);
             scene.rotation.y = -(e.beta * Math.PI / 180 + Math.PI*2);
@@ -1613,7 +1538,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
                         child_data.push({})
                     while(child_data.length > ticks.length) // ticks may return a smaller array, so pop child data
                         child_data.pop()
-                    _.each(ticks, function(tick, i) {
+                    _.each(ticks, (tick, i) => {
                         child_data[i].value = tick;
                     });
                     return child_data
@@ -1700,7 +1625,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
         if(this.model.get('render_continuous'))
             this.update()
-        this.model.get('scene').trigger('afterRender', this.scene, this.renderer, this.camera)
+        this.model.get('scene').trigger('afterRender', this.scene_volume, this.renderer, this.camera)
     },
     get_style_color: function(name) {
         style = this.get_style(name)
@@ -1712,7 +1637,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
     },
     get_style: function(name) {
         var value = [null]
-        _.each(name.split(" "), function(property) {
+        _.each(name.split(" "), property => {
             var value_found = _.reduce(property.split("."), function(object, property) {
                 if(object != null && object[property] != undefined)
                     return object[property]
@@ -1727,14 +1652,14 @@ var FigureView = widgets.DOMWidgetView.extend( {
     },
     _render_eye: function(camera) {
         this.camera.updateMatrixWorld();
-        var has_volumes = this.model.get("volume_data");
+        var has_volumes = this.model.get("volumes").length != 0;
         var panorama = this.model.get('panorama_mode') != 'no';
 
         // set material to rgb
-        _.each(this.scatter_views, function(scatter) {
+        _.each(this.scatter_views, scatter => {
             scatter.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
         }, this)
-        _.each(this.mesh_views, function(mesh_view) {
+        _.each(this.mesh_views, mesh_view => {
             mesh_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
         }, this)
 
@@ -1773,100 +1698,186 @@ var FigureView = widgets.DOMWidgetView.extend( {
             return
         }
 
-        // clear main render target
-        this.renderer.clearTarget(this.volr_texture, true, true, true)
-
         // render the back coordinates of the box
-        this.box_mesh.material = this.box_material;
-        this.box_material.side = THREE.BackSide;
-        this.renderer.clearTarget(this.back_texture, true, true, true)
-        this.renderer.render(this.scene, camera, this.back_texture);
+        if(has_volumes){
+            // to render the back sides of the boxes, we need to invert the z buffer value
+            // and invert the test
+            this.renderer.state.buffers.depth.setClear(0);
+            _.each(this.volume_views, volume_view => {
+                volume_view.box_material.side = THREE.BackSide;
+                volume_view.box_material.depthFunc = THREE.GreaterDepth
+                volume_view.vol_box_mesh.material = volume_view.box_material;
+                volume_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
+            },this)
+            this.renderer.clearTarget(this.volume_back_target, true, true, true)
+            this.renderer.render(this.scene_volume, camera, this.volume_back_target);
+            this.renderer.state.buffers.depth.setClear(1);
 
-        // now render the opaque object, such that we limit the rays
-        // set material to rgb
-        _.each(this.scatter_views, function(scatter) {
+            // Color and depth render pass for volume rendering
+            this.renderer.autoClear = false;
+            this.renderer.clearTarget(this.geometry_depth_target, true, true, true)
+            this.renderer.render(this.scene_scatter, camera, this.geometry_depth_target);
+            this.renderer.render(this.scene_opaque, camera, this.geometry_depth_target);
+            this.renderer.autoClear = true;
+
+        }
+        
+        // Normal color pass of geometry for final screen pass
+        this.renderer.autoClear = false;
+        this.renderer.clearTarget(this.color_pass_target, true, true, true)
+        this.renderer.render(this.scene_scatter, camera, this.color_pass_target);
+        this.renderer.render(this.scene_opaque, camera, this.color_pass_target);
+        this.renderer.autoClear = true;
+
+        if(has_volumes) {
+            // render the box front once, without writing the colors
+            // so that once we render the box again, each fragment will be processed
+            // once.
+            this.renderer.context.colorMask(0, 0, 0, 0)
+            _.each(this.volume_views, volume_view => {
+                volume_view.box_material.side = THREE.FrontSide;
+                volume_view.box_material.depthFunc = THREE.LessEqualDepth
+            },this)
+            this.renderer.autoClear = false;
+            this.renderer.clearTarget(this.color_pass_target, false, true, false)
+            this.renderer.render(this.scene_volume, camera, this.color_pass_target);
+            this.renderer.autoClear = true;
+            this.renderer.context.colorMask(true, true, true, true)
+
+            // TODO: if volume perfectly overlap, we render it twice, use polygonoffset and LESS z test?
+            _.each(this.volume_views, volume_view => {
+                volume_view.vol_box_mesh.material = this.material_multivolume;
+                // volume_view.set_geometry_depth_tex(this.geometry_depth_target.depthTexture)
+            },this)
+            this.renderer.autoClear = false;
+            // we want to keep the colors and z-buffer as they are
+            this.renderer.clearTarget(this.color_pass_target, false, false, false)
+            this.renderer.render(this.scene_volume, camera, this.color_pass_target);
+            this.renderer.autoClear = true;
+        }
+
+        // set RGB material for coordinate texture render
+        _.each(this.scatter_views, scatter => {
             scatter.mesh.material = scatter.mesh.material_rgb
         }, this)
-        _.each(this.mesh_views, function(mesh_view) {
-            _.each(mesh_view.meshes, function(mesh) {
+        _.each(this.mesh_views, mesh_view => {
+            _.each(mesh_view.meshes, mesh => {
                 mesh.material = mesh.material_rgb
             }, this);
         }, this)
-        this.renderer.autoClear = false;
-        this.scene_opaque.overrideMaterial = this.box_material;
-        this.renderer.render(this.scene_scatter, camera, this.back_texture);
-        this.renderer.render(this.scene_opaque, camera, this.back_texture);
 
         // we also render this for the zoom coordinate
+        this.renderer.autoClear = false;
         this.renderer.setClearAlpha(0)
         this.renderer.clearTarget(this.coordinate_texture, true, true, true)
         this.renderer.render(this.scene_scatter, camera, this.coordinate_texture);
-        this.renderer.render(this.scene_opaque, camera, this.coordinate_texture);
-
         this.renderer.autoClear = true;
-
-        // restore materials
-        _.each(this.scatter_views, function(scatter) {
-            scatter.mesh.material = scatter.mesh.material_normal
-        }, this)
-        _.each(this.mesh_views, function(mesh_view) {
-            _.each(mesh_view.meshes, function(mesh) {
-                mesh.material = mesh.material_normal
-            }, this);
-        }, this)
-
-
-        if(has_volumes) {
-            // render the front coordinates
-            //this.box_mesh.material = this.box_material_volr;
-            this.box_material.side = THREE.FrontSide;
-            this.renderer.autoClear = false;
-            this.renderer.clearTarget(this.front_texture, true, true, true)
-            this.renderer.render(this.scene, camera, this.front_texture);
-            this.renderer.autoClear = true;
-        }
-
-        // render the opaque objects with normal materials
-        this.scene_opaque.overrideMaterial = null;
-        this.renderer.autoClear = false;
-        this.renderer.render(this.scene_scatter, camera, this.volr_texture);
-        this.renderer.render(this.scene_opaque, camera, this.volr_texture);
-        this.renderer.autoClear = true;
-
-        if(has_volumes) {
-            // last pass, render the volume
-            this.box_mesh.material = this.box_material_volr;
-            this.renderer.autoClear = false;
-            // clear depth buffer only
-            this.renderer.clearTarget(this.volr_texture, false, true, false)
-            this.renderer.render(this.scene, camera, this.volr_texture);
-            this.renderer.autoClear = true;
-            // restore material
-        }
 
         // now we render the weighted coordinate for the volumetric data
         // make sure where we don't render, alpha = 0
         if(has_volumes) {
+            // render again, but now with depth material
+            // TODO: this render pass is only needed when the coordinate is required
+            // we slow down by a factor of 2 by always doing this
+            this.renderer.context.colorMask(0, 0, 0, 0)
+            _.each(this.volume_views, volume_view => {
+                volume_view.box_material.side = THREE.FrontSide;
+                volume_view.box_material.depthFunc = THREE.LessEqualDepth
+            },this)
             this.renderer.autoClear = false;
-            this.box_mesh.material = this.box_material_volr_depth;
-            this.renderer.render(this.scene, camera, this.coordinate_texture);
+            this.renderer.clearTarget(this.color_pass_target, false, true, false)
+            this.renderer.render(this.scene_volume, camera, this.color_pass_target);
+            this.renderer.autoClear = true;
+            this.renderer.context.colorMask(true, true, true, true)
+
+            // TODO: if volume perfectly overlap, we render it twice, use polygonoffset and LESS z test?
+            _.each(this.volume_views, volume_view => {
+                volume_view.vol_box_mesh.material = this.material_multivolume_depth;
+                // volume_view.set_geometry_depth_tex(this.geometry_depth_target.depthTexture)
+            },this)
+            this.renderer.autoClear = false;
+            // we want to keep the colors and z-buffer as they are
+            this.renderer.clearTarget(this.color_pass_target, false, false, false)
+            this.renderer.render(this.scene_volume, camera, this.coordinate_texture);
+            this.renderer.autoClear = true;
+
         }
-        this.renderer.autoClear = true;
+
+        // restore materials
+        _.each(this.scatter_views, scatter => {
+            scatter.mesh.material = scatter.mesh.material_normal
+        }, this)
+        _.each(this.mesh_views, mesh_view => {
+            _.each(mesh_view.meshes, mesh => {
+                mesh.material = mesh.material_normal
+            }, this);
+        }, this)
 
         // render to screen
-        this.screen_texture = {Volume:this.volr_texture, Back:this.back_texture, Front:this.front_texture, Coordinate:this.coordinate_texture}[this.model.get("show")]
+        this.screen_texture = {Volume:this.color_pass_target, Back:this.volume_back_target, Geometry_back:this.geometry_depth_target, Coordinate:this.coordinate_texture}[this.model.get("show")]
         this.screen_material.uniforms.tex.value = this.screen_texture.texture
         //this.renderer.clearTarget(this.renderer, true, true, true)
         this.renderer.render(this.screen_scene, this.screen_camera);
-
-
     },
+    rebuild_multivolume_rendering_material: function() {
+        var volumes = this.model.get('volumes'); // This is always a list?
+        if(volumes.length == 0)
+            return;
 
+        var material = this.material_multivolume;
+        var material_depth = this.material_multivolume_depth;
+        var count_normal = 0;
+        var count_max_int = 0;
+        material.uniforms.volumes.value                 = []
+        material.uniforms.volumes_max_int.value         = []
+        material.uniforms.data.value             = []
+        material.uniforms.data_max_int.value     = []
+        material.uniforms.transfer_function.value         = []
+        material.uniforms.transfer_function_max_int.value = []
+        material.uniforms.steps.value = _.max(volumes.map(volume => {
+            let volume_view = this.volume_views[volume.cid];
+            return volume_view ? volume_view.get_ray_steps() : 0;
+        }))
+
+        _.each(volumes, vol_model => {
+            let volume_view = this.volume_views[vol_model.cid];
+            // could be that the view was not yet created
+            if(volume_view) {
+                var volume = volume_view.model;
+                if(volume_view.is_normal()) {
+                    count_normal++;
+                    material.uniforms.volumes.value.push(volume_view.uniform_volumes_values)
+                    material.uniforms.data.value.push(volume_view.uniform_data.value[0])
+                    material.uniforms.transfer_function.value.push(volume_view.uniform_transfer_function.value[0])
+                } else {
+                    count_max_int++;
+                    material.uniforms.volumes_max_int.value.push(volume_view.uniform_volumes_values)
+                    material.uniforms.data_max_int.value.push(volume_view.uniform_data.value[0])
+                    material.uniforms.transfer_function_max_int.value.push(volume_view.uniform_transfer_function.value[0])
+                }
+            }
+        })
+        material.defines.VOLUME_COUNT = count_normal;
+        material.defines.VOLUME_COUNT_MAX_INT = count_max_int;
+        material_depth.defines.VOLUME_COUNT = count_normal;
+        material_depth.defines.VOLUME_COUNT_MAX_INT = count_max_int;
+
+        let mustache_render = (template_shader) => {
+            var view = {
+                volumes: _.range(count_normal),
+                volumes_max_int: _.range(count_max_int)
+            };
+            return Mustache.render(template_shader, view)
+        }
+        material_depth.fragmentShader = material.fragmentShader = mustache_render(shaders["volr_fragment"])
+        material_depth.vertexShader = material.vertexShader = shaders["volr_vertex"]
+        material_depth.needsUpdate = material.needsUpdate = true;
+    },
     update_light: function() {
-        this.box_material_volr.uniforms.ambient_coefficient.value = this.model.get("ambient_coefficient")
-        this.box_material_volr.uniforms.diffuse_coefficient.value = this.model.get("diffuse_coefficient")
-        this.box_material_volr.uniforms.specular_coefficient.value = this.model.get("specular_coefficient")
-        this.box_material_volr.uniforms.specular_exponent.value = this.model.get("specular_exponent")
+        this.material_multivolume.uniforms.ambient_coefficient.value = this.model.get("ambient_coefficient")
+        this.material_multivolume.uniforms.diffuse_coefficient.value = this.model.get("diffuse_coefficient")
+        this.material_multivolume.uniforms.specular_coefficient.value = this.model.get("specular_coefficient")
+        this.material_multivolume.uniforms.specular_exponent.value = this.model.get("specular_exponent")
         this.update()
     },
     update_size: function() {
@@ -1890,7 +1901,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var render_height = height;
         var display_width = width * this.model.get('displayscale')
         var display_height = height * this.model.get('displayscale')
-        if(this.is_fullscreen() && this.model.get("volume_data")) {
+        if(this.is_fullscreen() && this.model.get("volumes") != 0) {
             // fullscreen volume rendering is slow, respect width and height
             render_width = custom_width || this.model.get("width");
             render_height = custom_height || this.model.get("height");
@@ -1924,65 +1935,23 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // this.camera.height = render_height
         this.camera.updateProjectionMatrix();
         //console.log("render size: ", width, height, render_width, render_height)
-        this.back_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
-        this.front_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
-        this.volr_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
-        this.coordinate_texture = new THREE.WebGLRenderTarget( render_width, render_height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
-        this.screen_texture = this.volr_texture
-        this.box_material_volr.uniforms.back.value = this.back_texture.texture
-        this.box_material_volr.uniforms.front.value = this.front_texture.texture
-        this.box_material_volr.uniforms.render_size.value = [render_width, render_height]
+        //
+        
+        this.material_multivolume.uniforms.render_size.value = [render_width, render_height]
+
+        this.volume_back_target.setSize(render_width, render_height);
+        this.geometry_depth_target.setSize(render_width, render_height);
+        this.color_pass_target.setSize(render_width, render_height);
+        this.screen_pass_target.setSize(render_width, render_height);
+        this.coordinate_texture.setSize(render_width, render_height);
+
+        this.screen_texture = this.color_pass_target.texture;
         if(!skip_update)
             this.update()
     },
-    data_set: function() {
-        this.volume = this.model.get("volume_data")
-        if(!this.volume) {
-            this.update_size()
-            return;
-            //this.volume = {image_shape: [2048, 1024], slice_shape: [128, 128], rows: 8, columns:16, slices: 128, src:default_cube_url}
-        }
-        var data = new Uint8Array(this.volume.tiles.buffer)
-        this.texture_volume = new THREE.DataTexture(data, this.volume.image_shape[0], this.volume.image_shape[1],
-                                                    THREE.RGBAFormat, THREE.UnsignedByteType)
-        this.texture_volume.magFilter = THREE.LinearFilter
-        this.texture_volume.minFilter = THREE.LinearFilter
-        this.box_material_volr.uniforms.volume_rows.value = this.volume.rows,
-        this.box_material_volr.uniforms.volume_columns.value = this.volume.columns
-        this.box_material_volr.uniforms.volume_slices.value = this.volume.slices
-        this.box_material_volr.uniforms.volume_size.value = this.volume.image_shape
-        this.box_material_volr.uniforms.volume_slice_size.value = this.volume.slice_shape
-        this.box_material_volr.uniforms.volume.value = this.texture_volume
-        this.box_material_volr.uniforms.volume_data_range.value = [this.model.get('volume_data_min'), this.model.get('volume_data_max')]
-        this.box_material_volr.uniforms.volume_show_range.value = [this.model.get('volume_show_min'), this.model.get('volume_show_max')]
-        this.texture_volume.needsUpdate = true // without this it doesn't seem to work
-        if(this.model.previous("volume_data")) {
-            this.update()
-        } else {
-            this.update_size() // could need a resize, see update_size
-        }
-    },
-    tf_set: function() {
-        // TODO: remove listeners from previous
-        if(this.model.get("tf")) {
-            this.model.get("tf").on('change:rgba', this.tf_changed, this);
-            this.tf_changed()
-        }
-    },
-    tf_changed: function() {
-        var tf = this.model.get("tf")
-        if(tf) {
-            /*if(!this.texture_tf) {
-                this.texture_tf = new THREE.DataTexture(tf.get_data_array(), tf.get("rgba").length, 1, THREE.RGBAFormat, THREE.UnsignedByteType)
-            } else {
-                this.texture_tf.image.data = tf.get_data_array()
-                this.texture_tf.needsUpdate = true
-            }*/
-            this.texture_tf = new THREE.DataTexture(tf.get_data_array(), tf.get("rgba").shape[0], 1, THREE.RGBAFormat, THREE.UnsignedByteType)
-            this.texture_tf.needsUpdate = true // without this it doesn't seem to work
-            this.box_material_volr.uniforms.transfer_function.value = this.texture_tf
-            this.update()
-        }
+    getRenderSize: function() {
+        var render_size = this.renderer.getSize()
+        return [render_size.width, render_size.width];
     },
     fullscreen: function() {
         screenfull.request(this.el)
@@ -2002,11 +1971,6 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             _model_module_version: semver_range,
              _view_module_version: semver_range,
             eye_separation: 6.4,
-            ambient_coefficient: 0.5,
-            diffuse_coefficient: 0.8,
-            specular_coefficient: 0.5,
-            specular_exponent: 5,
-            opacity_scale: 1.0,
             stereo: false,
             camera_control: 'trackball',
             camera_fov: 45,
@@ -2017,7 +1981,8 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             displayscale: 1,
             scatters: null,
             meshes: null,
-            show: "Volume",
+            volumes: null,
+            show: 'Volume',
             xlim: [0., 1.],
             ylim: [0., 1.],
             zlim: [0., 1.],
@@ -2028,26 +1993,20 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             animation_exponent: 1.0,
             style: styles['light'],
             render_continuous: false,
-            extent: null,
             selector: 'lasso',
             selection_mode: 'replace',
             mouse_mode: 'normal',
             panorama_mode: 'no',
             capture_fps: undefined,
             cube_resolution: 512,
-            volume_rendering_lighting: true,
-            volume_rendering_method: 'NORMAL',
-            volume_clamp_min: false,
-            volume_clamp_max: false,
-            volume_data_range: null,
-            volume_show_range: null,
         })
     }
 }, {
     serializers: _.extend({
-        tf: { deserialize: widgets.unpack_models },
+
         scatters: { deserialize: widgets.unpack_models },
         meshes: { deserialize: widgets.unpack_models },
+        volumes: { deserialize: widgets.unpack_models },
         camera: { deserialize: widgets.unpack_models },
         scene: { deserialize: widgets.unpack_models },
     }, widgets.DOMWidgetModel.serializers)

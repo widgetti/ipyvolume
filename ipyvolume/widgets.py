@@ -113,6 +113,69 @@ class Scatter(widgets.DOMWidget):
         return pythreejs.ShaderMaterial()
 
 @widgets.register
+class Volume(widgets.DOMWidget):
+    """Widget class representing a volume (rendering) using three.js"""
+    _view_name = Unicode('VolumeView').tag(sync=True)
+    _view_module = Unicode('ipyvolume').tag(sync=True)
+    _model_name = Unicode('VolumeModel').tag(sync=True)
+    _model_module = Unicode('ipyvolume').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+
+    data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_tile_serialization)
+    data_original = Array(default_value=None, allow_none=True)
+    data_max_shape = traitlets.CInt(None, allow_none=True)  # TODO: allow this to be a list
+    data_min = traitlets.CFloat().tag(sync=True)
+    data_max = traitlets.CFloat().tag(sync=True)
+    show_min = traitlets.CFloat().tag(sync=True)
+    show_max = traitlets.CFloat().tag(sync=True)
+    clamp_min = traitlets.CBool(False).tag(sync=True)
+    clamp_max = traitlets.CBool(False).tag(sync=True)
+    opacity_scale = traitlets.CFloat(1.0).tag(sync=True)
+    brightness = traitlets.CFloat(1.0).tag(sync=True)
+    tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
+    ray_steps = traitlets.CInt(None, allow_none=True, help='defines the length of the ray (1/ray_steps) for each step, in normalized coordintes.').tag(sync=True)
+
+    rendering_method = traitlets.Enum(values=['NORMAL', 'MAX_INTENSITY'], default_value='NORMAL').tag(sync=True)
+    lighting = traitlets.Bool(True).tag(sync=True)
+
+    extent = traitlets.Any().tag(sync=True)
+    extent_original = traitlets.Any()
+
+    def __init__(self, **kwargs):
+        super(Volume, self).__init__(**kwargs)
+        self._update_data()
+        self.observe(self.update_data, ['data_original', 'data_max_shape'])
+
+    @debounced(method=True)
+    def update_data(self, change=None):
+        self._update_data()
+
+    def _update_data(self):
+        if self.data_original is None:
+            return
+        if all([k <= self.data_max_shape for k in self.data_original.shape]):
+            self.data = self.data_original
+            self.extent = self.extent_original
+            return
+        import ipyvolume as ipv
+        current_figure = ipv.gcf()
+        xlim = current_figure.xlim
+        ylim = current_figure.ylim
+        zlim = current_figure.zlim
+        shape = self.data_original.shape
+        ex = self.extent_original
+        viewx, xt = grid_slice(ex[0][0], ex[0][1], shape[2], *xlim)
+        viewy, yt = grid_slice(ex[1][0], ex[1][1], shape[1], *ylim)
+        viewz, zt = grid_slice(ex[2][0], ex[2][1], shape[0], *zlim)
+        view = [slice(*viewz), slice(*viewy), slice(*viewx)]
+        data_view = self.data_original[view]
+        extent = [xt, yt, zt]
+        data_view, extent = reduce_size(data_view, self.data_max_shape, extent)
+        self.data = np.array(data_view)
+        self.extent = extent
+
+@widgets.register
 class Figure(ipywebrtc.MediaStream):
     """Widget class representing a volume (rendering) using three.js"""
     _view_name = Unicode('FigureView').tag(sync=True)
@@ -122,24 +185,11 @@ class Figure(ipywebrtc.MediaStream):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    volume_data = Array(default_value=None, allow_none=True).tag(sync=True, **array_cube_tile_serialization)
-    volume_data_original = Array(default_value=None, allow_none=True)
-    volume_data_max_shape = traitlets.CInt(None, allow_none=True)  # TODO: allow this to be a list
     eye_separation = traitlets.CFloat(6.4).tag(sync=True)
-    volume_data_min = traitlets.CFloat().tag(sync=True)
-    volume_data_max = traitlets.CFloat().tag(sync=True)
-    volume_show_min = traitlets.CFloat().tag(sync=True)
-    volume_show_max = traitlets.CFloat().tag(sync=True)
-    volume_clamp_min = traitlets.CBool(False).tag(sync=True)
-    volume_clamp_max = traitlets.CBool(False).tag(sync=True)
-    opacity_scale = traitlets.CFloat(1.0).tag(sync=True)
-    tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
-
-    volume_rendering_method = traitlets.Enum(values=['NORMAL', 'MAX_INTENSITY'], default_value='NORMAL').tag(sync=True)
-    volume_rendering_lighting = traitlets.Bool(True).tag(sync=True)
 
     scatters = traitlets.List(traitlets.Instance(Scatter), [], allow_none=False).tag(sync=True, **ipywidgets.widget_serialization)
     meshes = traitlets.List(traitlets.Instance(Mesh), [], allow_none=False).tag(sync=True, **ipywidgets.widget_serialization)
+    volumes = traitlets.List(traitlets.Instance(Volume), [], allow_none=False).tag(sync=True, **ipywidgets.widget_serialization)
 
     animation = traitlets.Float(1000.0).tag(sync=True)
     animation_exponent = traitlets.Float(1.0).tag(sync=True)
@@ -148,6 +198,7 @@ class Figure(ipywebrtc.MediaStream):
     diffuse_coefficient = traitlets.Float(0.8).tag(sync=True)
     specular_coefficient = traitlets.Float(0.5).tag(sync=True)
     specular_exponent = traitlets.Float(5).tag(sync=True)
+
     stereo = traitlets.Bool(False).tag(sync=True)
 
     camera_control = traitlets.Unicode(default_value='trackball').tag(sync=True)
@@ -181,9 +232,6 @@ class Figure(ipywebrtc.MediaStream):
     ylim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
     zlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
 
-    extent = traitlets.Any().tag(sync=True)
-    extent_original = traitlets.Any()
-
     matrix_projection = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
     matrix_world = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
 
@@ -208,31 +256,6 @@ class Figure(ipywebrtc.MediaStream):
         self._screenshot_handlers = widgets.CallbackDispatcher()
         self._selection_handlers = widgets.CallbackDispatcher()
         self.on_msg(self._handle_custom_msg)
-        self._update_volume_data()
-        self.observe(self.update_volume_data, ['xlim', 'ylim', 'zlim', 'volume_data_original', 'volume_data_max_shape'])
-
-    @debounced(method=True)
-    def update_volume_data(self, change=None):
-        self._update_volume_data()
-
-    def _update_volume_data(self):
-        if self.volume_data_original is None:
-            return
-        if all([k <= self.volume_data_max_shape for k in self.volume_data_original.shape]):
-            self.volume_data = self.volume_data_original
-            self.extent = self.extent_original
-            return
-        shape = self.volume_data_original.shape
-        ex = self.extent_original
-        viewx, xt = grid_slice(ex[0][0], ex[0][1], shape[2], *self.xlim)
-        viewy, yt = grid_slice(ex[1][0], ex[1][1], shape[1], *self.ylim)
-        viewz, zt = grid_slice(ex[2][0], ex[2][1], shape[0], *self.zlim)
-        view = [slice(*viewz), slice(*viewy), slice(*viewx)]
-        data_view = self.volume_data_original[view]
-        extent = [xt, yt, zt]
-        data_view, extent = reduce_size(data_view, self.volume_data_max_shape, extent)
-        self.volume_data = np.array(data_view)
-        self.extent = extent
 
     def __enter__(self):
         """Sets this figure as the current in the pylab API
@@ -280,47 +303,20 @@ class Figure(ipywebrtc.MediaStream):
         xy = screen_h[:2] / screen_h[3]
         return xy
 
-def _volume_widets(v, lighting=False):
-    import ipywidgets
-    #angle1 = ipywidgets.FloatSlider(min=0, max=np.pi*2, value=v.angle1, description="angle1")
-    #angle2 = ipywidgets.FloatSlider(min=0, max=np.pi*2, value=v.angle2, description="angle2")
-    #ipywidgets.jslink((v, 'angle1'), (angle1, 'value'))
-    #ipywidgets.jslink((v, 'angle2'), (angle2, 'value'))
-    if lighting:
-        ambient_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=v.ambient_coefficient, description="ambient")
-        diffuse_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=v.diffuse_coefficient, description="diffuse")
-        specular_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=v.specular_coefficient, description="specular")
-        specular_exponent = ipywidgets.FloatSlider(min=0, max=10, step=0.001, value=v.specular_exponent, description="specular exp")
-        #angle2 = ipywidgets.FloatSlider(min=0, max=np.pi*2, value=v.angle2, description="angle2")
-        ipywidgets.jslink((v, 'ambient_coefficient'), (ambient_coefficient, 'value'))
-        ipywidgets.jslink((v, 'diffuse_coefficient'), (diffuse_coefficient, 'value'))
-        ipywidgets.jslink((v, 'specular_coefficient'), (specular_coefficient, 'value'))
-        ipywidgets.jslink((v, 'specular_exponent'), (specular_exponent, 'value'))
-        widgets_bottom = [ipywidgets.HBox([ambient_coefficient, diffuse_coefficient]),
-         ipywidgets.HBox([specular_coefficient, specular_exponent])]
-    else:
-        widgets_bottom = []
-        v.ambient_coefficient = 1
-        v.diffuse_coefficient = 0
-        v.specular_coefficient = 0
-
-    return ipywidgets.VBox(
-        [v.tf.control(), v,
-         ] + widgets_bottom# , ipywidgets.HBox([angle1, angle2])
-    )
-
 def volshow(*args, **kwargs):
     """Deprecated: please use ipyvolume.quickvolshow or use the ipyvolume.pylab interface"""
     warnings.warn("Please use ipyvolume.quickvolshow or use the ipyvolume.pylab interface", DeprecationWarning, stacklevel=2)
     return quickvolshow(*args, **kwargs)
 
 def quickquiver(x, y, z, u, v, w, **kwargs):
+    warnings.warn("Please use ipyvolume.quiver", DeprecationWarning, stacklevel=2)
     import ipyvolume.pylab as p3
     p3.figure()
     p3.quiver(x, y, z, u, v, w, **kwargs)
     return p3.current.container
 
 def quickscatter(x, y, z, **kwargs):
+    warnings.warn("Please use ipyvolume.scatter", DeprecationWarning, stacklevel=2)
     import ipyvolume.pylab as p3
     p3.figure()
     p3.scatter(x, y, z, **kwargs)
@@ -332,7 +328,8 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
             specular_coefficient=0.5, specular_exponent=5,
             downscale=1,
-            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, extent=None, **kwargs):
+            max_shape=256,
+            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, extent=None, memorder='C', **kwargs):
     """
     Visualize a 3d array using volume rendering
 
@@ -357,6 +354,7 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
     :return:
 
     """
+    warnings.warn("Please use ipyvolume.volshow", DeprecationWarning, stacklevel=2)
     if tf is None: # TODO: should this just call the pylab interface?
         #tf = TransferFunctionJsBumps(**kwargs)
         tf_kwargs = {}
@@ -394,16 +392,31 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
-    v = Figure(volume_data=data, data_min=data_min, data_max=data_max, stereo=stereo,
-                            width=width, height=height,
+
+    if memorder is 'F':
+        data = data.T
+
+    if extent is None:
+        extent = [(0, k) for k in data.shape[::-1]]
+
+    fig = Figure(stereo=stereo, width=width, height=height, **kwargs)
+
+    vol = Volume(volume_data_original=data, 
+                            tf=tf, 
+                            volume_data_min = data_min, 
+                            volume_data_max = data_max,
+                            volume_show_min = data_min,
+                            volume_show_max = data_max,
+                            volume_data_max_shape = max_shape,
+                            extent_original = extent,
                             ambient_coefficient=ambient_coefficient,
                             diffuse_coefficient=diffuse_coefficient,
                             specular_coefficient=specular_coefficient,
                             specular_exponent=specular_exponent,
-                            tf=tf, extent=extent, **kwargs)
+                            volume_rendering_lighting=False, **kwargs)
 
-    box = _volume_widets(v, lighting=lighting)
-    return box
+    fig.volumes = fig.volumes + [vol]
+    return fig
 
 def scatter(x, y, z, color=(1,0,0), s=0.01):
     global _last_figure;

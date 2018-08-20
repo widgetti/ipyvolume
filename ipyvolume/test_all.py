@@ -118,7 +118,8 @@ def test_figure():
     
     for controls in [True, False]:
         for debug in [True, False]:
-            p3.figure(debug=debug, controls=controls)
+            for controls_light in [True, False]:
+                p3.figure(debug=debug, controls=controls, controls_light=controls_light)
 
 def test_context():
     f1 = ipv.figure(1)
@@ -264,8 +265,8 @@ def test_volshow_max_shape():
     x, y, z = ipyvolume.examples.xyz(shape=32)
     I = x*y*z
     v = p3.volshow(I, max_shape=16, extent=[[0, 32]] * 3)
-    assert v.volume_data.shape == (16, 16, 16)
-    data = v.volume_data
+    assert v.data.shape == (16, 16, 16)
+    data = v.data
     p3.xlim(0, 16)
     #assert np.all(v.volume_data == I[::2,::2,0:16])
 
