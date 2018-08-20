@@ -267,7 +267,8 @@ var VolumeModel = widgets.WidgetModel.extend({
         })
     }}, {
     serializers: _.extend({
-        tf: { deserialize: widgets.unpack_models }
+        tf: { deserialize: widgets.unpack_models },
+        data: { serialize: (x) => x}
     }, widgets.DOMWidgetModel.serializers)
 });
 

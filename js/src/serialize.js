@@ -84,13 +84,13 @@ function deserialize_typed_array(data, manager) {
     if(data == null) {
         console.log('data is null')
     }
-    if(!data.buffer) {
-        console.log('data.buffer is null')
+    if(!data.data) {
+        console.log('data.data is null')
     }
-    if(!data.buffer.buffer) {
-        console.log('data.buffer is null')
+    if(!data.data.buffer) {
+        console.log('data.data.buffer is null')
     }
-    return new type(data.buffer.buffer) ; //
+    return new type(data.data.buffer) ; //
 
 }
 
@@ -221,7 +221,7 @@ function serialize_ndarray(data, manager) {
     if(data === null)
         return null;
     var ar = data;
-    if(_.isArray(data) && !data.buffer) { // plain list of list
+    if(_.isArray(data) && !data.data) { // plain list of list
         var ar = require("ndarray-pack")(data)
     }
     var data_json = {'data': ar.data.buffer, dtype:arrayToTypes[ar.data.constructor.name], shape:ar.shape}
