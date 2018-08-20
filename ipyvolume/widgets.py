@@ -312,26 +312,19 @@ def volshow(*args, **kwargs):
     return quickvolshow(*args, **kwargs)
 
 def quickquiver(x, y, z, u, v, w, **kwargs):
-    warnings.warn("Please use ipyvolume.quiver", DeprecationWarning, stacklevel=2)
-    import ipyvolume.pylab as p3
-    p3.figure()
-    p3.quiver(x, y, z, u, v, w, **kwargs)
-    return p3.current.container
+    import ipyvolume as ipv
+    ipv.figure()
+    ipv.quiver(x, y, z, u, v, w, **kwargs)
+    return ipv.gcc()
 
 def quickscatter(x, y, z, **kwargs):
-    warnings.warn("Please use ipyvolume.scatter", DeprecationWarning, stacklevel=2)
-    import ipyvolume.pylab as p3
-    p3.figure()
-    p3.scatter(x, y, z, **kwargs)
-    return p3.current.container
+    import ipyvolume as ipv
+    ipv.figure()
+    ipv.scatter(x, y, z, **kwargs)
+    return ipv.gcc()
 
 
-def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, stereo=False,
-            width=400, height=500,
-            ambient_coefficient=0.5, diffuse_coefficient=0.8,
-            specular_coefficient=0.5, specular_exponent=5,
-            downscale=1,
-            max_shape=256,
+def quickvolshow(data, lighting=False, data_min=None, data_max=None,  max_shape=256,
             level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, extent=None, memorder='C', **kwargs):
     """
     Visualize a 3d array using volume rendering
@@ -340,86 +333,20 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None, tf=None, st
     :param lighting: boolean, to use lighting or not, if set to false, lighting parameters will be overriden
     :param data_min: minimum value to consider for data, if None, computed using np.nanmin
     :param data_max: maximum value to consider for data, if None, computed using np.nanmax
-    :param tf: transfer function (see ipyvolume.transfer_function, or use the argument below)
-    :param stereo: stereo view for virtual reality (cardboard and similar VR head mount)
-    :param width: width of rendering surface
-    :param height: height of rendering surface
-    :param ambient_coefficient: lighting parameter
-    :param diffuse_coefficient: lighting parameter
-    :param specular_coefficient: lighting parameter
-    :param specular_exponent: lighting parameter
-    :param downscale: downscale the rendering for better performance, for instance when set to 2, a 512x512 canvas will show a 256x256 rendering upscaled, but it will render twice as fast.
+    :parap int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]), set to None to disable.
+    :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume, otherwise the viewport is used
     :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
     :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
     :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
-    :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume, otherwise the viewport is used
     :param kwargs: extra argument passed to Volume and default transfer function
     :return:
 
     """
-    warnings.warn("Please use ipyvolume.volshow", DeprecationWarning, stacklevel=2)
-    if tf is None: # TODO: should this just call the pylab interface?
-        #tf = TransferFunctionJsBumps(**kwargs)
-        tf_kwargs = {}
-        # level, opacity and widths can be scalars
-        try:
-            level[0]
-        except:
-            level = [level]
-        try:
-            opacity[0]
-        except:
-            opacity = [opacity] * 3
-        try:
-            level_width[0]
-        except:
-            level_width = [level_width] * 3
-        #clip off lists
-        min_length = min(len(level), len(level_width), len(opacity))
-        level = list(level[:min_length])
-        opacity = list(opacity[:min_length])
-        level_width = list(level_width[:min_length])
-        # append with zeros
-        while len(level) < 3:
-            level.append(0)
-        while len(opacity) < 3:
-            opacity.append(0)
-        while len(level_width) < 3:
-            level_width.append(0)
-        for i in range(1,4):
-            tf_kwargs["level"+str(i)] = level[i-1]
-            tf_kwargs["opacity"+str(i)] = opacity[i-1]
-            tf_kwargs["width"+str(i)] = level_width[i-1]
-        tf = TransferFunctionWidgetJs3(**tf_kwargs)
-    if data_min is None:
-        data_min = np.nanmin(data)
-    if data_max is None:
-        data_max = np.nanmax(data)
-
-    if memorder is 'F':
-        data = data.T
-
-    if extent is None:
-        extent = [(0, k) for k in data.shape[::-1]]
-
-    fig = Figure(stereo=stereo, width=width, height=height, **kwargs)
-
-    vol = Volume(volume_data_original=data, 
-                            tf=tf, 
-                            volume_data_min = data_min, 
-                            volume_data_max = data_max,
-                            volume_show_min = data_min,
-                            volume_show_max = data_max,
-                            volume_data_max_shape = max_shape,
-                            extent_original = extent,
-                            ambient_coefficient=ambient_coefficient,
-                            diffuse_coefficient=diffuse_coefficient,
-                            specular_coefficient=specular_coefficient,
-                            specular_exponent=specular_exponent,
-                            volume_rendering_lighting=False, **kwargs)
-
-    fig.volumes = fig.volumes + [vol]
-    return fig
+    import ipyvolume as ipv
+    ipv.figure()
+    ipv.volshow(data, lighting=lighting, data_min=data_min, data_max=data_max, max_shape=max_shape,
+        level=level, opacity=opacity, level_width=level_width, extent=extent,  memorder=memorder, **kwargs)
+    return ipv.gcc()
 
 def scatter(x, y, z, color=(1,0,0), s=0.01):
     global _last_figure;
