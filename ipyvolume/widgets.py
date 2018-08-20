@@ -147,6 +147,9 @@ class Volume(widgets.DOMWidget):
         self._update_data()
         self.observe(self.update_data, ['data_original', 'data_max_shape'])
 
+    def _listen_to(self, fig):
+        fig.observe(self.update_data, ['xlim', 'ylim', 'zlim'])
+
     @debounced(method=True)
     def update_data(self, change=None):
         self._update_data()

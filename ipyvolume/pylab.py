@@ -684,6 +684,9 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     if extent is None:
         extent = [(0, k) for k in data.shape[::-1]]
 
+    if extent:
+        _grow_limits(*extent)
+
     vol = ipv.Volume(data_original = data,
                     tf=tf,
                     data_min = data_min,
@@ -698,8 +701,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
                     specular_exponent = specular_exponent,
                     rendering_lighting = lighting)
 
-    if extent:
-        _grow_limits(*extent)
+    vol._listen_to(fig)
 
     if controls:
         widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2, 
