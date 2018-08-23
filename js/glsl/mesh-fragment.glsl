@@ -14,7 +14,7 @@ void main(void) {
     gl_FragColor = vec4(vertex_color.rgb, 1.0);
 #else
 #ifdef AS_LINE
-    gl_FragColor = vec4(vertex_color.rgb * vertex_color.a, vertex_color.a);
+    gl_FragColor = vec4(vertex_color.rgb, vertex_color.a);
 #else
     vec3 fdx = dFdx( vertex_position );
     vec3 fdy = dFdy( vertex_position );
@@ -25,7 +25,7 @@ void main(void) {
     vec4 sample = mix(texture2D(texture_previous, vertex_uv), texture2D(texture, vertex_uv), animation_time_texture);
     gl_FragColor = vec4(clamp(diffuse, 0.2, 1.) * sample.rgb, 1.0);
 #else
-    gl_FragColor = vec4(clamp(diffuse, 0.2, 1.) * vertex_color.rgb * vertex_color.a, vertex_color.a);
+    gl_FragColor = vec4(clamp(diffuse, 0.2, 1.) * vertex_color.rgb, vertex_color.a);
 #endif // USE_TEXTURE
 #endif // AS_LINE
 #endif // USE_RGB
