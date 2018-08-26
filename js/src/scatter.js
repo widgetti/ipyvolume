@@ -401,6 +401,8 @@ var ScatterModel = widgets.WidgetModel.extend({
             geo: 'diamond',
             sequence_index: 0,
             connected: false,
+            visible: true,
+            selected: null,
         })
     }}, {
     serializers: _.extend({

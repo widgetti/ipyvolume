@@ -251,11 +251,8 @@ var VolumeModel = widgets.WidgetModel.extend({
              _view_module_version: semver_range,
             sequence_index: 0,
             step_size: 0.01,
-            ambient_coefficient: 0.5,
-            diffuse_coefficient: 0.8,
-            specular_coefficient: 0.5,
-            specular_exponent: 5,
             opacity_scale: 1.0,
+            brightness: 1.0,
             extent: null,
             lighting: true,
             rendering_method: 'NORMAL',
@@ -263,6 +260,10 @@ var VolumeModel = widgets.WidgetModel.extend({
             clamp_max: false,
             data_range: null,
             show_range: null,
+            show_min: 0,
+            show_max: 1,
+            data_min: 0,
+            data_max: 1,
             ray_steps: null
         })
     }}, {
