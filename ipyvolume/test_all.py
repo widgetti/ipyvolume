@@ -152,27 +152,27 @@ def test_view():
     az0, el0, r0 = ipv.view()
     ipv.view(azimuth=az0+42)
     az, el, r = ipv.view()
-    assert az == az0+42
+    assert az == pytest.approx(az0 + 42)
     assert el == el0
     assert r == r0
 
     ipv.view(elevation=el0+42)
     az, el, r = ipv.view()
-    assert az == az0+42
-    assert el == el0+42
+    assert az == pytest.approx(az0 + 42)
+    assert el == pytest.approx(el0 + 42)
     assert r == r0
 
     ipv.view(distance=r0+42)
     az, el, r = ipv.view()
-    assert az == az0+42
-    assert el == el0+42
-    assert r == r0+42
+    assert az == pytest.approx(az0 + 42)
+    assert el == pytest.approx(el0 + 42)
+    assert r == pytest.approx(r0 + 42)
 
     ipv.view(42, 42, 42)
     az, el, r = ipv.view()
-    assert az == 42
-    assert el == 42
-    assert r == 42
+    assert az == pytest.approx(42)
+    assert el == pytest.approx(42)
+    assert r == pytest.approx(42)
 
 
 def test_limits():
