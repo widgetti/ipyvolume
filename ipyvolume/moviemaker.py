@@ -12,13 +12,13 @@ class MovieMaker(object):
                  overwrite_video=False):
         self.stream = stream
         self.camera = camera
-        self.recorder = ipywebrtc.MediaRecorder(stream=self.stream)
+        self.recorder = ipywebrtc.VideoRecorder(stream=self.stream)
         self.filename_camera = filename_camera
         self.filename_movie = filename_movie
         self.overwrite_video = overwrite_video
         self.button_record = widgets.ToggleButton(description='Record', icon='circle', value=False)#, style={'font-color': 'red'})
-        widgets.jslink((self.button_record, 'value'), (self.recorder, 'record'))
-        self.recorder.observe(lambda *x: self.write_movie(), 'data')
+        widgets.jslink((self.button_record, 'value'), (self.recorder, 'recording'))
+        self.recorder.video.observe(lambda *x: self.write_movie(), 'value')
         self.button_add = widgets.Button(description='Add')
         self.button_add.on_click(lambda *x: self.add())
         self.button_replace = widgets.Button(description='Replace')
@@ -81,7 +81,7 @@ class MovieMaker(object):
                     i += 1
                     filename = name + '_' + str(i) + ext
             with open(filename, 'wb') as f:
-                f.write(self.recorder.data)
+                f.write(self.recorder.video.value)
             print('wrote', filename)
 
     def add(self):
