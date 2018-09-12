@@ -80,9 +80,16 @@ class NPM(Command):
     def finalize_options(self):
         pass
 
+    def get_npm_name(self):
+        npmName = 'npm';
+        if platform.system() == 'Windows':
+            npmName = 'npm.cmd';
+        return npmName;
+
     def has_npm(self):
+        npmName = self.get_npm_name();
         try:
-            check_call(['npm', '--version'])
+            check_call([npmName, '--version'])
             return True
         except:
             return False
@@ -102,7 +109,8 @@ class NPM(Command):
 
         if self.should_run_npm_install():
             log.info("Installing build dependencies with npm.  This may take a while...")
-            check_call(['npm', 'install'], cwd=node_root, stdout=sys.stdout, stderr=sys.stderr)
+            npmName = self.get_npm_name();
+            check_call([npmName, 'install'], cwd=node_root, stdout=sys.stdout, stderr=sys.stderr)
             os.utime(self.node_modules, None)
 
         for t in self.targets:
