@@ -819,6 +819,8 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
         tempfile = os.path.join(tempdir, 'headless.html')
         save(tempfile, offline=False, scripts_path=tempdir, devmode=devmode)
         data = headless._screenshot_data("file://" + tempfile)
+        if data is None:
+            raise ValueError('Error capturing data from headless browser')
     else:
         if output_widget is None:
             output_widget = ipywidgets.Output()
