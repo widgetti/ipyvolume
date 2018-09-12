@@ -957,10 +957,11 @@ class style:
     """'Static class that mimics a matplotlib module.
 
     Example:
-    >>> import ipyvolume.pylab as p3
-    >>> p3.style.use('light'])
-    >>> p3.style.use('seaborn-darkgrid'])
-    >>> p3.style.use(['seaborn-darkgrid', {'axes.x.color':'orange'}])
+
+    >>> import ipyvolume as ipv
+    >>> ipv.style.use('light'])
+    >>> ipv.style.use('seaborn-darkgrid'])
+    >>> ipv.style.use(['seaborn-darkgrid', {'axes.x.color':'orange'}])
 
     Possible style values:
      * figure.facecolor: background color
@@ -1061,7 +1062,11 @@ for style_name, __ in ipv.styles.styles.items():
     def closure(style_name=style_name):
         def quick_set():
             style.use(style_name)
-        setattr(style, 'set_style_' + style_name, staticmethod(quick_set))
+        attr_name = 'set_style_' + style_name
+        attr = staticmethod(quick_set)
+        setattr(style, attr_name, attr)
+        getattr(style, attr_name).__doc__ = """Short for style.use(%r)""" % style_name
+
     closure()
 
 @_docsubst
@@ -1109,6 +1114,27 @@ def plot_plane(where="back", texture=None):
     return mesh
 
 def selector_default(output_widget=None):
+    """Capture selection events from the current figure, and apply the selections to Scatter objects
+
+    Example:
+
+    >>> import ipyvolume as ipv
+    >>> ipv.figure()
+    >>> ipv.examples.gaussian()
+    >>> ipv.selector_default()
+    >>> ipv.show()
+
+    Now hold the control key to do selections, type
+
+      * 'C' for circle
+      * 'R' for rectangle
+      * 'L' for lasso
+      * '=' for replace mode
+      * '&' for logically and mode
+      * '|' for logically or mode
+      * '-' for subtract mode
+
+    """
     fig = gcf()
     if output_widget is None:
         output_widget = ipywidgets.Output()

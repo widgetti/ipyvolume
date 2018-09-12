@@ -1,43 +1,53 @@
+"""Some examples for quick testing/demonstrations
+
+All function accept `show` and `draw` arguments
+
+  * If `draw` is `True` it will return the widgets (Scatter, Volume, Mesh)
+  * If `draw` is `False`, it will return the data
+  * if `show` is `False`, `ipv.show()` will not be called.
+"""
+
 import numpy as np
 import ipyvolume
 from numpy import cos, sin, sqrt, pi
 
 try:
-	import scipy.ndimage
-	import scipy.special
+    import scipy.ndimage
+    import scipy.special
 except:
-	pass # it's ok, it's not crucial
-__all__ = ["example_ylm"]
+    pass # it's ok, it's not crucial
+# __all__ = ["example_ylm"]
 
 def xyz(shape=128, limits=[-3, 3], spherical=False, sparse=True, centers=False):
-	dim = 3
-	try:
-		shape[0]
-	except:
-		shape = [shape] * dim
-	try:
-		limits[0][0]
-	except:
-		limits = [limits] * dim
-	if centers:
-		#print([(   vmin+(vmax-vmin)/float(N)/2, vmax-(vmax-vmin)/float(N)/4, (vmax-vmin)/float(N)) for (vmin, vmax), N in zip(limits, shape)])
-		v = [slice(vmin+(vmax-vmin)/float(N)/2, vmax-(vmax-vmin)/float(N)/4, (vmax-vmin)/float(N)) for (vmin, vmax), N in zip(limits, shape)]
-	else:
-		v = [slice(vmin, vmax+(vmax-vmin)/float(N)/2, (vmax-vmin)/float(N-1)) for (vmin, vmax), N in zip(limits, shape)]
-	if sparse:
-		x, y, z = np.ogrid.__getitem__(v)
-	else:
-		x, y, z = np.mgrid.__getitem__(v)
-	if spherical:
-		r = np.linalg.norm([x, y, z])
-		theta = np.arctan2(y, x)
-		phi = np.arccos(z / r)
-		return x, y, z, r, theta, phi
-	else:
-		return x, y, z
+    dim = 3
+    try:
+        shape[0]
+    except:
+        shape = [shape] * dim
+    try:
+        limits[0][0]
+    except:
+        limits = [limits] * dim
+    if centers:
+        #print([(   vmin+(vmax-vmin)/float(N)/2, vmax-(vmax-vmin)/float(N)/4, (vmax-vmin)/float(N)) for (vmin, vmax), N in zip(limits, shape)])
+        v = [slice(vmin+(vmax-vmin)/float(N)/2, vmax-(vmax-vmin)/float(N)/4, (vmax-vmin)/float(N)) for (vmin, vmax), N in zip(limits, shape)]
+    else:
+        v = [slice(vmin, vmax+(vmax-vmin)/float(N)/2, (vmax-vmin)/float(N-1)) for (vmin, vmax), N in zip(limits, shape)]
+    if sparse:
+        x, y, z = np.ogrid.__getitem__(v)
+    else:
+        x, y, z = np.mgrid.__getitem__(v)
+    if spherical:
+        r = np.linalg.norm([x, y, z])
+        theta = np.arctan2(y, x)
+        phi = np.arccos(z / r)
+        return x, y, z, r, theta, phi
+    else:
+        return x, y, z
 
 
 def example_ylm(m=0, n=2, shape=128, limits=[-4, 4],  draw=True, show=True, **kwargs):
+    """Show a spherical harmonic"""
     import ipyvolume.pylab as p3
     __, __, __, r, theta, phi = xyz(shape=shape, limits=limits, spherical=True)
     radial = np.exp(-(r - 2) ** 2)
@@ -52,53 +62,55 @@ def example_ylm(m=0, n=2, shape=128, limits=[-4, 4],  draw=True, show=True, **kw
     #return ipyvolume.volshow(data=data.T, **kwargs)
 
 def ball(rmax=3, rmin=0, shape=128, limits=[-4, 4], draw=True, show=True, **kwargs):
-	import ipyvolume.pylab as p3
-	__, __, __, r, theta, phi = xyz(shape=shape, limits=limits, spherical=True)
-	data = r * 0
-	data[(r < rmax) & (r >= rmin)] = 0.5
-	if "data_min" not in kwargs:
-		kwargs["data_min"] = 0
-	if "data_max" not in kwargs:
-		kwargs["data_max"] = 1
-	data  = data.T
-	if draw:
-		vol = p3.volshow(data=data, **kwargs)
-		if show:
-			p3.show()
-		return vol
-	else:
-		return data
+    """Show a ball"""
+    import ipyvolume.pylab as p3
+    __, __, __, r, theta, phi = xyz(shape=shape, limits=limits, spherical=True)
+    data = r * 0
+    data[(r < rmax) & (r >= rmin)] = 0.5
+    if "data_min" not in kwargs:
+        kwargs["data_min"] = 0
+    if "data_max" not in kwargs:
+        kwargs["data_max"] = 1
+    data  = data.T
+    if draw:
+        vol = p3.volshow(data=data, **kwargs)
+        if show:
+            p3.show()
+        return vol
+    else:
+        return data
 
 # http://graphics.stanford.edu/data/voldata/
 
 def klein_bottle(draw=True, show=True, figure8=False, endpoint=True, uv=True, wireframe=False, texture=None, both=False, interval=1000):
+    """Show one or two Klein bottles"""
     import ipyvolume.pylab as p3
     # http://paulbourke.net/geometry/klein/
     u = np.linspace(0, 2 * pi, num=40, endpoint=endpoint)
     v = np.linspace(0, 2 * pi, num=40, endpoint=endpoint)
     u, v = np.meshgrid(u, v)
     if both:
-    	x1, y1, z1, u1, v1 = klein_bottle(endpoint=endpoint, draw=False, show=False)
-    	x2, y2, z2, u2, v2 = klein_bottle(endpoint=endpoint, draw=False, show=False, figure8=True)
-    	x = [x1, x2]
-    	y = [y1, y2]
-    	z = [z1, z2]
+        x1, y1, z1, u1, v1 = klein_bottle(endpoint=endpoint, draw=False, show=False)
+        x2, y2, z2, u2, v2 = klein_bottle(endpoint=endpoint, draw=False, show=False, figure8=True)
+        x = [x1, x2]
+        y = [y1, y2]
+        z = [z1, z2]
     else:
-	    if figure8:
-	        #u -= np.pi
-	        #v -= np.pi
-	        a = 2
-	        s = 5
-	        x = s * (a + cos(u / 2) * sin(v) - sin(u / 2) * sin(2 * v)/2) * cos(u)
-	        y = s * (a + cos(u / 2) * sin(v) - sin(u / 2) * sin(2 * v)/2) * sin(u)
-	        z = s * (sin(u / 2) * sin(v) + cos(u / 2) * sin(2 * v)/2)
-	    else:
-	        r = 4 * (1 - cos(u) / 2)
-	        x = 6 * cos(u) * (1 + sin(u)) \
-	            + r * cos(u) * cos(v) * (u < pi) \
-	            + r * cos(v + pi) * (u >= pi)
-	        y = 16 * sin(u) + r * sin(u) * cos(v) * (u < pi)
-	        z = r * sin(v)
+        if figure8:
+            #u -= np.pi
+            #v -= np.pi
+            a = 2
+            s = 5
+            x = s * (a + cos(u / 2) * sin(v) - sin(u / 2) * sin(2 * v)/2) * cos(u)
+            y = s * (a + cos(u / 2) * sin(v) - sin(u / 2) * sin(2 * v)/2) * sin(u)
+            z = s * (sin(u / 2) * sin(v) + cos(u / 2) * sin(2 * v)/2)
+        else:
+            r = 4 * (1 - cos(u) / 2)
+            x = 6 * cos(u) * (1 + sin(u)) \
+                + r * cos(u) * cos(v) * (u < pi) \
+                + r * cos(v + pi) * (u >= pi)
+            y = 16 * sin(u) + r * sin(u) * cos(v) * (u < pi)
+            z = r * sin(v)
     if draw:
         if texture:
             uv = True
@@ -118,6 +130,12 @@ def klein_bottle(draw=True, show=True, figure8=False, endpoint=True, uv=True, wi
 import warnings
 
 def brain(draw=True, show=True, fiducial=True, flat=True, inflated=True, subject='S1', interval=1000, uv=True, color=None):
+    """Show a human brain model
+
+    Requirement:
+
+        $ pip install https://github.com/gallantlab/pycortex
+    """
     import ipyvolume as ipv
     try:
         import cortex
@@ -177,6 +195,7 @@ def brain(draw=True, show=True, fiducial=True, flat=True, inflated=True, subject
 
 
 def head(draw=True, show=True, max_shape=256):
+    """Show a volumetric rendering of a human male head"""
     # inspired by http://graphicsrunner.blogspot.com/2009/01/volume-rendering-102-transfer-functions.html
     import ipyvolume as ipv
     from scipy.interpolate import splrep, splev, interp1d
@@ -222,6 +241,7 @@ def head(draw=True, show=True, max_shape=256):
 
 
 def gaussian(N=1000, draw=True, show=True, seed=42, color=None, marker='sphere'):
+    """Show N random gaussian distributed points using a scatter plot"""
     import ipyvolume as ipv
     rng = np.random.RandomState(seed)
     x, y, z = rng.normal(size=(3, N))

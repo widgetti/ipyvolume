@@ -12,9 +12,11 @@ Try out in mybinder: [![Binder](http://mybinder.org/badge.svg)](https://beta.myb
 3d plotting for Python in the Jupyter notebook based on IPython widgets using WebGL.
 
 Ipyvolume currenty can
- * Do volume rendering.
+ * Do (multi) volume rendering.
  * Create scatter plots (up to ~1 million glyphs).
  * Create quiver plots (like scatter, but with an arrow pointing in a particular direction).
+ * Render isosurfaces.
+ * Do lasso mouse selections.
  * Render in the Jupyter notebook, or create a standalone html page (or snippet to embed in your page).
  * Render in stereo, for virtual reality with Google Cardboard.
  * Animate in d3 style, for instance if the x coordinates or color of a scatter plots changes.
@@ -27,8 +29,6 @@ Ipyvolume currenty can
 
 Ipyvolume will probably, but not yet:
  * Render labels in latex.
- * Do isosurface rendering.
- * Do selections using mouse or touch.
  * Show a custom popup on hovering over a glyph.
 
 # Documentation
@@ -53,37 +53,92 @@ Documentation is generated at readthedocs: [![Documentation](https://readthedocs
 
 # Installation
 
-To install use pip:
+## Using pip
 
-    $ pip install ipyvolume
+*Advice: Make sure you use conda or virtualenv. If you are not a root user and want to use the `--user` argument for pip, you expose the installation to all python environments, which is a bad practice, make sure you know what you are doing.*
 
-To install use pip (as non-admin):
+```
+$ pip install ipyvolume
+```
 
-    $ pip install ipyvolume --user
+## Conda/Anaconda
 
-Or with anaconda/conda:
+```
+$ conda install -c conda-forge ipyvolume
+```
 
-    $ conda install -c conda-forge ipyvolume
+## For Jupyter lab users
 
-For jupyter lab:
+The Jupyter lab extension is not enabled by default (yet).
 
-    $ jupyter labextension install ipyvolume
-    $ jupyter labextension install jupyter-threejs
+```
+$ conda install -c conda-forge nodejs  # or some other way to have a recent node
+$ jupyter labextension install jupyter labextension install @jupyter-widgets/jupyterlab-manager
+$ jupyter labextension install ipyvolume
+$ jupyter labextension install jupyter-threejs
+
+```
 
 
-For a development installation (requires npm),
+## Pre-notebook 5.3
 
-    $ git clone https://github.com/maartenbreddels/ipyvolume.git
-    $ cd ipyvolume
-    $ pip install -e .
-    $ jupyter nbextension install --py --symlink --sys-prefix ipyvolume
-    $ jupyter nbextension enable --py --sys-prefix ipyvolume
+If you are still using an old notebook version, ipyvolume and its dependend extension (widgetsnbextension) need to be enabled manually. If unsure, check which extensions are enabled:
+
+```
+$ jupyter nbextention list
+```
+
+If not enabled, enable them:
+
+```
+$ jupyter nbextension enable --py --sys-prefix ipyvolume
+$ jupyter nbextension enable --py --sys-prefix widgetsnbextension
+```
+
+## Pip as user: (but really, do not do this)
+
+**You have been warned, do this only if you know what you are doing, this might hunt you in the future, and now is a good time to consider learning virtualenv or conda.**
+
+```
+$ pip install ipyvolume --user
+$ jupyter nbextension enable --py --user ipyvolume
+$ jupyter nbextension enable --py --user widgetsnbextension
+```
+
+
+
+## Developer installation
+
+```
+$ git clone https://github.com/maartenbreddels/ipyvolume.git
+$ cd ipyvolume
+$ pip install -e .
+$ jupyter nbextension install --py --symlink --sys-prefix ipyvolume
+$ jupyter nbextension enable --py --sys-prefix ipyvolume
+```
 
 For all cases make sure [ipywidgets is enabled](http://ipywidgets.readthedocs.io/en/latest/user_install.html) if you use Jupyter notebook version < 5.3 (using `--user` instead of `--sys-prefix` if doing a local install):
 
-    $ jupyter nbextension enable --py --sys-prefix widgetsnbextension
-    $ jupyter nbextension enable --py --sys-prefix pythreejs
-    $ jupyter nbextension enable --py --sys-prefix ipywebrtc
-    $ jupyter nbextension enable --py --sys-prefix ipyvolume
+```
+$ jupyter nbextension enable --py --sys-prefix widgetsnbextension
+$ jupyter nbextension enable --py --sys-prefix pythreejs
+$ jupyter nbextension enable --py --sys-prefix ipywebrtc
+$ jupyter nbextension enable --py --sys-prefix ipyvolume
+```
 
-After changing the javascript, run npm install from the js directory, or `webpack --watch` and work from the examples/dev.ipynb notebook.
+## Developer workflow
+
+### Jupyter notebook (classical)
+
+*Note: There is never a need to restart the notebook server, nbextensions are picked up after a page reload.*
+
+Start this command:
+```
+$ (cd js; npm run watch)
+```
+
+It will
+ * Watch for changes in the sourcecode and run the typescript compiler for transpilation of the `src` dir to the `lib` dir.
+ * Watch the lib dir, and webpack will build (among other things), `ROOT/ipyvolume/static/index.js`.
+
+Refresh the page.

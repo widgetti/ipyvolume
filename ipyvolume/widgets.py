@@ -54,12 +54,14 @@ class Mesh(widgets.Widget):
 #    geo = traitlets.Unicode('diamond').tag(sync=True)
     visible = traitlets.CBool(default_value=True).tag(sync=True)
 
-    material = traitlets.Instance(pythreejs.ShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    material = traitlets.Instance(pythreejs.ShaderMaterial, help='A :any:`pythreejs.ShaderMaterial` that is used for the mesh')\
+                                  .tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('material')
     def _default_material(self):
         return pythreejs.ShaderMaterial(side=pythreejs.Side.DoubleSide)
 
-    line_material = traitlets.Instance(pythreejs.ShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    line_material = traitlets.Instance(pythreejs.ShaderMaterial, help='A :any:`pythreejs.ShaderMaterial` that is used for the lines/wireframe')\
+                                       .tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('line_material')
     def _default_line_material(self):
         return pythreejs.ShaderMaterial()
@@ -102,12 +104,14 @@ class Scatter(widgets.Widget):
         traitlets.List(Image(default_value=None, allow_none=True))
     ]).tag(sync=True, **texture_serialization)
 
-    material = traitlets.Instance(pythreejs.ShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    material = traitlets.Instance(pythreejs.ShaderMaterial, help='A :any:`pythreejs.ShaderMaterial` that is used for the mesh')\
+                                  .tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('material')
     def _default_material(self):
         return pythreejs.ShaderMaterial()
 
-    line_material = traitlets.Instance(pythreejs.ShaderMaterial).tag(sync=True, **ipywidgets.widget_serialization)
+    line_material = traitlets.Instance(pythreejs.ShaderMaterial, help='A :any:`pythreejs.ShaderMaterial` that is used for the lines/wireframe')\
+                                       .tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('line_material')
     def _default_line_material(self):
         return pythreejs.ShaderMaterial()
@@ -209,7 +213,8 @@ class Figure(ipywebrtc.MediaStream):
     camera_center = traitlets.List(traitlets.CFloat, default_value=[0, 0, 0]).tag(sync=True)
     #Tuple(traitlets.CFloat(0), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
 
-    camera = traitlets.Instance(pythreejs.Camera).tag(sync=True, **ipywidgets.widget_serialization)
+    camera = traitlets.Instance(pythreejs.Camera, help='A :any:`pythreejs.Camera` instance to control the camera')\
+                                .tag(sync=True, **ipywidgets.widget_serialization,)
     @traitlets.default('camera')
     def _default_camera(self):
         # return pythreejs.CombinedCamera(fov=46, position=(0, 0, 2), width=400, height=500)
@@ -356,3 +361,13 @@ def scatter(x, y, z, color=(1,0,0), s=0.01):
     fig.scatter = Scatter(x=x, y=y, z=z, color=color, size=s)
     fig.volume.scatter = fig.scatter
     return fig
+
+# add all help strings to the __doc__ for the api docstrings
+for name, cls in list(vars().items()):
+    try:
+        if issubclass(cls, traitlets.HasTraits):
+            for trait_name, trait in cls.class_traits().items():
+                if 'help' in trait.metadata:
+                    trait.__doc__ = trait.metadata['help']
+    except TypeError:
+        pass

@@ -121,7 +121,7 @@ For conda/anaconda, use:
 About
 =====
 
-Ipyvolume is an offspring project from `vaex <http://vaex.astro.rug.nl/>`_. Ipyvolume makes use of `threejs <https://threejs.org/>`_, and excellent Javascript library for OpenGL/WebGL rendering.
+Ipyvolume is an offspring project from `vaex <http://vaex.astro.rug.nl/>`_. Ipyvolume makes use of `threejs <https://threejs.org/>`_, an excellent Javascript library for OpenGL/WebGL rendering.
 
 
 
@@ -141,7 +141,48 @@ Contents
 
 Changelog
 =========
+ * 0.5
 
+   * New
+
+     * Volume is now its own widget, allowing multivolume rendering
+     * Depth aware zooming (Hold Alt key, or toggle in menu) and zoom into any object or volume rendering
+      * double click centers that point
+     * Configurable ray steps for volume rendering (Volume.ray_steps)
+     * Better transparency support, premultiplied colors used consistently, colors can now be of shape `(..., 3 or 4)` to allow alpha channel (note: no proper rendering yet, this is a difficult problem).
+     * Panoramic modes: 180 and 360 degrees for dome projection or VR video creations.
+     * Maximum intensity volume rendering.
+     * Progressive loading of large volumetric cubes.
+     * ipyvolume.moviemaker: simple UI for making movies, and keyframes settings for the camera.
+     * ipyvolume.astro: (experiment) as domain specific module for astronomy.
+     * New example male head volume rendering :any:`ipyvolume.examples.head`
+
+   * Changes
+
+     * 100x faster mesh generation
+     * Fixes/improvements for headless rendering
+     * Selection method in the kernel, see :any:`ipyvolume.pylab.selector_default`.
+     * Fixed memory leak issues in the browser
+     * Scatter supports 2d sprites,see :any:`ipyvolume.pylab.scatter`.
+     * Pythreejs integration, Camera, Scene and ShaderMaterial are now exposed.
+     * 'sphere' marker was double the size as the others, now halved in size/
+     * :any:`ipyvolume.pylab.view` can control distance, and returns currents values.
+
+   * New contributors
+
+     * Casper van Leeuwen
+     * Oleh Kozynets
+     * Oliver Evans
+     * Jean-Rémi KING
+     * Mathieu Carette
+     * Saul (saulthu)
+     * Timo Friedri
+     * WANG Aiyong
+     * mpu-creare
+     * xavArtley
+     * Eric Larson
+     * Hans Moritz Günther
+     * Jackie Leng
  * 0.4
    
    * plotting

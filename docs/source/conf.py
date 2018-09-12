@@ -35,6 +35,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
+    'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
@@ -144,12 +145,12 @@ todo_include_todos = True
 #html_theme = 'alabaster'
 
 
-# try:
-# 	import sphinx_rtd_theme
-# 	html_theme = "sphinx_rtd_theme"
-# 	html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-# except:
-# 	print "rtd theme not found"
+try:
+	import sphinx_rtd_theme
+	html_theme = "sphinx_rtd_theme"
+	html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+except:
+	print "rtd theme not found"
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -371,4 +372,4 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'https://docs.python.org/': None, 'pythreejs': ('https://pythreejs.readthedocs.io/en/latest/', None)}
