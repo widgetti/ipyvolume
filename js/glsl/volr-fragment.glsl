@@ -361,7 +361,7 @@ void cast_ray_max(vec3 ray_begin, vec3 ray_end) {
                 max_colors[{{.}}] = texture2D(transfer_function_max_int[{{.}}], vec2(max_values[{{.}}], 0.5));
                 if(volumes_max_int[{{.}}].lighting)
                     max_colors[{{.}}] = apply_lighting(max_colors[{{.}}], normal);
-                float alpha = clamp(max_colors[{{.}}].a * volumes_max_int[{{.}}].opacity_scale, 0., 1.);
+                float alpha = clamp(max_colors[{{.}}].a * volumes_max_int[{{.}}].opacity_scale * 10., 0., 1.);
                 max_colors[{{.}}].a = alpha;
                 #ifdef COORDINATE
                     max_colors[{{.}}].rgb = ray_pos * alpha; // no need to use brightness for the coordinates
