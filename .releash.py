@@ -4,9 +4,7 @@ import glob
 gitpush = ReleaseTargetGitPush()
 
 
-filenames_python = glob.glob('*')
-filenames_python.remove('js')
-filenames_python.remove('notebooks')
+filenames_python = ['ipyvolume']
 package_python = add_package(".", "py", distribution_name='ipyvolume', filenames=filenames_python)
 
 version_python = VersionSource(package_python, '{path}/ipyvolume/_version.py')
@@ -16,7 +14,7 @@ package_python.version_source = version_python
 package_python.version_targets.append(VersionTarget(package_python, '{path}/ipyvolume/_version.py'))
 
 package_python.release_targets.append(gittag)
-package_python.release_targets.append(ReleaseTargetSourceDist(package_python))
+package_python.release_targets.append(ReleaseTargetSourceDist(package_python, universal_wheel=True))
 #core.release_targets.append(gitpush)
 package_python.release_targets.append(ReleaseTargetCondaForge(package_python, '../feedstocks/ipyvolume-feedstock'))
 
