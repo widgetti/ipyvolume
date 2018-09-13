@@ -4,7 +4,7 @@ from ._version import __version__
 from . import styles
 from .widgets import *
 from .transferfunction import *
-from .examples import  *
+from . import examples
 from . import datasets
 from . import embed
 from .pylab import *
