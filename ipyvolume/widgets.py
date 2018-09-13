@@ -214,7 +214,7 @@ class Figure(ipywebrtc.MediaStream):
     #Tuple(traitlets.CFloat(0), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
 
     camera = traitlets.Instance(pythreejs.Camera, help='A :any:`pythreejs.Camera` instance to control the camera')\
-                                .tag(sync=True, **ipywidgets.widget_serialization,)
+                                .tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('camera')
     def _default_camera(self):
         # return pythreejs.CombinedCamera(fov=46, position=(0, 0, 2), width=400, height=500)
