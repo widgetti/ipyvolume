@@ -77,5 +77,13 @@
     "three-text2d": "~0.4.1",
     "underscore": "^1.8.3",
     "webrtc-adapter": "^4.2.2"
-  }
+  },
+  "files": [
+    "dist/",
+    "css/",
+    "src/",
+    "lib/",
+    "data/",
+    "glsl/"
+  ]
 }
