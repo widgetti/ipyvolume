@@ -34,20 +34,38 @@ var MeshView = widgets.WidgetView.extend( {
                 texture: { type: 't', value: null },
                 texture_previous: { type: 't', value: null },
         }
-        this.material = this.model.get('material').obj.clone()
-        this.material_rgb = this.model.get('material').obj.clone()
-        this.line_material = this.model.get('line_material').obj.clone()
-        this.line_material_rgb = this.model.get('line_material').obj.clone()
+        let get_material = (attr_name)  => {
+            if(this.model.get('material'))
+                return this.model.get('material').obj.clone()
+            else {
+                var mat = new THREE.ShaderMaterial();
+                mat.side = THREE.DoubleSide;
+                return mat;
+            }
+
+        }
+        this.material = get_material('material');
+        this.material_rgb = get_material('material');
+        this.line_material = get_material('line_material');
+        this.material.polygonOffset = true;
+        this.material.polygonOffsetFactor = 1;
+        this.material.polygonOffsetUnits = 0.1;
+        // this.material.depthFunc = THREE.LessEqualDepth
+        this.line_material_rgb = get_material('line_material');
         this.materials = [this.material, this.material_rgb, this.line_material, this.line_material_rgb]
         this._update_materials()
-        this.model.get('material').on('change', () => {
-            this._update_materials()
-            this.renderer.update()
-        })
-        this.model.get('line_material').on('change', () => {
-            this._update_materials()
-            this.renderer.update()
-        })
+        if(this.model.get('material')) {
+            this.model.get('material').on('change', () => {
+                this._update_materials()
+                this.renderer.update()
+            })
+        }
+        if(this.model.get('line_material')) {
+            this.model.get('line_material').on('change', () => {
+                this._update_materials()
+                this.renderer.update()
+            })
+        }
 
         this.create_mesh()
         this.add_to_scene()
@@ -203,10 +221,14 @@ var MeshView = widgets.WidgetView.extend( {
         return this._get_value_vec3(this.previous_values[name] || this.model.get(name), index, default_value)
     },
     _update_materials: function() {
-        this.material.copy(this.model.get('material').obj)
-        this.material_rgb.copy(this.model.get('material').obj)
-        this.line_material.copy(this.model.get('line_material').obj)
-        this.line_material_rgb.copy(this.model.get('line_material').obj)
+        if(this.model.get('material'))
+            this.material.copy(this.model.get('material').obj)
+        if(this.model.get('material'))
+            this.material_rgb.copy(this.model.get('material').obj)
+        if(this.model.get('line_material'))
+            this.line_material.copy(this.model.get('line_material').obj)
+        if(this.model.get('line_material'))
+            this.line_material_rgb.copy(this.model.get('line_material').obj)
         this.material_rgb.defines = {USE_RGB: true}
         this.line_material.defines = {AS_LINE: true}
         this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true}

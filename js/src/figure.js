@@ -410,7 +410,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var initial_fov = this.model.get("camera_fov")
         this.reset_icon.a.onclick = () => {
             this.camera.copy(this.camera_initial)
-            this.camera.ipymodel.syncToModel(true)
+            if(this.camera.ipymodel)
+                this.camera.ipymodel.syncToModel(true)
             //this.model.save_changes()
         }
 
@@ -522,21 +523,25 @@ var FigureView = widgets.DOMWidgetView.extend( {
         //     orthoNEAR,
         //     orthoFAR
         // );
-        this.camera = this.model.get('camera').obj
+        if(this.model.get('camera')) {
+            this.camera = this.model.get('camera').obj
+            this.model.get('camera').on('change', () => {
+                // the threejs' lookAt ignore the quaternion, and uses the up vector
+                // we manually set it ourselve
+                var up = new THREE.Vector3( 0, 1, 0 );
+                up.applyQuaternion( this.camera.quaternion );
+                this.camera.up = up;
+                this.camera.lookAt(0, 0, 0);
+                // TODO: shouldn't we do the same with the orbit control?
+                this.control_trackball.position0 = this.camera.position.clone();
+                this.control_trackball.up0 = this.camera.up.clone();
+                // TODO: if we implement figure.look_at, we should update control's target as well
+                this.update();
+            });
+        } else {
+            this.camera = new THREE.PerspectiveCamera(46, 1, NEAR, FAR);
+        }
         this.camera_initial = this.camera.clone()
-        this.model.get('camera').on('change', () => {
-            // the threejs' lookAt ignore the quaternion, and uses the up vector
-            // we manually set it ourselve
-            var up = new THREE.Vector3( 0, 1, 0 );
-            up.applyQuaternion( this.camera.quaternion );
-            this.camera.up = up;
-            this.camera.lookAt(0, 0, 0);
-            // TODO: shouldn't we do the same with the orbit control?
-            this.control_trackball.position0 = this.camera.position.clone();
-            this.control_trackball.up0 = this.camera.up.clone();
-            // TODO: if we implement figure.look_at, we should update control's target as well
-            this.update();
-        });
         this.cube_camera = new THREE.CubeCamera(this.camera.near, this.camera.far, this.model.get('cube_resolution'));
         // this.camera.aspect = 0.8
         // this.camera.cameraP.aspect = 0.8
@@ -608,12 +613,16 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // we have our 'private' scene, if we use the real scene, it gives buggy
         // results in the volume rendering when we have two views
         this.scene_volume = new THREE.Scene();
-        this.shared_scene = this.model.get('scene').obj
-
         // could be removed when https://github.com/jovyan/pythreejs/issues/176 is solved
         // the default for pythreejs is white, which leads the volume rendering pass to make everything white
         this.scene_volume.background = null
-        this.model.get('scene').on('rerender', () => this.update())
+
+        if(this.model.get('scene')) {
+            this.shared_scene = this.model.get('scene').obj
+            this.model.get('scene').on('rerender', () => this.update())
+        } else {
+            this.shared_scene = new THREE.Scene();
+        }
 
         this.scene_volume.add(this.camera);
         // the threejs animation system looks at the parent of the camera and sends rerender msg'es
@@ -774,19 +783,21 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:xlim change:ylim change:zlim', () => {
             update_matrix_world_scale()
         })
-        this.model.get('camera').on('change:matrixWorld', () => {
+        if(this.model.get('camera')) {
+            this.model.get('camera').on('change:matrixWorld', () => {
+                update_matrix_world_scale()
+            })
             update_matrix_world_scale()
-        })
-        update_matrix_world_scale()
 
-        var update_matrix_projection = () => {
-            this.model.set('matrix_projection', this.camera.projectionMatrix.elements.slice())
-        }
-        update_matrix_projection()
-        this.model.get('camera').on('change:projectionMatrix', () => {
+            var update_matrix_projection = () => {
+                this.model.set('matrix_projection', this.camera.projectionMatrix.elements.slice())
+            }
             update_matrix_projection()
-        })
-        update_matrix_projection()
+            this.model.get('camera').on('change:projectionMatrix', () => {
+                update_matrix_projection()
+            })
+            update_matrix_projection()
+        }
 
         this.model.on('change:camera_control', this.update_mouse_mode, this)
         this.model.on('change:xlabel change:ylabel change:zlabel', this.update, this);
@@ -886,6 +897,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             var stream = this.renderer.domElement.captureStream()
         this.model.stream = Promise.resolve(stream)
         window.last_figure_stream = (stream)
+        window.last_figure = this;
         //console.log('set this figure as last stream')
         // keep track over hover status manually
         this.renderer.domElement.onmouseover = () => {
@@ -1414,7 +1426,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
     },
     update_angles: function() {
-        this.camera.ipymodel.syncToModel(true)
+        if(this.camera.ipymodel)
+            this.camera.ipymodel.syncToModel(true)
         this.update()
     },
     _get_scale_matrix: function() {
@@ -1453,7 +1466,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
       return Math.tan(rad);
     },
     update_current_control: function() {
-        this.camera.ipymodel.syncToModel(true)
+        if(this.camera.ipymodel)
+            this.camera.ipymodel.syncToModel(true)
         this.control_trackball.position0 = this.camera.position.clone()
         this.control_trackball.up0 = this.camera.up.clone()
     },
@@ -1614,7 +1628,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
         if(this.model.get('render_continuous'))
             this.update()
-        this.model.get('scene').trigger('afterRender', this.scene_volume, this.renderer, this.camera)
+        if(this.model.get('scene'))
+            this.model.get('scene').trigger('afterRender', this.scene_volume, this.renderer, this.camera)
     },
     get_style_color: function(name) {
         style = this.get_style(name)

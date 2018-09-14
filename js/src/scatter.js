@@ -80,21 +80,31 @@ var ScatterView = widgets.WidgetView.extend( {
                 animation_time_color : { type: "f", value: 1. },
                 texture: { type: 't', value: null },
                 texture_previous: { type: 't', value: null },
-            },
-        this.material = this.model.get('material').obj.clone()
-        this.material_rgb = this.model.get('material').obj.clone()
-        this.line_material = this.model.get('line_material').obj.clone()
-        this.line_material_rgb = this.model.get('line_material').obj.clone()
+            };
+        let get_material = (attr_name)  => {
+            if(this.model.get('material'))
+                return this.model.get('material').obj.clone()
+            else
+                return new THREE.ShaderMaterial();
+        }
+        this.material = get_material('material')
+        this.material_rgb = get_material('material')
+        this.line_material = get_material('line_material')
+        this.line_material_rgb = get_material('line_material')
         this.materials = [this.material, this.material_rgb, this.line_material, this.line_material_rgb]
         this._update_materials()
-        this.model.get('material').on('change', () => {
-            this._update_materials()
-            this.renderer.update()
-        })
-        this.model.get('line_material').on('change', () => {
-            this._update_materials()
-            this.renderer.update()
-        })
+        if(this.model.get('material')) {
+            this.model.get('material').on('change', () => {
+                this._update_materials()
+                this.renderer.update()
+            })
+        }
+        if(this.model.get('line_material')) {
+            this.model.get('line_material').on('change', () => {
+                this._update_materials()
+                this.renderer.update()
+            })
+        }
 
         this.create_mesh()
         this.add_to_scene()
@@ -229,12 +239,17 @@ var ScatterView = widgets.WidgetView.extend( {
         return this._get_value_vec3(this.previous_values[name] || this.model.get(name), index, default_value)
     },
     _update_materials: function() {
-        this.material.copy(this.model.get('material').obj)
-        this.material_rgb.copy(this.model.get('material').obj)
-        this.line_material.copy(this.model.get('line_material').obj)
-        // not present on .copy.. bug?
-        this.line_material_rgb.copy(this.model.get('line_material').obj)
-        this.line_material_rgb.linewidth = this.line_material.linewidth = this.model.get('line_material').obj.linewidth
+        if(this.model.get('material'))
+            this.material.copy(this.model.get('material').obj)
+        if(this.model.get('material'))
+            this.material_rgb.copy(this.model.get('material').obj)
+        if(this.model.get('line_material'))
+            this.line_material.copy(this.model.get('line_material').obj)
+        if(this.model.get('line_material')) {
+            this.line_material_rgb.copy(this.model.get('line_material').obj)
+            // not present on .copy.. bug?
+            this.line_material_rgb.linewidth = this.line_material.linewidth = this.model.get('line_material').obj.linewidth
+        }
         this.material.extensions = {derivatives: true}
         this.material_rgb.defines = {USE_RGB: true}
         this.material_rgb.extensions = {derivatives: true}
