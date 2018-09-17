@@ -213,14 +213,14 @@ class Figure(ipywebrtc.MediaStream):
     camera_center = traitlets.List(traitlets.CFloat, default_value=[0, 0, 0]).tag(sync=True)
     #Tuple(traitlets.CFloat(0), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
 
-    camera = traitlets.Instance(pythreejs.Camera, help='A :any:`pythreejs.Camera` instance to control the camera')\
+    camera = traitlets.Instance(pythreejs.Camera, allow_none=True, help='A :any:`pythreejs.Camera` instance to control the camera')\
                                 .tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('camera')
     def _default_camera(self):
         # return pythreejs.CombinedCamera(fov=46, position=(0, 0, 2), width=400, height=500)
         return pythreejs.PerspectiveCamera(fov=46, position=(0, 0, 2), width=400, height=500)
 
-    scene = traitlets.Instance(pythreejs.Scene).tag(sync=True, **ipywidgets.widget_serialization)
+    scene = traitlets.Instance(pythreejs.Scene, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('scene')
     def _default_scene(self):
         # could be removed when https://github.com/jovyan/pythreejs/issues/176 is solved
