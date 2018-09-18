@@ -4,5 +4,5 @@ set -ex
 
 pip install .
 
-jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-threejs ipyvolume@^0.5.0 --no-build
+jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-threejs js --no-build
 jupyter lab build
