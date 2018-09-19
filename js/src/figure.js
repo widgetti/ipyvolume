@@ -597,8 +597,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         // set a good intial z for any fov angle
         // see maartenbreddels/ipyvolume#40 for explanation
-        // TODO: this should now be reflected on the Python side on the camera
-        this.camera.position.z = 2 * this.getTanDeg(45/2) / this.getTanDeg(this.model.get("camera_fov")/2)
 
 
         // d3 data
@@ -1460,10 +1458,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var view_matrix = this.camera.matrixWorldInverse.clone()
         view_matrix.multiply(this._get_scale_matrix().clone())
         return view_matrix;
-    },
-    getTanDeg: function(deg) {
-      var rad = deg * Math.PI/180;
-      return Math.tan(rad);
     },
     update_current_control: function() {
         if(this.camera.ipymodel)

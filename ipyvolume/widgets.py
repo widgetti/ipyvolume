@@ -217,8 +217,9 @@ class Figure(ipywebrtc.MediaStream):
                                 .tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('camera')
     def _default_camera(self):
-        # return pythreejs.CombinedCamera(fov=46, position=(0, 0, 2), width=400, height=500)
-        return pythreejs.PerspectiveCamera(fov=46, position=(0, 0, 2), width=400, height=500)
+        # see https://github.com/maartenbreddels/ipyvolume/pull/40 for an explanation
+        z = 2 * np.tan(45./2.*np.pi/180) / np.tan(self.camera_fov/2.*np.pi/180)
+        return pythreejs.PerspectiveCamera(fov=self.camera_fov, position=(0, 0, z), width=400, height=500)
 
     scene = traitlets.Instance(pythreejs.Scene, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
     @traitlets.default('scene')
