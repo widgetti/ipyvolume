@@ -284,7 +284,7 @@ def load_transfer_functions(include_rgb_linear=True,
             rgb = colors[color_key]
             tf = linear_transfer_function(rgb)
             transfer_functions[color_key] = tf
-            reverse_tf = linear_transfer_function(rgb, reverse_opacity=True)
+            tf_reversed = linear_transfer_function(rgb, reverse_opacity=True)
             transfer_functions[color_key + '_r'] = tf_reversed
     # matplotlib colormaps
     if include_matplotlib:
