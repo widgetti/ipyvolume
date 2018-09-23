@@ -288,12 +288,18 @@ def load_transfer_functions(include_rgb_linear=True,
             transfer_functions[color_key + '_r'] = tf_reversed
     # matplotlib colormaps
     if include_matplotlib:
-        matplotlib_colormaps = [m for m in matplotlib.cm.datad if not m.endswith("_r")]
+        matplotlib_colormaps = [m for m in dir(matplotlib.cm) if not m.endswith("_r")]
         for colormap in matplotlib_colormaps:
-            transfer_functions[colormap] = matplotlib_transfer_function(colormap)
+            try:
+                transfer_functions[colormap] = matplotlib_transfer_function(colormap)
+            except ValueError:
+                continue
     # reversed matplotlib colormaps
     if include_matplotlib_reversed:
-        reversed_matplotlib_colormaps = [m for m in matplotlib.cm.datad if m.endswith("_r")]
+        reversed_matplotlib_colormaps = [m for m in dir(matplotlib.cm) if m.endswith("_r")]
         for colormap in reversed_matplotlib_colormaps:
-            transfer_functions[colormap] = matplotlib_transfer_function(colormap)
+            try:
+                transfer_functions[colormap] = matplotlib_transfer_function(colormap)
+            except ValueError:
+                continue
     return transfer_functions
