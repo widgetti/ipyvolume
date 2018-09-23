@@ -4,6 +4,7 @@ from traitlets import Unicode, validate
 from traittypes import Array
 import traitlets
 import numpy as np
+import matplotlib.cm
 from . import serialize
 from .serialize import array_rgba_png_serialization, array_serialization
 N = 1024
@@ -164,3 +165,135 @@ class TransferFunctionWidget3(TransferFunction):
 		return ipywidgets.VBox(
 			[ipywidgets.HBox([ipywidgets.Label(value="levels:"), l1, l2, l3]), ipywidgets.HBox([ipywidgets.Label(value="opacities:"), o1, o2, o3])]
 		)
+
+
+def linear_transfer_function(rgb_values,
+                             min_opacity=0,
+                             max_opacity=0.05,
+                             reverse_opacity=False):
+    """Transfer function from a single RGB value with a linear opacity.
+
+    :param rgb_values: Tuple or list containing the RGB values
+        of red, green and blue, respectively.
+    :param min_opacity: Minimum opacity, default value is 0.0.
+        Lowest possible value is 0.0, optional.
+    :param max_opacity: Maximum opacity, default value is 0.05.
+        Highest possible value is 1.0, optional.
+    :param reverse_opacity: Linearly decrease opacity, optional.
+    :type rgb: listlike
+    :type min_opacity: float, int
+    :type max_opacity: float, int
+    :type reverse_opacity: bool
+    :return: transfer_function
+    :rtype: ipyvolume TransferFunction
+
+    :Example:
+    >>> import ipyvolume as ipv
+    >>> rgb = (0, 255, 0)  # RGB value for green
+    >>> green_tf = ipv.transfer_function.linear_transfer_function(rgb)
+    >>> ds = ipv.datasets.aquariusA2.fetch()
+    >>> ipv.volshow(ds.data[::4,::4,::4], tf=green_tf)
+    >>> ipv.show()
+
+    .. seealso:: matplotlib_transfer_function()
+    """
+    _num_elements = 256  # length of rgba transfer function array
+    r, g, b = [value/255. for value in rgb_values]  # rescales 0-255 to float
+    opacity = np.linspace(min_opacity, max_opacity, num=_num_elements)
+    if reverse_opacity: opacity = np.flip(opacity, axis=0)
+    rgba = np.transpose(np.stack([[r] * _num_elements,
+                                  [g] * _num_elements,
+                                  [b] * _num_elements,
+                                  opacity]))
+    transfer_function = TransferFunction(rgba=rgba)
+    return transfer_function
+
+
+def matplotlib_transfer_function(colormap_name,
+                                 min_opacity=0,
+                                 max_opacity=0.05,
+                                 reverse_colormap=False,
+                                 reverse_opacity=False):
+    """Transfer function from matplotlib colormaps.
+
+    :param colormap_name: name of matplotlib colormap
+    :param min_opacity: Minimum opacity, default value is 0.
+        Lowest possible value is 0, optional.
+    :param max_opacity: Maximum opacity, default value is 0.05.
+        Highest possible value is 1.0, optional.
+    :param reverse_colormap: reversed matplotlib colormap, optional.
+    :param reverse_opacity: Linearly decrease opacity, optional.
+    :type colormap_name: str
+    :type min_opacity: float, int
+    :type max_opacity: float, int
+    :type reverse_colormap: bool
+    :type reverse_opacity: bool
+    :return: transfer_function
+    :rtype: ipyvolume TransferFunction
+
+    :Example:
+    >>> import ipyvolume as ipv
+    >>> rgb = (0, 255, 0)  # RGB value for green
+    >>> green_tf = ipv.transfer_function.matplotlib_transfer_function('viridis')
+    >>> ds = ipv.datasets.aquariusA2.fetch()
+    >>> ipv.volshow(ds.data[::4,::4,::4], tf=green_tf)
+    >>> ipv.show()
+
+    .. seealso:: linear_transfer_function()
+    """
+    _num_elements = 256  # length of rgba transfer function array
+    cmap = matplotlib.cm.get_cmap(name=colormap_name)
+    rgba = np.array([cmap(i) for i in np.linspace(0, 1, _num_elements)])
+    if reverse_colormap: rgba = np.flip(rgba, axis=0)
+    # Create opacity values to overwrite default matplotlib opacity=1.0
+    opacity = np.linspace(min_opacity, max_opacity, num=_num_elements)
+    if reverse_opacity: opacity = np.flip(opacity, axis=0)
+    rgba[:,-1] = opacity # replace opacity=1 with actual opacity
+    transfer_function = TransferFunction(rgba=rgba)
+    return transfer_function
+
+
+def load_transfer_functions(include_rgb_linear=True,
+                            include_matplotlib=True,
+                            include_matplotlib_reversed=True):
+    """Load predefined transfer functions into a dictionary.
+
+    :param include_rgb_linear: load transfer functions from individual
+        RGB values & linear opacity, optional.
+    :param include_matplotlib: load transfer functions from matplotlib
+        colormaps & linear opacity, optional.
+    :param include_matplotlib_reversed: load transfer functions from
+        REVERSED matplotlib colormaps, optional.
+    :type include_rgb_linear: bool
+    :type include_matplotlib: bool
+    :type include_matplotlib_reversed: bool
+    :return: dictionary of predefined transfer functions.
+    :rtype: dict of ipyvolume TransferFunction instances
+    """
+    transfer_functions = {}
+    # RGB primary and secondary colors
+    if include_rgb_linear:
+        colors = {'grey': (0, 0, 0),
+                  'red': (255, 0, 0),
+                  'green': (0, 255, 0),
+                  'blue': (0, 0, 255),
+                  'yellow': (255, 255, 0),
+                  'magenta': (255, 0, 255),
+                  'cyan': (0, 255, 255)}
+        for color_key in colors:
+            rgb = colors[color_key]
+            tf = linear_transfer_function(rgb)
+            transfer_functions[color_key] = tf
+            reverse_tf = linear_transfer_function(rgb, reverse_opacity=True)
+            transfer_functions[color_key + '_r'] = tf_reversed
+    # matplotlib colormaps
+    if include_matplotlib:
+        matplotlib_colormaps = [m for m in matplotlib.cm.datad if not m.endswith("_r")]
+        for colormap in matplotlib_colormaps:
+            transfer_functions[colormap] = matplotlib_transfer_function(colormap)
+    # reversed matplotlib colormaps
+    if include_matplotlib_reversed:
+        reversed_matplotlib_colormaps = [m for m in matplotlib.cm.datad if m.endswith("_r")]
+        for colormap in reversed_matplotlib_colormaps:
+            transfer_functions[colormap] = matplotlib_transfer_function(colormap)
+    return transfer_functions
