@@ -5,6 +5,7 @@ from traittypes import Array
 import traitlets
 import numpy as np
 import matplotlib.cm
+import matplotlib.colors
 from . import serialize
 from .serialize import array_rgba_png_serialization, array_serialization
 N = 1024
@@ -167,22 +168,22 @@ class TransferFunctionWidget3(TransferFunction):
 		)
 
 
-def linear_transfer_function(rgb_values,
+def linear_transfer_function(color,
                              min_opacity=0,
                              max_opacity=0.05,
                              reverse_opacity=False,
                              n_elements = 256):
-    """Transfer function from a single RGB value with a linear opacity.
+    """Transfer function of a single color and linear opacity.
 
-    :param rgb_values: Tuple or list containing the RGB values
-        of red, green and blue, respectively.
+    :param color: Listlike RGB, or string with hexidecimal or named color.
+        RGB values should be within 0-1 range.
     :param min_opacity: Minimum opacity, default value is 0.0.
         Lowest possible value is 0.0, optional.
     :param max_opacity: Maximum opacity, default value is 0.05.
         Highest possible value is 1.0, optional.
     :param reverse_opacity: Linearly decrease opacity, optional.
     :param n_elements: Length of rgba array transfer function attribute.
-    :type rgb: listlike
+    :type color: listlike or string
     :type min_opacity: float, int
     :type max_opacity: float, int
     :type reverse_opacity: bool
@@ -192,15 +193,14 @@ def linear_transfer_function(rgb_values,
 
     :Example:
     >>> import ipyvolume as ipv
-    >>> rgb = (0, 255, 0)  # RGB value for green
-    >>> green_tf = ipv.transfer_function.linear_transfer_function(rgb)
+    >>> green_tf = ipv.transfer_function.linear_transfer_function('green')
     >>> ds = ipv.datasets.aquariusA2.fetch()
     >>> ipv.volshow(ds.data[::4,::4,::4], tf=green_tf)
     >>> ipv.show()
 
     .. seealso:: matplotlib_transfer_function()
     """
-    r, g, b = [value/255. for value in rgb_values]  # rescales 0-255 to float
+    r, g, b = matplotlib.colors.to_rgb(color)
     opacity = np.linspace(min_opacity, max_opacity, num=n_elements)
     if reverse_opacity:
         opacity = np.flip(opacity, axis=0)
@@ -280,17 +280,11 @@ def load_transfer_functions(include_rgb_linear=True,
     transfer_functions = {}
     # RGB primary and secondary colors
     if include_rgb_linear:
-        colors = {'grey': (0, 0, 0),
-                  'red': (255, 0, 0),
-                  'green': (0, 255, 0),
-                  'blue': (0, 0, 255),
-                  'yellow': (255, 255, 0),
-                  'magenta': (255, 0, 255),
-                  'cyan': (0, 255, 255)}
-        for color_key in colors:
-            rgb = colors[color_key]
-            tf = linear_transfer_function(rgb)
-            transfer_functions[color_key] = tf
+        colors = ['red', 'green', 'blue', 'yellow', 'magenta', 'cyan',
+                  'black', 'gray', 'white']
+        for color in colors:
+            tf = linear_transfer_function(color)
+            transfer_functions[color] = tf
             tf_reversed = linear_transfer_function(rgb, reverse_opacity=True)
             transfer_functions[color_key + '_r'] = tf_reversed
     # matplotlib colormaps
