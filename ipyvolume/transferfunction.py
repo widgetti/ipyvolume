@@ -170,7 +170,8 @@ class TransferFunctionWidget3(TransferFunction):
 def linear_transfer_function(rgb_values,
                              min_opacity=0,
                              max_opacity=0.05,
-                             reverse_opacity=False):
+                             reverse_opacity=False,
+                             n_elements = 256):
     """Transfer function from a single RGB value with a linear opacity.
 
     :param rgb_values: Tuple or list containing the RGB values
@@ -180,10 +181,12 @@ def linear_transfer_function(rgb_values,
     :param max_opacity: Maximum opacity, default value is 0.05.
         Highest possible value is 1.0, optional.
     :param reverse_opacity: Linearly decrease opacity, optional.
+    :param n_elements: Length of rgba array transfer function attribute.
     :type rgb: listlike
     :type min_opacity: float, int
     :type max_opacity: float, int
     :type reverse_opacity: bool
+    :type n_elements: int
     :return: transfer_function
     :rtype: ipyvolume TransferFunction
 
@@ -197,14 +200,13 @@ def linear_transfer_function(rgb_values,
 
     .. seealso:: matplotlib_transfer_function()
     """
-    _num_elements = 256  # length of rgba transfer function array
     r, g, b = [value/255. for value in rgb_values]  # rescales 0-255 to float
-    opacity = np.linspace(min_opacity, max_opacity, num=_num_elements)
+    opacity = np.linspace(min_opacity, max_opacity, num=n_elements)
     if reverse_opacity:
         opacity = np.flip(opacity, axis=0)
-    rgba = np.transpose(np.stack([[r] * _num_elements,
-                                  [g] * _num_elements,
-                                  [b] * _num_elements,
+    rgba = np.transpose(np.stack([[r] * n_elements,
+                                  [g] * n_elements,
+                                  [b] * n_elements,
                                   opacity]))
     transfer_function = TransferFunction(rgba=rgba)
     return transfer_function
@@ -214,7 +216,8 @@ def matplotlib_transfer_function(colormap_name,
                                  min_opacity=0,
                                  max_opacity=0.05,
                                  reverse_colormap=False,
-                                 reverse_opacity=False):
+                                 reverse_opacity=False,
+                                 n_elements=256):
     """Transfer function from matplotlib colormaps.
 
     :param colormap_name: name of matplotlib colormap
@@ -224,11 +227,13 @@ def matplotlib_transfer_function(colormap_name,
         Highest possible value is 1.0, optional.
     :param reverse_colormap: reversed matplotlib colormap, optional.
     :param reverse_opacity: Linearly decrease opacity, optional.
+    :param n_elements: Length of rgba array transfer function attribute.
     :type colormap_name: str
     :type min_opacity: float, int
     :type max_opacity: float, int
     :type reverse_colormap: bool
     :type reverse_opacity: bool
+    :type n_elements: int
     :return: transfer_function
     :rtype: ipyvolume TransferFunction
 
@@ -242,13 +247,12 @@ def matplotlib_transfer_function(colormap_name,
 
     .. seealso:: linear_transfer_function()
     """
-    _num_elements = 256  # length of rgba transfer function array
     cmap = matplotlib.cm.get_cmap(name=colormap_name)
-    rgba = np.array([cmap(i) for i in np.linspace(0, 1, _num_elements)])
+    rgba = np.array([cmap(i) for i in np.linspace(0, 1, n_elements)])
     if reverse_colormap:
         rgba = np.flip(rgba, axis=0)
     # Create opacity values to overwrite default matplotlib opacity=1.0
-    opacity = np.linspace(min_opacity, max_opacity, num=_num_elements)
+    opacity = np.linspace(min_opacity, max_opacity, num=n_elements)
     if reverse_opacity:
         opacity = np.flip(opacity, axis=0)
     rgba[:,-1] = opacity # replace opacity=1 with actual opacity
