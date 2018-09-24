@@ -200,7 +200,8 @@ def linear_transfer_function(rgb_values,
     _num_elements = 256  # length of rgba transfer function array
     r, g, b = [value/255. for value in rgb_values]  # rescales 0-255 to float
     opacity = np.linspace(min_opacity, max_opacity, num=_num_elements)
-    if reverse_opacity: opacity = np.flip(opacity, axis=0)
+    if reverse_opacity:
+        opacity = np.flip(opacity, axis=0)
     rgba = np.transpose(np.stack([[r] * _num_elements,
                                   [g] * _num_elements,
                                   [b] * _num_elements,
@@ -234,7 +235,7 @@ def matplotlib_transfer_function(colormap_name,
     :Example:
     >>> import ipyvolume as ipv
     >>> rgb = (0, 255, 0)  # RGB value for green
-    >>> green_tf = ipv.transfer_function.matplotlib_transfer_function('viridis')
+    >>> green_tf = ipv.transfer_function.matplotlib_transfer_function('bone')
     >>> ds = ipv.datasets.aquariusA2.fetch()
     >>> ipv.volshow(ds.data[::4,::4,::4], tf=green_tf)
     >>> ipv.show()
@@ -244,10 +245,12 @@ def matplotlib_transfer_function(colormap_name,
     _num_elements = 256  # length of rgba transfer function array
     cmap = matplotlib.cm.get_cmap(name=colormap_name)
     rgba = np.array([cmap(i) for i in np.linspace(0, 1, _num_elements)])
-    if reverse_colormap: rgba = np.flip(rgba, axis=0)
+    if reverse_colormap:
+        rgba = np.flip(rgba, axis=0)
     # Create opacity values to overwrite default matplotlib opacity=1.0
     opacity = np.linspace(min_opacity, max_opacity, num=_num_elements)
-    if reverse_opacity: opacity = np.flip(opacity, axis=0)
+    if reverse_opacity:
+        opacity = np.flip(opacity, axis=0)
     rgba[:,-1] = opacity # replace opacity=1 with actual opacity
     transfer_function = TransferFunction(rgba=rgba)
     return transfer_function
