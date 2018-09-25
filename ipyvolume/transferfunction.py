@@ -6,7 +6,8 @@ __all__ = ['TransferFunction', 'TransferFunctionJsBumps',
            'TransferFunctionWidgetJs3', 'TransferFunctionWidget3']
 
 import numpy as np
-import ipywidgets as widgets
+import ipywidgets
+import ipywidgets as widgets  # we should not have ipywidgets under two names
 import traitlets
 from traitlets import Unicode, validate
 from traittypes import Array
@@ -56,7 +57,6 @@ class TransferFunctionJsBumps(TransferFunction):
 
 
 	def control(self, max_opacity=0.2):
-		import ipywidgets
 		return ipywidgets.VBox()
 		l1 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level1)
 		l2 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level2)
@@ -91,7 +91,6 @@ class TransferFunctionWidgetJs3(TransferFunction):
 
 
 	def control(self, max_opacity=0.2):
-		import ipywidgets
 		l1 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level1)
 		l2 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level2)
 		l3 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level3)
@@ -155,7 +154,6 @@ class TransferFunctionWidget3(TransferFunction):
 		#self._notify_trait("rgba", old_value, self.rgba)
 
 	def control(self, max_opacity=0.2):
-		import ipywidgets
 		l1 = ipywidgets.FloatSlider(min=0, max=1, value=self.level1)
 		l2 = ipywidgets.FloatSlider(min=0, max=1, value=self.level2)
 		l3 = ipywidgets.FloatSlider(min=0, max=1, value=self.level3)
