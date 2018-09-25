@@ -4,7 +4,7 @@ import PIL.Image
 import pythreejs
 
 import ipyvolume as ipv
-from .datasets import UrlCached
+from ipyvolume.datasets import UrlCached
 
 def _randomSO3():
     """return random rotatation matrix, algo by James Arvo"""
@@ -34,9 +34,9 @@ def spherical_galaxy_orbit(orbit_x, orbit_y, orbit_z, N_stars=100, sigma_r=1, or
     x = np.repeat(orbit_x, N_stars).reshape((-1, N_stars))
     y = np.repeat(orbit_y, N_stars).reshape((-1, N_stars))
     z = np.repeat(orbit_z, N_stars).reshape((-1, N_stars))
-    xr, yr, zr = np.random.normal(0, scale=sigma_r, size=(3, N_stars))# + 
+    xr, yr, zr = np.random.normal(0, scale=sigma_r, size=(3, N_stars))# +
     r = np.sqrt(xr**2 + yr**2 + zr**2)
-    
+
     for i in range(N_stars):
         a = np.linspace(0, 1, x.shape[0]) * 2 * np.pi * N_star_orbits
         xo = r[i] * np.sin(a)
@@ -47,8 +47,8 @@ def spherical_galaxy_orbit(orbit_x, orbit_y, orbit_z, N_stars=100, sigma_r=1, or
         x[:, i] += xo
         y[:, i] += yo
         z[:, i] += zo
-    
-    
+
+
     sprite = ipv.scatter(x, y, z, texture=radial_sprite((64, 64), color), marker='square_2d', size=size_star, **scatter_kwargs)
     with sprite.material.hold_sync():
         sprite.material.blending = pythreejs.BlendingMode.CustomBlending
