@@ -1,30 +1,41 @@
+"""The widgets module of ipvyolume."""
+
 from __future__ import absolute_import
-import ipywidgets as widgets
-import ipywidgets
-from traittypes import Array
-from ipyvolume.traittypes import Image
-from traitlets import Unicode, Integer
-import traitlets
-import logging
-import numpy as np
-from .serialize import array_cube_tile_serialization, array_serialization, array_sequence_serialization,\
-    color_serialization, image_serialization, texture_serialization
-from .transferfunction import *
-from .utils import debounced, grid_slice, reduce_size
-import warnings
-import ipyvolume
-import ipywebrtc
-import pythreejs
-
-logger = logging.getLogger("ipyvolume")
-
-_last_volume_renderer = None
-import ipyvolume._version
-semver_range_frontend = "~" + ipyvolume._version.__version_js__
-
 
 __all__ = ['Mesh', 'Scatter', 'Volume', 'Figure',
            'quickquiver', 'quickscatter', 'quickvolshow']
+
+import logging
+import warnings
+
+import numpy as np
+import ipywidgets
+import ipywidgets as widgets  # we should not have ipywidgets under two names
+import ipywebrtc
+import pythreejs
+import traitlets
+from traitlets import Unicode, Integer
+from traittypes import Array
+
+import ipyvolume
+import ipyvolume._version
+from ipyvolume.traittypes import Image
+from ipyvolume.serialize import (array_cube_tile_serialization,
+                        array_serialization,
+                        array_sequence_serialization,
+                        color_serialization,
+                        image_serialization,
+                        texture_serialization)
+from ipyvolume.transferfunction import (TransferFunction,
+                                        TransferFunctionJsBumps,
+                                        TransferFunctionWidgetJs3,
+                                        TransferFunctionWidget3)
+from ipyvolume.utils import debounced, grid_slice, reduce_size
+
+
+_last_volume_renderer = None
+logger = logging.getLogger("ipyvolume")
+semver_range_frontend = "~" + ipyvolume._version.__version_js__
 
 
 @widgets.register
