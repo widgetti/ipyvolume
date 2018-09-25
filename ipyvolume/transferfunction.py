@@ -10,6 +10,12 @@ N = 1024
 x = np.linspace(0, 1, N, endpoint=True)
 
 import ipyvolume._version
+
+
+__all__ = ['TransferFunction', 'TransferFunctionJsBumps',
+           'TransferFunctionWidgetJs3', 'TransferFunctionWidget3']
+
+
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
 
 
