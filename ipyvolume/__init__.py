@@ -50,7 +50,7 @@ from .pylab import (current,
                     xyzlabel,
                     view,
                     style,
-                    plot_plane',
+                    plot_plane,
                     selector_default)
 
 def _jupyter_nbextension_paths():
