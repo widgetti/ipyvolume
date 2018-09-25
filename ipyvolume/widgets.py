@@ -22,6 +22,11 @@ _last_volume_renderer = None
 import ipyvolume._version
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
 
+
+__all__ = ['Mesh', 'Scatter', 'Volume', 'Figure',
+           'quickquiver', 'quickscatter', 'quickvolshow']
+
+
 @widgets.register
 class Mesh(widgets.Widget):
     _view_name = Unicode('MeshView').tag(sync=True)
