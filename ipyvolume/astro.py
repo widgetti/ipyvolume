@@ -2,6 +2,7 @@ import numpy as np
 
 import PIL.Image
 import pythreejs
+import scipy.interpolate
 
 import ipyvolume as ipv
 from ipyvolume.datasets import UrlCached
@@ -19,7 +20,6 @@ def _randomSO3():
 def spherical_galaxy_orbit(orbit_x, orbit_y, orbit_z, N_stars=100, sigma_r=1, orbit_visible=False, orbit_line_interpolate=5, N_star_orbits=10, color=[255, 220, 200], size_star=1, scatter_kwargs={}):
     """Create a fake galaxy around the points orbit_x/y/z with N_stars around it"""
     if orbit_line_interpolate > 1:
-        import scipy.interpolate
         x = np.linspace(0, 1, len(orbit_x))
         x_smooth = np.linspace(0, 1, len(orbit_x)*orbit_line_interpolate)
         kind = 'quadratic'
@@ -75,7 +75,6 @@ def radial_sprite(shape, color):
     return im
 
 def stars(N=1000, radius=100000, thickness=3, seed=42, color=[255, 240, 240]):
-    import ipyvolume as ipv
     rng = np.random.RandomState(seed)
     x, y, z = rng.normal(size=(3, N))
     r = np.sqrt(x**2 + y**2 + z**2)/(radius + thickness * radius * np.random.random(N))
