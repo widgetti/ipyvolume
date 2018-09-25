@@ -1,23 +1,24 @@
+"""The transferfunction module of ipvyolume."""
+
 from __future__ import absolute_import
-import ipywidgets as widgets
-from traitlets import Unicode, validate
-from traittypes import Array
-import traitlets
-import numpy as np
-from . import serialize
-from .serialize import array_rgba_png_serialization, array_serialization
-N = 1024
-x = np.linspace(0, 1, N, endpoint=True)
-
-import ipyvolume._version
-
 
 __all__ = ['TransferFunction', 'TransferFunctionJsBumps',
            'TransferFunctionWidgetJs3', 'TransferFunctionWidget3']
 
+import numpy as np
+import ipywidgets as widgets
+import traitlets
+from traitlets import Unicode, validate
+from traittypes import Array
 
+import ipyvolume._version
+from ipyvolume import serialize
+from ipyvolume.serialize import array_rgba_png_serialization, array_serialization
+
+
+N = 1024
+x = np.linspace(0, 1, N, endpoint=True)
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
-
 
 if 0:
 	def array_from_json(value, obj=None):
