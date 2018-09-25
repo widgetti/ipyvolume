@@ -2,7 +2,9 @@ import os
 import io
 import zipfile
 import shutil
+
 from ipywidgets import embed as wembed
+
 import ipyvolume
 from ipyvolume.utils import download_to_file, download_to_bytes
 from ipyvolume._version import __version_threejs__
@@ -26,7 +28,7 @@ html_template = u"""<!DOCTYPE html>
 def save_ipyvolumejs(target="", devmode=False,
                      version=ipyvolume._version.__version_js__, version3js=__version_threejs__):
     """ output the ipyvolume javascript to a local file
-    
+
     :type target: str
     :type devmode: bool
     :param devmode: if True get index.js from js/dist directory
@@ -188,7 +190,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
 
         cors_attribute = 'crossorigin="anonymous"' if offline_cors else ' '
         snippet = """
-<link href="{rel_script_path}{fname_fontawe}/css/font-awesome.min.css" rel="stylesheet">    
+<link href="{rel_script_path}{fname_fontawe}/css/font-awesome.min.css" rel="stylesheet">
 <script src="{rel_script_path}{fname_require}"{cors} data-main='./{rel_script_path}' ></script>
 <script>
     require.config({{
@@ -200,7 +202,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
 </script>
 {subsnippet}
         """.format(rel_script_path=rel_script_path, fname_fontawe=fname_fontawe, fname_require=fname_require,
-                   fname_pyv=os.path.splitext(fname_pyv)[0], 
+                   fname_pyv=os.path.splitext(fname_pyv)[0],
                    subsnippet=subsnippet, cors=cors_attribute)
 
     template_opts['snippet'] = snippet
