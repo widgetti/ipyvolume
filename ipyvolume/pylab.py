@@ -23,6 +23,16 @@ except:
 import base64
 
 
+__all__ = ['current', 'clear', 'controls_light', 'figure', 'gcf',
+          'xlim', 'ylim', 'zlim', 'xyzlim', 'squarelim',
+          'plot_trisurf', 'plot_surface', 'plot_wireframe', 'plot_mesh',
+          'plot', 'scatter', 'quiver', 'show', 'animate_glyphs',
+          'animation_control', 'gcc', 'transfer_function', 'plot_isosurface',
+          'volshow', 'save', 'movie', 'screenshot', 'savefig',
+          'xlabel', 'ylabel', 'zlabel', 'xyzlabel', 'view', 'style',
+          'plot_plane', 'selector_default']
+
+
 def _docsubst(f):
     """Perform docstring substitutions"""
     f.__doc__ = f.__doc__.format(**_doc_snippets)
@@ -650,7 +660,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
 
     :param data: 3d numpy array
     :param origin: origin of the volume data, this is to match meshes which have a different origin
-    :param domain_size: domain size is the size of the volume 
+    :param domain_size: domain size is the size of the volume
     :param bool lighting: use lighting or not, if set to false, lighting parameters will be overriden
     :param float data_min: minimum value to consider for data, if None, computed using np.nanmin
     :param float data_max: maximum value to consider for data, if None, computed using np.nanmax
@@ -704,7 +714,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     vol._listen_to(fig)
 
     if controls:
-        widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2, 
+        widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2,
                                                      description="opacity")
         widget_brightness = ipywidgets.FloatLogSlider(base=10, min=-1, max=1,
                                                      description="brightness")
