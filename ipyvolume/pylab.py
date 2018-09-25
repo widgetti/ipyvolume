@@ -1,27 +1,7 @@
+"""The pylab module of ipvyolume."""
+
 from __future__ import absolute_import
 from __future__ import division
-_last_figure = None
-import ipywidgets
-from IPython.display import display
-import IPython
-import ipyvolume as ipv
-import ipyvolume.embed
-import os
-import numpy as np
-from . import utils
-import time
-from . import examples
-import warnings
-import PIL.Image
-import traitlets
-import uuid
-
-try:
-    from io import BytesIO as StringIO
-except:
-    from cStringIO import StringIO
-import base64
-
 
 __all__ = ['current', 'clear', 'controls_light', 'figure', 'gcf',
           'xlim', 'ylim', 'zlim', 'xyzlim', 'squarelim',
@@ -31,6 +11,31 @@ __all__ = ['current', 'clear', 'controls_light', 'figure', 'gcf',
           'volshow', 'save', 'movie', 'screenshot', 'savefig',
           'xlabel', 'ylabel', 'zlabel', 'xyzlabel', 'view', 'style',
           'plot_plane', 'selector_default']
+
+import os
+import time
+import warnings
+import uuid
+import base64
+try:
+    from io import BytesIO as StringIO
+except:
+    from cStringIO import StringIO
+
+import numpy as np
+import PIL.Image
+import ipywidgets
+import traitlets
+import IPython
+from IPython.display import display
+
+import ipyvolume as ipv
+import ipyvolume.embed
+from ipyvolume import utils
+from ipyvolume import examples
+
+
+_last_figure = None
 
 
 def _docsubst(f):
