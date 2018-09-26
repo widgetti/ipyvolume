@@ -187,7 +187,7 @@ def zlim(zmin, zmax):
 
 
 def xyzlim(vmin, vmax=None):
-    """Set limits or all axis the same, if vmax not given, use [-vmin, vmax]"""
+    """Set limits or all axis the same, if vmax not given, use [-vmin, vmin]"""
     if vmax is None:
         vmin, vmax = -vmin, vmin
     xlim(vmin, vmax)
