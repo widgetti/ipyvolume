@@ -260,47 +260,23 @@ def matplotlib_transfer_function(colormap_name,
     return transfer_function
 
 
-def load_transfer_functions(include_rgb_linear=True,
-                            include_matplotlib=True,
-                            include_matplotlib_reversed=True):
+def predefined_transfer_functions():
     """Load predefined transfer functions into a dictionary.
 
-    :param include_rgb_linear: load transfer functions from individual
-        RGB values & linear opacity, optional.
-    :param include_matplotlib: load transfer functions from matplotlib
-        colormaps & linear opacity, optional.
-    :param include_matplotlib_reversed: load transfer functions from
-        REVERSED matplotlib colormaps, optional.
-    :type include_rgb_linear: bool
-    :type include_matplotlib: bool
-    :type include_matplotlib_reversed: bool
     :return: dictionary of predefined transfer functions.
     :rtype: dict of ipyvolume TransferFunction instances
     """
     transfer_functions = {}
     # RGB primary and secondary colors
-    if include_rgb_linear:
-        colors = ['red', 'green', 'blue', 'yellow', 'magenta', 'cyan',
-                  'black', 'gray', 'white']
-        for color in colors:
-            tf = linear_transfer_function(color)
-            transfer_functions[color] = tf
-            tf_reversed = linear_transfer_function(rgb, reverse_opacity=True)
-            transfer_functions[color_key + '_r'] = tf_reversed
-    # matplotlib colormaps
-    if include_matplotlib:
-        matplotlib_colormaps = [m for m in dir(matplotlib.cm) if not m.endswith("_r")]
-        for colormap in matplotlib_colormaps:
-            try:
-                transfer_functions[colormap] = matplotlib_transfer_function(colormap)
-            except ValueError:
-                continue
-    # reversed matplotlib colormaps
-    if include_matplotlib_reversed:
-        reversed_matplotlib_colormaps = [m for m in dir(matplotlib.cm) if m.endswith("_r")]
-        for colormap in reversed_matplotlib_colormaps:
-            try:
-                transfer_functions[colormap] = matplotlib_transfer_function(colormap)
-            except ValueError:
-                continue
+    colors = ['red', 'green', 'blue', 'yellow', 'magenta', 'cyan',
+              'black', 'gray', 'white']
+    for color in colors:
+        tf = linear_transfer_function(color)
+        transfer_functions[color] = tf
+        tf_reversed = linear_transfer_function(rgb, reverse_opacity=True)
+        transfer_functions[color_key + '_r'] = tf_reversed
+    # All matplotlib colormaps
+    matplotlib_colormaps = matplotlib.cm.cmap_d.keys()
+    for colormap in matplotlib_colormaps:
+        transfer_functions[colormap] = matplotlib_transfer_function(colormap)
     return transfer_functions
