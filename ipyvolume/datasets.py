@@ -1,20 +1,18 @@
 import os
-import numpy as np
 import bz2
 import gzip
 import platform
-data_dir = os.path.expanduser("~/.ipyvolume/datasets")
-if not os.path.exists(data_dir):
-	os.makedirs(data_dir)
-
 try:
     from urllib import urlretrieve # py2
 except ImportError:
     from urllib.request import urlretrieve # py3
 
+import numpy as np
 
 osname = dict(darwin="osx", linux="linux", windows="windows")[platform.system().lower()]
-
+data_dir = os.path.expanduser("~/.ipyvolume/datasets")
+if not os.path.exists(data_dir):
+	os.makedirs(data_dir)
 
 
 class UrlCached(object):

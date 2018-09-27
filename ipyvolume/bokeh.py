@@ -1,9 +1,12 @@
 from __future__ import absolute_import
-from bokeh.models import CustomJS
-from bokeh.plotting import figure
-import ipyvolume
+
 import ipywidgets as widgets
 from traitlets import Unicode
+from bokeh.models import CustomJS
+from bokeh.plotting import figure
+
+import ipyvolume
+
 
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
 

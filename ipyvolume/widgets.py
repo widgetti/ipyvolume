@@ -1,26 +1,43 @@
+"""The widgets module of ipvyolume."""
+
 from __future__ import absolute_import
-import ipywidgets as widgets
-import ipywidgets
-from traittypes import Array
-from ipyvolume.traittypes import Image
-from traitlets import Unicode, Integer
-import traitlets
+
+__all__ = ['Mesh', 'Scatter', 'Volume', 'Figure',
+           'quickquiver', 'quickscatter', 'quickvolshow']
+
 import logging
-import numpy as np
-from .serialize import array_cube_tile_serialization, array_serialization, array_sequence_serialization,\
-    color_serialization, image_serialization, texture_serialization
-from .transferfunction import *
-from .utils import debounced, grid_slice, reduce_size
 import warnings
-import ipyvolume
+
+import numpy as np
+import ipywidgets
+import ipywidgets as widgets  # we should not have ipywidgets under two names
 import ipywebrtc
 import pythreejs
+import traitlets
+from traitlets import Unicode, Integer
+from traittypes import Array
 
-logger = logging.getLogger("ipyvolume")
+import ipyvolume
+import ipyvolume as ipv  # we should not have ipyvolume under two names either
+import ipyvolume._version
+from ipyvolume.traittypes import Image
+from ipyvolume.serialize import (array_cube_tile_serialization,
+                        array_serialization,
+                        array_sequence_serialization,
+                        color_serialization,
+                        image_serialization,
+                        texture_serialization)
+from ipyvolume.transferfunction import (TransferFunction,
+                                        TransferFunctionJsBumps,
+                                        TransferFunctionWidgetJs3,
+                                        TransferFunctionWidget3)
+from ipyvolume.utils import debounced, grid_slice, reduce_size
+
 
 _last_volume_renderer = None
-import ipyvolume._version
+logger = logging.getLogger("ipyvolume")
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
+
 
 @widgets.register
 class Mesh(widgets.Widget):
@@ -165,7 +182,6 @@ class Volume(widgets.Widget):
             self.data = self.data_original
             self.extent = self.extent_original
             return
-        import ipyvolume as ipv
         current_figure = ipv.gcf()
         xlim = current_figure.xlim
         ylim = current_figure.ylim
@@ -277,13 +293,10 @@ class Figure(ipywebrtc.MediaStream):
         >>> assert ipv.gcf() is f2
         """
 
-
-        import ipyvolume as ipv
         self._previous_figure = ipv.gcf()
         ipv.figure(self)
 
     def __exit__(self, type, value, traceback):
-        import ipyvolume as ipv
         ipv.figure(self._previous_figure)
         del self._previous_figure
 
@@ -318,13 +331,11 @@ def volshow(*args, **kwargs):
     return quickvolshow(*args, **kwargs)
 
 def quickquiver(x, y, z, u, v, w, **kwargs):
-    import ipyvolume as ipv
     ipv.figure()
     ipv.quiver(x, y, z, u, v, w, **kwargs)
     return ipv.gcc()
 
 def quickscatter(x, y, z, **kwargs):
-    import ipyvolume as ipv
     ipv.figure()
     ipv.scatter(x, y, z, **kwargs)
     return ipv.gcc()
@@ -348,7 +359,6 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None,  max_shape=
     :return:
 
     """
-    import ipyvolume as ipv
     ipv.figure()
     ipv.volshow(data, lighting=lighting, data_min=data_min, data_max=data_max, max_shape=max_shape,
         level=level, opacity=opacity, level_width=level_width, extent=extent,  memorder=memorder, **kwargs)

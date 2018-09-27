@@ -2,9 +2,10 @@ import numpy as np
 
 import PIL.Image
 import pythreejs
+import scipy.interpolate
 
 import ipyvolume as ipv
-from .datasets import UrlCached
+from ipyvolume.datasets import UrlCached
 
 def _randomSO3():
     """return random rotatation matrix, algo by James Arvo"""
@@ -19,7 +20,6 @@ def _randomSO3():
 def spherical_galaxy_orbit(orbit_x, orbit_y, orbit_z, N_stars=100, sigma_r=1, orbit_visible=False, orbit_line_interpolate=5, N_star_orbits=10, color=[255, 220, 200], size_star=1, scatter_kwargs={}):
     """Create a fake galaxy around the points orbit_x/y/z with N_stars around it"""
     if orbit_line_interpolate > 1:
-        import scipy.interpolate
         x = np.linspace(0, 1, len(orbit_x))
         x_smooth = np.linspace(0, 1, len(orbit_x)*orbit_line_interpolate)
         kind = 'quadratic'
@@ -34,9 +34,9 @@ def spherical_galaxy_orbit(orbit_x, orbit_y, orbit_z, N_stars=100, sigma_r=1, or
     x = np.repeat(orbit_x, N_stars).reshape((-1, N_stars))
     y = np.repeat(orbit_y, N_stars).reshape((-1, N_stars))
     z = np.repeat(orbit_z, N_stars).reshape((-1, N_stars))
-    xr, yr, zr = np.random.normal(0, scale=sigma_r, size=(3, N_stars))# + 
+    xr, yr, zr = np.random.normal(0, scale=sigma_r, size=(3, N_stars))# +
     r = np.sqrt(xr**2 + yr**2 + zr**2)
-    
+
     for i in range(N_stars):
         a = np.linspace(0, 1, x.shape[0]) * 2 * np.pi * N_star_orbits
         xo = r[i] * np.sin(a)
@@ -47,8 +47,8 @@ def spherical_galaxy_orbit(orbit_x, orbit_y, orbit_z, N_stars=100, sigma_r=1, or
         x[:, i] += xo
         y[:, i] += yo
         z[:, i] += zo
-    
-    
+
+
     sprite = ipv.scatter(x, y, z, texture=radial_sprite((64, 64), color), marker='square_2d', size=size_star, **scatter_kwargs)
     with sprite.material.hold_sync():
         sprite.material.blending = pythreejs.BlendingMode.CustomBlending
@@ -75,7 +75,6 @@ def radial_sprite(shape, color):
     return im
 
 def stars(N=1000, radius=100000, thickness=3, seed=42, color=[255, 240, 240]):
-    import ipyvolume as ipv
     rng = np.random.RandomState(seed)
     x, y, z = rng.normal(size=(3, N))
     r = np.sqrt(x**2 + y**2 + z**2)/(radius + thickness * radius * np.random.random(N))
