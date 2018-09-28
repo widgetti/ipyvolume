@@ -48,7 +48,7 @@ q = ipv.quiver(*ds_stream.data, size=6)
 ipv.animation_control(q, interval=200)
 ipv.show()
 ```
-![Animation of ds_stream.data](misc/screencast_animation.gif)
+![Animation of ds_stream.data](https://user-images.githubusercontent.com/30920819/46180725-4eda9200-c305-11e8-9d09-4eecae487502.gif)
 
 (see more at [the documentation](https://ipyvolume.readthedocs.io/en/latest/animation.html))
 
