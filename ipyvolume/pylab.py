@@ -638,7 +638,7 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
 
 
 def volshow(data, lighting=False, data_min=None, data_max=None,
-            max_shape=256, tf=None, stereo=False,
+            max_shape=256, tf_colornames=None, stereo=False,
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
             specular_coefficient=0.5, specular_exponent=5,
             downscale=1,
@@ -655,7 +655,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     :param float data_min: minimum value to consider for data, if None, computed using np.nanmin
     :param float data_max: maximum value to consider for data, if None, computed using np.nanmax
     :parap int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]), set to None to disable.
-    :param tf: transfer function (or a default one)
+    :param tf_colornames: transfer function (or a default one)
     :param bool stereo: stereo view for virtual reality (cardboard and similar VR head mount)
     :param ambient_coefficient: lighting parameter
     :param diffuse_coefficient: lighting parameter
@@ -669,10 +669,10 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     fig = gcf()
     if data.ndim == 3:  # input data has only one channel
         data = np.expand_dims(data, -1)
-    if tf is None:
-        colors = ['red', 'green', 'blue', 'grey', 'cyan', 'magenta', 'yellow']
+    if tf_colornames is None:
+        default_colors = ['red', 'green', 'blue', 'grey', 'cyan', 'magenta', 'yellow']
         n_volumes = data.shape[-1]
-        tf = [linear_transfer_function(color) for color in colors[:n_volumes]]
+        colors = default_colors[:n_volumes]
     if data_min is None:
         data_min = np.nanmin(data)
     if data_max is None:
@@ -683,9 +683,10 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
         _grow_limits(*extent)
 
     data = np.moveaxis(data, -1, 0)  # for more convenient looping
-    for i, (subdata, color) in enumerate(zip(data, tf)):
+    for i, (subdata, color) in enumerate(zip(data, colors)):
+        tf = linear_transfer_function(color)
         vol = ipv.Volume(data_original = subdata,
-                        tf=tf[i],
+                        tf=tf,
                         data_min = data_min,
                         data_max = data_max,
                         show_min = data_min,
@@ -705,9 +706,15 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
                                                          description="opacity")
             widget_brightness = ipywidgets.FloatLogSlider(base=10, min=-1, max=1,
                                                          description="brightness")
+            widget_colorpicker = ipywidgets.ColorPicker(value=color,
+                layout=ipywidgets.Layout(width='15%'))
             ipywidgets.jslink((vol, 'opacity_scale'), (widget_opacity_scale, 'value'))
             ipywidgets.jslink((vol, 'brightness'), (widget_brightness, 'value'))
-            widgets_bottom = [ipywidgets.HBox([widget_opacity_scale, widget_brightness])]
+            def change_transfer_function(vol, color):
+                vol.tf = linear_transfer_function(color.new)
+            widget_colorpicker.observe(lambda x, vol=vol: change_transfer_function(vol, x), names='value')
+
+            widgets_bottom = [ipywidgets.HBox([widget_colorpicker, widget_opacity_scale, widget_brightness])]
             current.container.children += tuple(widgets_bottom, )
 
         fig.volumes = fig.volumes + [vol]
