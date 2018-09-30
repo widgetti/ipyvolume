@@ -21,6 +21,7 @@ try:
 except:
     from cStringIO import StringIO
 import base64
+from ipyvolume.transferfunction import linear_transfer_function
 
 
 def _docsubst(f):
@@ -650,7 +651,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
 
     :param data: 3d numpy array
     :param origin: origin of the volume data, this is to match meshes which have a different origin
-    :param domain_size: domain size is the size of the volume 
+    :param domain_size: domain size is the size of the volume
     :param bool lighting: use lighting or not, if set to false, lighting parameters will be overriden
     :param float data_min: minimum value to consider for data, if None, computed using np.nanmin
     :param float data_max: maximum value to consider for data, if None, computed using np.nanmax
@@ -704,7 +705,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     vol._listen_to(fig)
 
     if controls:
-        widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2, 
+        widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2,
                                                      description="opacity")
         widget_brightness = ipywidgets.FloatLogSlider(base=10, min=-1, max=1,
                                                      description="brightness")
