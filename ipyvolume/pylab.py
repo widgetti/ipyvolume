@@ -21,7 +21,7 @@ try:
 except:
     from cStringIO import StringIO
 import base64
-from ipyvolume.transferfunction import linear_transfer_function as tf
+from ipyvolume.transferfunction import linear_transfer_function
 
 
 def _docsubst(f):
@@ -667,49 +667,50 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     :return:
     """
     fig = gcf()
-
+    if data.ndim == 3:  # input data has only one channel
+        data = np.expand_dims(data, -1)
     if tf is None:
-        tf = transfer_function(level, opacity, level_width, controls=controls, max_opacity=max_opacity)
+        colors = ['red', 'green', 'blue', 'grey', 'cyan', 'magenta', 'yellow']
+        n_volumes = data.shape[-1]
+        tf = [linear_transfer_function(color) for color in colors[:n_volumes]]
     if data_min is None:
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
-    if memorder is 'F':
-        data = data.T
-
     if extent is None:
-        extent = [(0, k) for k in data.shape[::-1]]
-
+        extent = [(0, k) for k in data[..., -1].shape[::-1]]
     if extent:
         _grow_limits(*extent)
 
-    vol = ipv.Volume(data_original = data,
-                    tf=tf,
-                    data_min = data_min,
-                    data_max = data_max,
-                    show_min = data_min,
-                    show_max = data_max,
-                    extent_original = extent,
-                    data_max_shape = max_shape,
-                    ambient_coefficient = ambient_coefficient,
-                    diffuse_coefficient = diffuse_coefficient,
-                    specular_coefficient = specular_coefficient,
-                    specular_exponent = specular_exponent,
-                    rendering_lighting = lighting)
+    data = np.moveaxis(data, -1, 0)  # for more convenient looping
+    for i, (subdata, color) in enumerate(zip(data, tf)):
+        vol = ipv.Volume(data_original = subdata,
+                        tf=tf[i],
+                        data_min = data_min,
+                        data_max = data_max,
+                        show_min = data_min,
+                        show_max = data_max,
+                        extent_original = extent,
+                        data_max_shape = max_shape,
+                        ambient_coefficient = ambient_coefficient,
+                        diffuse_coefficient = diffuse_coefficient,
+                        specular_coefficient = specular_coefficient,
+                        specular_exponent = specular_exponent,
+                        rendering_lighting = lighting)
 
-    vol._listen_to(fig)
+        vol._listen_to(fig)
 
-    if controls:
-        widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2,
-                                                     description="opacity")
-        widget_brightness = ipywidgets.FloatLogSlider(base=10, min=-1, max=1,
-                                                     description="brightness")
-        ipywidgets.jslink((vol, 'opacity_scale'), (widget_opacity_scale, 'value'))
-        ipywidgets.jslink((vol, 'brightness'), (widget_brightness, 'value'))
-        widgets_bottom = [ipywidgets.HBox([widget_opacity_scale, widget_brightness])]
-        current.container.children += tuple(widgets_bottom, )
+        if controls:
+            widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2,
+                                                         description="opacity")
+            widget_brightness = ipywidgets.FloatLogSlider(base=10, min=-1, max=1,
+                                                         description="brightness")
+            ipywidgets.jslink((vol, 'opacity_scale'), (widget_opacity_scale, 'value'))
+            ipywidgets.jslink((vol, 'brightness'), (widget_brightness, 'value'))
+            widgets_bottom = [ipywidgets.HBox([widget_opacity_scale, widget_brightness])]
+            current.container.children += tuple(widgets_bottom, )
 
-    fig.volumes = fig.volumes + [vol]
+        fig.volumes = fig.volumes + [vol]
 
     return vol
 
