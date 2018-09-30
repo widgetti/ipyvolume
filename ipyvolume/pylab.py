@@ -642,8 +642,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
             specular_coefficient=0.5, specular_exponent=5,
             downscale=1,
-            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1,
-            controls=True, max_opacity=0.2, memorder='C', extent=None):
+            controls=True, memorder='C', extent=None):
     """Visualize a 3d array using volume rendering.
 
     Currently only 1 volume can be rendered.
@@ -663,11 +662,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     :param specular_coefficient: lighting parameter
     :param specular_exponent: lighting parameter
     :param float downscale: downscale the rendering for better performance, for instance when set to 2, a 512x512 canvas will show a 256x256 rendering upscaled, but it will render twice as fast.
-    :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
-    :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
-    :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
     :param bool controls: add controls for lighting and transfer function or not
-    :param float max_opacity: maximum opacity for transfer function controls
     :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume, otherwise the viewport is used
     :return:
     """
