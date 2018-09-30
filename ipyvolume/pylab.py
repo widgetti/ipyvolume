@@ -21,7 +21,7 @@ try:
 except:
     from cStringIO import StringIO
 import base64
-from ipyvolume.transferfunction import linear_transfer_function
+from ipyvolume.transferfunction import linear_transfer_function as tf
 
 
 def _docsubst(f):
