@@ -342,7 +342,7 @@ def quickscatter(x, y, z, **kwargs):
 
 
 def quickvolshow(data, lighting=False, data_min=None, data_max=None,  max_shape=256,
-            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, extent=None, memorder='C', **kwargs):
+                 extent=None, memorder='C', **kwargs):
     """
     Visualize a 3d array using volume rendering
 
@@ -352,16 +352,13 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None,  max_shape=
     :param data_max: maximum value to consider for data, if None, computed using np.nanmax
     :parap int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]), set to None to disable.
     :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume, otherwise the viewport is used
-    :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
-    :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
-    :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
     :param kwargs: extra argument passed to Volume and default transfer function
     :return:
 
     """
     ipv.figure()
     ipv.volshow(data, lighting=lighting, data_min=data_min, data_max=data_max, max_shape=max_shape,
-        level=level, opacity=opacity, level_width=level_width, extent=extent,  memorder=memorder, **kwargs)
+                extent=extent,  memorder=memorder, **kwargs)
     return ipv.gcc()
 
 def scatter(x, y, z, color=(1,0,0), s=0.01):

@@ -39,7 +39,7 @@ import ipyvolume.embed
 from ipyvolume import utils
 from ipyvolume import examples
 from ipyvolume import headless
-
+from ipyvolume.transferfunction import linear_transfer_function
 
 _last_figure = None
 
@@ -657,12 +657,11 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
 
 
 def volshow(data, lighting=False, data_min=None, data_max=None,
-            max_shape=256, tf=None, stereo=False,
+            max_shape=256, tf_colornames=None, stereo=False,
             ambient_coefficient=0.5, diffuse_coefficient=0.8,
             specular_coefficient=0.5, specular_exponent=5,
             downscale=1,
-            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1,
-            controls=True, max_opacity=0.2, memorder='C', extent=None):
+            controls=True, memorder='C', extent=None):
     """Visualize a 3d array using volume rendering.
 
     Currently only 1 volume can be rendered.
@@ -675,67 +674,71 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     :param float data_min: minimum value to consider for data, if None, computed using np.nanmin
     :param float data_max: maximum value to consider for data, if None, computed using np.nanmax
     :parap int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]), set to None to disable.
-    :param tf: transfer function (or a default one)
+    :param tf_colornames: transfer function (or a default one)
     :param bool stereo: stereo view for virtual reality (cardboard and similar VR head mount)
     :param ambient_coefficient: lighting parameter
     :param diffuse_coefficient: lighting parameter
     :param specular_coefficient: lighting parameter
     :param specular_exponent: lighting parameter
     :param float downscale: downscale the rendering for better performance, for instance when set to 2, a 512x512 canvas will show a 256x256 rendering upscaled, but it will render twice as fast.
-    :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
-    :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
-    :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
     :param bool controls: add controls for lighting and transfer function or not
-    :param float max_opacity: maximum opacity for transfer function controls
     :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume, otherwise the viewport is used
     :return:
     """
     fig = gcf()
-
-    if tf is None:
-        tf = transfer_function(level, opacity, level_width, controls=controls, max_opacity=max_opacity)
+    if data.ndim == 3:  # input data has only one channel
+        data = np.expand_dims(data, -1)
+    if tf_colornames is None:
+        default_colors = ['red', 'green', 'blue', 'grey', 'cyan', 'magenta', 'yellow']
+        n_volumes = data.shape[-1]
+        colors = default_colors[:n_volumes]
     if data_min is None:
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
-    if memorder is 'F':
-        data = data.T
-
     if extent is None:
-        extent = [(0, k) for k in data.shape[::-1]]
-
+        extent = [(0, k) for k in data[..., -1].shape[::-1]]
     if extent:
         _grow_limits(*extent)
 
-    vol = ipv.Volume(data_original = data,
-                    tf=tf,
-                    data_min = data_min,
-                    data_max = data_max,
-                    show_min = data_min,
-                    show_max = data_max,
-                    extent_original = extent,
-                    data_max_shape = max_shape,
-                    ambient_coefficient = ambient_coefficient,
-                    diffuse_coefficient = diffuse_coefficient,
-                    specular_coefficient = specular_coefficient,
-                    specular_exponent = specular_exponent,
-                    rendering_lighting = lighting)
+    data = np.moveaxis(data, -1, 0)  # for more convenient looping
+    for i, (subdata, color) in enumerate(zip(data, colors)):
+        tf = linear_transfer_function(color)
+        vol = ipv.Volume(data_original = subdata,
+                        tf=tf,
+                        data_min = data_min,
+                        data_max = data_max,
+                        show_min = data_min,
+                        show_max = data_max,
+                        extent_original = extent,
+                        data_max_shape = max_shape,
+                        ambient_coefficient = ambient_coefficient,
+                        diffuse_coefficient = diffuse_coefficient,
+                        specular_coefficient = specular_coefficient,
+                        specular_exponent = specular_exponent,
+                        rendering_lighting = lighting)
 
-    vol._listen_to(fig)
+        vol._listen_to(fig)
 
-    if controls:
-        widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2,
-                                                     description="opacity")
-        widget_brightness = ipywidgets.FloatLogSlider(base=10, min=-1, max=1,
-                                                     description="brightness")
-        ipywidgets.jslink((vol, 'opacity_scale'), (widget_opacity_scale, 'value'))
-        ipywidgets.jslink((vol, 'brightness'), (widget_brightness, 'value'))
-        widgets_bottom = [ipywidgets.HBox([widget_opacity_scale, widget_brightness])]
-        current.container.children += tuple(widgets_bottom, )
+        if controls:
+            widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2,
+                                                         description="opacity")
+            widget_brightness = ipywidgets.FloatLogSlider(base=10, min=-1, max=1,
+                                                         description="brightness")
+            widget_colorpicker = ipywidgets.ColorPicker(value=color,
+                layout=ipywidgets.Layout(width='15%'))
+            ipywidgets.jslink((vol, 'opacity_scale'), (widget_opacity_scale, 'value'))
+            ipywidgets.jslink((vol, 'brightness'), (widget_brightness, 'value'))
+            def change_transfer_function(vol, color):
+                vol.tf = linear_transfer_function(color.new)
+            widget_colorpicker.observe(lambda x, vol=vol: change_transfer_function(vol, x), names='value')
 
-    fig.volumes = fig.volumes + [vol]
+            widgets_bottom = [ipywidgets.HBox([widget_colorpicker, widget_opacity_scale, widget_brightness])]
+            current.container.children += tuple(widgets_bottom, )
 
-    return vol
+        fig.volumes = fig.volumes + [vol]
+
+    return fig
 
 
 def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
