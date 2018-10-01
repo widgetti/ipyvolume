@@ -738,7 +738,7 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
 
         fig.volumes = fig.volumes + [vol]
 
-    return vol
+    return fig
 
 
 def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
