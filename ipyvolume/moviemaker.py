@@ -1,7 +1,7 @@
-import json
-import numpy as np
 import os
+import json
 
+import numpy as np
 import ipywidgets as widgets
 import pythreejs
 import ipywebrtc
@@ -35,13 +35,13 @@ class MovieMaker(object):
         self.times = []
         self.camera_action_box = widgets.HBox()
         self.output = widgets.Output()
-        
+
         self.options_interpolation = [('discrete', 'InterpolateDiscrete'),
                                       ('linear','InterpolateLinear'),
                                       ('smooth','InterpolateSmooth')]
         self.select_interpolation = widgets.Dropdown(options=self.options_interpolation, index=1)
-        
-        
+
+
         self.select_interpolation.observe(lambda x: self.update_keyframes(), 'index')
         self.select_keyframes.observe(lambda x: self.sync_camera(), 'index')
         if positions is None and quaternions is None and times is None:
@@ -59,17 +59,17 @@ class MovieMaker(object):
                               box_control, self.select_keyframes, self.camera_action_box,
                              self.output])
 
-        
+
 #         self.positon_track = pythreejs.VectorKeyframeTrack(name='.position', times=[0], values=[self.camera.position])
 #         self.rotation_track = pythreejs.QuaternionKeyframeTrack(name='.quaternion', times=[0], values=[self.camera.quaternion])
-        
+
     def sync_camera(self):
         with self.output:
             index = self.select_keyframes.index
             if index is not None:
                 self.camera.position = self.positions[index]
                 self.camera.quaternion = self.quaternions[index]
-            
+
     def write_movie(self):
         with self.output:
             filename = self.filename_movie
@@ -108,7 +108,7 @@ class MovieMaker(object):
             self.positions[index] = p
             self.quaternions[index] = q
             self.update_keyframes()
-        
+
     def remove(self):
         index = self.select_keyframes.index
         if index is not None:
@@ -168,8 +168,8 @@ class MovieMaker(object):
     #         self.rotation_track.times = self.times
     #         self.rotation_track.valeus = self.quaternions
 
-        
-        
+
+
     def show(self):
         box_io = widgets.HBox([self.button_save, self.button_load])
         box_control = widgets.HBox([self.button_add, self.button_replace, self.button_remove])

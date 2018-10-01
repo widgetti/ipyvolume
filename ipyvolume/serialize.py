@@ -1,23 +1,27 @@
 from __future__ import division
+
+import sys
 import logging
+import warnings
 import math
-
-from ipython_genutils.py3compat import string_types, PY3
-import ipyvolume as ipv
-from . import utils
-import ipywidgets
-import ipywebrtc
-import numpy as np
-import PIL.Image
-
+from base64 import b64encode
 try:
 	from io import BytesIO as StringIO # python3
 except:
 	from StringIO import StringIO # python2
-from base64 import b64encode
-import warnings
+
+import numpy as np
+import PIL.Image
+import ipywidgets
+import ipywebrtc
+from ipython_genutils.py3compat import string_types, PY3
+
+import ipyvolume as ipv
+from ipyvolume import utils
+
 
 logger = logging.getLogger("ipyvolume")
+
 
 def image_to_url(image, widget):
     if image is None:
@@ -59,7 +63,7 @@ max_texture_width = 2048*8  # this will nicely fit 512**3 textures
 min_texture_width = 256
 
 def _compute_tile_size(shape):
-	# TODO: we need to be a bit smarter here, for large grids we need to 
+	# TODO: we need to be a bit smarter here, for large grids we need to
 	slices = shape[0]
 	approx_rows = int(round(math.sqrt(slices)))
 	image_width = max(min_texture_width, min(max_texture_width, utils.next_power_of_2(approx_rows * shape[1])))
@@ -80,7 +84,6 @@ def _cube_to_tiles(grid, vmin, vmax):
 	with np.errstate(divide='ignore'):
 		gradient = gradient / np.sqrt(gradient[0]**2 + gradient[1]**2 + gradient[2]**2)
 	# intensity_normalized = (np.log(self.data3d + 1.) - np.log(mi)) / (np.log(ma) - np.log(mi));
-	import PIL.Image
 	for y2d in range(rows):
 		for x2d in range(columns):
 			zindex = x2d + y2d * columns
@@ -117,7 +120,7 @@ def tile_volume(vol, tex_size, tile_shape, vol_size):
 	            break
 	        slice_data = vol[z]
 	        xoffset = tileX*vol_size[0]
-	        yoffset = tileY*vol_size[1]	
+	        yoffset = tileY*vol_size[1]
 	        tex[yoffset:yoffset+vol_size[1],xoffset:xoffset+vol_size[0]] = slice_data
 	# debug image saving
 	# scipy.misc.toimage(tex, cmin=tex.min(), cmax=tex.max()).save('outfile.png')
@@ -146,20 +149,19 @@ def volume_to_json_volume_tiled(vol, obj=None):
 	#print "vol_shape: {}, a: {}, tile_shape: {}, tex_size: {}".format(vol_shape,a, tile_shape, tex_size)
 
 	if vol.ndim == 4: #time series
-		return {"volume_data_tiled":[tile_volume(vol[t], tex_size, tile_shape, vol_shape) for t in range(vol.shape[0])], 
+		return {"volume_data_tiled":[tile_volume(vol[t], tex_size, tile_shape, vol_shape) for t in range(vol.shape[0])],
 				"shape":vol_shape,
 				"tile_shape": tile_shape,
 				"vol_tex_size": tex_size}
 	else:
-		return {"volume_data_tiled":[tile_volume(vol, tex_size, tile_shape, vol_shape)], 
-				"shape":vol_shape, 
+		return {"volume_data_tiled":[tile_volume(vol, tex_size, tile_shape, vol_shape)],
+				"shape":vol_shape,
 				"tile_shape": tile_shape,
 				"vol_tex_size": tex_size}
 
 	return None
 
 def rgba_to_png(rgba, file):
-	import PIL.Image
 	if len(rgba.shape) != 3 or rgba.shape[-1] != 4:
 		return None
 		logger.error("only 3d arrays with the last dimension equal to 4 (rgba images) are supported")
@@ -344,7 +346,6 @@ texture_serialization = dict(to_json=texture_to_json, from_json=None)
 ndarray_serialization = dict(to_json=array_to_binary, from_json=binary_to_array)
 
 if __name__ == "__main__":
-    import sys
     grid = np.load(sys.argv[1]).items()[0][1]
     with open(sys.argv[2], "wb") as f:
 	    cube_to_png(np.log10(grid+1), f)

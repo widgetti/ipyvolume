@@ -1,19 +1,27 @@
+"""The transferfunction module of ipvyolume."""
+
 from __future__ import absolute_import
-import ipywidgets as widgets
+
+__all__ = ['TransferFunction', 'TransferFunctionJsBumps',
+           'TransferFunctionWidgetJs3', 'TransferFunctionWidget3']
+
+import numpy as np
+import ipywidgets
+import ipywidgets as widgets  # we should not have ipywidgets under two names
+import traitlets
 from traitlets import Unicode, validate
 from traittypes import Array
-import traitlets
-import numpy as np
-import matplotlib.cm
 import matplotlib.colors
-from . import serialize
-from .serialize import array_rgba_png_serialization, array_serialization
-N = 1024
-x = np.linspace(0, 1, N, endpoint=True)
+import matplotlib.cm
 
 import ipyvolume._version
-semver_range_frontend = "~" + ipyvolume._version.__version_js__
+from ipyvolume import serialize
+from ipyvolume.serialize import array_rgba_png_serialization, array_serialization
 
+
+N = 1024
+x = np.linspace(0, 1, N, endpoint=True)
+semver_range_frontend = "~" + ipyvolume._version.__version_js__
 
 if 0:
 	def array_from_json(value, obj=None):
@@ -51,7 +59,6 @@ class TransferFunctionJsBumps(TransferFunction):
 
 
 	def control(self, max_opacity=0.2):
-		import ipywidgets
 		return ipywidgets.VBox()
 		l1 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level1)
 		l2 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level2)
@@ -86,7 +93,6 @@ class TransferFunctionWidgetJs3(TransferFunction):
 
 
 	def control(self, max_opacity=0.2):
-		import ipywidgets
 		l1 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level1)
 		l2 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level2)
 		l3 = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=self.level3)
@@ -150,7 +156,6 @@ class TransferFunctionWidget3(TransferFunction):
 		#self._notify_trait("rgba", old_value, self.rgba)
 
 	def control(self, max_opacity=0.2):
-		import ipywidgets
 		l1 = ipywidgets.FloatSlider(min=0, max=1, value=self.level1)
 		l2 = ipywidgets.FloatSlider(min=0, max=1, value=self.level2)
 		l3 = ipywidgets.FloatSlider(min=0, max=1, value=self.level3)

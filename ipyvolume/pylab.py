@@ -1,27 +1,47 @@
+"""The pylab module of ipvyolume."""
+
 from __future__ import absolute_import
 from __future__ import division
-_last_figure = None
-import ipywidgets
-from IPython.display import display
-import IPython
-import ipyvolume as ipv
-import ipyvolume.embed
-import os
-import numpy as np
-from . import utils
-import time
-from . import examples
-import warnings
-import PIL.Image
-import traitlets
-import uuid
 
+__all__ = ['current', 'clear', 'controls_light', 'figure', 'gcf',
+          'xlim', 'ylim', 'zlim', 'xyzlim', 'squarelim',
+          'plot_trisurf', 'plot_surface', 'plot_wireframe', 'plot_mesh',
+          'plot', 'scatter', 'quiver', 'show', 'animate_glyphs',
+          'animation_control', 'gcc', 'transfer_function', 'plot_isosurface',
+          'volshow', 'save', 'movie', 'screenshot', 'savefig',
+          'xlabel', 'ylabel', 'zlabel', 'xyzlabel', 'view', 'style',
+          'plot_plane', 'selector_default']
+
+import os
+import time
+import warnings
+import tempfile
+import uuid
+import base64
 try:
     from io import BytesIO as StringIO
 except:
     from cStringIO import StringIO
-import base64
+
+import six
+import numpy as np
+import PIL.Image
+import matplotlib.style
+import shapely.geometry
+from skimage import measure
+import ipywidgets
+import traitlets
+import IPython
+from IPython.display import display
+
+import ipyvolume as ipv
+import ipyvolume.embed
+from ipyvolume import utils
+from ipyvolume import examples
+from ipyvolume import headless
 from ipyvolume.transferfunction import linear_transfer_function
+
+_last_figure = None
 
 
 def _docsubst(f):
@@ -587,7 +607,6 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounding box of the mesh, otherwise the viewport is used
     :return: :any:`Mesh`
     """
-    from skimage import measure
     if level is None:
         level = np.median(data)
     if hasattr(measure, 'marching_cubes_lewiner'):
@@ -785,7 +804,6 @@ def movie(f="movie.mp4", function=_change_azimuth_angle, fps=30, frames=30, endp
     :return: the temp dir where the frames are stored
     """
     movie_filename = f
-    import tempfile
     tempdir = tempfile.mkdtemp()
     output = ipywidgets.Output()
     display(output)
@@ -817,8 +835,6 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
     else:
         assert isinstance(fig, ipv.Figure)
     if headless:
-        from . import headless
-        import tempfile
         tempdir = tempfile.mkdtemp()
         tempfile = os.path.join(tempdir, 'headless.html')
         save(tempfile, offline=False, scripts_path=tempdir, devmode=devmode)
@@ -983,7 +999,6 @@ class style:
         :param style: matplotlib style name, or dict with values, or a sequence of these, where the last value overrides previous
         :return:
         """
-        import six
         def valid(value):  # checks if json'able
             return isinstance(value, six.string_types)
 
@@ -1024,7 +1039,6 @@ class style:
                 else:
                     # lets see if we can copy matplotlib's style
                     # we assume now it's a matplotlib style, get all properties that we understand
-                    import matplotlib.style
                     cleaned_style = {key: value for key, value in dict(matplotlib.style.library[style]).items() if
                                      valid(value)}
                     style = translate(cleaned_style)
@@ -1146,7 +1160,6 @@ def selector_default(output_widget=None):
     def lasso(data, other=None, fig=fig):
         with output_widget:
             if data['device'] and data['type'] == 'lasso':
-                import shapely.geometry
                 region = shapely.geometry.Polygon(data['device'])
                 @np.vectorize
                 def inside(x, y):

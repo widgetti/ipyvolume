@@ -21,8 +21,13 @@ Run:
 python -m ipyvolume.style
 to update the json style (needed for the js side)
 """
-from . import utils
+
+import os
+import json
 import copy
+
+from ipyvolume import utils
+
 
 styles = {}
 _defaults = {
@@ -128,15 +133,12 @@ nobox = create("nobox", {
 })
 
 if __name__ == "__main__":
-    import os
     source = __file__
     dest = os.path.join(os.path.dirname(source), "../js/data/style.json")
     print(source, dest)
     need_update = (not os.path.exists(dest)) or (os.path.getmtime(source) > os.path.getmtime(dest))
     if need_update:
-        import json
         print(styles)
         with open(dest, "w") as f:
             json.dump(styles, f, indent=2)
         print("wrote json")
-
