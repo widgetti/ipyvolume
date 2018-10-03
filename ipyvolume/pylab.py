@@ -27,8 +27,14 @@ import six
 import numpy as np
 import PIL.Image
 import matplotlib.style
-import shapely.geometry
-from skimage import measure
+try:
+    import shapely.geometry
+except:
+    shapely = None
+try:
+    import skimage.measure
+except:
+    skimage = None
 import ipywidgets
 import traitlets
 import IPython
@@ -38,7 +44,6 @@ import ipyvolume as ipv
 import ipyvolume.embed
 from ipyvolume import utils
 from ipyvolume import examples
-from ipyvolume import headless
 
 
 _last_figure = None
@@ -610,9 +615,9 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     if level is None:
         level = np.median(data)
     if hasattr(measure, 'marching_cubes_lewiner'):
-        values = measure.marching_cubes_lewiner(data, level)
+        values = skimage.measure.marching_cubes_lewiner(data, level)
     else:
-        values = measure.marching_cubes(data, level)
+        values = skimage.measure.marching_cubes(data, level)
     verts, triangles = values[:2] # version 0.13 returns 4 values, normals, values
     # in the future we may want to support normals and the values (with colormap)
     # and require skimage >= 0.13
@@ -637,10 +642,10 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
         def recompute(*_ignore):
             level = level_slider.value
             recompute_button.description = "updating..."
-            if hasattr(measure, 'marching_cubes_lewiner'):
-                values = measure.marching_cubes_lewiner(data, level)
+            if hasattr(skimage.measure, 'marching_cubes_lewiner'):
+                values = skimage.measure.marching_cubes_lewiner(data, level)
             else:
-                values = measure.marching_cubes(data, level)
+                values = skimage.measure.marching_cubes(data, level)
             verts, triangles = values[:2] # version 0.13 returns 4 values, normals, values
             # in the future we may want to support normals and the values (with colormap)
             # and require skimage >= 0.13
@@ -835,7 +840,8 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
         tempdir = tempfile.mkdtemp()
         tempfile = os.path.join(tempdir, 'headless.html')
         save(tempfile, offline=False, scripts_path=tempdir, devmode=devmode)
-        data = headless._screenshot_data("file://" + tempfile)
+        import ipyvolume.headless
+        data = ipyvolume.headless._screenshot_data("file://" + tempfile)
         if data is None:
             raise ValueError('Error capturing data from headless browser')
     else:
