@@ -1,4 +1,13 @@
 from __future__ import absolute_import
+
+import os
+import shutil
+import json
+import contextlib
+
+import numpy as np
+import pytest
+
 import ipyvolume
 import ipyvolume.pylab as p3
 import ipyvolume as ipv
@@ -6,12 +15,6 @@ import ipyvolume.examples
 import ipyvolume.datasets
 import ipyvolume.utils
 import ipyvolume.serialize
-import numpy as np
-import os
-import shutil
-import json
-import pytest
-import contextlib
 
 
 @contextlib.contextmanager
@@ -37,7 +40,7 @@ def test_serialize():
 
     value = np.asarray(5)
     assert ipyvolume.serialize.array_sequence_to_binary_or_json(value) == 5
-    
+
     value = np.asarray(5)
     assert ipyvolume.serialize.array_sequence_to_binary_or_json(value) == 5
 
@@ -93,14 +96,14 @@ def test_figure():
     f5 = p3.gcf()
     p3.clear()
     f6 = p3.gcf()
-    
+
     assert f1 != f2
     assert f2 != f3
     assert f3 != f4
     assert f2 == f2
     assert f4 == f5
     assert f5 != f6
-    
+
     f7 = p3.figure('f7')
     f8 = p3.figure()
     f9 = p3.figure('f7')
@@ -108,14 +111,14 @@ def test_figure():
     f11 = p3.gcf()
     f12 = p3.current.figure
     f13 = p3.figure('f7')
-    f14 = p3.current.figures['f7'] 
-   
+    f14 = p3.current.figures['f7']
+
     assert f7 == f9
     assert f8 == f10
     assert f10 == f11
     assert f11 == f12
     assert f13 == f14
-    
+
     for controls in [True, False]:
         for debug in [True, False]:
             for controls_light in [True, False]:

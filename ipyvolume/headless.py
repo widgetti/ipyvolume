@@ -6,11 +6,11 @@ Assuming osx, define the following aliases for convenience, and start in headles
      $ chrome --remote-debugging-port=9222 --headless
 
 Make sure you have `PyChromeDevTools` installed::
-    
+
     $ pip install PyChromeDevTools
 
 Now run the following snippet (doesn't have to be from the Jupyter notebook) ::
-    
+
     import ipyvolume as ipv
     ipv.examples.klein_bottle()
     ipv.view(10,30)
@@ -20,10 +20,14 @@ Now run the following snippet (doesn't have to be from the Jupyter notebook) ::
 """
 
 import os
+import time
 import subprocess
 
+import numpy as np
 import PyChromeDevTools
-from . import pylab
+
+from ipyvolume import pylab
+
 
 def _get_browser():
     options = []
@@ -48,9 +52,6 @@ def _screenshot_data(html_filename, timeout_seconds=10, output_widget=None, form
     chrome.Network.enable()
     chrome.Page.enable()
     chrome.Page.navigate(url=html_filename)
-    import time
-    #time.sleep(2)
-    # loadEventFired
     chrome.wait_event("Page.frameStoppedLoading", timeout=60)
     chrome.wait_event("Page.loadEventFired", timeout=60)
     time.sleep(0.5)
@@ -69,7 +70,6 @@ def _screenshot_data(html_filename, timeout_seconds=10, output_widget=None, form
                 raise
 
 def _main():
-    import numpy as np
     print(_get_browser())
     pylab.figure()
     pylab.scatter(*np.random.random((3,100)))

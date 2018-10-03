@@ -1,12 +1,15 @@
 from __future__ import print_function
-import collections
-import requests
-import io
+
 import os
-import numpy as np
+import io
+import time
 import functools
 import collections
-import time
+
+import numpy as np
+import requests
+import IPython
+import zmq
 
 
 # https://stackoverflow.com/questions/14267555/find-the-smallest-power-of-2-greater-than-n-in-python
@@ -251,8 +254,6 @@ def grid_slice(amin, amax, shape, bmin, bmax):
     return (imin, imax), (amin + nmin * width, amin + nmax * width)
 
 def get_ioloop():
-    import IPython
-    import zmq
     ipython = IPython.get_ipython()
     if ipython and hasattr(ipython, 'kernel'):
         return zmq.eventloop.ioloop.IOLoop.instance()
