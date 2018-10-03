@@ -377,9 +377,9 @@ def test_embed():
     p3.clear()
     x, y, z = np.random.random((3, 100))
     p3.scatter(x, y, z)
-    p3.save("tmp/ipyolume_scatter_online.html", offline=False)
+    p3.save("tmp/ipyolume_scatter_online.html", offline=False, devmode=True)
     assert os.path.getsize("tmp/ipyolume_scatter_online.html") > 0
-    p3.save("tmp/ipyolume_scatter_offline.html", offline=True, scripts_path='js/subdir')
+    p3.save("tmp/ipyolume_scatter_offline.html", offline=True, scripts_path='js/subdir', devmode=True)
     assert os.path.getsize("tmp/ipyolume_scatter_offline.html") > 0
 
 
