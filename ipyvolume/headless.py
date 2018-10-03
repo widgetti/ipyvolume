@@ -26,7 +26,7 @@ import subprocess
 import numpy as np
 import PyChromeDevTools
 
-from ipyvolume import pylab
+import ipyvolume as ipv
 
 
 def _get_browser():
@@ -71,9 +71,9 @@ def _screenshot_data(html_filename, timeout_seconds=10, output_widget=None, form
 
 def _main():
     print(_get_browser())
-    pylab.figure()
-    pylab.scatter(*np.random.random((3,100)))
-    pylab.savefig('test.png', headless=True)
+    ipv.figure()
+    ipv.scatter(*np.random.random((3,100)))
+    ipv.savefig('test.png', headless=True)
 
 if __name__ == "__main__":
     _main()
