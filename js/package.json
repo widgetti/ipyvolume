@@ -15,7 +15,7 @@
     "ipywidgets"
   ],
   "scripts": {
-    "prepublish": "webpack ",
+    "prepublish": "webpack --mode=production",
     "install-test": "npm install && karma start --single-run",
     "test": "karma start --single-run",
     "build:lib": "tsc --project .",
