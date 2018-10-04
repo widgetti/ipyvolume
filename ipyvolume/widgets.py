@@ -350,7 +350,7 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None,  max_shape=
     :param lighting: boolean, to use lighting or not, if set to false, lighting parameters will be overriden
     :param data_min: minimum value to consider for data, if None, computed using np.nanmin
     :param data_max: maximum value to consider for data, if None, computed using np.nanmax
-    :parap int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]), set to None to disable.
+    :param int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]), set to None to disable.
     :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume, otherwise the viewport is used
     :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
     :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
