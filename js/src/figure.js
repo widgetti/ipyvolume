@@ -958,7 +958,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // console.log(amount, factor, mouseX, height-mouseY, buffer)
         if(this.last_zoom_coordinate) { // at least something got drawn
             // clear it so that we don't use it again
-            this.renderer.clearTarget(this.coordinate_texture, true, true, true)
+            this.renderer.setRenderTarget(this.coordinate_texture)
+            this.renderer.clear(true, true, true)
             //var center = new THREE.Vector3(buffer[0], buffer[1], buffer[2])
             //center.multiplyScalar(1/255.); // normalize
             var center = this.last_zoom_coordinate;
@@ -1690,7 +1691,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.cube_camera.update(this.renderer, this.scene_scatter)
             this.cube_camera.update(this.renderer, this.scene_opaque)
             this.screen_texture = this.cube_camera.renderTarget; //{Volume:this.volr_texture, Back:this.back_texture, Front:this.front_texture, Coordinate:this.coordinate_texture}[this.model.get("show")]
-            //this.renderer.clearTarget(this.renderer, true, true, true)
+            //this.renderer.setRenderTarget(this.renderer)
+            //this.renderer.clear( true, true, true)
             this.renderer.render(this.screen_scene_cube, this.screen_camera);
             //this.screen_material.uniforms.tex.value = null;
             return
@@ -1707,13 +1709,15 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 volume_view.vol_box_mesh.material = volume_view.box_material;
                 volume_view.set_limits(_.pick(this.model.attributes, 'xlim', 'ylim', 'zlim'))
             },this)
-            this.renderer.clearTarget(this.volume_back_target, true, true, true)
+            this.renderer.setRenderTarget(this.volume_back_target)
+            this.renderer.clear( true, true, true)
             this.renderer.render(this.scene_volume, camera, this.volume_back_target);
             this.renderer.state.buffers.depth.setClear(1);
 
             // Color and depth render pass for volume rendering
             this.renderer.autoClear = false;
-            this.renderer.clearTarget(this.geometry_depth_target, true, true, true)
+            this.renderer.setRenderTarget(this.geometry_depth_target)
+            this.renderer.clear( true, true, true)
             this.renderer.render(this.scene_scatter, camera, this.geometry_depth_target);
             this.renderer.render(this.scene_opaque, camera, this.geometry_depth_target);
             this.renderer.autoClear = true;
@@ -1722,7 +1726,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         
         // Normal color pass of geometry for final screen pass
         this.renderer.autoClear = false;
-        this.renderer.clearTarget(this.color_pass_target, true, true, true)
+        this.renderer.setRenderTarget(this.color_pass_target)
+        this.renderer.clear( true, true, true)
         this.renderer.render(this.scene_scatter, camera, this.color_pass_target);
         this.renderer.render(this.scene_opaque, camera, this.color_pass_target);
         this.renderer.autoClear = true;
@@ -1737,7 +1742,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 volume_view.box_material.depthFunc = THREE.LessEqualDepth
             },this)
             this.renderer.autoClear = false;
-            this.renderer.clearTarget(this.color_pass_target, false, true, false)
+            this.renderer.setRenderTarget(this.color_pass_target)
+            this.renderer.clear( false, true, false)
             this.renderer.render(this.scene_volume, camera, this.color_pass_target);
             this.renderer.autoClear = true;
             this.renderer.context.colorMask(true, true, true, true)
@@ -1749,7 +1755,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
             },this)
             this.renderer.autoClear = false;
             // we want to keep the colors and z-buffer as they are
-            this.renderer.clearTarget(this.color_pass_target, false, false, false)
+            this.renderer.setRenderTarget(this.color_pass_target)
+            this.renderer.clear( false, false, false)
             this.renderer.render(this.scene_volume, camera, this.color_pass_target);
             this.renderer.autoClear = true;
         }
@@ -1767,7 +1774,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // we also render this for the zoom coordinate
         this.renderer.autoClear = false;
         this.renderer.setClearAlpha(0)
-        this.renderer.clearTarget(this.coordinate_texture, true, true, true)
+        this.renderer.setRenderTarget(this.coordinate_texture)
+        this.renderer.clear( true, true, true)
         this.renderer.render(this.scene_scatter, camera, this.coordinate_texture);
         this.renderer.autoClear = true;
 
@@ -1783,7 +1791,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 volume_view.box_material.depthFunc = THREE.LessEqualDepth
             },this)
             this.renderer.autoClear = false;
-            this.renderer.clearTarget(this.color_pass_target, false, true, false)
+            this.renderer.setRenderTarget(this.color_pass_target)
+            this.renderer.clear( false, true, false)
             this.renderer.render(this.scene_volume, camera, this.color_pass_target);
             this.renderer.autoClear = true;
             this.renderer.context.colorMask(true, true, true, true)
@@ -1795,7 +1804,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
             },this)
             this.renderer.autoClear = false;
             // we want to keep the colors and z-buffer as they are
-            this.renderer.clearTarget(this.color_pass_target, false, false, false)
+            this.renderer.setRenderTarget(this.color_pass_target)
+            this.renderer.clear( false, false, false)
             this.renderer.render(this.scene_volume, camera, this.coordinate_texture);
             this.renderer.autoClear = true;
 
