@@ -838,10 +838,10 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
         assert isinstance(fig, ipv.Figure)
     if headless:
         tempdir = tempfile.mkdtemp()
-        tempfile = os.path.join(tempdir, 'headless.html')
-        save(tempfile, offline=False, scripts_path=tempdir, devmode=devmode)
+        tempfile_ = os.path.join(tempdir, 'headless.html')
+        save(tempfile_, offline=True, scripts_path=tempdir, devmode=devmode)
         import ipyvolume.headless
-        data = ipyvolume.headless._screenshot_data("file://" + tempfile)
+        data = ipyvolume.headless._screenshot_data("file://" + tempfile_)
         if data is None:
             raise ValueError('Error capturing data from headless browser')
     else:
