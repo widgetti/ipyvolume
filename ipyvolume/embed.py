@@ -64,6 +64,15 @@ def save_ipyvolumejs(target="", devmode=False,
 
 def save_jupyterthreejs(target="", devmode=False,
                         version3js=__version_threejs__):
+    """ Output the jupyter-threejs javascript to a local file.
+
+    :type target: str
+    :type devmode: bool
+    :param devmode: if True get jupyter-threejs.js from js/dist directory
+    :type version3js: str
+    :param version3js: version number of threejs
+
+    """
     url = "https://unpkg.com/jupyter-threejs@{version}/dist/index.js".format(version=version3js)
     j3js_filename = 'jupyter-threejs.js'
     j3js_filepath = os.path.join(target, j3js_filename)
