@@ -1185,8 +1185,9 @@ def selector_default(output_widget=None):
                 def inside(x, y):
                     return (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
             def join(x, y, mode):
-                N = np.max(x) if x is not None else np.max(y)
-                N = max(N, np.max(y))
+                Nx = 0 if (x is None or len(x[0]) == 0) else np.max(x)
+                Ny = 0 if len(y[0]) == 0 else np.max(y)
+                N = max(Nx, Ny)
                 xmask = np.zeros(N+1, np.bool)
                 ymask = np.zeros(N+1, np.bool)
                 if x is not None:
