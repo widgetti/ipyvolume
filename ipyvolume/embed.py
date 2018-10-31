@@ -26,17 +26,14 @@ html_template = u"""<!DOCTYPE html>
 
 
 def save_ipyvolumejs(target="", devmode=False,
-                     version=ipyvolume._version.__version_js__, version3js=__version_threejs__):
-    """ output the ipyvolume javascript to a local file
+                     version=ipyvolume._version.__version_js__):
+    """Output the ipyvolume javascript to a local file.
 
     :type target: str
     :type devmode: bool
     :param devmode: if True get index.js from js/dist directory
     :type version: str
     :param version: version number of ipyvolume
-    :type version3js: str
-    :param version3js: version number of threejs
-
     """
     url = "https://unpkg.com/ipyvolume@{version}/dist/index.js".format(version=version)
     pyv_filename = 'ipyvolume_v{version}.js'.format(version=version)
@@ -51,15 +48,7 @@ def save_ipyvolumejs(target="", devmode=False,
         shutil.copy(devfile, pyv_filepath)
     else:
         download_to_file(url, pyv_filepath)
-
-    # TODO: currently not in use, think about this if we want to have this external for embedding,
-    # see also https://github.com/jovyan/pythreejs/issues/109
-    # three_filename = 'three_v{version}.js'.format(version=__version_threejs__)
-    # three_filepath = os.path.join(target, three_filename)
-    # threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
-    # shutil.copy(threejs, three_filepath)
-
-    return pyv_filename#, three_filename
+    return pyv_filename
 
 
 def save_jupyterthreejs(target="", devmode=False,
