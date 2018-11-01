@@ -7,7 +7,10 @@ from ipywidgets import embed as wembed
 
 import ipyvolume
 from ipyvolume.utils import download_to_file, download_to_bytes
-from ipyvolume._version import __version_threejs__
+from ipyvolume._version import (__version_js__,
+                                __version_threejs__,
+                                __version_requirejs__,
+                                __version_fontawesome__)
 
 html_template = u"""<!DOCTYPE html>
 <html lang="en">
@@ -26,7 +29,7 @@ html_template = u"""<!DOCTYPE html>
 
 
 def save_ipyvolumejs(target="", devmode=False,
-                     version=ipyvolume._version.__version_js__):
+                     version=__version_js__):
     """Output the ipyvolume javascript to a local file.
 
     :type target: str
@@ -52,17 +55,17 @@ def save_ipyvolumejs(target="", devmode=False,
 
 
 def save_jupyterthreejs(target="", devmode=False,
-                        version3js=__version_threejs__):
+                        version=__version_threejs__):
     """ Output the jupyter-threejs javascript to a local file.
 
     :type target: str
     :type devmode: bool
     :param devmode: if True get jupyter-threejs.js from js/dist directory
-    :type version3js: str
-    :param version3js: version number of threejs
+    :type version: str
+    :param version: version number of jupyter-threejs
 
     """
-    url = "https://unpkg.com/jupyter-threejs@{version}/dist/index.js".format(version=version3js)
+    url = "https://unpkg.com/jupyter-threejs@{version}/dist/index.js".format(version=version)
     j3js_filename = 'jupyter-threejs.js'
     j3js_filepath = os.path.join(target, j3js_filename)
 
@@ -78,7 +81,7 @@ def save_jupyterthreejs(target="", devmode=False,
     return j3js_filename
 
 
-def save_requirejs(target="", version="2.3.4"):
+def save_requirejs(target="", version=__version_requirejs__):
     """ download and save the require javascript to a local file
 
     :type target: str
@@ -109,7 +112,7 @@ def save_embed_js(target="", version=wembed.__html_manager_version__):
 
 
 # TODO this may be able to get directly taken from embed-amd.js in the future jupyter-widgets/ipywidgets#1650
-def save_font_awesome(dirpath='', version="4.7.0"):
+def save_font_awesome(dirpath='', version=__version_fontawesome__):
     """ download and save the font-awesome package to a local directory
 
     :type dirpath: str
