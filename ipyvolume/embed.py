@@ -54,6 +54,19 @@ def save_ipyvolumejs(target="", devmode=False,
     return pyv_filename
 
 
+def save_requirejs(target="", version=__version_requirejs__):
+    """ download and save the require javascript to a local file
+
+    :type target: str
+    :type version: str
+    """
+    url = "https://cdnjs.cloudflare.com/ajax/libs/require.js/{version}/require.min.js".format(version=version)
+    filename = "require.min.v{0}.js".format(version)
+    filepath = os.path.join(target, filename)
+    download_to_file(url, filepath)
+    return filename
+
+
 def save_jupyterthreejs(target="", devmode=False,
                         version=__version_threejs__):
     """ Output the jupyter-threejs javascript to a local file.
@@ -66,29 +79,7 @@ def save_jupyterthreejs(target="", devmode=False,
 
     """
     url = "https://unpkg.com/jupyter-threejs@{version}/dist/index.js".format(version=version)
-    j3js_filename = 'jupyter-threejs.js'
-    j3js_filepath = os.path.join(target, j3js_filename)
-
-    devfile = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "..", "js", "dist", "jupyter-threejs.js")
-    if devmode:
-        if not os.path.exists(devfile):
-            raise IOError('devmode=True but cannot find : {}'.format(devfile))
-        if target and not os.path.exists(target):
-            os.makedirs(target)
-        shutil.copy(devfile, j3js_filepath)
-    else:
-        download_to_file(url, j3js_filepath)
-    return j3js_filename
-
-
-def save_requirejs(target="", version=__version_requirejs__):
-    """ download and save the require javascript to a local file
-
-    :type target: str
-    :type version: str
-    """
-    url = "https://cdnjs.cloudflare.com/ajax/libs/require.js/{version}/require.min.js".format(version=version)
-    filename = "require.min.v{0}.js".format(version)
+    filename = 'jupyter-threejs.js'
     filepath = os.path.join(target, filename)
     download_to_file(url, filepath)
     return filename
@@ -198,9 +189,9 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
 
         fname_pyv = save_ipyvolumejs(scripts_path, devmode=devmode)
         fname_require = save_requirejs(os.path.join(scripts_path))
+        fname_threejs = save_jupyterthreejs(os.path.join(scripts_path))
         fname_embed = save_embed_js(os.path.join(scripts_path))
         fname_fontawe = save_font_awesome(os.path.join(scripts_path))
-        fname_threejs = save_jupyterthreejs(scripts_path, devmode=devmode)
 
         subsnippet = wembed.embed_snippet(widgets, embed_url=rel_script_path+fname_embed,
                                           requirejs=False, drop_defaults=drop_defaults, state=state)
