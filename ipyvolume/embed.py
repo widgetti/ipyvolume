@@ -8,7 +8,7 @@ from ipywidgets import embed as wembed
 import ipyvolume
 from ipyvolume.utils import download_to_file, download_to_bytes
 from ipyvolume._version import (__version_js__,
-                                __version_threejs__,
+                                __version_pythreejs__,
                                 __version_requirejs__,
                                 __version_fontawesome__)
 
@@ -68,7 +68,7 @@ def save_requirejs(target="", version=__version_requirejs__):
 
 
 def save_jupyterthreejs(target="", devmode=False,
-                        version=__version_threejs__):
+                        version=__version_pythreejs__):
     """ Output the jupyter-threejs javascript to a local file.
 
     :type target: str
