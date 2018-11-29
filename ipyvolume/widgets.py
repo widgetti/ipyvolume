@@ -226,7 +226,7 @@ class Figure(ipywebrtc.MediaStream):
 
     camera_control = traitlets.Unicode(default_value='trackball').tag(sync=True)
     camera_fov = traitlets.CFloat(45,min=0.1,max=179.9).tag(sync=True)
-    camera_center = traitlets.List(traitlets.CFloat, default_value=[0, 0, 0]).tag(sync=True)
+    camera_center = traitlets.List(traitlets.CFloat(), default_value=[0, 0, 0]).tag(sync=True)
     #Tuple(traitlets.CFloat(0), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
 
     camera = traitlets.Instance(pythreejs.Camera, allow_none=True, help='A :any:`pythreejs.Camera` instance to control the camera')\
@@ -253,12 +253,12 @@ class Figure(ipywebrtc.MediaStream):
 
     show = traitlets.Unicode("Volume").tag(sync=True) # for debugging
 
-    xlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
-    ylim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
-    zlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+    xlim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+    ylim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+    zlim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
 
-    matrix_projection = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
-    matrix_world = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
+    matrix_projection = traitlets.List(traitlets.CFloat(), default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
+    matrix_world = traitlets.List(traitlets.CFloat(), default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
 
     xlabel = traitlets.Unicode("x").tag(sync=True)
     ylabel = traitlets.Unicode("y").tag(sync=True)
