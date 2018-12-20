@@ -7,7 +7,10 @@ from ipywidgets import embed as wembed
 
 import ipyvolume
 from ipyvolume.utils import download_to_file, download_to_bytes
-from ipyvolume._version import __version_threejs__
+from ipyvolume._version import (__version_js__,
+                                __version_pythreejs__,
+                                __version_requirejs__,
+                                __version_fontawesome__)
 
 html_template = u"""<!DOCTYPE html>
 <html lang="en">
@@ -26,17 +29,14 @@ html_template = u"""<!DOCTYPE html>
 
 
 def save_ipyvolumejs(target="", devmode=False,
-                     version=ipyvolume._version.__version_js__, version3js=__version_threejs__):
-    """ output the ipyvolume javascript to a local file
+                     version=__version_js__):
+    """Output the ipyvolume javascript to a local file.
 
     :type target: str
     :type devmode: bool
     :param devmode: if True get index.js from js/dist directory
     :type version: str
     :param version: version number of ipyvolume
-    :type version3js: str
-    :param version3js: version number of threejs
-
     """
     url = "https://unpkg.com/ipyvolume@{version}/dist/index.js".format(version=version)
     pyv_filename = 'ipyvolume_v{version}.js'.format(version=version)
@@ -51,18 +51,10 @@ def save_ipyvolumejs(target="", devmode=False,
         shutil.copy(devfile, pyv_filepath)
     else:
         download_to_file(url, pyv_filepath)
-
-    # TODO: currently not in use, think about this if we want to have this external for embedding,
-    # see also https://github.com/jovyan/pythreejs/issues/109
-    # three_filename = 'three_v{version}.js'.format(version=__version_threejs__)
-    # three_filepath = os.path.join(target, three_filename)
-    # threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
-    # shutil.copy(threejs, three_filepath)
-
-    return pyv_filename#, three_filename
+    return pyv_filename
 
 
-def save_requirejs(target="", version="2.3.4"):
+def save_requirejs(target="", version=__version_requirejs__):
     """ download and save the require javascript to a local file
 
     :type target: str
@@ -70,6 +62,24 @@ def save_requirejs(target="", version="2.3.4"):
     """
     url = "https://cdnjs.cloudflare.com/ajax/libs/require.js/{version}/require.min.js".format(version=version)
     filename = "require.min.v{0}.js".format(version)
+    filepath = os.path.join(target, filename)
+    download_to_file(url, filepath)
+    return filename
+
+
+def save_jupyterthreejs(target="", devmode=False,
+                        version=__version_pythreejs__):
+    """ Output the jupyter-threejs javascript to a local file.
+
+    :type target: str
+    :type devmode: bool
+    :param devmode: if True get jupyter-threejs.js from js/dist directory
+    :type version: str
+    :param version: version number of jupyter-threejs
+
+    """
+    url = "https://unpkg.com/jupyter-threejs@{version}/dist/index.js".format(version=version)
+    filename = 'jupyter-threejs.js'
     filepath = os.path.join(target, filename)
     download_to_file(url, filepath)
     return filename
@@ -93,7 +103,7 @@ def save_embed_js(target="", version=wembed.__html_manager_version__):
 
 
 # TODO this may be able to get directly taken from embed-amd.js in the future jupyter-widgets/ipywidgets#1650
-def save_font_awesome(dirpath='', version="4.7.0"):
+def save_font_awesome(dirpath='', version=__version_fontawesome__):
     """ download and save the font-awesome package to a local directory
 
     :type dirpath: str
@@ -179,6 +189,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
 
         fname_pyv = save_ipyvolumejs(scripts_path, devmode=devmode)
         fname_require = save_requirejs(os.path.join(scripts_path))
+        fname_threejs = save_jupyterthreejs(os.path.join(scripts_path))
         fname_embed = save_embed_js(os.path.join(scripts_path))
         fname_fontawe = save_font_awesome(os.path.join(scripts_path))
 
