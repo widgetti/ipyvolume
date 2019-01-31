@@ -226,7 +226,7 @@ class Figure(ipywebrtc.MediaStream):
 
     camera_control = traitlets.Unicode(default_value='trackball').tag(sync=True)
     camera_fov = traitlets.CFloat(45,min=0.1,max=179.9).tag(sync=True)
-    camera_center = traitlets.List(traitlets.CFloat, default_value=[0, 0, 0]).tag(sync=True)
+    camera_center = traitlets.List(traitlets.CFloat(), default_value=[0, 0, 0]).tag(sync=True)
     #Tuple(traitlets.CFloat(0), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
 
     camera = traitlets.Instance(pythreejs.Camera, allow_none=True, help='A :any:`pythreejs.Camera` instance to control the camera')\
@@ -253,12 +253,12 @@ class Figure(ipywebrtc.MediaStream):
 
     show = traitlets.Unicode("Volume").tag(sync=True) # for debugging
 
-    xlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
-    ylim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
-    zlim = traitlets.List(traitlets.CFloat, default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+    xlim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+    ylim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+    zlim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
 
-    matrix_projection = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
-    matrix_world = traitlets.List(traitlets.CFloat, default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
+    matrix_projection = traitlets.List(traitlets.CFloat(), default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
+    matrix_world = traitlets.List(traitlets.CFloat(), default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16).tag(sync=True)
 
     xlabel = traitlets.Unicode("x").tag(sync=True)
     ylabel = traitlets.Unicode("y").tag(sync=True)
@@ -350,7 +350,7 @@ def quickvolshow(data, lighting=False, data_min=None, data_max=None,  max_shape=
     :param lighting: boolean, to use lighting or not, if set to false, lighting parameters will be overriden
     :param data_min: minimum value to consider for data, if None, computed using np.nanmin
     :param data_max: maximum value to consider for data, if None, computed using np.nanmax
-    :parap int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]), set to None to disable.
+    :param int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]), set to None to disable.
     :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume, otherwise the viewport is used
     :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
     :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
