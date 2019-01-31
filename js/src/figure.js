@@ -540,6 +540,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
             });
         } else {
             this.camera = new THREE.PerspectiveCamera(46, 1, NEAR, FAR);
+            // same default as the Python version
+            var z = 2 * Math.tan(45./2.*Math.PI/180) / Math.tan(this.model.get('camera_fov')/2.*Math.PI/180);
+            this.camera.position.z = z;
         }
         this.camera_initial = this.camera.clone()
         this.cube_camera = new THREE.CubeCamera(this.camera.near, this.camera.far, this.model.get('cube_resolution'));
