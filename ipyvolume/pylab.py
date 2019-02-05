@@ -3,14 +3,44 @@
 from __future__ import absolute_import
 from __future__ import division
 
-__all__ = ['current', 'clear', 'controls_light', 'figure', 'gcf',
-          'xlim', 'ylim', 'zlim', 'xyzlim', 'squarelim',
-          'plot_trisurf', 'plot_surface', 'plot_wireframe', 'plot_mesh',
-          'plot', 'scatter', 'quiver', 'show', 'animate_glyphs',
-          'animation_control', 'gcc', 'transfer_function', 'plot_isosurface',
-          'volshow', 'save', 'movie', 'screenshot', 'savefig',
-          'xlabel', 'ylabel', 'zlabel', 'xyzlabel', 'view', 'style',
-          'plot_plane', 'selector_default']
+__all__ = [
+    'current',
+    'clear',
+    'controls_light',
+    'figure',
+    'gcf',
+    'xlim',
+    'ylim',
+    'zlim',
+    'xyzlim',
+    'squarelim',
+    'plot_trisurf',
+    'plot_surface',
+    'plot_wireframe',
+    'plot_mesh',
+    'plot',
+    'scatter',
+    'quiver',
+    'show',
+    'animate_glyphs',
+    'animation_control',
+    'gcc',
+    'transfer_function',
+    'plot_isosurface',
+    'volshow',
+    'save',
+    'movie',
+    'screenshot',
+    'savefig',
+    'xlabel',
+    'ylabel',
+    'zlabel',
+    'xyzlabel',
+    'view',
+    'style',
+    'plot_plane',
+    'selector_default',
+]
 
 import os
 import time
@@ -18,6 +48,7 @@ import warnings
 import tempfile
 import uuid
 import base64
+
 try:
     from io import BytesIO as StringIO
 except:
@@ -27,6 +58,7 @@ import six
 import numpy as np
 import PIL.Image
 import matplotlib.style
+
 try:
     import shapely.geometry
 except:
@@ -43,40 +75,55 @@ from IPython.display import display
 import ipyvolume as ipv
 import ipyvolume.embed
 from ipyvolume import utils
-from ipyvolume import examples
 
 
 _last_figure = None
 
 
 def _docsubst(f):
-    """Perform docstring substitutions"""
+    """Perform docstring substitutions."""
     f.__doc__ = f.__doc__.format(**_doc_snippets)
     return f
+
 
 _seq_sn = "If an (S, N) array, the first dimension will be used for frames in an animation."
 _seq_snm = "If an (S, N, M) array, the first dimension will be used for frames in an animation."
 
 _doc_snippets = {}
+_doc_snippets["color"] = (
+    "color for each point/vertex/symbol, can be string format, examples for red:'red', '#f00',"
+    "'#ff0000' or'rgb(1,0,0), or rgb array of shape (N, 3 or 4) or (S, N, 3 or 4)"
+)
 _doc_snippets[
-    "color"] = "color for each point/vertex/symbol, can be string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (N, 3 or 4) or (S, N, 3 or 4)"
+    "color2d"
+] = "color for each point/vertex string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb"
+" array of shape (2, N, 3 or 4) or (S, 2, N, 3 or 4)"
 _doc_snippets[
-    "color2d"] = "color for each point/vertex string format, examples for red:'red', '#f00', '#ff0000' or 'rgb(1,0,0), or rgb array of shape (2, N, 3 or 4) or (S, 2, N, 3 or 4)"
+    "size"
+] = "float representing the size of the glyph in percentage of the viewport, where 100 is the full size of the viewport"
 _doc_snippets[
-    "size"] = "float representing the size of the glyph in percentage of the viewport, where 100 is the full size of the viewport"
-_doc_snippets["marker"] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere', 'point_2d', 'square_2d', 'triangle_2d', 'circle_2d'"
+    "marker"
+] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere', 'point_2d', 'square_2d', 'triangle_2d', "
+"'circle_2d'"
 _doc_snippets["x"] = "numpy array of shape (N,) or (S, N) with x positions. {}".format(_seq_sn)
 _doc_snippets["y"] = "idem for y"
 _doc_snippets["z"] = "idem for z"
-_doc_snippets["u_dir"] = "numpy array of shape (N,) or (S, N) indicating the x component of a vector. {}".format(_seq_sn)
+_doc_snippets["u_dir"] = "numpy array of shape (N,) or (S, N) indicating the x component of a vector. {}".format(
+    _seq_sn
+)
 _doc_snippets["v_dir"] = "idem for y"
 _doc_snippets["w_dir"] = "idem for z"
-_doc_snippets["u"] = "numpy array of shape (N,) or (S, N) indicating the u (x) coordinate for the texture. {}".format(_seq_sn)
-_doc_snippets["v"] = "numpy array of shape (N,) or (S, N) indicating the v (y) coordinate for the texture. {}".format(_seq_sn)
+_doc_snippets["u"] = "numpy array of shape (N,) or (S, N) indicating the u (x) coordinate for the texture. {}".format(
+    _seq_sn
+)
+_doc_snippets["v"] = "numpy array of shape (N,) or (S, N) indicating the v (y) coordinate for the texture. {}".format(
+    _seq_sn
+)
 _doc_snippets["x2d"] = "numpy array of shape (N,M) or (S, N, M) with x positions. {}".format(_seq_snm)
 _doc_snippets["y2d"] = "idem for y"
 _doc_snippets["z2d"] = "idem for z"
 _doc_snippets["texture"] = "PIL.Image object or ipywebrtc.MediaStream (can be a seqence)"
+
 
 class current:
     figure = None
@@ -86,31 +133,50 @@ class current:
 
 
 def clear():
-    """Remove current figure (and container)"""
+    """Remove current figure (and container)."""
     current.container = None
     current.figure = None
 
+
 def controls_light(return_widget=False):
     fig = gcf()
-    ambient_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=fig.ambient_coefficient,
-                                                 description="ambient")
-    diffuse_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=fig.diffuse_coefficient,
-                                                 description="diffuse")
-    specular_coefficient = ipywidgets.FloatSlider(min=0, max=1, step=0.001, value=fig.specular_coefficient,
-                                                  description="specular")
-    specular_exponent = ipywidgets.FloatSlider(min=0, max=10, step=0.001, value=fig.specular_exponent,
-                                               description="specular exp")
+    ambient_coefficient = ipywidgets.FloatSlider(
+        min=0, max=1, step=0.001, value=fig.ambient_coefficient, description="ambient"
+    )
+    diffuse_coefficient = ipywidgets.FloatSlider(
+        min=0, max=1, step=0.001, value=fig.diffuse_coefficient, description="diffuse"
+    )
+    specular_coefficient = ipywidgets.FloatSlider(
+        min=0, max=1, step=0.001, value=fig.specular_coefficient, description="specular"
+    )
+    specular_exponent = ipywidgets.FloatSlider(
+        min=0, max=10, step=0.001, value=fig.specular_exponent, description="specular exp"
+    )
     ipywidgets.jslink((fig, 'ambient_coefficient'), (ambient_coefficient, 'value'))
     ipywidgets.jslink((fig, 'diffuse_coefficient'), (diffuse_coefficient, 'value'))
     ipywidgets.jslink((fig, 'specular_coefficient'), (specular_coefficient, 'value'))
     ipywidgets.jslink((fig, 'specular_exponent'), (specular_exponent, 'value'))
-    widgets_bottom = [ipywidgets.HBox([ambient_coefficient, diffuse_coefficient]),
-                      ipywidgets.HBox([specular_coefficient, specular_exponent])]
-    current.container.children += tuple(widgets_bottom, )
-    if return_widget: return widgets_bottom
+    widgets_bottom = [
+        ipywidgets.HBox([ambient_coefficient, diffuse_coefficient]),
+        ipywidgets.HBox([specular_coefficient, specular_exponent]),
+    ]
+    current.container.children += tuple(widgets_bottom)
+    if return_widget:
+        return widgets_bottom
 
-def figure(key=None, width=400, height=500, lighting=True, controls=True, controls_vr=False, controls_light=False, debug=False, **kwargs):
-    """Create a new figure (if no key is given) or return the figure associated with key
+
+def figure(
+    key=None,
+    width=400,
+    height=500,
+    lighting=True,
+    controls=True,
+    controls_vr=False,
+    controls_light=False,
+    debug=False,
+    **kwargs
+):
+    """Create a new figure if no key is given, or return the figure associated with key.
 
     :param key: Python object that identifies this figure
     :param int width: pixel width of WebGL canvas
@@ -138,10 +204,10 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, contro
         current.figures[key] = current.figure
         current.containers[key] = current.container
         if controls:
-            #stereo = ipywidgets.ToggleButton(value=current.figure.stereo, description='stereo', icon='eye')
-            #l1 = ipywidgets.jslink((current.figure, 'stereo'), (stereo, 'value'))
-            #current.container.children += (ipywidgets.HBox([stereo, ]),)
-            pass # stereo and fullscreen are now include in the js code (per view)
+            # stereo = ipywidgets.ToggleButton(value=current.figure.stereo, description='stereo', icon='eye')
+            # l1 = ipywidgets.jslink((current.figure, 'stereo'), (stereo, 'value'))
+            # current.container.children += (ipywidgets.HBox([stereo, ]),)
+            pass  # stereo and fullscreen are now include in the js code (per view)
         if controls_vr:
             eye_separation = ipywidgets.FloatSlider(value=current.figure.eye_separation, min=-10, max=10, icon='eye')
             ipywidgets.jslink((eye_separation, 'value'), (current.figure, 'eye_separation'))
@@ -151,13 +217,13 @@ def figure(key=None, width=400, height=500, lighting=True, controls=True, contro
         if debug:
             show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front", "Coordinate"])
             current.container.children += (show,)
-            #ipywidgets.jslink((current.figure, 'show'), (show, 'value'))
+            # ipywidgets.jslink((current.figure, 'show'), (show, 'value'))
             traitlets.link((current.figure, 'show'), (show, 'value'))
     return current.figure
 
 
 def gcf():
-    """Get current figure, or create a new one
+    """Get current figure, or create a new one.
 
     :return: :any:`Figure`
     """
@@ -195,25 +261,25 @@ def _grow_limits(x, y, z):
 
 
 def xlim(xmin, xmax):
-    """Set limits of x axis"""
+    """Set limits of x axis."""
     fig = gcf()
     fig.xlim = [xmin, xmax]
 
 
 def ylim(ymin, ymax):
-    """Set limits of y axis"""
+    """Set limits of y axis."""
     fig = gcf()
     fig.ylim = [ymin, ymax]
 
 
 def zlim(zmin, zmax):
-    """Set limits of zaxis"""
+    """Set limits of zaxis."""
     fig = gcf()
     fig.zlim = [zmin, zmax]
 
 
 def xyzlim(vmin, vmax=None):
-    """Set limits or all axis the same, if vmax not given, use [-vmin, vmin]"""
+    """Set limits or all axis the same, if vmax not given, use [-vmin, vmin]."""
     if vmax is None:
         vmin, vmax = -vmin, vmin
     xlim(vmin, vmax)
@@ -222,7 +288,7 @@ def xyzlim(vmin, vmax=None):
 
 
 def squarelim():
-    """Sets all axes with equal aspect ratio, such that the space is 'square'"""
+    """Set all axes with equal aspect ratio, such that the space is 'square'."""
     fig = gcf()
     xmin, xmax = fig.xlim
     ymin, ymax = fig.ylim
@@ -244,7 +310,7 @@ default_size_selected = default_size * 1.3
 
 @_docsubst
 def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=None, v=None, texture=None):
-    """Draws a polygon/triangle mesh defined by a coordinate and triangle indices
+    """Draw a polygon/triangle mesh defined by a coordinate and triangle indices.
 
     The following example plots a rectangle in the z==2 plane, consisting of 2 triangles:
 
@@ -286,7 +352,7 @@ def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=Non
 
 @_docsubst
 def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
-    """Draws a 2d surface in 3d, defined by the 2d ordered arrays x,y,z
+    """Draws a 2d surface in 3d, defined by the 2d ordered arrays x,y,z.
 
     :param x: {x2d}
     :param y: {y2d}
@@ -301,7 +367,7 @@ def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
 
 @_docsubst
 def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False):
-    """Draws a 2d wireframe in 3d, defines by the 2d ordered arrays x,y,z
+    """Draws a 2d wireframe in 3d, defines by the 2d ordered arrays x,y,z.
 
     See also :any:`ipyvolume.pylab.plot_mesh`
 
@@ -316,9 +382,10 @@ def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False):
     return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=True, surface=False)
 
 
-def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None,
-              texture=None):
-    """Draws a 2d wireframe+surface in 3d: generalization of :any:`plot_wireframe` and :any:`plot_surface`
+def plot_mesh(
+    x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None, texture=None
+):
+    """Draws a 2d wireframe+surface in 3d: generalization of :any:`plot_wireframe` and :any:`plot_surface`.
 
     :param x: {x2d}
     :param y: {y2d}
@@ -355,9 +422,9 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
         return d
 
     if dim(x) == 2:
-        nx, ny = shape = x.shape
+        nx, ny = x.shape
     else:
-        nx, ny = shape = x[0].shape
+        nx, ny = x[0].shape
 
     # assert len(x.shape) == 2, "Array x must be 2 dimensional."
     # assert len(y.shape) == 2, "Array y must be 2 dimensional."
@@ -371,6 +438,7 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
             return [k.reshape(-1) for k in ar]
         else:
             return ar.reshape(-1)
+
     x = reshape(x)
     y = reshape(y)
     z = reshape(z)
@@ -392,16 +460,25 @@ def plot_mesh(x, y, z, color=default_color, wireframe=True, surface=True, wrapx=
         color = reshape_color(color)
 
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
-    triangles, lines = _make_triangles_lines((nx,ny) ,wrapx,wrapy)
-    mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles if surface else None, color=color,
-                       lines=lines if wireframe else None,
-                       u=u, v=v, texture=texture)
+    triangles, lines = _make_triangles_lines((nx, ny), wrapx, wrapy)
+    mesh = ipv.Mesh(
+        x=x,
+        y=y,
+        z=z,
+        triangles=triangles if surface else None,
+        color=color,
+        lines=lines if wireframe else None,
+        u=u,
+        v=v,
+        texture=texture,
+    )
     fig.meshes = fig.meshes + [mesh]
     return mesh
 
+
 @_docsubst
 def plot(x, y, z, color=default_color, **kwargs):
-    """Plot a line in 3d
+    """Plot a line in 3d.
 
     :param x: {x}
     :param y: {y}
@@ -412,8 +489,9 @@ def plot(x, y, z, color=default_color, **kwargs):
     """
     fig = gcf()
     _grow_limits(x, y, z)
-    defaults = dict(visible_lines=True, color_selected=None, size_selected=1,
-                    size=1, connected=True, visible_markers=False)
+    defaults = dict(
+        visible_lines=True, color_selected=None, size_selected=1, size=1, connected=True, visible_markers=False
+    )
     kwargs = dict(defaults, **kwargs)
     s = ipv.Scatter(x=x, y=y, z=z, color=color, **kwargs)
     s.material.visible = False
@@ -422,11 +500,20 @@ def plot(x, y, z, color=default_color, **kwargs):
 
 
 @_docsubst
-def scatter(x, y, z, color=default_color, size=default_size,
-            size_selected=default_size_selected,
-            color_selected=default_color_selected, marker="diamond",
-            selection=None, grow_limits=True, **kwargs):
-    """Plots many markers/symbols in 3d
+def scatter(
+    x,
+    y,
+    z,
+    color=default_color,
+    size=default_size,
+    size_selected=default_size_selected,
+    color_selected=default_color_selected,
+    marker="diamond",
+    selection=None,
+    grow_limits=True,
+    **kwargs
+):
+    """Plot many markers/symbols in 3d.
 
     :param x: {x}
     :param y: {y}
@@ -436,24 +523,46 @@ def scatter(x, y, z, color=default_color, size=default_size,
     :param size_selected: like size, but for selected glyphs
     :param color_selected:  like color, but for selected glyphs
     :param marker: {marker}
-    :param selection: numpy array of shape (N,) or (S, N) with indices of x,y,z arrays of the selected markers, which can have a different size and color
+    :param selection: numpy array of shape (N,) or (S, N) with indices of x,y,z arrays of the selected markers, which
+                      can have a different size and color
     :param kwargs:
     :return: :any:`Scatter`
     """
     fig = gcf()
     if grow_limits:
         _grow_limits(x, y, z)
-    s = ipv.Scatter(x=x, y=y, z=z, color=color, size=size,
-                    color_selected=color_selected, size_selected=size_selected,
-                    geo=marker, selection=selection, **kwargs)
+    s = ipv.Scatter(
+        x=x,
+        y=y,
+        z=z,
+        color=color,
+        size=size,
+        color_selected=color_selected,
+        size_selected=size_selected,
+        geo=marker,
+        selection=selection,
+        **kwargs
+    )
     fig.scatters = fig.scatters + [s]
     return s
 
+
 @_docsubst
-def quiver(x, y, z, u, v, w, size=default_size * 10,
-           size_selected=default_size_selected * 10, color=default_color,
-           color_selected=default_color_selected, marker="arrow", **kwargs):
-    """Create a quiver plot, which is like a scatter plot but with arrows pointing in the direction given by u, v and w
+def quiver(
+    x,
+    y,
+    z,
+    u,
+    v,
+    w,
+    size=default_size * 10,
+    size_selected=default_size_selected * 10,
+    color=default_color,
+    color_selected=default_color_selected,
+    marker="arrow",
+    **kwargs
+):
+    """Create a quiver plot, which is like a scatter plot but with arrows pointing in the direction given by u, v and w.
 
     :param x: {x}
     :param y: {y}
@@ -473,15 +582,26 @@ def quiver(x, y, z, u, v, w, size=default_size * 10,
     _grow_limits(x, y, z)
     if 'vx' in kwargs or 'vy' in kwargs or 'vz' in kwargs:
         raise KeyError('Please use u, v, w instead of vx, vy, vz')
-    s = ipv.Scatter(x=x, y=y, z=z, vx=u, vy=v, vz=w, color=color, size=size,
-                    color_selected=color_selected, size_selected=size_selected,
-                    geo=marker, **kwargs)
+    s = ipv.Scatter(
+        x=x,
+        y=y,
+        z=z,
+        vx=u,
+        vy=v,
+        vz=w,
+        color=color,
+        size=size,
+        color_selected=color_selected,
+        size_selected=size_selected,
+        geo=marker,
+        **kwargs
+    )
     fig.scatters = fig.scatters + [s]
     return s
 
 
 def show(extra_widgets=[]):
-    """Display (like in IPython.display.dispay(...)) the current figure"""
+    """Display (like in IPython.display.dispay(...)) the current figure."""
     gcf()  # make sure we have something..
     display(gcc())
     for widget in extra_widgets:
@@ -489,7 +609,7 @@ def show(extra_widgets=[]):
 
 
 def animate_glyphs(*args, **kwargs):
-    """Deprecated: please use animation_control"""
+    """Deprecated: please use animation_control."""
     warnings.warn("Please use animation_control(...)", DeprecationWarning, stacklevel=2)
     animation_control(*args, **kwargs)
 
@@ -497,10 +617,11 @@ def animate_glyphs(*args, **kwargs):
 def animation_control(object, sequence_length=None, add=True, interval=200):
     """Animate scatter, quiver or mesh by adding a slider and play button.
 
-    :param object: :any:`Scatter` or :any:`Mesh` object (having an sequence_index property), or a list of these to control multiple.
+    :param object: :any:`Scatter` or :any:`Mesh` object (having an sequence_index property), or a list of these to
+                   control multiple.
     :param sequence_length: If sequence_length is None we try try our best to figure out, in case we do it badly,
-            you can tell us what it should be. Should be equal to the S in the shape of the numpy arrays as for instance documented
-            in :any:`scatter` or :any:`plot_mesh`.
+            you can tell us what it should be. Should be equal to the S in the shape of the numpy arrays as for instance
+            documented in :any:`scatter` or :any:`plot_mesh`.
     :param add: if True, add the widgets to the container, else return a HBox with the slider and play button. Useful when you
             want to customise the layout of the widgets yourself.
     :param interval: interval in msec between each frame
@@ -527,7 +648,7 @@ def animation_control(object, sequence_length=None, add=True, interval=200):
                         sequence_lengths.append(sequence_length)
                 else:
                     sequence_lengths.append(sequence_length)
-            except IndexError:      # scalars get ignored
+            except IndexError:  # scalars get ignored
                 pass
             if hasattr(object, 'color'):
                 color = object.color
@@ -541,7 +662,7 @@ def animation_control(object, sequence_length=None, add=True, interval=200):
         sequence_length = max(sequence_lengths)
     fig = gcf()
     fig.animation = interval
-    fig.animation_exponent = 1.
+    fig.animation_exponent = 1.0
     play = ipywidgets.Play(min=0, max=sequence_length - 1, interval=interval, value=0, step=1)
     slider = ipywidgets.FloatSlider(min=0, max=play.max, step=1)
     ipywidgets.jslink((play, 'value'), (slider, 'value'))
@@ -560,8 +681,10 @@ def gcc():
     return current.container
 
 
-def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, controls=True, max_opacity=0.2):
-    """Create a transfer function, see volshow"""
+def transfer_function(
+    level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, controls=True, max_opacity=0.2
+):
+    """Create a transfer function, see volshow."""
     tf_kwargs = {}
     # level, opacity and widths can be scalars
     try:
@@ -593,14 +716,14 @@ def transfer_function(level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_wi
         tf_kwargs["opacity" + str(i)] = opacity[i - 1]
         tf_kwargs["width" + str(i)] = level_width[i - 1]
     tf = ipv.TransferFunctionWidgetJs3(**tf_kwargs)
-    fig = gcf()
+    gcf()  # make sure a current container/figure exists
     if controls:
         current.container.children = (tf.control(max_opacity=max_opacity),) + current.container.children
     return tf
 
 
 def plot_isosurface(data, level=None, color=default_color, wireframe=True, surface=True, controls=True, extent=None):
-    """Plot a surface at constant value (like a 2d contour)
+    """Plot a surface at constant value (like a 2d contour).
 
     :param data: 3d numpy array
     :param float level: value where the surface should lie
@@ -609,16 +732,17 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     :param bool wireframe: draw lines between the vertices
     :param bool surface: draw faces/triangles between the vertices
     :param bool controls: add controls to change the isosurface
-    :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounding box of the mesh, otherwise the viewport is used
+    :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounding box of the mesh,
+                   otherwise the viewport is used
     :return: :any:`Mesh`
     """
     if level is None:
         level = np.median(data)
-    if hasattr(measure, 'marching_cubes_lewiner'):
+    if hasattr(skimage.measure, 'marching_cubes_lewiner'):
         values = skimage.measure.marching_cubes_lewiner(data, level)
     else:
-        values = skimage.measure.marching_cubes(data, level)
-    verts, triangles = values[:2] # version 0.13 returns 4 values, normals, values
+        values = skimage.measure.marching_cubes(data, level)  # pylint: disable=no-member
+    verts, triangles = values[:2]  # version 0.13 returns 4 values, normals, values
     # in the future we may want to support normals and the values (with colormap)
     # and require skimage >= 0.13
     x, y, z = verts.T
@@ -626,27 +750,28 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     # Rescale coordinates to given limits
     if extent:
         xlim, ylim, zlim = extent
-        x = x * np.diff(xlim)/(data.shape[0]-1) + xlim[0]
-        y = y * np.diff(ylim)/(data.shape[1]-1) + ylim[0]
-        z = z * np.diff(zlim)/(data.shape[2]-1) + zlim[0]
+        x = x * np.diff(xlim) / (data.shape[0] - 1) + xlim[0]
+        y = y * np.diff(ylim) / (data.shape[1] - 1) + ylim[0]
+        z = z * np.diff(zlim) / (data.shape[2] - 1) + zlim[0]
         _grow_limits(*extent)
 
     mesh = plot_trisurf(x, y, z, triangles=triangles, color=color)
     if controls:
-        vmin, vmax = np.percentile(data, 1),  np.percentile(data, 99)
-        step = (vmax - vmin)/250
+        vmin, vmax = np.percentile(data, 1), np.percentile(data, 99)
+        step = (vmax - vmin) / 250
         level_slider = ipywidgets.FloatSlider(value=level, min=vmin, max=vmax, step=step, icon='eye')
         recompute_button = ipywidgets.Button(description='update')
         controls = ipywidgets.HBox(children=[level_slider, recompute_button])
         current.container.children += (controls,)
+
         def recompute(*_ignore):
             level = level_slider.value
             recompute_button.description = "updating..."
             if hasattr(skimage.measure, 'marching_cubes_lewiner'):
                 values = skimage.measure.marching_cubes_lewiner(data, level)
             else:
-                values = skimage.measure.marching_cubes(data, level)
-            verts, triangles = values[:2] # version 0.13 returns 4 values, normals, values
+                values = skimage.measure.marching_cubes(data, level)  # pylint: disable=no-member
+            verts, triangles = values[:2]  # version 0.13 returns 4 values, normals, values
             # in the future we may want to support normals and the values (with colormap)
             # and require skimage >= 0.13
             x, y, z = verts.T
@@ -661,13 +786,27 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     return mesh
 
 
-def volshow(data, lighting=False, data_min=None, data_max=None,
-            max_shape=256, tf=None, stereo=False,
-            ambient_coefficient=0.5, diffuse_coefficient=0.8,
-            specular_coefficient=0.5, specular_exponent=5,
-            downscale=1,
-            level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1,
-            controls=True, max_opacity=0.2, memorder='C', extent=None):
+def volshow(
+    data,
+    lighting=False,
+    data_min=None,
+    data_max=None,
+    max_shape=256,
+    tf=None,
+    stereo=False,
+    ambient_coefficient=0.5,
+    diffuse_coefficient=0.8,
+    specular_coefficient=0.5,
+    specular_exponent=5,
+    downscale=1,
+    level=[0.1, 0.5, 0.9],
+    opacity=[0.01, 0.05, 0.1],
+    level_width=0.1,
+    controls=True,
+    max_opacity=0.2,
+    memorder='C',
+    extent=None,
+):
     """Visualize a 3d array using volume rendering.
 
     Currently only 1 volume can be rendered.
@@ -679,20 +818,23 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     :param bool lighting: use lighting or not, if set to false, lighting parameters will be overriden
     :param float data_min: minimum value to consider for data, if None, computed using np.nanmin
     :param float data_max: maximum value to consider for data, if None, computed using np.nanmax
-    :parap int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]), set to None to disable.
+    :parap int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]),
+                          set to None to disable.
     :param tf: transfer function (or a default one)
     :param bool stereo: stereo view for virtual reality (cardboard and similar VR head mount)
     :param ambient_coefficient: lighting parameter
     :param diffuse_coefficient: lighting parameter
     :param specular_coefficient: lighting parameter
     :param specular_exponent: lighting parameter
-    :param float downscale: downscale the rendering for better performance, for instance when set to 2, a 512x512 canvas will show a 256x256 rendering upscaled, but it will render twice as fast.
+    :param float downscale: downscale the rendering for better performance, for instance when set to 2, a 512x512
+                            canvas will show a 256x256 rendering upscaled, but it will render twice as fast.
     :param level: level(s) for the where the opacity in the volume peaks, maximum sequence of length 3
     :param opacity: opacity(ies) for each level, scalar or sequence of max length 3
     :param level_width: width of the (gaussian) bumps where the opacity peaks, scalar or sequence of max length 3
     :param bool controls: add controls for lighting and transfer function or not
     :param float max_opacity: maximum opacity for transfer function controls
-    :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume, otherwise the viewport is used
+    :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume,
+                   otherwise the viewport is used
     :return:
     """
     fig = gcf()
@@ -712,42 +854,50 @@ def volshow(data, lighting=False, data_min=None, data_max=None,
     if extent:
         _grow_limits(*extent)
 
-    vol = ipv.Volume(data_original = data,
-                    tf=tf,
-                    data_min = data_min,
-                    data_max = data_max,
-                    show_min = data_min,
-                    show_max = data_max,
-                    extent_original = extent,
-                    data_max_shape = max_shape,
-                    ambient_coefficient = ambient_coefficient,
-                    diffuse_coefficient = diffuse_coefficient,
-                    specular_coefficient = specular_coefficient,
-                    specular_exponent = specular_exponent,
-                    rendering_lighting = lighting)
+    vol = ipv.Volume(
+        data_original=data,
+        tf=tf,
+        data_min=data_min,
+        data_max=data_max,
+        show_min=data_min,
+        show_max=data_max,
+        extent_original=extent,
+        data_max_shape=max_shape,
+        ambient_coefficient=ambient_coefficient,
+        diffuse_coefficient=diffuse_coefficient,
+        specular_coefficient=specular_coefficient,
+        specular_exponent=specular_exponent,
+        rendering_lighting=lighting,
+    )
 
     vol._listen_to(fig)
 
     if controls:
-        widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2,
-                                                     description="opacity")
-        widget_brightness = ipywidgets.FloatLogSlider(base=10, min=-1, max=1,
-                                                     description="brightness")
+        widget_opacity_scale = ipywidgets.FloatLogSlider(base=10, min=-2, max=2, description="opacity")
+        widget_brightness = ipywidgets.FloatLogSlider(base=10, min=-1, max=1, description="brightness")
         ipywidgets.jslink((vol, 'opacity_scale'), (widget_opacity_scale, 'value'))
         ipywidgets.jslink((vol, 'brightness'), (widget_brightness, 'value'))
         widgets_bottom = [ipywidgets.HBox([widget_opacity_scale, widget_brightness])]
-        current.container.children += tuple(widgets_bottom, )
+        current.container.children += tuple(widgets_bottom)
 
     fig.volumes = fig.volumes + [vol]
 
     return vol
 
 
-def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
-         offline=False, scripts_path='js',
-         drop_defaults=False, template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
-         devmode=False, offline_cors=False):
-    """Save the current container to a HTML file
+def save(
+    filepath,
+    makedirs=True,
+    title=u'IPyVolume Widget',
+    all_states=False,
+    offline=False,
+    scripts_path='js',
+    drop_defaults=False,
+    template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
+    devmode=False,
+    offline_cors=False,
+):
+    """Save the current container to a HTML file.
 
     By default the HTML file is not standalone and requires an internet connection to fetch a few javascript
     libraries. Use offline=True to download these and make the HTML file work without an internet connection.
@@ -765,22 +915,37 @@ def save(filepath, makedirs=True, title=u'IPyVolume Widget', all_states=False,
     :param bool offline_cors: if True, sets crossorigin attribute of script tags to anonymous
 
     """
-    ipyvolume.embed.embed_html(filepath, current.container, makedirs=makedirs, title=title, all_states=all_states,
-                               offline=offline, scripts_path=scripts_path,
-                               drop_defaults=drop_defaults, template_options=template_options, devmode=devmode,
-                               offline_cors=offline_cors)
+    ipyvolume.embed.embed_html(
+        filepath,
+        current.container,
+        makedirs=makedirs,
+        title=title,
+        all_states=all_states,
+        offline=offline,
+        scripts_path=scripts_path,
+        drop_defaults=drop_defaults,
+        template_options=template_options,
+        devmode=devmode,
+        offline_cors=offline_cors,
+    )
 
 
 def _change_azimuth_angle(fig, frame, fraction):
     with fig:
-        view(azimuth=fraction*360)
+        view(azimuth=fraction * 360)
 
 
-def movie(f="movie.mp4", function=_change_azimuth_angle, fps=30, frames=30, endpoint=False, \
-          cmd_template_ffmpeg="ffmpeg -y -r {fps} -i {tempdir}/frame-%5d.png -vcodec h264 -pix_fmt yuv420p {filename}",
-          cmd_template_gif="convert -delay {delay} {loop} {tempdir}/frame-*.png {filename}",
-          gif_loop=0):
-    """Create a movie (mp4/gif) out of many frames
+def movie(
+    f="movie.mp4",
+    function=_change_azimuth_angle,
+    fps=30,
+    frames=30,
+    endpoint=False,
+    cmd_template_ffmpeg="ffmpeg -y -r {fps} -i {tempdir}/frame-%5d.png -vcodec h264 -pix_fmt yuv420p {filename}",
+    cmd_template_gif="convert -delay {delay} {loop} {tempdir}/frame-*.png {filename}",
+    gif_loop=0,
+):
+    """Create a movie out of many frames in e.g. mp4 or gif format.
 
     If the filename ends in `.gif`, `convert` is used to convert all frames to an animated gif using the `cmd_template_gif`
     template. Otherwise `ffmpeg is assumed to know the file format`.
@@ -812,7 +977,7 @@ def movie(f="movie.mp4", function=_change_azimuth_angle, fps=30, frames=30, endp
     fig = gcf()
     for i in range(frames):
         with output:
-            fraction = i / (frames - 1. if endpoint else frames)
+            fraction = i / (frames - 1.0 if endpoint else frames)
             function(fig, i, fraction)
             frame_filename = os.path.join(tempdir, "frame-%05d.png" % i)
             savefig(frame_filename, output_widget=output)
@@ -831,7 +996,16 @@ def movie(f="movie.mp4", function=_change_azimuth_angle, fps=30, frames=30, endp
     return tempdir
 
 
-def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width=None, height=None, fig=None, headless=False, devmode=False):
+def _screenshot_data(
+    timeout_seconds=10,
+    output_widget=None,
+    format="png",
+    width=None,
+    height=None,
+    fig=None,
+    headless=False,
+    devmode=False,
+):
     if fig is None:
         fig = gcf()
     else:
@@ -841,6 +1015,7 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
         tempfile_ = os.path.join(tempdir, 'headless.html')
         save(tempfile_, offline=True, scripts_path=tempdir, devmode=devmode)
         import ipyvolume.headless
+
         data = ipyvolume.headless._screenshot_data("file://" + tempfile_)
         if data is None:
             raise ValueError('Error capturing data from headless browser')
@@ -861,7 +1036,7 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
 
         fig.on_screenshot(screenshot_handler)
         try:
-            fig.screenshot(width=width, height=height,mime_type="image/"+format)
+            fig.screenshot(width=width, height=height, mime_type="image/" + format)
             t0 = time.time()
             timeout = False
             ipython = IPython.get_ipython()
@@ -877,10 +1052,20 @@ def _screenshot_data(timeout_seconds=10, output_widget=None, format="png", width
             with output_widget:
                 fig.on_screenshot(screenshot_handler, remove=True)
         data = data[0]
-    data = data[data.find(",") + 1:]
+    data = data[data.find(",") + 1 :]
     return base64.b64decode(data)
 
-def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=10, output_widget=None, headless=False, devmode=False):
+
+def screenshot(
+    width=None,
+    height=None,
+    format="png",
+    fig=None,
+    timeout_seconds=10,
+    output_widget=None,
+    headless=False,
+    devmode=False,
+):
     """Save the figure to a PIL.Image object.
 
     :param int width: the width of the image in pixels
@@ -897,13 +1082,24 @@ def screenshot(width=None, height=None, format="png", fig=None, timeout_seconds=
     :return: PIL.Image
 
     """
-    assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
-    data = _screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget,
-    format=format, width=width, height=height, fig=fig, headless=headless, devmode=devmode)
+    assert format in ['png', 'jpeg', 'svg'], "image format must be png, jpeg or svg"
+    data = _screenshot_data(
+        timeout_seconds=timeout_seconds,
+        output_widget=output_widget,
+        format=format,
+        width=width,
+        height=height,
+        fig=fig,
+        headless=headless,
+        devmode=devmode,
+    )
     f = StringIO(data)
     return PIL.Image.open(f)
 
-def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, output_widget=None, headless=False, devmode=False):
+
+def savefig(
+    filename, width=None, height=None, fig=None, timeout_seconds=10, output_widget=None, headless=False, devmode=False
+):
     """Save the figure to an image file.
 
     :param str filename: must have extension .png, .jpeg or .svg
@@ -918,38 +1114,49 @@ def savefig(filename, width=None, height=None, fig=None, timeout_seconds=10, out
     """
     __, ext = os.path.splitext(filename)
     format = ext[1:]
-    assert format in ['png','jpeg','svg'], "image format must be png, jpeg or svg"
+    assert format in ['png', 'jpeg', 'svg'], "image format must be png, jpeg or svg"
     with open(filename, "wb") as f:
-        f.write(_screenshot_data(timeout_seconds=timeout_seconds, output_widget=output_widget,
-        format=format, width=width, height=height, fig=fig, headless=headless, devmode=devmode))
+        f.write(
+            _screenshot_data(
+                timeout_seconds=timeout_seconds,
+                output_widget=output_widget,
+                format=format,
+                width=width,
+                height=height,
+                fig=fig,
+                headless=headless,
+                devmode=devmode,
+            )
+        )
 
 
 def xlabel(label):
-    """Set the labels for the x-axis"""
+    """Set the labels for the x-axis."""
     fig = gcf()
     fig.xlabel = label
 
 
 def ylabel(label):
-    """Set the labels for the y-axis"""
+    """Set the labels for the y-axis."""
     fig = gcf()
     fig.ylabel = label
 
 
 def zlabel(label):
-    """Set the labels for the z-axis"""
+    """Set the labels for the z-axis."""
     fig = gcf()
     fig.zlabel = label
 
 
 def xyzlabel(labelx, labely, labelz):
-    """Set all labels at once"""
+    """Set all labels at once."""
     xlabel(labelx)
     ylabel(labely)
     zlabel(labelz)
 
+
 def view(azimuth=None, elevation=None, distance=None):
-    """Sets camera angles and distance and returns the current.
+    """Set camera angles and distance and return the current.
 
     :param float azimuth: rotation around the axis pointing up in degrees
     :param float elevation: rotation where +90 means 'up', -90 means 'down', in degrees
@@ -958,9 +1165,9 @@ def view(azimuth=None, elevation=None, distance=None):
     fig = gcf()
     # first calculate the current values
     x, y, z = fig.camera.position
-    r = np.sqrt(x**2 + y**2 + z**2)
+    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
     az = np.degrees(np.arctan2(x, z))
-    el = np.degrees(np.arcsin(y/r))
+    el = np.degrees(np.arcsin(y / r))
     if azimuth is None:
         azimuth = az
     if elevation is None:
@@ -971,13 +1178,13 @@ def view(azimuth=None, elevation=None, distance=None):
     sinaz = np.sin(np.radians(azimuth))
     sine = np.sin(np.radians(elevation))
     cose = np.cos(np.radians(elevation))
-    fig.camera.position = (distance*sinaz*cose, distance*sine, distance*cosaz*cose)
+    fig.camera.position = (distance * sinaz * cose, distance * sine, distance * cosaz * cose)
     return azimuth, elevation, distance
 
 
 # mimic matplotlib namesace
 class style:
-    """'Static class that mimics a matplotlib module.
+    """Static class that mimics a matplotlib module.
 
     Example:
 
@@ -997,7 +1204,7 @@ class style:
 
     @staticmethod
     def use(style):
-        """Set the style of the current figure/visualization
+        """Set the style of the current figure/visualization.
 
         :param style: matplotlib style name, or dict with values, or a sequence of these, where the last value overrides previous
         :return:
@@ -1014,7 +1221,7 @@ class style:
                 ['ytick.color', 'axes.y.color'],
                 ['axes.labelcolor', 'axes.label.color'],
                 ['text.color', 'color'],
-                ['axes.edgecolor', 'axes.color']
+                ['axes.edgecolor', 'axes.color'],
             ]
             for from_name, to_name in mapping:
                 if from_name in mplstyle:
@@ -1042,8 +1249,9 @@ class style:
                 else:
                     # lets see if we can copy matplotlib's style
                     # we assume now it's a matplotlib style, get all properties that we understand
-                    cleaned_style = {key: value for key, value in dict(matplotlib.style.library[style]).items() if
-                                     valid(value)}
+                    cleaned_style = {
+                        key: value for key, value in dict(matplotlib.style.library[style]).items() if valid(value)
+                    }
                     style = translate(cleaned_style)
                     # totalstyle.update(cleaned_style)
             else:
@@ -1056,33 +1264,36 @@ class style:
 
     @staticmethod
     def axes_off():
-        """Do not draw the axes"""
+        """Do not draw the axes."""
         style.use({'axes': {'visible': False}})
 
     @staticmethod
     def axes_on():
-        """Draw the axes"""
+        """Draw the axes."""
         style.use({'axes': {'visible': True}})
 
     @staticmethod
     def box_off():
-        """Do not draw the box around the visible volume"""
+        """Do not draw the box around the visible volume."""
         style.use({'box': {'visible': False}})
 
     @staticmethod
     def box_on():
-        """Draw a box around the visible volume"""
+        """Draw a box around the visible volume."""
         style.use({'box': {'visible': True}})
 
     @staticmethod
     def background_color(color):
-        """Sets the background color"""
+        """Set the background color."""
         style.use({'background-color': color})
 
+
 for style_name, __ in ipv.styles.styles.items():
+
     def closure(style_name=style_name):
         def quick_set():
             style.use(style_name)
+
         attr_name = 'set_style_' + style_name
         attr = staticmethod(quick_set)
         setattr(style, attr_name, attr)
@@ -1090,9 +1301,10 @@ for style_name, __ in ipv.styles.styles.items():
 
     closure()
 
+
 @_docsubst
 def plot_plane(where="back", texture=None):
-    """Plots a plane at a particular location in the viewbox
+    """Plot a plane at a particular location in the viewbox.
 
     :param str where: 'back', 'front', 'left', 'right', 'top', 'bottom'
     :param texture: {texture}
@@ -1129,13 +1341,14 @@ def plot_plane(where="back", texture=None):
     triangles = [(0, 1, 2), (0, 2, 3)]
     u = v = None
     if texture is not None:
-        u = [0., 1., 1., 0.]
-        v = [0., 0., 1., 1.]
+        u = [0.0, 1.0, 1.0, 0.0]
+        v = [0.0, 0.0, 1.0, 1.0]
     mesh = plot_trisurf(x, y, z, triangles, texture=texture, u=u, v=v)
     return mesh
 
+
 def selector_default(output_widget=None):
-    """Capture selection events from the current figure, and apply the selections to Scatter objects
+    """Capture selection events from the current figure, and apply the selections to Scatter objects.
 
     Example:
 
@@ -1160,21 +1373,31 @@ def selector_default(output_widget=None):
     if output_widget is None:
         output_widget = ipywidgets.Output()
         display(output_widget)
+
     def lasso(data, other=None, fig=fig):
         with output_widget:
+            inside = None
             if data['device'] and data['type'] == 'lasso':
                 region = shapely.geometry.Polygon(data['device'])
+
                 @np.vectorize
-                def inside(x, y):
+                def inside_polygon(x, y):
                     return region.contains(shapely.geometry.Point([x, y]))
+
+                inside = inside_polygon
+
             if data['device'] and data['type'] == 'circle':
                 x1, y1 = data['device']['begin']
                 x2, y2 = data['device']['end']
                 dx = x2 - x1
                 dy = y2 - y1
-                r = (dx**2 + dy**2)**0.5
-                def inside(x, y):
-                    return ((x-x1)**2 + (y-y1)**2) < r**2
+                r = (dx ** 2 + dy ** 2) ** 0.5
+
+                def inside_circle(x, y):
+                    return ((x - x1) ** 2 + (y - y1) ** 2) < r ** 2
+
+                inside = inside_circle
+
             if data['device'] and data['type'] == 'rectangle':
                 x1, y1 = data['device']['begin']
                 x2, y2 = data['device']['end']
@@ -1182,14 +1405,18 @@ def selector_default(output_widget=None):
                 y = [y1, y2]
                 xmin, xmax = min(x), max(x)
                 ymin, ymax = min(y), max(y)
-                def inside(x, y):
+
+                def inside_rectangle(x, y):
                     return (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
+
+                inside = inside_rectangle
+
             def join(x, y, mode):
                 Nx = 0 if (x is None or len(x[0]) == 0) else np.max(x)
                 Ny = 0 if len(y[0]) == 0 else np.max(y)
                 N = max(Nx, Ny)
-                xmask = np.zeros(N+1, np.bool)
-                ymask = np.zeros(N+1, np.bool)
+                xmask = np.zeros(N + 1, np.bool)
+                ymask = np.zeros(N + 1, np.bool)
                 if x is not None:
                     xmask[x] = True
                 ymask[y] = True
@@ -1204,16 +1431,17 @@ def selector_default(output_widget=None):
                 if mode == "subtract":
                     mask = xmask & ~ymask
                     return np.where(ymask if x is None else mask)
+
             for scatter in fig.scatters:
                 x, y = fig.project(scatter.x, scatter.y, scatter.z)
                 mask = inside(x, y)
                 scatter.selected = join(scatter.selected, np.where(mask), fig.selection_mode)
+
     fig.on_selection(lasso)
 
 
-
 def _make_triangles_lines(shape, wrapx=False, wrapy=False):
-    """Transform rectangular regular grid into triangles
+    """Transform rectangular regular grid into triangles.
 
     :param x: {x2d}
     :param y: {y2d}
@@ -1222,7 +1450,6 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
     :param bool wrapy: simular for the y coordinate
     :return: triangles and lines used to plot Mesh
     """
-
     nx, ny = shape
 
     mx = nx if wrapx else nx - 1
@@ -1262,12 +1489,8 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
         (i+1)*ny+j -  (i+1)*ny+j+1
     """
 
-    t1 = (i * ny + j,
-          (i + 1) % nx * ny + j,
-          (i + 1) % nx * ny + (j + 1) % ny)
-    t2 = (i * ny + j,
-          (i + 1) % nx * ny + (j + 1) % ny,
-          i * ny + (j + 1) % ny)
+    t1 = (i * ny + j, (i + 1) % nx * ny + j, (i + 1) % nx * ny + (j + 1) % ny)
+    t2 = (i * ny + j, (i + 1) % nx * ny + (j + 1) % ny, i * ny + (j + 1) % ny)
 
     """
         %nx and %ny are used for wrapx and wrapy :
@@ -1282,9 +1505,9 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
     triangles[1::2, 0], triangles[1::2, 1], triangles[1::2, 2] = t2
 
     lines = np.zeros((nt * 4, 2), dtype=np.uint32)
-    lines[::4,0], lines[::4,1] = t1[:2]
-    lines[1::4,0], lines[1::4,1] = t1[0],t2[2]
-    lines[2::4,0], lines[2::4,1] = t2[2:0:-1]
-    lines[3::4,0], lines[3::4,1] = t1[1],t2[1]
+    lines[::4, 0], lines[::4, 1] = t1[:2]
+    lines[1::4, 0], lines[1::4, 1] = t1[0], t2[2]
+    lines[2::4, 0], lines[2::4, 1] = t2[2:0:-1]
+    lines[3::4, 0], lines[3::4, 1] = t1[1], t2[1]
 
     return triangles, lines
