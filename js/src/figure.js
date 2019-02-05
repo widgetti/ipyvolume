@@ -38,7 +38,7 @@ shaders["volr_vertex"] = require('raw-loader!../glsl/volr-vertex.glsl');
 // puts this as first argument to f, followed be other arguments, and make context f's this
 function bind_d3(f, context) {
     return function() {
-        var args  = [this].concat([].slice.call(arguments)) // convert argument to array
+        var args = [this].concat([].slice.call(arguments)) // convert argument to array
         f.apply(context, args)
     }
 }
@@ -51,8 +51,8 @@ function download_image(data) {
     if (document.createEvent) {
         e = document.createEvent("MouseEvents");
         e.initMouseEvent("click", true, true, window,
-                         0, 0, 0, 0, 0, false, false, false,
-                         false, 0, null);
+            0, 0, 0, 0, 0, false, false, false,
+            false, 0, null);
 
         a.dispatchEvent(e);
     } else if (lnk.fireEvent) {
@@ -152,7 +152,7 @@ var LassoSelector = function(canvas) {
         this.context.strokeStyle = 'rgba(255, 0, 0, 1)';
         this.context.fillStyle = 'rgba(255, 0, 0, 0.5)';
         this.context.beginPath();
-        for(var i = 0; i < this.points.length; i++) {
+        for (var i = 0; i < this.points.length; i++) {
             this.context.lineTo(this.points[i][0], this.points[i][1]);
         }
         this.context.closePath()
@@ -160,7 +160,9 @@ var LassoSelector = function(canvas) {
         this.context.stroke()
     }
     this.getData = function(width, height) {
-        var data = {type: 'lasso'}
+        var data = {
+            type: 'lasso'
+        }
         data['pixel'] = this.points
         data['device'] = _.map(this.points, (xy) => _scale_point(xy, width, height))
         return data;
@@ -194,16 +196,24 @@ var CircleSelector = function(canvas) {
             ctx.beginPath();
             var dx = this.begin[0] - this.end[0];
             var dy = this.begin[1] - this.end[1];
-            var r = Math.sqrt(dx*dx + dy*dy)
-            ctx.arc(this.begin[0], this.begin[1], r, 0, 2*Math.PI);
+            var r = Math.sqrt(dx * dx + dy * dy)
+            ctx.arc(this.begin[0], this.begin[1], r, 0, 2 * Math.PI);
             ctx.fill()
             ctx.stroke()
         }
     }
     this.getData = function(width, height) {
-        var data = {type: 'circle'}
-        data['pixel']  = {begin: this.begin, end: this.end}
-        data['device'] = {begin: _scale_point(this.begin, width, height), end:_scale_point(this.end, width, height)}
+        var data = {
+            type: 'circle'
+        }
+        data['pixel'] = {
+            begin: this.begin,
+            end: this.end
+        }
+        data['device'] = {
+            begin: _scale_point(this.begin, width, height),
+            end: _scale_point(this.end, width, height)
+        }
         return data;
     }
 }
@@ -239,16 +249,28 @@ var RectangleSelector = function(canvas) {
         }
     }
     this.getData = function(width, height) {
-        var data = {type: 'rectangle'}
-        data['pixel']  = {begin: this.begin, end: this.end}
-        data['device'] = {begin: _scale_point(this.begin, width, height), end:_scale_point(this.end, width, height)}
+        var data = {
+            type: 'rectangle'
+        }
+        data['pixel'] = {
+            begin: this.begin,
+            end: this.end
+        }
+        data['device'] = {
+            begin: _scale_point(this.begin, width, height),
+            end: _scale_point(this.end, width, height)
+        }
         return data;
     }
 }
 
-var selectors = {'lasso': LassoSelector, 'circle': CircleSelector, 'rectangle': RectangleSelector};
+var selectors = {
+    'lasso': LassoSelector,
+    'circle': CircleSelector,
+    'rectangle': RectangleSelector
+};
 
-var FigureView = widgets.DOMWidgetView.extend( {
+var FigureView = widgets.DOMWidgetView.extend({
     render: function() {
         this.transitions = []
         this._update_requested = false
@@ -264,13 +286,13 @@ var FigureView = widgets.DOMWidgetView.extend( {
         document.addEventListener("keydown", keydown);
         document.addEventListener("keyup", keyup);
         this.once('remove', () => {
-            //console.log('remove key listeners')
-            document.removeEventListener('keydown', keydown)
-            document.removeEventListener('keyup', keyup)
-        })
-        // set up fullscreen button
-        // this is per view, so it's not exposed on the python side
-        // which is ok, since it can only be triggered from a UI action
+                //console.log('remove key listeners')
+                document.removeEventListener('keydown', keydown)
+                document.removeEventListener('keyup', keyup)
+            })
+            // set up fullscreen button
+            // this is per view, so it's not exposed on the python side
+            // which is ok, since it can only be triggered from a UI action
         this.fullscreen_icon = new ToolIcon('fa-arrows-alt', this.toolbar_div)
         this.fullscreen_icon.a.title = 'Fullscreen'
         this.fullscreen_icon.a.onclick = _.bind(function() {
@@ -305,7 +327,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         this.screenshot_icon = new ToolIcon('fa-picture-o', this.toolbar_div)
         this.screenshot_icon.a.title = 'Take a screenshot (hold shift to copy to clipboard)'
-        this.screenshot_icon.a.onclick = (event) =>  {
+        this.screenshot_icon.a.onclick = (event) => {
             try {
                 var data = this.screenshot()
                 if (event.shiftKey) {
@@ -320,7 +342,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
         window.ipvss = () => {
             var data = this.screenshot()
-            //download_image(data)
             return data
         }
 
@@ -378,14 +399,15 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.zoom_icon = new ToolIcon('fa-search-plus', this.toolbar_div)
         this.zoom_icon.a.title = 'Zoom mode (auto when control key is pressed, use scrolling)'
         this.zoom_icon.a.onclick = () => {
-            if (this.model.get('mouse_mode') == 'zoom') {
-                this.model.set('mouse_mode', 'normal');
-            } else {
-                this.model.set('mouse_mode', 'zoom');
+                if (this.model.get('mouse_mode') == 'zoom') {
+                    this.model.set('mouse_mode', 'normal');
+                } else {
+                    this.model.set('mouse_mode', 'zoom');
+                }
+                this.touch()
             }
-            this.touch()
-        }
-        //this.zoom_icon.active(false)
+
+        // this.zoom_icon.active(false)
         // using ctrl and shift, you can quickly change mode
         // remember the previous mode so we can restore it
         this.quick_mouse_mode_change = false;
@@ -402,7 +424,6 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.camera.copy(this.camera_initial)
             if (this.camera.ipymodel)
                 this.camera.ipymodel.syncToModel(true)
-            //this.model.save_changes()
         }
 
         this.setting_icon = new ToolIcon('fa-cog', this.toolbar_div)
@@ -411,7 +432,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var add_resolution = (name, x, y, stereo) => {
             var tool = new ToolIconDropdown('fa-cogs', this.setting_icon.sub, name + ' (' + x + 'x' + y + ')')
             tool.a.onclick = (event) => {
-                this.model.set('width',  x);
+                this.model.set('width', x);
                 this.model.set('height', y);
                 this.touch();
             }
@@ -431,7 +452,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var add_scaling = (x) => {
             var tool = new ToolIconDropdown('fa-compress', this.setting_icon.sub, 'Scale canvas (down) by ' + x)
             tool.a.onclick = (event) => {
-                this.model.set('displayscale',  1/x);
+                this.model.set('displayscale', 1 / x);
                 this.touch();
             }
         }
@@ -471,7 +492,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.canvas_overlay_container.appendChild(this.canvas_overlay);
         this.canvas_container.appendChild(this.canvas_overlay_container);
 
-        this.renderer = new THREE.WebGLRenderer({alpha: true, antialias: true});
+        this.renderer = new THREE.WebGLRenderer({
+            alpha: true,
+            antialias: true
+        });
 
         this.canvas_renderer_container = document.createElement("div")
         this.canvas_renderer_container.appendChild(this.renderer.domElement);
@@ -492,11 +516,11 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.el_axes = document.createElement("div")
         this.el_mirror.appendChild(this.el_axes);
 
-        this.renderer.domElement.addEventListener('wheel', this.mousewheel.bind(this), false );
+        this.renderer.domElement.addEventListener('wheel', this.mousewheel.bind(this), false);
 
 
-        //const VIEW_ANGLE = this.model.get("camera_fov");
-        //const aspect = width / height;
+        // const VIEW_ANGLE = this.model.get("camera_fov");
+        // const aspect = width / height;
         const NEAR = 0.01;
         const FAR = 10000;
         const orthoNEAR = -500;
@@ -507,8 +531,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.model.get('camera').on('change', () => {
                 // the threejs' lookAt ignore the quaternion, and uses the up vector
                 // we manually set it ourselve
-                var up = new THREE.Vector3( 0, 1, 0 );
-                up.applyQuaternion( this.camera.quaternion );
+                var up = new THREE.Vector3(0, 1, 0);
+                up.applyQuaternion(this.camera.quaternion);
                 this.camera.up = up;
                 this.camera.lookAt(0, 0, 0);
                 // TODO: shouldn't we do the same with the orbit control?
@@ -535,19 +559,31 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         var make_line = function(x1, y1, z1, x2, y2, z2, material) {
             var geometry = new THREE.Geometry();
-            geometry.vertices.push(new THREE.Vector3( x1, y1, z1 ), new THREE.Vector3( x2, y2, z2));
-            return new THREE.Line( geometry, material );
+            geometry.vertices.push(new THREE.Vector3(x1, y1, z1), new THREE.Vector3(x2, y2, z2));
+            return new THREE.Line(geometry, material);
         }
 
         var make_axis = function(x, y, z, material) {
-            return make_line(-0.5, -0.5, -0.5 ,  -0.5+x, -0.5+y, -0.5+z, material);
+            return make_line(-0.5, -0.5, -0.5, -0.5 + x, -0.5 + y, -0.5 + z, material);
         }
 
         var linewidth = 1;
-        this.axes_material = new THREE.LineBasicMaterial({color: "cyan", linewidth: linewidth});
-        this.xaxes_material = new THREE.LineBasicMaterial({color: "red", linewidth: linewidth});
-        this.yaxes_material = new THREE.LineBasicMaterial({color: "green", linewidth: linewidth});
-        this.zaxes_material = new THREE.LineBasicMaterial({color: "blue", linewidth: linewidth});
+        this.axes_material = new THREE.LineBasicMaterial({
+            color: "cyan",
+            linewidth: linewidth
+        });
+        this.xaxes_material = new THREE.LineBasicMaterial({
+            color: "red",
+            linewidth: linewidth
+        });
+        this.yaxes_material = new THREE.LineBasicMaterial({
+            color: "green",
+            linewidth: linewidth
+        });
+        this.zaxes_material = new THREE.LineBasicMaterial({
+            color: "blue",
+            linewidth: linewidth
+        });
 
         this.x_axis = make_axis(1, 0, 0, this.xaxes_material);
         this.y_axis = make_axis(0, 1, 0, this.yaxes_material);
@@ -559,52 +595,50 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.axes.add(this.z_axis);
 
         this.wire_box = new THREE.Object3D()
-        this.wire_box_x_line = make_line(-0.5, -0.5, -0.5, -0.5+1, -0.5, -0.5, this.axes_material)
+        this.wire_box_x_line = make_line(-0.5, -0.5, -0.5, -0.5 + 1, -0.5, -0.5, this.axes_material)
         this.wire_box.add(this.wire_box_x_line)
-        this.wire_box.add(make_line(-0.5, -0.5+1, -0.5, -0.5+1, -0.5+1, -0.5, this.axes_material))
-        this.wire_box.add(make_line(-0.5, -0.5, -0.5+1, -0.5+1, -0.5, -0.5+1, this.axes_material))
-        this.wire_box.add(make_line(-0.5, -0.5+1, -0.5+1, -0.5+1, -0.5+1, -0.5+1, this.axes_material))
+        this.wire_box.add(make_line(-0.5, -0.5 + 1, -0.5, -0.5 + 1, -0.5 + 1, -0.5, this.axes_material))
+        this.wire_box.add(make_line(-0.5, -0.5, -0.5 + 1, -0.5 + 1, -0.5, -0.5 + 1, this.axes_material))
+        this.wire_box.add(make_line(-0.5, -0.5 + 1, -0.5 + 1, -0.5 + 1, -0.5 + 1, -0.5 + 1, this.axes_material))
 
-        this.wire_box_y_line = make_line(-0.5, -0.5, -0.5, -0.5, -0.5+1, -0.5, this.axes_material)
+        this.wire_box_y_line = make_line(-0.5, -0.5, -0.5, -0.5, -0.5 + 1, -0.5, this.axes_material)
         this.wire_box.add(this.wire_box_y_line)
-        this.wire_box.add(make_line(-0.5+1, -0.5, -0.5, -0.5+1, -0.5+1, -0.5, this.axes_material))
-        this.wire_box.add(make_line(-0.5, -0.5, -0.5+1, -0.5, -0.5+1, -0.5+1, this.axes_material))
-        this.wire_box.add(make_line(-0.5+1, -0.5, -0.5+1, -0.5+1, -0.5+1, -0.5+1, this.axes_material))
+        this.wire_box.add(make_line(-0.5 + 1, -0.5, -0.5, -0.5 + 1, -0.5 + 1, -0.5, this.axes_material))
+        this.wire_box.add(make_line(-0.5, -0.5, -0.5 + 1, -0.5, -0.5 + 1, -0.5 + 1, this.axes_material))
+        this.wire_box.add(make_line(-0.5 + 1, -0.5, -0.5 + 1, -0.5 + 1, -0.5 + 1, -0.5 + 1, this.axes_material))
 
-        this.wire_box_z_line = make_line(-0.5, -0.5, -0.5, -0.5, -0.5, -0.5+1, this.axes_material)
+        this.wire_box_z_line = make_line(-0.5, -0.5, -0.5, -0.5, -0.5, -0.5 + 1, this.axes_material)
         this.wire_box.add(this.wire_box_z_line)
-        this.wire_box.add(make_line(-0.5+1, -0.5, -0.5, -0.5+1, -0.5, -0.5+1, this.axes_material))
-        this.wire_box.add(make_line(-0.5, -0.5+1, -0.5, -0.5, -0.5+1, -0.5+1, this.axes_material))
-        this.wire_box.add(make_line(-0.5+1, -0.5+1, -0.5, -0.5+1, -0.5+1, -0.5+1, this.axes_material))
+        this.wire_box.add(make_line(-0.5 + 1, -0.5, -0.5, -0.5 + 1, -0.5, -0.5 + 1, this.axes_material))
+        this.wire_box.add(make_line(-0.5, -0.5 + 1, -0.5, -0.5, -0.5 + 1, -0.5 + 1, this.axes_material))
+        this.wire_box.add(make_line(-0.5 + 1, -0.5 + 1, -0.5, -0.5 + 1, -0.5 + 1, -0.5 + 1, this.axes_material))
 
         // d3 data
-        this.axes_data = [
-            {
-                name: 'x',
-                label: 'x',
-                object: null,
-                object_label: null,
-                translate: [0.0, -0.5, -0.5],
-                rotate: [Math.PI / 4., 0, 0],
-                rotation_order: 'XYZ'
-            }, {
-                name: 'y',
-                label: 'y',
-                object: null,
-                object_label: null,
-                translate: [-0.5, 0.0, -0.5],
-                rotate: [Math.PI * 3. / 4., 0, Math.PI / 2.],
-                rotation_order: 'ZXY'
-            }, {
-                name: 'z',
-                label: 'z',
-                object: null,
-                object_label: null,
-                translate: [-0.5, -0.5, 0.0],
-                rotate: [-Math.PI / 8., -Math.PI / 2., 0],
-                rotation_order: 'YZX'
-            }
-        ];
+        this.axes_data = [{
+            name: 'x',
+            label: 'x',
+            object: null,
+            object_label: null,
+            translate: [0.0, -0.5, -0.5],
+            rotate: [Math.PI / 4., 0, 0],
+            rotation_order: 'XYZ'
+        }, {
+            name: 'y',
+            label: 'y',
+            object: null,
+            object_label: null,
+            translate: [-0.5, 0.0, -0.5],
+            rotate: [Math.PI * 3. / 4., 0, Math.PI / 2.],
+            rotation_order: 'ZXY'
+        }, {
+            name: 'z',
+            label: 'z',
+            object: null,
+            object_label: null,
+            translate: [-0.5, -0.5, 0.0],
+            rotate: [-Math.PI / 8., -Math.PI / 2., 0],
+            rotation_order: 'YZX'
+        }];
 
         this.ticks = 5; //hardcoded for now
 
@@ -682,7 +716,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.screen_texture = this.color_pass_target.texture;
         this.screen_scene = new THREE.Scene();
         this.screen_scene_cube = new THREE.Scene();
-        this.screen_plane = new THREE.PlaneBufferGeometry( 1.0, 1.0 );
+        this.screen_plane = new THREE.PlaneBufferGeometry(1.0, 1.0);
 
         this.screen_material = new THREE.ShaderMaterial({
             uniforms: {
@@ -709,8 +743,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
             depthWrite: false
         });
 
-        this.screen_mesh = new THREE.Mesh(this.screen_plane, this.screen_material );
-        this.screen_mesh_cube = new THREE.Mesh(this.screen_plane, this.screen_material_cube );
+        this.screen_mesh = new THREE.Mesh(this.screen_plane, this.screen_material);
+        this.screen_mesh_cube = new THREE.Mesh(this.screen_plane, this.screen_material_cube);
         this.screen_scene.add(this.screen_mesh)
         this.screen_scene_cube.add(this.screen_mesh_cube)
         this.screen_camera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, -10000., 10000.);
@@ -745,32 +779,77 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.control_trackball.rotateSpeed = 0.5
         this.control_trackball.zoomSpeed = 3.
 
-		window.addEventListener('deviceorientation', _.bind(this.on_orientationchange, this), false );
+        window.addEventListener('deviceorientation', _.bind(this.on_orientationchange, this), false);
 
         var render_size = this.getRenderSize()
 
         this.material_multivolume = new THREE.ShaderMaterial({
             uniforms: {
-                back_tex : { type: 't', value: this.volume_back_target.texture },
-                geometry_depth_tex: { type: 't', value: this.geometry_depth_target.depthTexture },
+                back_tex: {
+                    type: 't',
+                    value: this.volume_back_target.texture
+                },
+                geometry_depth_tex: {
+                    type: 't',
+                    value: this.geometry_depth_target.depthTexture
+                },
 
-                volumes: {type: 'tv', value: [{}]},
-                data: {type: 'tv', value: []},
-                transfer_function: {type: 'tv', value: []},
+                volumes: {
+                    type: 'tv',
+                    value: [{}]
+                },
+                data: {
+                    type: 'tv',
+                    value: []
+                },
+                transfer_function: {
+                    type: 'tv',
+                    value: []
+                },
 
-                volumes_max_int: {type: 'tv', value: [{}]},
-                data_max_int: {type: 'tv', value: []},
-                transfer_function_max_int: {type: 'tv', value: []},
+                volumes_max_int: {
+                    type: 'tv',
+                    value: [{}]
+                },
+                data_max_int: {
+                    type: 'tv',
+                    value: []
+                },
+                transfer_function_max_int: {
+                    type: 'tv',
+                    value: []
+                },
 
-                ambient_coefficient : { type: "f", value: this.model.get("ambient_coefficient") },
-                diffuse_coefficient : { type: "f", value: this.model.get("diffuse_coefficient") },
-                specular_coefficient : { type: "f", value: this.model.get("specular_coefficient") },
-                specular_exponent : { type: "f", value: this.model.get("specular_exponent") },
+                ambient_coefficient: {
+                    type: "f",
+                    value: this.model.get("ambient_coefficient")
+                },
+                diffuse_coefficient: {
+                    type: "f",
+                    value: this.model.get("diffuse_coefficient")
+                },
+                specular_coefficient: {
+                    type: "f",
+                    value: this.model.get("specular_coefficient")
+                },
+                specular_exponent: {
+                    type: "f",
+                    value: this.model.get("specular_exponent")
+                },
 
-                brightness : { type: "f", value: 2. },
-                render_size : { type: "2f", value: render_size },
+                brightness: {
+                    type: "f",
+                    value: 2.
+                },
+                render_size: {
+                    type: "2f",
+                    value: render_size
+                },
 
-                steps : {type: 'f', value: 10}
+                steps: {
+                    type: 'f',
+                    value: 10
+                }
             },
             blending: THREE.CustomBlending,
             blendSrc: THREE.OneFactor,
@@ -785,7 +864,9 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.material_multivolume_depth = new THREE.ShaderMaterial({
             uniforms: this.material_multivolume.uniforms,
             blending: THREE.NoBlending,
-            defines: {COORDINATE: true},
+            defines: {
+                COORDINATE: true
+            },
             side: THREE.FrontSide
         });
 
@@ -800,7 +881,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
         var that = this;
 
-        this.el.addEventListener( 'change', _.bind(this.update, this) ); // remove when using animation loop
+        this.el.addEventListener('change', _.bind(this.update, this)); // remove when using animation loop
 
         // TODO: remove this when we fully depend on the camera worldMatrix
         var update_matrix_world_scale = () => {
@@ -836,7 +917,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.model.on('change:xlim change:ylim change:zlim ', this._save_matrices, this);
         this.model.on('change:downscale', this.update_size, this);
         this.model.on('change:stereo', this.update_size, this);
-        
+
         this.model.on('change:eye_separation', this.update, this)
 
         this.model.on('change:camera_fov', this.update_current_control, this)
@@ -930,8 +1011,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         if (e.offsetX) {
             mouseX = e.offsetX;
             mouseY = e.offsetY;
-        }
-        else if (e.layerX) {
+        } else if (e.layerX) {
             mouseX = e.layerX;
             mouseY = e.layerY;
         }
@@ -940,8 +1020,8 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var buffer = new Uint8Array(4);
         var height = this.renderer.domElement.clientHeight;
         if (!this.last_zoom_coordinate) {
-            this.renderer.readRenderTargetPixels(this.coordinate_texture, mouseX, 
-                                                 height - mouseY, 1, 1, buffer)
+            this.renderer.readRenderTargetPixels(this.coordinate_texture, mouseX,
+                height - mouseY, 1, 1, buffer)
 
             if (buffer[3] > 1) {
                 // at least something got drawn
@@ -985,19 +1065,25 @@ var FigureView = widgets.DOMWidgetView.extend( {
         if (e.offsetX) {
             mouseX = e.offsetX;
             mouseY = e.offsetY;
-        }
-        else if (e.layerX) {
+        } else if (e.layerX) {
             mouseX = e.layerX;
             mouseY = e.layerY;
         }
-        this.mouse_down_position = {x:mouseX, y:mouseY};
-        this.mouse_down_limits = {x: this.model.get('xlim'), y:this.model.get('ylim'), z:this.model.get('zlim')}
+        this.mouse_down_position = {
+            x: mouseX,
+            y: mouseY
+        };
+        this.mouse_down_limits = {
+            x: this.model.get('xlim'),
+            y: this.model.get('ylim'),
+            z: this.model.get('zlim')
+        }
         var height = this.renderer.domElement.clientHeight;
         var buffer = new Uint8Array(4);
-        this.renderer.readRenderTargetPixels(this.coordinate_texture, mouseX, height-mouseY, 1, 1, buffer)
+        this.renderer.readRenderTargetPixels(this.coordinate_texture, mouseX, height - mouseY, 1, 1, buffer)
         if (buffer[3] > 1) { // at least something got drawn
             var center = new THREE.Vector3(buffer[0], buffer[1], buffer[2])
-            center.multiplyScalar(1/255.); // normalize
+            center.multiplyScalar(1 / 255.); // normalize
             this.last_pan_coordinate = center;
         }
 
@@ -1015,12 +1101,16 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }
 
         if (e.offsetX) {
-            var mouseX = e.offsetX, mouseY = e.offsetY;
+            var mouseX = e.offsetX,
+                mouseY = e.offsetY;
+        } else if (e.layerX) {
+            var mouseX = e.layerX,
+                mouseY = e.layerY;
         }
-        else if (e.layerX) {
-            var mouseX = e.layerX, mouseY = e.layerY;
-        }
-        mouse_position = {x : mouseX, y : mouseY};
+        mouse_position = {
+            x: mouseX,
+            y: mouseY
+        };
 
         this.last_zoom_coordinate = null;
         if (this.selector) {
@@ -1033,10 +1123,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
             if (e.buttons == 1) {
                 var canvas = this.renderer.domElement;
                 var pixels_right = mouse_position.x - this.mouse_down_position.x;
-                var pixels_up   = -(mouse_position.y - this.mouse_down_position.y);
+                var pixels_up = -(mouse_position.y - this.mouse_down_position.y);
                 // normalized GL screen coordinates
                 var right = (pixels_right / canvas.clientWidth) * 2;
-                var up    = (pixels_up / canvas.clientHeight) * 2;
+                var up = (pixels_up / canvas.clientHeight) * 2;
                 var P = this.camera.projectionMatrix;
                 var W = this._get_view_matrix();
                 // M goes from world to screen
@@ -1093,8 +1183,11 @@ var FigureView = widgets.DOMWidgetView.extend( {
     _mouse_up: function(e) {
         if (this.selector) {
             var canvas = this.renderer.domElement;
-            this.send({event: 'selection', data: this.selector.getData(canvas.clientWidth, canvas.clientHeight)})
-            // send event..
+            this.send({
+                    event: 'selection',
+                    data: this.selector.getData(canvas.clientWidth, canvas.clientHeight)
+                })
+                // send event..
             this.mouse_trail = []
             this.selector.close()
             this.selector = null;
@@ -1104,40 +1197,40 @@ var FigureView = widgets.DOMWidgetView.extend( {
     },
     _special_keys_down: function(e) {
         if (!this.hover) return;
-        var evtobj = window.event? event : e
+        var evtobj = window.event ? event : e
         if (evtobj.altKey) {
             //console.log('pressed alt', this.hover)
         }
         var handled = false;
-        if (evtobj.key == '=') {  // '='
+        if (evtobj.key == '=') { // '='
             this.model.set('selection_mode', 'replace');
             handled = true;
         }
-        if (evtobj.key == '|') {  // '='
+        if (evtobj.key == '|') { // '='
             this.model.set('selection_mode', 'or');
             handled = true;
         }
-        if (evtobj.key == '&') {  // '='
+        if (evtobj.key == '&') { // '='
             this.model.set('selection_mode', 'and');
             handled = true;
         }
-        if (evtobj.key == '-') {  // '='
+        if (evtobj.key == '-') { // '='
             this.model.set('selection_mode', 'subtract');
             handled = true;
         }
-        if (evtobj.keyCode == 76) {  // 'l'
+        if (evtobj.keyCode == 76) { // 'l'
             this.model.set('selector', 'lasso');
             handled = true;
         }
-        if (evtobj.keyCode == 67) {  // 'c'
+        if (evtobj.keyCode == 67) { // 'c'
             this.model.set('selector', 'circle');
             handled = true;
         }
-        if (evtobj.keyCode == 82) {  // 'r'
+        if (evtobj.keyCode == 82) { // 'r'
             this.model.set('selector', 'rectangle');
             handled = true;
         }
-        if (evtobj.keyCode == 18) {  // shift
+        if (evtobj.keyCode == 18) { // shift
             // avoid ctrl and shift
             if (!this.quick_mouse_mode_change) {
                 this.quick_mouse_mode_change = true;
@@ -1146,7 +1239,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 handled = true;
             }
         }
-        if (evtobj.keyCode == 17) {  // ctrl
+        if (evtobj.keyCode == 17) { // ctrl
             if (!this.quick_mouse_mode_change) {
                 this.quick_mouse_mode_change = true;
                 this.quick_mouse_previous_mode = this.model.get('mouse_mode')
@@ -1177,7 +1270,10 @@ var FigureView = widgets.DOMWidgetView.extend( {
     custom_msg: function(content) {
         if (content.msg == 'screenshot') {
             var data = this.screenshot(undefined, content.width, content.height)
-            this.send({event: 'screenshot', data: data});
+            this.send({
+                event: 'screenshot',
+                data: data
+            });
         }
     },
     screenshot: function(mime_type, width, height) {
@@ -1274,23 +1370,22 @@ var FigureView = widgets.DOMWidgetView.extend( {
         sprite.scale.multiplyScalar(s)
         var n = parent_data.name // x, y or z
 
-        sprite.fillStyle = this.get_style('axes.' + n +'.ticklabel.color axes.ticklabel.color axes.' + n +'.color axes.color')
+        sprite.fillStyle = this.get_style('axes.' + n + '.ticklabel.color axes.ticklabel.color axes.' + n + '.color axes.color')
         parent_data.object.add(sprite)
         d.object_ticklabel = sprite;
         return sprite
     },
     _d3_update_axis_tick: function(node, d, i) {
-        var parent_data = d3.select(d3.select(node).node().parentNode).datum(); // TODO: find the proper way to do so
-        //console.log("update tick", d, i, parent_data)
+        // TODO: find the proper way to do so
+        var parent_data = d3.select(d3.select(node).node().parentNode).datum();
         var scale = parent_data.scale;
         var tick_format = scale.tickFormat(this.ticks, ".1f");
         var tick_text = tick_format(d.value);
         d.object_ticklabel.text = tick_text
         d.object_ticklabel.position.x = scale(d.value)
         var n = parent_data.name // x, y or z
-        d.object_ticklabel.fillStyle = this.get_style('axes.' + n +'.ticklabel.color axes.ticklabel.color axes.' + n +'.color axes.color')
-        d.object_ticklabel.visible = this.get_style('axes.' + n +'.ticklabel.visible axes.' + n +'.visible axes.visible')
-        //d.object_ticklabel.fillStyle = this.model.get("style")[parent_data.name + 'axis.color']
+        d.object_ticklabel.fillStyle = this.get_style('axes.' + n + '.ticklabel.color axes.ticklabel.color axes.' + n + '.color axes.color')
+        d.object_ticklabel.visible = this.get_style('axes.' + n + '.ticklabel.visible axes.' + n + '.visible axes.visible')
     },
     _d3_remove_axis_tick: function(node, d, i) {
         d.object_ticklabel.parent.remove(d.object_ticklabel)
@@ -1302,17 +1397,22 @@ var FigureView = widgets.DOMWidgetView.extend( {
             // Add new scatter if not already as scatter view in figure
             _.each(scatters, scatter_model => {
                 current_sct_cids.push(scatter_model.cid);
-                if (!(scatter_model.cid in this.scatter_views)){
-                    var options = {parent: this}
-                    var scatter_view = new scatter.ScatterView({options: options, model: scatter_model})
-                    scatter_view.render()    
+                if (!(scatter_model.cid in this.scatter_views)) {
+                    var options = {
+                        parent: this
+                    }
+                    var scatter_view = new scatter.ScatterView({
+                        options: options,
+                        model: scatter_model
+                    })
+                    scatter_view.render()
                     this.scatter_views[scatter_model.cid] = scatter_view
                 }
             }, this)
 
             // Remove old scatters not contained in scatters
             _.each(this.scatter_views, (sct, cid) => {
-                if (current_sct_cids.indexOf(cid) == -1){
+                if (current_sct_cids.indexOf(cid) == -1) {
                     sct.remove_from_scene();
                     delete this.scatter_views[cid];
                 }
@@ -1325,20 +1425,25 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var meshes = this.model.get('meshes'); // This is always a list?
         if (meshes.length != 0) { // So now check if list has length 0
             var current_msh_cids = []
-            // Add new meshes if not already as mesh view in figure
+                // Add new meshes if not already as mesh view in figure
             _.each(meshes, mesh_model => {
                 current_msh_cids.push(mesh_model.cid);
-                if (!(mesh_model.cid in this.mesh_views)){
-                    var options = {parent: this}
-                    var mesh_view = new mesh.MeshView({options: options, model: mesh_model})
-                    mesh_view.render()    
+                if (!(mesh_model.cid in this.mesh_views)) {
+                    var options = {
+                        parent: this
+                    }
+                    var mesh_view = new mesh.MeshView({
+                        options: options,
+                        model: mesh_model
+                    })
+                    mesh_view.render()
                     this.mesh_views[mesh_model.cid] = mesh_view
                 }
             }, this)
 
             // Remove old meshes not contained in meshes
             _.each(this.mesh_views, (mv, cid) => {
-                if (current_msh_cids.indexOf(cid) == -1){
+                if (current_msh_cids.indexOf(cid) == -1) {
                     mv.remove_from_scene();
                     delete this.mesh_views[cid];
                 }
@@ -1351,12 +1456,17 @@ var FigureView = widgets.DOMWidgetView.extend( {
         var volumes = this.model.get('volumes'); // This is always a list?
         if (volumes.length != 0) { // So now check if list has length 0
             var current_vol_cids = []
-            // Add new volumes if not already as volume view in figure
+                // Add new volumes if not already as volume view in figure
             _.each(volumes, vol_model => {
                 current_vol_cids.push(vol_model.cid);
                 if (!(vol_model.cid in this.volume_views)) {
-                    var options = {parent: this}
-                    var volume_view = new volume.VolumeView({options: options, model: vol_model})
+                    var options = {
+                        parent: this
+                    }
+                    var volume_view = new volume.VolumeView({
+                        options: options,
+                        model: vol_model
+                    })
                     this.volume_views[vol_model.cid] = volume_view
                     volume_view.render()
                 }
@@ -1364,7 +1474,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
             // Remove old meshes not contained in meshes
             _.each(this.volume_views, (vol, cid) => {
-                if (current_vol_cids.indexOf(cid) == -1){
+                if (current_vol_cids.indexOf(cid) == -1) {
                     vol.remove_from_scene();
                     delete this.volume_views[cid];
                 }
@@ -1389,43 +1499,40 @@ var FigureView = widgets.DOMWidgetView.extend( {
                 return (dt >= this.duration) || this.cancelled
             }
             this.cancel = function() {
-                this.cancelled = true;
-            },
-            this.update = function() {
-                if (this.cancelled)
-                    return
-                var dt = ((new Date()).getTime() - this.time_start)/this.duration;
+                    this.cancelled = true;
+                },
+                this.update = function() {
+                    if (this.cancelled)
+                        return
+                    var dt = ((new Date()).getTime() - this.time_start) / this.duration;
 
-                var u = Math.min(1, dt);
-                u = Math.pow(u, that.model.get("animation_exponent"))
-                f.apply(context, [u]);
-                if (dt >= 1 && !this.called_on_done) {
-                    this.called_on_done = true
-                    on_done.apply(context)
+                    var u = Math.min(1, dt);
+                    u = Math.pow(u, that.model.get("animation_exponent"))
+                    f.apply(context, [u]);
+                    if (dt >= 1 && !this.called_on_done) {
+                        this.called_on_done = true
+                        on_done.apply(context)
+                    }
                 }
-            }
             that.transitions.push(this)
         }
         return new Transition()
     },
     on_orientationchange: function(e) {
         _.each([this.scene_volume, this.scene_opaque, this.scene_scatter], scene => {
-            scene.rotation.reorder( "XYZ" );
-            scene.rotation.x = (e.gamma * Math.PI / 180 + Math.PI*2);
-            scene.rotation.y = -(e.beta * Math.PI / 180 + Math.PI*2);
+            scene.rotation.reorder("XYZ");
+            scene.rotation.x = (e.gamma * Math.PI / 180 + Math.PI * 2);
+            scene.rotation.y = -(e.beta * Math.PI / 180 + Math.PI * 2);
             scene.rotation.z = -((e.alpha) * Math.PI / 180);
         }, this)
         this.update()
 
     },
-    on_canvas_resize: function(event) {
-    },
+    on_canvas_resize: function(event) {},
     keypress: function(event) {
         var code = event.keyCode || event.which;
-        if (event.keyCode == 27) {
-        }
-        if (event.key == 'f') {
-        }
+        if (event.keyCode == 27) {}
+        if (event.key == 'f') {}
     },
     update_angles: function() {
         if (this.camera.ipymodel)
@@ -1455,7 +1562,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
         // make sure the camera's inverse is up to date, normally the renderer would do this
         // but this also gets called before the first render
         this.camera.updateMatrixWorld()
-        this.camera.matrixWorldInverse.getInverse( this.camera.matrixWorld )
+        this.camera.matrixWorldInverse.getInverse(this.camera.matrixWorld)
         // we don't really properly use the worldmatrix, rendering threejs's frustum culling
         // useless, we maybe should change this
         // https://github.com/mrdoob/three.js/issues/78#issuecomment-846917
@@ -1472,24 +1579,28 @@ var FigureView = widgets.DOMWidgetView.extend( {
     update_panorama: function() {
         var material = this.screen_material_cube
         if (this.model.get('panorama_mode') == '360')
-            material.defines = {PANORAMA_360: true}
+            material.defines = {
+                PANORAMA_360: true
+            }
         if (this.model.get('panorama_mode') == '180')
-            material.defines = {PANORAMA_180: true}
+            material.defines = {
+                PANORAMA_180: true
+            }
         material.needsUpdate = true
         this.update()
     },
     update: function() {
         // requestAnimationFrame stacks, so make sure multiple update calls only lead to 1 _real_update call
         if (!this._update_requested) {
-           this._update_requested = true
+            this._update_requested = true
             requestAnimationFrame(_.bind(this._real_update, this))
         }
     },
     _real_update: function() {
         this.control_trackball.handleResize()
         this._update_requested = false
-        // since the threejs animation system can update the camera, make sure we keep looking at the
-        // center
+        // since the threejs animation system can update the camera,
+        // make sure we keep looking at the center
         this.camera.lookAt(0, 0, 0)
 
         this.renderer.setClearColor(this.get_style_color('background-color'))
@@ -1515,12 +1626,12 @@ var FigureView = widgets.DOMWidgetView.extend( {
         this.wire_box_z_line.visible = !this.z_axis.visible && this.wire_box.visible
 
         d3.select(this.el_axes).selectAll(".ipyvol-axis")
-                .data(this.axes_data)
-                .each(bind_d3(this._d3_update_axis, this))
-                .enter()
-                .append("div")
-                .attr("class", "ipyvol-axis")
-                .each(bind_d3(this._d3_add_axis, this));
+            .data(this.axes_data)
+            .each(bind_d3(this._d3_update_axis, this))
+            .enter()
+            .append("div")
+            .attr("class", "ipyvol-axis")
+            .each(bind_d3(this._d3_add_axis, this));
 
         var that = this;
         this.ticks = 5
@@ -1530,10 +1641,14 @@ var FigureView = widgets.DOMWidgetView.extend( {
             if (child_data) {
                 child_data = d.ticks = child_data.slice()
                 var ticks = d.scale.ticks(that.ticks)
-                while(child_data.length < ticks.length) // ticks may return a larger array, so grow child data
+
+                // ticks may return a larger array, so grow child data
+                while (child_data.length < ticks.length)
                     child_data.push({})
-                while(child_data.length > ticks.length) // ticks may return a smaller array, so pop child data
+                // ticks may return a smaller array, so pop child data
+                while (child_data.length > ticks.length)
                     child_data.pop()
+
                 _.each(ticks, (tick, i) => {
                     child_data[i].value = tick;
                 });
@@ -1541,17 +1656,21 @@ var FigureView = widgets.DOMWidgetView.extend( {
             } else {
                 var scale = d.scale;
                 var ticks = scale.ticks(that.ticks)
-                var child_data = _.map(ticks, function(value) { return {value: value}});
+                var child_data = _.map(ticks, function(value) {
+                    return {
+                        value: value
+                    }
+                });
                 d.ticks = child_data;
                 return child_data;
             }
         };
 
         this.last_tick_selection = d3.select(this.el_axes)
-                                     .selectAll(".ipyvol-axis")
-                                     .data(this.axes_data)
-                                     .selectAll(".ipyvol-tick")
-                                     .data(last_tick_selection_data);
+            .selectAll(".ipyvol-axis")
+            .data(this.axes_data)
+            .selectAll(".ipyvol-tick")
+            .data(last_tick_selection_data);
 
         this.last_tick_selection
             .each(bind_d3(this._d3_update_axis_tick, this))
@@ -1578,7 +1697,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this._render_eye(this.camera);
         } else {
             var size = this.renderer.getSize();
-            if (this.camera.parent === null ) this.camera.updateMatrixWorld();
+            if (this.camera.parent === null) this.camera.updateMatrixWorld();
             this.camera_stereo.eyeSep = this.model.get('eye_separation') / 100.;
             this.camera.focus = this.camera.focus
             this.camera_stereo.update(this.camera)
@@ -1596,30 +1715,30 @@ var FigureView = widgets.DOMWidgetView.extend( {
             // in 360 mode, left is rendered top, right bottom
             var panorama = this.model.get('panorama_mode') != 'no';
             // left eye
-            this.renderer.setScissorTest( true );
+            this.renderer.setScissorTest(true);
             if (panorama) {
-                this.renderer.setScissor( 0, 0, size.width, size.height/2);
-                this.renderer.setViewport(0, 0, size.width, size.height/2);
+                this.renderer.setScissor(0, 0, size.width, size.height / 2);
+                this.renderer.setViewport(0, 0, size.width, size.height / 2);
             } else {
-                this.renderer.setScissor( 0, 0, size.width / 2, size.height );
-                this.renderer.setViewport( 0, 0, size.width / 2, size.height );
+                this.renderer.setScissor(0, 0, size.width / 2, size.height);
+                this.renderer.setViewport(0, 0, size.width / 2, size.height);
             }
-            //this.renderer.render(this.scene, this.camera_stereo.cameraL );
+
             this._render_eye(this.camera_stereo.cameraL);
 
             // right eye
             if (panorama) {
-                this.renderer.setScissor( 0, size.height/2, size.width, size.height/2 );
-                this.renderer.setViewport(0, size.height/2, size.width, size.height/2 );
+                this.renderer.setScissor(0, size.height / 2, size.width, size.height / 2);
+                this.renderer.setViewport(0, size.height / 2, size.width, size.height / 2);
             } else {
-                this.renderer.setScissor( size.width/2, 0, size.width/2, size.height );
-                this.renderer.setViewport(size.width/2, 0, size.width/2, size.height );
+                this.renderer.setScissor(size.width / 2, 0, size.width / 2, size.height);
+                this.renderer.setViewport(size.width / 2, 0, size.width / 2, size.height);
             }
-            //this.renderer.render(this.scene, this.camera_stereo.cameraR );
+
             this._render_eye(this.camera_stereo.cameraR);
 
-            this.renderer.setScissorTest( false );
-            this.renderer.setViewport( 0, 0, size.width, size.height );
+            this.renderer.setScissorTest(false);
+            this.renderer.setViewport(0, 0, size.width, size.height);
         }
         if (this.selector)
             this.selector.draw() // TODO: what to do with stereo rendering?
@@ -1627,10 +1746,12 @@ var FigureView = widgets.DOMWidgetView.extend( {
         if (this.transitions.length > 0) {
             this.update()
         }
-        if (this.model.get('render_continuous'))
+        if (this.model.get('render_continuous')) {
             this.update()
-        if (this.model.get('scene'))
+        }
+        if (this.model.get('scene')) {
             this.model.get('scene').trigger('afterRender', this.scene_volume, this.renderer, this.camera)
+        }
     },
     get_style_color: function(name) {
         style = this.get_style(name)
@@ -1693,7 +1814,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
 
             this.cube_camera.update(this.renderer, this.scene_scatter)
             this.cube_camera.update(this.renderer, this.scene_opaque)
-            this.screen_texture = this.cube_camera.renderTarget; //{Volume:this.volr_texture, Back:this.back_texture, Front:this.front_texture, Coordinate:this.coordinate_texture}[this.model.get("show")]
+            this.screen_texture = this.cube_camera.renderTarget; 
             this.renderer.render(this.screen_scene_cube, this.screen_camera);
             return
         }
@@ -1723,7 +1844,7 @@ var FigureView = widgets.DOMWidgetView.extend( {
             this.renderer.autoClear = true;
 
         }
-        
+
         // Normal color pass of geometry for final screen pass
         this.renderer.autoClear = false;
         this.renderer.setRenderTarget(this.color_pass_target);
@@ -1822,9 +1943,14 @@ var FigureView = widgets.DOMWidgetView.extend( {
         }, this)
 
         // render to screen
-        this.screen_texture = {Volume:this.color_pass_target, Back:this.volume_back_target, Geometry_back:this.geometry_depth_target, Coordinate:this.coordinate_texture}[this.model.get("show")]
+        this.screen_texture = {
+            Volume: this.color_pass_target,
+            Back: this.volume_back_target,
+            Geometry_back: this.geometry_depth_target,
+            Coordinate: this.coordinate_texture
+        }[this.model.get("show")];
         this.screen_material.uniforms.tex.value = this.screen_texture.texture
-        //this.renderer.setRenderTarget(this.renderer);
+
         this.renderer.clear(true, true, true)
         this.renderer.render(this.screen_scene, this.screen_camera);
     },
@@ -1969,17 +2095,17 @@ var FigureView = widgets.DOMWidgetView.extend( {
 var FigureModel = widgets.DOMWidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
-            _model_name : 'FigureModel',
-            _view_name : 'FigureView',
-            _model_module : 'ipyvolume',
-            _view_module : 'ipyvolume',
+            _model_name: 'FigureModel',
+            _view_name: 'FigureView',
+            _model_module: 'ipyvolume',
+            _view_module: 'ipyvolume',
             _model_module_version: semver_range,
-             _view_module_version: semver_range,
+            _view_module_version: semver_range,
             eye_separation: 6.4,
             stereo: false,
             camera_control: 'trackball',
             camera_fov: 45,
-            camera_center: [0.,0.,0.],
+            camera_center: [0., 0., 0.],
             ambient_coefficient: 0.5,
             diffuse_coefficient: 0.8,
             specular_coefficient: 0.5,
@@ -2023,8 +2149,8 @@ var FigureModel = widgets.DOMWidgetModel.extend({
 var WidgetManagerHackModel = widgets.WidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.WidgetModel.prototype.defaults(), {
-            _model_name : 'WidgetManagerHackModel',
-            _model_module : 'ipyvolume',
+            _model_name: 'WidgetManagerHackModel',
+            _model_module: 'ipyvolume',
             _model_module_version: semver_range,
         })
     },
@@ -2042,7 +2168,6 @@ module.exports = {
     FigureModel: FigureModel,
     FigureView: FigureView,
 };
-
 
 //////////////////
 // WEBPACK FOOTER
