@@ -2,7 +2,6 @@ var semver_range = '~' + require('../package.json').version;
 
 var isTypedArray = require('is-typedarray')
 
-
 function is_typedarray(obj) {
     return isTypedArray(obj)
 }
@@ -19,8 +18,6 @@ function get_array_dimension(array) {
     }
     return dimension
 }
-
-
 
 module.exports = {
     is_typedarray: is_typedarray,
