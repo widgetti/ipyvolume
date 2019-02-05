@@ -22,7 +22,7 @@
     "prepare": "npm run build:lib",
     "watch": "npm-run-all -p watch:*",
     "watch:lib": "tsc -w --project .",
-    "watch:nbextension": "webpack --watch"
+    "watch:nbextension": "webpack --watch --mode=development"
   },
   "jupyterlab": {
     "extension": "lib/labplugin"
@@ -57,8 +57,8 @@
     "ts-loader": "^4.4.2",
     "typescript": "~3.0.0",
     "url-loader": "^0.5.7",
-    "webpack": "^4.16.1",
-    "webpack-cli": "^3.0.8"
+    "webpack": "^4.29.1",
+    "webpack-cli": "^3.2.3"
   },
   "dependencies": {
     "@jupyter-widgets/base": "^1.0.0",
