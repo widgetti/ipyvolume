@@ -1328,6 +1328,7 @@ var FigureView = widgets.DOMWidgetView.extend({
         d.object = axis;
         d.scale = d3.scaleLinear().domain(this.model.get(d.name + "lim")).range([-0.5, 0.5]);
         d.ticks = null;
+        this._d3_update_axis(node, d, i)
     },
     _d3_update_axis: function(node, d, i) {
         d.object_label.text = d.label;
@@ -1370,6 +1371,7 @@ var FigureView = widgets.DOMWidgetView.extend({
         sprite.fillStyle = this.get_style('axes.' + n + '.ticklabel.color axes.ticklabel.color axes.' + n + '.color axes.color')
         parent_data.object.add(sprite)
         d.object_ticklabel = sprite;
+        this._d3_update_axis_tick(node, d, i)
         return sprite
     },
     _d3_update_axis_tick: function(node, d, i) {
