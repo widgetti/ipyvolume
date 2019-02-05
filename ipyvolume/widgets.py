@@ -246,8 +246,8 @@ class Figure(ipywebrtc.MediaStream):
 
     width = traitlets.CInt(500).tag(sync=True)
     height = traitlets.CInt(400).tag(sync=True)
-    downscale = traitlets.CInt(1).tag(sync=True)
     displayscale = traitlets.CFloat(1).tag(sync=True)
+    pixel_ratio = traitlets.Float(None, allow_none=True, help='Pixel ratio of the WebGL canvas (2 on retina screens). Set to 1 for better performance, but less crisp edges. If set to None it will use the browser\'s window.devicePixelRatio.').tag(sync=True)
     capture_fps = traitlets.CFloat(None, allow_none=True).tag(sync=True)
     cube_resolution = traitlets.CInt(512).tag(sync=True)
 

@@ -492,10 +492,13 @@ var FigureView = widgets.DOMWidgetView.extend({
         this.canvas_overlay_container.appendChild(this.canvas_overlay);
         this.canvas_container.appendChild(this.canvas_overlay_container);
 
-        this.renderer = new THREE.WebGLRenderer({
-            alpha: true,
-            antialias: true
-        });
+        this.renderer = new THREE.WebGLRenderer({alpha: true, antialias: true});
+        var update_pixel_ratio = () => {
+            this.renderer.setPixelRatio(this.model.get('pixel_ratio') || window.devicePixelRatio)
+            this._update_size()
+        }
+        this.renderer.setPixelRatio(this.model.get('pixel_ratio') || window.devicePixelRatio)
+        this.listenTo(this.model, "change:pixel_ratio", update_pixel_ratio)
 
         this.canvas_renderer_container = document.createElement("div")
         this.canvas_renderer_container.appendChild(this.renderer.domElement);
@@ -675,9 +678,6 @@ var FigureView = widgets.DOMWidgetView.extend({
 
         if (this.model.get("stereo"))
             render_width /= 2;
-
-        render_width /= this.model.get("downscale")
-        render_height /= this.model.get("downscale")
 
         // Render pass targets
         // float texture for better depth data, prev name back_texture
@@ -915,7 +915,6 @@ var FigureView = widgets.DOMWidgetView.extend({
         this.model.on('change:style', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this.update, this);
         this.model.on('change:xlim change:ylim change:zlim ', this._save_matrices, this);
-        this.model.on('change:downscale', this.update_size, this);
         this.model.on('change:stereo', this.update_size, this);
 
         this.model.on('change:eye_separation', this.update, this)
@@ -1291,7 +1290,6 @@ var FigureView = widgets.DOMWidgetView.extend({
         }
     },
     _d3_add_axis: function(node, d, i) {
-
         var axis = new THREE.Object3D();
 
         axis.translateX(d.translate[0]);
@@ -1316,14 +1314,14 @@ var FigureView = widgets.DOMWidgetView.extend({
         };
         var label = new THREEtext2d.SpriteText2D(d.label, {
             align: aligns[d.name],
-            font: '30px Arial',
+            font: '100px Arial',
             fillStyle: '#00FF00',
             antialias: true
         });
         label.material.transparent = true;
         label.material.alphaTest = 0.3;
 
-        var s = 0.01 * 0.4;
+        var s = 0.01 * 0.4 / 3;
         label.scale.set(s, s, s);
         axis.add(label);
         d.object_label = label;
@@ -1354,7 +1352,7 @@ var FigureView = widgets.DOMWidgetView.extend({
         };
         var sprite = new THREEtext2d.SpriteText2D(tick_text, {
             align: aligns[parent_data.name],
-            font: '30px Arial',
+            font: '100px Arial',
             fillStyle: '#00FF00',
             antialias: true
         });
@@ -1365,8 +1363,7 @@ var FigureView = widgets.DOMWidgetView.extend({
         sprite.blendDst = THREE.OneMinusSrcAlphaFactor
         sprite.blendEquation = THREE.AddEquation
 
-        var s = 0.01 * 0.4 * 0.5 * 0.5;
-
+        var s = 0.01 * 0.4 * 0.5 * 0.5 / 3;
         sprite.scale.multiplyScalar(s)
         var n = parent_data.name // x, y or z
 
@@ -2030,8 +2027,8 @@ var FigureView = widgets.DOMWidgetView.extend({
         }
 
         // the offscreen rendering can be of lower resolution
-        var render_width = width;
-        var render_height = height;
+        var render_width = width * this.renderer.getPixelRatio();
+        var render_height = height * this.renderer.getPixelRatio();
         var display_width = width * this.model.get('displayscale')
         var display_height = height * this.model.get('displayscale')
         if (this.is_fullscreen() && this.model.get("volumes") != 0) {
@@ -2041,7 +2038,7 @@ var FigureView = widgets.DOMWidgetView.extend({
         }
         this.renderer.setSize(width, height, false);
         var buffer_width = this.renderer.context.drawingBufferWidth;
-        var buffer_height = this.renderer.context.drawingBufferWidth;
+        var buffer_height = this.renderer.context.drawingBufferHeight;
         if ((buffer_width < width) || (buffer_height < height)) {
             console.info('could not set resolution to', width, height, ', resolution is', buffer_width, buffer_height)
         }
@@ -2051,16 +2048,13 @@ var FigureView = widgets.DOMWidgetView.extend({
         this.canvas_container.style.width = display_width + "px"
         this.canvas_container.style.height = display_height + "px"
         this.canvas_overlay.style.width = display_width + "px"
-        this.canvas_overlay.style.height = height + "px"
+        this.canvas_overlay.style.height = display_height + "px"
         this.canvas_overlay.width = width
         this.canvas_overlay.height = height
 
         if (this.model.get("stereo")) {
             render_width /= 2;
         }
-        render_width /= this.model.get("downscale")
-        render_height /= this.model.get("downscale")
-
         var aspect = render_width / render_height;
         this.camera.aspect = aspect
         // TODO: should we now update the camera object?
@@ -2112,7 +2106,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             specular_exponent: 5,
             width: 500,
             height: 400,
-            downscale: 1,
+            pixel_ratio: null,
             displayscale: 1,
             scatters: null,
             meshes: null,
