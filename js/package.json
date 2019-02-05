@@ -1,6 +1,6 @@
 {
   "name": "ipyvolume",
-  "version": "0.5.2-dev.1",
+  "version": "0.6.0-dev.1",
   "description": "IPython widget for rendering 3d volumes",
   "author": "Maarten A. Breddels",
   "main": "lib/index.js",
@@ -73,7 +73,7 @@
     "ndarray-pack": "^1.2.1",
     "screenfull": "^3.3.1",
     "style-loader": "^0.18.2",
-    "three": "^0.91.0",
+    "three": "^0.97.0",
     "three-text2d": "~0.4.1",
     "underscore": "^1.8.3",
     "webrtc-adapter": "^4.2.2"
