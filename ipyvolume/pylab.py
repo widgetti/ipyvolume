@@ -845,7 +845,7 @@ def volshow(
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
-    if memorder is 'F':
+    if memorder == 'F':
         data = data.T
 
     if extent is None:
