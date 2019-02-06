@@ -30,7 +30,7 @@ before_install:
   - conda info -a
   - conda create -q -n test-environment python=$PYTHON_VERSION numpy scipy runipy
   - source activate test-environment
-  - conda install -c conda-forge pytest pytest-cov bokeh nodejs matplotlib scikit-image shapely
+  - conda install -c conda-forge pytest pytest-cov bokeh nodejs matplotlib scikit-image shapely flake8
   - pip install PyChromeDevTools
   - pip install coveralls
 
