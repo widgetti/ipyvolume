@@ -1,4 +1,3 @@
-// @ts-check
 var widgets = require("@jupyter-widgets/base")
 var _ = require("underscore")
 var THREE = require("three")
