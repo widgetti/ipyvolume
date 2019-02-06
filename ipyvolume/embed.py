@@ -25,17 +25,15 @@ html_template = u"""<!DOCTYPE html>
 """
 
 
-def save_ipyvolumejs(target="", devmode=False,
-                     version=ipyvolume._version.__version_js__, version3js=__version_threejs__):
-    """ output the ipyvolume javascript to a local file
+def save_ipyvolumejs(
+    target="", devmode=False, version=ipyvolume._version.__version_js__, version3js=__version_threejs__
+):
+    """Output the ipyvolume javascript to a local file.
 
     :type target: str
-    :type devmode: bool
-    :param devmode: if True get index.js from js/dist directory
-    :type version: str
-    :param version: version number of ipyvolume
-    :type version3js: str
-    :param version3js: version number of threejs
+    :param bool devmode: if True get index.js from js/dist directory
+    :param str version: version number of ipyvolume
+    :param str version3js: version number of threejs
 
     """
     url = "https://unpkg.com/ipyvolume@{version}/dist/index.js".format(version=version)
@@ -59,11 +57,11 @@ def save_ipyvolumejs(target="", devmode=False,
     # threejs = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "static", "three.js")
     # shutil.copy(threejs, three_filepath)
 
-    return pyv_filename#, three_filename
+    return pyv_filename  # , three_filename
 
 
 def save_requirejs(target="", version="2.3.4"):
-    """ download and save the require javascript to a local file
+    """Download and save the require javascript to a local file.
 
     :type target: str
     :type version: str
@@ -76,7 +74,7 @@ def save_requirejs(target="", version="2.3.4"):
 
 
 def save_embed_js(target="", version=wembed.__html_manager_version__):
-    """ download and save the ipywidgets embedding javascript to a local file
+    """Download and save the ipywidgets embedding javascript to a local file.
 
     :type target: str
     :type version: str
@@ -94,7 +92,7 @@ def save_embed_js(target="", version=wembed.__html_manager_version__):
 
 # TODO this may be able to get directly taken from embed-amd.js in the future jupyter-widgets/ipywidgets#1650
 def save_font_awesome(dirpath='', version="4.7.0"):
-    """ download and save the font-awesome package to a local directory
+    """Download and save the font-awesome package to a local directory.
 
     :type dirpath: str
     :type url: str
@@ -105,7 +103,7 @@ def save_font_awesome(dirpath='', version="4.7.0"):
     if os.path.exists(directory_path):
         return directory_name
     url = "https://fontawesome.com/v{0:s}/assets/font-awesome-{0:s}.zip".format(version)
-    content, encoding = download_to_bytes(url)
+    content, _encoding = download_to_bytes(url)
 
     try:
         zip_directory = io.BytesIO(content)
@@ -120,15 +118,23 @@ def save_font_awesome(dirpath='', version="4.7.0"):
     return directory_name
 
 
-def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_states=False,
-               offline=False, scripts_path='js',
-               drop_defaults=False, template=html_template,
-               template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
-               devmode=False, offline_cors=False):
-    """ Write a minimal HTML file with widget views embedded.
+def embed_html(
+    filepath,
+    widgets,
+    makedirs=True,
+    title=u'IPyVolume Widget',
+    all_states=False,
+    offline=False,
+    scripts_path='js',
+    drop_defaults=False,
+    template=html_template,
+    template_options=(("extra_script_head", ""), ("body_pre", ""), ("body_post", "")),
+    devmode=False,
+    offline_cors=False,
+):
+    """Write a minimal HTML file with widget views embedded.
 
-    :type filepath: str
-    :param filepath: The file to write the HTML output to.
+    :param str filepath: The file to write the HTML output to.
     :type widgets: widget or collection of widgets or None
     :param widgets:The widgets to include views for. If None, all DOMWidgets are included (not just the displayed ones).
     :param makedirs: whether to make directories in the filename path, if they do not already exist
@@ -137,8 +143,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
     :param offline: if True, use local urls for required js/css packages and download all js/css required packages
     (if not already available), such that the html can be viewed with no internet connection
     :param scripts_path: the directory to save required js/css packages to (relative to the filepath)
-    :type drop_defaults: bool
-    :param drop_defaults: Whether to drop default values from the widget states
+    :param bool drop_defaults: Whether to drop default values from the widget states
     :param template: template string for the html, must contain at least {title} and {snippet} place holders
     :param template_options: list or dict of additional template options
     :param devmode: if True, attempt to get index.js from local js/dist directory
@@ -163,7 +168,6 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
         # we have to get the snippet (rather than just call embed_minimal_html), because if the new template includes
         # {} characters (such as in the bokeh example) then an error is raised when trying to format
         snippet = wembed.embed_snippet(widgets, state=state, requirejs=True, drop_defaults=drop_defaults)
-        directory = os.path.dirname(filepath)
     else:
 
         if not os.path.isabs(scripts_path):
@@ -172,7 +176,7 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
         rel_script_path = os.path.relpath(scripts_path, os.path.dirname(filepath))
         if rel_script_path.startswith(".."):
             raise ValueError("The scripts_path must have the same root directory as the filepath")
-        elif rel_script_path=='.':
+        elif rel_script_path == '.':
             rel_script_path = ''
         else:
             rel_script_path += '/'
@@ -182,8 +186,9 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
         fname_embed = save_embed_js(os.path.join(scripts_path))
         fname_fontawe = save_font_awesome(os.path.join(scripts_path))
 
-        subsnippet = wembed.embed_snippet(widgets, embed_url=rel_script_path+fname_embed,
-                                          requirejs=False, drop_defaults=drop_defaults, state=state)
+        subsnippet = wembed.embed_snippet(
+            widgets, embed_url=rel_script_path + fname_embed, requirejs=False, drop_defaults=drop_defaults, state=state
+        )
         if not offline_cors:
             # TODO DIRTY hack, we need to do this cleaner upstream
             subsnippet = subsnippet.replace(' crossorigin="anonymous"', '')
@@ -201,9 +206,14 @@ def embed_html(filepath, widgets, makedirs=True, title=u'IPyVolume Widget', all_
       }}}})
 </script>
 {subsnippet}
-        """.format(rel_script_path=rel_script_path, fname_fontawe=fname_fontawe, fname_require=fname_require,
-                   fname_pyv=os.path.splitext(fname_pyv)[0],
-                   subsnippet=subsnippet, cors=cors_attribute)
+        """.format(
+            rel_script_path=rel_script_path,
+            fname_fontawe=fname_fontawe,
+            fname_require=fname_require,
+            fname_pyv=os.path.splitext(fname_pyv)[0],
+            subsnippet=subsnippet,
+            cors=cors_attribute,
+        )
 
     template_opts['snippet'] = snippet
     template_opts['title'] = title

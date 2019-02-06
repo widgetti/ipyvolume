@@ -1,6 +1,7 @@
 from traitlets import TraitType
 import PIL.Image
 
+
 class Image(TraitType):
     """A trait for PIL images."""
 

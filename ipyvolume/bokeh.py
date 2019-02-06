@@ -3,12 +3,12 @@ from __future__ import absolute_import
 import ipywidgets as widgets
 from traitlets import Unicode
 from bokeh.models import CustomJS
-from bokeh.plotting import figure
 
 import ipyvolume
 
 
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
+
 
 @widgets.register('ipyvolume.WidgetManagerHack')
 class WidgetManagerHackModel(widgets.Widget):
@@ -16,14 +16,21 @@ class WidgetManagerHackModel(widgets.Widget):
     _model_module = Unicode('ipyvolume').tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
+
 wmh = None
+
+
 def _ensure_widget_manager_hack():
     global wmh
     if not wmh:
         wmh = WidgetManagerHackModel()
+
+
 def link_data_source_selection_to_widget(data_source, widget, trait_name):
     _ensure_widget_manager_hack()
-    callback = CustomJS(args=dict(data=data_source), code="""
+    callback = CustomJS(
+        args=dict(data=data_source),
+        code="""
 
     var indices = data.selected["1d"].indices
     var widget_id = '%s'
@@ -40,5 +47,7 @@ def link_data_source_selection_to_widget(data_source, widget, trait_name):
         console.error("no widget manager")
     }
 
-    """ % (widget.model_id, trait_name))
+    """
+        % (widget.model_id, trait_name),
+    )
     data_source.js_on_change("selected", callback)

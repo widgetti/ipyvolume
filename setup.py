@@ -7,28 +7,29 @@ from subprocess import check_call
 import os
 import sys
 import platform
+from distutils import log
 
 here = os.path.dirname(os.path.abspath(__file__))
 node_root = os.path.join(here, 'js')
 is_repo = os.path.exists(os.path.join(here, '.git'))
 
-npm_path = os.pathsep.join([
-    os.path.join(node_root, 'node_modules', '.bin'),
-                os.environ.get('PATH', os.defpath),
-])
+npm_path = os.pathsep.join([os.path.join(node_root, 'node_modules', '.bin'), os.environ.get('PATH', os.defpath)])
 
-from distutils import log
+
 log.set_verbosity(log.DEBUG)
 log.info('setup.py entered')
 log.info('$PATH=%s' % os.environ['PATH'])
 
+
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
 LONG_DESCRIPTION = read("README.rst")
 
+
 def js_prerelease(command, strict=False):
-    """decorator for building minified js/css prior to another command"""
+    """Decorator for building minified js/css prior to another command."""
     class DecoratedCommand(command):
         def run(self):
             jsdeps = self.distribution.get_command_obj('jsdeps')
@@ -51,10 +52,12 @@ def js_prerelease(command, strict=False):
                     log.warn(str(e))
             command.run(self)
             update_package_data(self.distribution)
+
     return DecoratedCommand
 
+
 def update_package_data(distribution):
-    """update package_data to catch changes during setup"""
+    """Update package_data to catch changes during setup."""
     build_py = distribution.get_command_obj('build_py')
     # distribution.package_data = find_package_data()
     # re-init build_py options which load package_data
@@ -71,7 +74,7 @@ class NPM(Command):
     targets = [
         os.path.join(here, 'ipyvolume', 'static', 'extension.js'),
         os.path.join(here, 'ipyvolume', 'static', 'index.js'),
-        os.path.join(here, 'ipyvolume', 'static', 'three.js')
+        os.path.join(here, 'ipyvolume', 'static', 'three.js'),
     ]
 
     def initialize_options(self):
@@ -81,13 +84,13 @@ class NPM(Command):
         pass
 
     def get_npm_name(self):
-        npmName = 'npm';
+        npmName = 'npm'
         if platform.system() == 'Windows':
-            npmName = 'npm.cmd';
-        return npmName;
+            npmName = 'npm.cmd'
+        return npmName
 
     def has_npm(self):
-        npmName = self.get_npm_name();
+        npmName = self.get_npm_name()
         try:
             check_call([npmName, '--version'])
             return True
@@ -95,21 +98,21 @@ class NPM(Command):
             return False
 
     def should_run_npm_install(self):
-        package_json = os.path.join(node_root, 'package.json')
-        node_modules_exists = os.path.exists(self.node_modules)
         return self.has_npm()
 
     def run(self):
         has_npm = self.has_npm()
         if not has_npm:
-            log.error("`npm` unavailable.  If you're running this command using sudo, make sure `npm` is available to sudo")
+            log.error(
+                "`npm` unavailable.  If you're running this command using sudo, make sure `npm` is available to sudo"
+            )
 
         env = os.environ.copy()
         env['PATH'] = npm_path
 
         if self.should_run_npm_install():
             log.info("Installing build dependencies with npm.  This may take a while...")
-            npmName = self.get_npm_name();
+            npmName = self.get_npm_name()
             check_call([npmName, 'install'], cwd=node_root, stdout=sys.stdout, stderr=sys.stderr)
             os.utime(self.node_modules, None)
 
@@ -123,6 +126,7 @@ class NPM(Command):
         # update package data in case this created new files
         update_package_data(self.distribution)
 
+
 version_ns = {}
 with open(os.path.join(here, 'ipyvolume', '_version.py')) as f:
     exec(f.read(), {}, version_ns)
@@ -134,13 +138,16 @@ setup_args = {
     'long_description': LONG_DESCRIPTION,
     'include_package_data': True,
     'data_files': [
-        ('share/jupyter/nbextensions/ipyvolume', [
-            'ipyvolume/static/extension.js',
-            'ipyvolume/static/index.js',
-            'ipyvolume/static/three.js',
-            'ipyvolume/static/index.js.map',
-        ]),
-        ('etc/jupyter/nbconfig/notebook.d' , ['ipyvolume.json'])
+        (
+            'share/jupyter/nbextensions/ipyvolume',
+            [
+                'ipyvolume/static/extension.js',
+                'ipyvolume/static/index.js',
+                'ipyvolume/static/three.js',
+                'ipyvolume/static/index.js.map',
+            ],
+        ),
+        ('etc/jupyter/nbconfig/notebook.d', ['ipyvolume.json']),
     ],
     'install_requires': [
         'ipywidgets>=7.0.0',
@@ -161,16 +168,10 @@ setup_args = {
         'sdist': js_prerelease(sdist, strict=True),
         'jsdeps': NPM,
     },
-
     'author': 'Maarten A. Breddels',
     'author_email': 'maartenbreddels@gmail.com',
     'url': 'https://github.com/maartenbreddels/ipyvolume',
-    'keywords': [
-        'ipython',
-        'jupyter',
-        'widgets',
-        'volume rendering'
-    ],
+    'keywords': ['ipython', 'jupyter', 'widgets', 'volume rendering'],
     'classifiers': [
         'Development Status :: 4 - Beta',
         'Framework :: IPython',
