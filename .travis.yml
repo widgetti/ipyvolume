@@ -41,6 +41,8 @@ script:
   - py.test --cov-report= --cov=ipyvolume ipyvolume
   - npm run --prefix js install-test
   - flake8 ipyvolume
+  - (cd js; ./node_modules/.bin/eslint src/selectors.js)
+  - (cd js; npm run test)
 #  - runipy examples/examples.ipynb
 
 after_success:
