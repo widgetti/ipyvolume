@@ -184,7 +184,7 @@ class CircleSelector extends Selector {
 export
 class RectangleSelector extends Selector {
     constructor (canvas) {
-        super()
+        super();
         this.canvas = canvas;
         this.points = [];
         this.begin = null;
