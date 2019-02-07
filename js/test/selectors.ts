@@ -25,6 +25,11 @@ describe("Selector", () => {
         expect(path_data['device']).to.deep.equals([[-1, 1], [1, 1], [-1, -1]])
         expect(path_data['type']).to.equal('lasso');
 
+        expect(selector.point_inside(2, 2)).to.be.true;
+        expect(selector.point_inside(10, 10)).to.be.false;
+        expect([...selector.points_inside([2, 10], [2, 10])]).to.deep.equals([1, 0])
+        expect([...selector.indices_inside([2, 10], [2, 10])]).to.deep.equals([0])
+
         selector.close()
         data_inside = context.getImageData(2,2,1,1)
         data_outside = context.getImageData(10,10,1,1)
@@ -51,6 +56,11 @@ describe("Selector", () => {
         expect(path_data['device']['begin']).to.deep.equals([-1, 1])
         expect(path_data['device']['end']).to.deep.equals([0, 1])
         expect(path_data['type']).to.equal('circle');
+
+        expect(selector.point_inside(2, 2)).to.be.true;
+        expect(selector.point_inside(10, 10)).to.be.false;
+        expect([...selector.points_inside([2, 10], [2, 10])]).to.deep.equals([1, 0])
+        expect([...selector.indices_inside([2, 10], [2, 10])]).to.deep.equals([0])
 
         selector.mouseMove(0, 10);
         path_data = selector.getData(10, 10)
@@ -86,6 +96,11 @@ describe("Selector", () => {
         expect(path_data['device']['begin']).to.deep.equals([-1, 1])
         expect(path_data['device']['end']).to.deep.equals([0, 0])
         expect(path_data['type']).to.equal('rectangle');
+
+        expect(selector.point_inside(2, 2)).to.be.true;
+        expect(selector.point_inside(10, 10)).to.be.false;
+        expect([...selector.points_inside([2, 10], [2, 10])]).to.deep.equals([1, 0])
+        expect([...selector.indices_inside([2, 10], [2, 10])]).to.deep.equals([0])
 
         selector.mouseMove(5, 10);
         path_data = selector.getData(10, 10)
