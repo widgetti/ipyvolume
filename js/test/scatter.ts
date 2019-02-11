@@ -15,7 +15,7 @@ describe("scatter >", () => {
         let y = data_float32([2, 3]);
         let z = data_float32([0, 3]);
         let { scatter, figure } = await create_figure_scatter(this.manager, [x], [y], [z]);
-        expect(scatter.model.get('x')[0][0]).to.equal(10);
+        expect(scatter.model.get('x')[0][0]).to.equal(0);
         expect(scatter.model.get('x')[0][1]).to.equal(1);
     });
 });
