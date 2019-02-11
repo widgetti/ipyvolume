@@ -15,11 +15,10 @@
     "ipywidgets"
   ],
   "scripts": {
-    "prepublish": "webpack --mode=production",
     "install-test": "npm install && karma start --single-run",
     "test": "karma start --single-run",
     "build:lib": "tsc --project .",
-    "prepare": "npm run build:lib",
+    "prepare": "npm run build:lib && webpack --mode=production",
     "watch": "npm-run-all -p watch:*",
     "watch:lib": "tsc -w --project .",
     "watch:nbextension": "webpack --watch --mode=development"
