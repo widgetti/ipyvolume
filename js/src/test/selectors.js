@@ -1,4 +1,4 @@
-import { LassoSelector, CircleSelector, RectangleSelector } from "../lib/selectors.js";
+import { LassoSelector, CircleSelector, RectangleSelector } from "../selectors";
 import { expect } from 'chai';
 
 const color_inside = [255, 0, 0, 128];

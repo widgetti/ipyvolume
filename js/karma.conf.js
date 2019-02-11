@@ -2,11 +2,6 @@
 // Generated on Wed Jun 20 2018 16:46:14 GMT+0200 (CEST)
 var webpackConfig = require('./webpack.config.js');
 var webpack = require('webpack');
-webpackConfig[1].module.rules.push(
-    { test: /\.(ts)?$/, use: [ { loader: "ts-loader", options: { transpileOnly: true, } } ] }
-)
-
-// console.log(webpackConfig[1].module.rules)
 
 
 module.exports = function (config) {
@@ -15,12 +10,12 @@ module.exports = function (config) {
         frameworks: ['mocha', 'chai', 'sinon'],
         files: [
             // we use 1 bundle for testing
-            { pattern: 'test/index.ts' },
+            { pattern: 'lib/test/index.js' },
         ],
         exclude: ['**/embed.js'],
         preprocessors: {
             // the bundle goes through webpack, and will emit (inline) source maps, which karma needs to read again
-            'test/index.ts': ['webpack', 'sourcemap'],
+            'lib/test/index.js': ['webpack', 'sourcemap'],
         },
         webpack: {
             module: {
@@ -30,7 +25,7 @@ module.exports = function (config) {
             devtool: 'inline-source-map',
             mode: 'development',
             resolve: {
-                extensions: ['.ts', '.js']
+                extensions: ['.js']
             },
         },
         reporters: ['progress', 'mocha'],

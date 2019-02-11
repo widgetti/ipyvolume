@@ -1,9 +1,9 @@
 // import {Figure} from '../src/Figure.js';
 import {DummyManager} from './dummy-manager';
-import { ScatterModel, ScatterView, FigureModel, FigureView } from "..";
+// import { ScatterModel, ScatterView, FigureModel, FigureView } from "../../";
 import { expect } from 'chai';
 import {create_model, create_figure_scatter, data_float32} from './widget-utils'
-let ipyvolume = require('..');
+let ipyvolume = require('../..');
 
 describe("scatter >", () => {
     beforeEach(async function() {

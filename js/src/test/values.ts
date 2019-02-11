@@ -1,4 +1,4 @@
-import { Values } from "..";
+import { Values } from "../values";
 import { expect } from 'chai';
 
 describe("values >", () => {
