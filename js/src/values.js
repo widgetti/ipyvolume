@@ -3,6 +3,7 @@ var THREE = require("three");
 var utils = require("./utils.js");
 /* Manages a list of scalar and arrays for use with WebGL instanced rendering
 */
+export
 class Values {
     constructor(names, names_vec3, getter, sequence_index, names_vec4) {
         this.length = Infinity;
@@ -276,5 +277,3 @@ Values.defaults = {
     z: 0,
     size: 0
 };
-
-module.exports = { Values: Values };

@@ -132,6 +132,7 @@ var ToolIconDropdown = function(className, parent, text) {
 
 import {selectors} from './selectors';
 
+export
 var FigureView = widgets.DOMWidgetView.extend({
     render: function() {
         this.transitions = []
@@ -923,6 +924,7 @@ var FigureView = widgets.DOMWidgetView.extend({
     _mouse_down: function(e) {
         //console.log('mouse down', e)
         window.last_event = e
+        let mouseX, mouseY;
         if (e.offsetX) {
             mouseX = e.offsetX;
             mouseY = e.offsetY;
@@ -968,7 +970,7 @@ var FigureView = widgets.DOMWidgetView.extend({
             var mouseX = e.layerX,
                 mouseY = e.layerY;
         }
-        mouse_position = {
+        const mouse_position = {
             x: mouseX,
             y: mouseY
         };
@@ -1615,7 +1617,7 @@ var FigureView = widgets.DOMWidgetView.extend({
         }
     },
     get_style_color: function(name) {
-        style = this.get_style(name)
+        const style = this.get_style(name)
         if (style) {
             return new THREE.Color(style)
         } else {
@@ -1950,6 +1952,7 @@ var FigureView = widgets.DOMWidgetView.extend({
     }
 });
 
+export
 var FigureModel = widgets.DOMWidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
@@ -1990,7 +1993,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
             selection_mode: 'replace',
             mouse_mode: 'normal',
             panorama_mode: 'no',
-            capture_fps: undefined,
+            capture_fps: null,
             cube_resolution: 512,
         })
     }
@@ -2004,6 +2007,7 @@ var FigureModel = widgets.DOMWidgetModel.extend({
     }, widgets.DOMWidgetModel.serializers)
 });
 
+export
 var WidgetManagerHackModel = widgets.WidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.WidgetModel.prototype.defaults(), {
@@ -2021,11 +2025,8 @@ var WidgetManagerHackModel = widgets.WidgetModel.extend({
     }
 });
 
-module.exports = {
-    WidgetManagerHackModel: WidgetManagerHackModel,
-    FigureModel: FigureModel,
-    FigureView: FigureView,
-};
+
+
 
 //////////////////
 // WEBPACK FOOTER

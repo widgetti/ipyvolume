@@ -6,8 +6,8 @@ var values = require('./values.js');
 var semver_range = require('./utils.js').semver_range;
 var cat_data = require("../data/cat.json");
 
-var ScatterView = widgets.WidgetView.extend( {
-    render: function() {
+class ScatterView extends widgets.WidgetView {
+    render () {
         this.renderer = this.options.parent;
         this.previous_values = {}
         this.attributes_changed = {}
@@ -116,8 +116,8 @@ var ScatterView = widgets.WidgetView.extend( {
             this._update_materials()
             this.renderer.update()
         })
-    },
-    _load_textures: function() {
+    }
+    _load_textures () {
         var texture = this.model.get('texture');
         if(texture.stream) { // instanceof media.MediaStreamModel) {
             this.textures = null
@@ -141,23 +141,23 @@ var ScatterView = widgets.WidgetView.extend( {
                 }, this));
             }, this)
         }
-    },
-    update_visibility: function () {
+    }
+    update_visibility () {
         this._update_materials()
         this.renderer.update()
-    },
-    set_limits: function(limits) {
+    }
+    set_limits (limits) {
         _.mapObject(limits, function(value, key) {
             this.material.uniforms[key].value = value
         }, this)
-    },
-    add_to_scene: function() {
+    }
+    add_to_scene () {
         this.renderer.scene_scatter.add(this.mesh)
         if(this.line_segments) {
             this.renderer.scene_scatter.add(this.line_segments)
         }
-    },
-    remove_from_scene: function() {
+    }
+    remove_from_scene () {
         if(this.renderer.scene_scatter.children.indexOf(this.mesh) == -1) {
             console.warn('trying to removing scatter mesh from scene that does not include it');
         }
@@ -167,8 +167,8 @@ var ScatterView = widgets.WidgetView.extend( {
             this.renderer.scene_scatter.remove(this.line_segments)
             this.line_segments.geometry.dispose()
         }
-    },
-    on_change: function(attribute) {
+    }
+    on_change (attribute) {
         _.mapObject(this.model.changedAttributes(), function(val, key){
             this.previous_values[key] = this.model.previous(key)
             // attributes_changed keys will say what needs to be animated, it's values are the properties in
@@ -200,30 +200,31 @@ var ScatterView = widgets.WidgetView.extend( {
             }
         }, this)
         this.update_()
-    },
-    update_: function() {
+    }
+    update_ () {
         this.remove_from_scene()
         this.create_mesh()
         this.add_to_scene()
         this.renderer.update()
-    },
-    _get_value: function(value, index, default_value) {
+    }
+    _get_value (value, index, default_value) {
         var default_value = default_value;
         if(!value)
             return default_value
         // it is either an array of typed arrays, or a list of numbers coming from the javascript world
-        if(_.isArray(value) && !_.isNumber(value[0]))
-            return value[index % value.length]
-        else
-            return value
-    },
-    get_current: function(name, index, default_value) {
-        return this._get_value(this.model.get(name), index, default_value)
-    },
-    get_previous: function(name, index, default_value) {
+        if(_.isArray(value) && !_.isNumber(value[0])) {
+            return value[index % value.length];
+        } else {
+            return value;
+        }
+    }
+    get_current (name, index, default_value) {
+        return this._get_value(this.model.get(name), index, default_value);
+    }
+    get_previous (name, index, default_value) {
         return this._get_value(this.previous_values[name] || this.model.get(name), index, default_value)
-    },
-    _get_value_vec3: function(value, index, default_value) {
+    }
+    _get_value_vec3 (value, index, default_value) {
         var default_value = default_value;
         if(!value)
             return default_value
@@ -231,14 +232,14 @@ var ScatterView = widgets.WidgetView.extend( {
             return value[index % value.length]
         else
             return value
-    },
-    get_current_vec3: function(name, index, default_value) {
+    }
+    get_current_vec3 (name, index, default_value) {
         return this._get_value_vec3(this.model.get(name), index, default_value)
-    },
-    get_previous_vec3: function(name, index, default_value) {
+    }
+    get_previous_vec3 (name, index, default_value) {
         return this._get_value_vec3(this.previous_values[name] || this.model.get(name), index, default_value)
-    },
-    _update_materials: function() {
+    }
+    _update_materials () {
         if(this.model.get('material'))
             this.material.copy(this.model.get('material').obj)
         if(this.model.get('material'))
@@ -285,8 +286,8 @@ var ScatterView = widgets.WidgetView.extend( {
         this.material_rgb.needsUpdate = true;
         this.line_material.needsUpdate = true;
         this.line_material_rgb.needsUpdate = true;
-    },
-    create_mesh: function() {
+    }
+    create_mesh () {
         var geo = this.model.get("geo")
         //console.log(geo)
         if(!geo)
@@ -398,11 +399,11 @@ var ScatterView = widgets.WidgetView.extend( {
         }, this)
         this.attributes_changed = {}
     }
-});
+};
 
-var ScatterModel = widgets.WidgetModel.extend({
-    defaults: function() {
-        return _.extend(widgets.WidgetModel.prototype.defaults(), {
+class ScatterModel extends widgets.WidgetModel {
+    defaults () {
+        return {...super.defaults(), 
             _model_name : 'ScatterModel',
             _view_name : 'ScatterView',
             _model_module : 'ipyvolume',
@@ -418,9 +419,10 @@ var ScatterModel = widgets.WidgetModel.extend({
             connected: false,
             visible: true,
             selected: null,
-        })
-    }}, {
-    serializers: _.extend({
+        }
+    }
+    static serializers = {
+        ...widgets.WidgetModel.serializers,
         x: serialize.array_or_json,
         y: serialize.array_or_json,
         z: serialize.array_or_json,
@@ -435,8 +437,8 @@ var ScatterModel = widgets.WidgetModel.extend({
         texture: serialize.texture,
         material: { deserialize: widgets.unpack_models },
         line_material: { deserialize: widgets.unpack_models },
-    }, widgets.WidgetModel.serializers)
-});
+    }
+};
 
 
 

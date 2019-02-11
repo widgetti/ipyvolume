@@ -1,4 +1,4 @@
-import { FigureModel, FigureView, WidgetManagerHackModel } from "../src/figure.js";
+import { FigureModel, FigureView, WidgetManagerHackModel } from "..";
 import { expect } from 'chai';
 
 describe("figure >", () => {
