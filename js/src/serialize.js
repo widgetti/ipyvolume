@@ -5,50 +5,50 @@ var widgets = require('@jupyter-widgets/base');
 var ndarray = require('ndarray')
 
 function ascii_decode(buf) {
-        return String.fromCharCode.apply(null, new Uint8Array(buf));
+    return String.fromCharCode.apply(null, new Uint8Array(buf));
 }
 
 function read_uint16_LE(buffer) {
-        var view = new DataView(buffer);
-        var val = view.getUint8(0);
-        val |= view.getUint8(1) << 8;
-        return val;
+    var view = new DataView(buffer);
+    var val = view.getUint8(0);
+    val |= view.getUint8(1) << 8;
+    return val;
 }
 
 function numpy_buffer_to_ndarray(buf) {
-    var magic = ascii_decode(buf.slice(0,6));
-    if (magic.slice(1,6) != 'NUMPY') {
+    var magic = ascii_decode(buf.slice(0, 6));
+    if (magic.slice(1, 6) != 'NUMPY') {
         throw new Error('unknown file type');
     }
 
-    var version = new Uint8Array(buf.slice(6,8));
-    var headerLength = read_uint16_LE(buf.slice(8,10));
-    var headerStr = ascii_decode(buf.slice(10, 10+headerLength));
+    var version = new Uint8Array(buf.slice(6, 8));
+    var headerLength = read_uint16_LE(buf.slice(8, 10));
+    var headerStr = ascii_decode(buf.slice(10, 10 + headerLength));
     var offsetBytes = 10 + headerLength;
-      //rest = buf.slice(10+headerLength);  XXX -- This makes a copy!!! https://www.khronos.org/registry/typedarray/specs/latest/#5
+    //rest = buf.slice(10+headerLength);  XXX -- This makes a copy!!! https://www.khronos.org/registry/typedarray/specs/latest/#5
 
-    var info =  JSON.parse(headerStr.toLowerCase().replace('(','[').replace(',),',']').replace('),',']').replace(/'/g,"\""));
+    var info = JSON.parse(headerStr.toLowerCase().replace('(', '[').replace(',),', ']').replace('),', ']').replace(/'/g, "\""));
 
     // Intepret the bytes according to the specified dtype
     var data;
     if (info.descr === "|u1") {
-      data = new Uint8Array(buf, offsetBytes);
+        data = new Uint8Array(buf, offsetBytes);
     } else if (info.descr === "|i1") {
-      data = new Int8Array(buf, offsetBytes);
+        data = new Int8Array(buf, offsetBytes);
     } else if (info.descr === "<u2") {
-      data = new Uint16Array(buf, offsetBytes);
+        data = new Uint16Array(buf, offsetBytes);
     } else if (info.descr === "<i2") {
-      data = new Int16Array(buf, offsetBytes);
+        data = new Int16Array(buf, offsetBytes);
     } else if (info.descr === "<u4") {
-      data = new Uint32Array(buf, offsetBytes);
+        data = new Uint32Array(buf, offsetBytes);
     } else if (info.descr === "<i4") {
-      data = new Int32Array(buf, offsetBytes);
+        data = new Int32Array(buf, offsetBytes);
     } else if (info.descr === "<f4") {
-      data = new Float32Array(buf, offsetBytes);
+        data = new Float32Array(buf, offsetBytes);
     } else if (info.descr === "<f8") {
-      data = new Float64Array(buf, offsetBytes);
+        data = new Float64Array(buf, offsetBytes);
     } else {
-      throw new Error('unknown numeric dtype')
+        throw new Error('unknown numeric dtype')
     }
 
     return ndarray(data, info.shape);
@@ -81,27 +81,27 @@ var arrayToTypes = {
 
 function deserialize_typed_array(data, manager) {
     var type = typesToArray[data.dtype];
-    if(data == null) {
+    if (data == null) {
         console.log('data is null')
     }
-    if(!data.data) {
+    if (!data.data) {
         console.log('data.data is null')
     }
-    if(!data.data.buffer) {
+    if (!data.data.buffer) {
         console.log('data.data.buffer is null')
     }
-    return new type(data.data.buffer) ; //
+    return new type(data.data.buffer); //
 
 }
 
 function deserialize_array_or_json(data, manager) {
-    if(data == null)
+    if (data == null)
         return null;
     var arrays = null;
-    if(_.isNumber(data)) { // plain number
+    if (_.isNumber(data)) { // plain number
         return data;
     } else { // should be an array of buffer+dtype+shape
-        arrays = _.map(data, function(data) { return deserialize_typed_array(data, manager)})
+        arrays = _.map(data, function (data) { return deserialize_typed_array(data, manager) })
     }
     arrays.original_data = data;
     return arrays;
@@ -137,7 +137,7 @@ function deserialize_array_or_json(data, manager) {
 }
 
 function deserialize_color_or_json(data, manager) {
-    if(data == null)
+    if (data == null)
         return null;
     var arrays = null;
 
@@ -150,20 +150,20 @@ function deserialize_color_or_json(data, manager) {
     // shape is 3 dim, items are float, it should be (sequence_length, len(x), 3) -> rgb values
     function string_array_to_rgb(string_array) {
         var rgbs = new Float32Array(string_array.length * 3);
-        for(var i = 0; i < string_array.length; i++) {
+        for (var i = 0; i < string_array.length; i++) {
             var color = new THREE.Color(string_array[i]);
-            rgbs[i*3+0] = color.r;
-            rgbs[i*3+1] = color.g;
-            rgbs[i*3+2] = color.b;
+            rgbs[i * 3 + 0] = color.r;
+            rgbs[i * 3 + 1] = color.g;
+            rgbs[i * 3 + 2] = color.b;
         }
         return rgbs;
     }
     function rgb_array_to_rgb(rgb_array) {
         var rgbs = new Float32Array(rgb_array.length * 3);
-        for(var i = 0; i < rgb_array.length; i++) {
-            rgbs[i*3+0] = rgb_array[i][0];
-            rgbs[i*3+1] = rgb_array[i][1];
-            rgbs[i*3+2] = rgb_array[i][2];
+        for (var i = 0; i < rgb_array.length; i++) {
+            rgbs[i * 3 + 0] = rgb_array[i][0];
+            rgbs[i * 3 + 1] = rgb_array[i][1];
+            rgbs[i * 3 + 2] = rgb_array[i][2];
         }
         return rgbs;
     }
@@ -173,18 +173,18 @@ function deserialize_color_or_json(data, manager) {
         //arrays = new Float32Array([color.r, color.g, color.b]) // no sequence, scalar
         arrays = data; // special case, if we keep it a string, we can control it via colorppicker
     } else {
-        if(typeof data[0].dtype !== "undefined") { // we have a list of ndarrays
-            arrays = _.map(data, function(data) { return deserialize_typed_array(data, manager)})
+        if (typeof data[0].dtype !== "undefined") { // we have a list of ndarrays
+            arrays = _.map(data, function (data) { return deserialize_typed_array(data, manager) })
         } else {
             // must be a plain list of string, or list of list
-            if(dimension == 1 && typeof data[0] == "string") {
+            if (dimension == 1 && typeof data[0] == "string") {
                 arrays = string_array_to_rgb(data)
             } else
-            if(dimension == 2 && typeof data[0][0] == "string") {
-                arrays = _.map(data, string_array_to_rgb)
-            } else {
-                console.error("don't understand color type")
-            }
+                if (dimension == 2 && typeof data[0][0] == "string") {
+                    arrays = _.map(data, string_array_to_rgb)
+                } else {
+                    console.error("don't understand color type")
+                }
         }
     }
     arrays.original_data = data;
@@ -193,38 +193,38 @@ function deserialize_color_or_json(data, manager) {
 
 
 function serialize_array_or_json(obj, manager) {
-    if(_.isNumber(obj)) return obj; // return numbers directly
-    if(obj != null) {
-        if(typeof obj.original_data == "undefined") // if someone modified the data from javascript land, we don't have this
+    if (_.isNumber(obj)) return obj; // return numbers directly
+    if (obj != null) {
+        if (typeof obj.original_data == "undefined") // if someone modified the data from javascript land, we don't have this
             return obj
         else
             return obj.original_data; // ftm we just feed back the original data, we don't modify currently
     } else {
-       return null;
+        return null;
     }
 }
 function deserialize_texture(data, manager) {
-    if(typeof data == "string") {
-        if(data.startsWith('IPY_MODEL_')) {
+    if (typeof data == "string") {
+        if (data.startsWith('IPY_MODEL_')) {
             return widgets.unpack_models(data, manager)
         }
     }
     return data
 }
 function deserialize_ndarray(data, manager) {
-    if(data === null)
+    if (data === null)
         return null;
     return ndarray(deserialize_typed_array(data, manager), data.shape);
 }
 
 function serialize_ndarray(data, manager) {
-    if(data === null)
+    if (data === null)
         return null;
     var ar = data;
-    if(_.isArray(data) && !data.data) { // plain list of list
+    if (_.isArray(data) && !data.data) { // plain list of list
         var ar = require("ndarray-pack")(data)
     }
-    var data_json = {'data': ar.data.buffer, dtype:arrayToTypes[ar.data.constructor.name], shape:ar.shape}
+    var data_json = { 'data': ar.data.buffer, dtype: arrayToTypes[ar.data.constructor.name], shape: ar.shape }
     return data_json;
 }
 
@@ -236,8 +236,8 @@ window.ndarray = ndarray;
 
 
 module.exports = {
-    texture: {deserialize:deserialize_texture, serialize: serialize_texture},
-      serialize_array_or_json:   serialize_array_or_json,
+    texture: { deserialize: deserialize_texture, serialize: serialize_texture },
+    serialize_array_or_json: serialize_array_or_json,
     deserialize_array_or_json: deserialize_array_or_json,
     deserialize_color_or_json: deserialize_color_or_json,
     array_or_json: { deserialize: deserialize_array_or_json, serialize: serialize_array_or_json },

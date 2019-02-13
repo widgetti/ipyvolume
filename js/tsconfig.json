@@ -1,19 +1,22 @@
 {
 "compilerOptions": {
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "lib": ["dom", "es5", "es2015.promise", "es2015.iterable"],
-    "noEmitOnError": true,
+    "noEmitOnError": false,
     "strictNullChecks": true,
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es2015",
     "outDir": "lib",
     "skipLibCheck": true,
-    "sourceMap": true,
+    "strictNullChecks": false,
+    // "sourceMap": true,
+    // inline seems to work better with karma
+    "inlineSourceMap": true,
     "allowJs": true
   },
   "include": [
-        "./src/**/*"
+      "./src/**/*",
   ],
   "exclude": [
         "node_modules",
