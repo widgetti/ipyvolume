@@ -115,7 +115,6 @@ For conda/anaconda, use:
 ::
 
     conda install -c conda-forge ipyvolume
-    pip install ipywidgets~=6.0.0b5 --user
 
 
 About
