@@ -1,6 +1,6 @@
 {
   "name": "ipyvolume",
-  "version": "0.6.0-dev.1",
+  "version": "0.6.0",
   "description": "IPython widget for rendering 3d volumes",
   "author": "Maarten A. Breddels",
   "main": "lib/index.js",
@@ -60,7 +60,7 @@
     "webpack-cli": "^3.2.3"
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^1.0.0",
+    "@jupyter-widgets/base": "^1.0.0 || ^2.0.0",
     "@jupyter-widgets/controls": "^1.4.2",
     "css-loader": "^0.28.4",
     "d3": "~4.6.0",
