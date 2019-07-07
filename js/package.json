@@ -61,13 +61,12 @@
     "webpack-cli": "^3.0.8"
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^1.0.0",
+    "@jupyter-widgets/base": "^1.0.0 || ^2.0.0",
     "css-loader": "^0.28.4",
     "d3": "~4.6.0",
     "gl-matrix": "^2.0.0",
     "is-typedarray": "~1.0.0",
     "jquery": "^3.1.1",
-    "mqtt": "^2.11.0",
     "mustache": "^2.3.1",
     "ndarray": "~1.0.18",
     "ndarray-pack": "^1.2.1",
@@ -75,8 +74,7 @@
     "style-loader": "^0.18.2",
     "three": "^0.91.0",
     "three-text2d": "~0.4.1",
-    "underscore": "^1.8.3",
-    "webrtc-adapter": "^4.2.2"
+    "underscore": "^1.8.3"
   },
   "files": [
     "dist/",

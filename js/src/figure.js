@@ -11,6 +11,7 @@ require('../css/style.css')
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
 // so that N.M.x is allowed (we don't care about x, but we assume 0.2.x is not compatible with 0.3.x
 var semver_range = require('./utils.js').semver_range;
+var shader_fix = require('./utils.js').shader_fix;
 var axis_names = ['x', 'y', 'z']
 var styles = require('../data/style.json')
 
@@ -34,10 +35,10 @@ function is_ndarray(obj) {
 }
 
 var shaders = {}
-shaders["screen_fragment"] = require('raw-loader!../glsl/screen-fragment.glsl');
-shaders["screen_vertex"] = require('raw-loader!../glsl/screen-vertex.glsl');
-shaders["volr_fragment"] = require('raw-loader!../glsl/volr-fragment.glsl');
-shaders["volr_vertex"] = require('raw-loader!../glsl/volr-vertex.glsl');
+shaders["screen_fragment"] = shader_fix(require('raw-loader!../glsl/screen-fragment.glsl'));
+shaders["screen_vertex"] = shader_fix(require('raw-loader!../glsl/screen-vertex.glsl'));
+shaders["volr_fragment"] = shader_fix(require('raw-loader!../glsl/volr-fragment.glsl'));
+shaders["volr_vertex"] = shader_fix(require('raw-loader!../glsl/volr-vertex.glsl'));
 
 
 function to_rgb(color) {

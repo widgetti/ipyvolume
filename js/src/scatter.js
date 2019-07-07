@@ -5,6 +5,7 @@ var serialize = require('./serialize.js');
 import * as values from './values'
 var semver_range = require('./utils.js').semver_range;
 var cat_data = require("../data/cat.json");
+var shader_fix = require('./utils.js').shader_fix;
 
 var ScatterView = widgets.WidgetView.extend( {
     render: function() {
@@ -246,8 +247,8 @@ var ScatterView = widgets.WidgetView.extend( {
         this.line_material.visible = this.line_material.visible && this.model.get('visible');
         this.line_material_rgb.visible = this.line_material.visible && this.model.get('visible');
         this.materials.forEach((material) => {
-            material.vertexShader = require('raw-loader!../glsl/scatter-vertex.glsl');
-            material.fragmentShader = require('raw-loader!../glsl/scatter-fragment.glsl');
+            material.vertexShader = shader_fix(require('raw-loader!../glsl/scatter-vertex.glsl'));
+            material.fragmentShader = shader_fix(require('raw-loader!../glsl/scatter-fragment.glsl'));
             material.uniforms = _.extend({}, material.uniforms, this.uniforms);
             material.depthWrite = true;
             material.transparant = true;

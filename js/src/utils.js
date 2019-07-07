@@ -2,6 +2,14 @@ var semver_range = '~' + require('../package.json').version;
 
 var isTypedArray = require('is-typedarray')
 
+function shader_fix(shader_code_or_module) {
+    // similar fix as in https://github.com/bloomberg/bqplot/pull/859/files
+    if (typeof shader_code_or_module === "string") {
+        return shader_code_or_module;
+    } else {
+        return shader_code_or_module.default
+    }
+}
 
 function is_typedarray(obj) {
     return isTypedArray(obj)
@@ -26,5 +34,6 @@ module.exports = {
     is_typedarray: is_typedarray,
     is_arraybuffer: is_arraybuffer,
     get_array_dimension: get_array_dimension,
-    semver_range: semver_range
+    semver_range: semver_range,
+    shader_fix: shader_fix
 }

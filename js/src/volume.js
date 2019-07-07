@@ -3,11 +3,12 @@ var widgets = require('@jupyter-widgets/base');
 var THREE = require('three')
 var serialize = require('./serialize.js')
 var semver_range = require('./utils.js').semver_range;
+var shader_fix = require('./utils.js').shader_fix;
 
 var shaders = {}
 
-shaders["box_fragment"] = require('raw-loader!../glsl/box-fragment.glsl');
-shaders["box_vertex"] = require('raw-loader!../glsl/box-vertex.glsl');
+shaders["box_fragment"] = shader_fix(require('raw-loader!../glsl/box-fragment.glsl'));
+shaders["box_vertex"] = shader_fix(require('raw-loader!../glsl/box-vertex.glsl'));
 
 var VolumeView = widgets.WidgetView.extend( {
     render: function() {

@@ -4,6 +4,7 @@ var THREE = require('three');
 var serialize = require('./serialize.js');
 import * as values from './values'
 var semver_range = require('./utils.js').semver_range;
+var shader_fix = require('./utils.js').shader_fix;
 
 var MeshView = widgets.WidgetView.extend( {
     render: function() {
@@ -217,8 +218,8 @@ var MeshView = widgets.WidgetView.extend( {
         this.line_material.visible = this.line_material.visible && this.model.get('visible');
         this.line_material_rgb.visible = this.line_material.visible && this.model.get('visible');
         this.materials.forEach((material) => {
-            material.vertexShader = require('raw-loader!../glsl/mesh-vertex.glsl');
-            material.fragmentShader = require('raw-loader!../glsl/mesh-fragment.glsl');
+            material.vertexShader = shader_fix(require('raw-loader!../glsl/mesh-vertex.glsl'));
+            material.fragmentShader = shader_fix(require('raw-loader!../glsl/mesh-fragment.glsl'));
             material.uniforms = this.uniforms;
             material.depthWrite = true;
             material.transparant = true;
