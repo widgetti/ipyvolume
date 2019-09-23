@@ -631,13 +631,20 @@ var FigureView = widgets.DOMWidgetView.extend({
         this.control_orbit = new THREE.OrbitControls(this.camera, this.renderer.domElement);
         this.control_trackball.dynamicDampingFactor = 1.
         this.control_trackball.noPan = true;
-        this.control_orbit.enablePan = false;
-        this.control_orbit.dampingFactor = 1.
+
         this.update_mouse_mode()
 
-        this.control_orbit.rotateSpeed = 0.5
         this.control_trackball.rotateSpeed = 0.5
         this.control_trackball.zoomSpeed = 3.
+
+        // All widgets on the page would receive those keypresses all the time:
+        this.control_orbit.enableKeys = false;
+        this.control_orbit.panSpeed = 1.0;
+        this.control_orbit.rotateSpeed = 0.5;
+        this.control_orbit.zoomSpeed = 2.0;
+        this.control_orbit.screenSpacePanning = true;
+
+        // TODO: minDistance, maxDistance, target
 
         window.addEventListener('deviceorientation', _.bind(this.on_orientationchange, this), false);
 
