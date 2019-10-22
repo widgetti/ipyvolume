@@ -395,19 +395,16 @@ var FigureView = widgets.DOMWidgetView.extend({
         if (this.model.get('camera')) {
             this.camera = this.model.get('camera').obj
             this.model.get('camera').on('change', () => {
-                // the threejs' lookAt ignore the quaternion, and uses the up vector
-                // we manually set it ourselve
-                var up = new THREE.Vector3(0, 1, 0);
-                up.applyQuaternion(this.camera.quaternion);
-                this.camera.up = up;
-                this.camera.lookAt(0, 0, 0);
-                // TODO: shouldn't we do the same with the orbit control?
                 this.control_trackball.position0 = this.camera.position.clone();
                 this.control_trackball.up0 = this.camera.up.clone();
                 // TODO: if we implement figure.look_at, we should update control's target as well
                 this.update();
             });
         } else {
+            // NB: Default camera is set in ipyvolume/widgets.py
+            /////////////////////////////
+            alert('this never happens?');
+            /////////////////////////////
             this.camera = new THREE.PerspectiveCamera(46, 1, NEAR, FAR);
             // same default as the Python version
             var z = 2 * Math.tan(45. / 2. * Math.PI / 180.) / Math.tan(this.model.get('camera_fov') / 2. * Math.PI / 180.);
@@ -634,13 +631,20 @@ var FigureView = widgets.DOMWidgetView.extend({
         this.control_orbit = new THREE.OrbitControls(this.camera, this.renderer.domElement);
         this.control_trackball.dynamicDampingFactor = 1.
         this.control_trackball.noPan = true;
-        this.control_orbit.enablePan = false;
-        this.control_orbit.dampingFactor = 1.
+
         this.update_mouse_mode()
 
-        this.control_orbit.rotateSpeed = 0.5
         this.control_trackball.rotateSpeed = 0.5
         this.control_trackball.zoomSpeed = 3.
+
+        // All widgets on the page would receive those keypresses all the time:
+        this.control_orbit.enableKeys = false;
+        this.control_orbit.panSpeed = 1.0;
+        this.control_orbit.rotateSpeed = 0.5;
+        this.control_orbit.zoomSpeed = 2.0;
+        this.control_orbit.screenSpacePanning = true;
+
+        // TODO: minDistance, maxDistance, target
 
         window.addEventListener('deviceorientation', _.bind(this.on_orientationchange, this), false);
 
@@ -1464,7 +1468,6 @@ var FigureView = widgets.DOMWidgetView.extend({
         this._update_requested = false
         // since the threejs animation system can update the camera,
         // make sure we keep looking at the center
-        this.camera.lookAt(0, 0, 0)
 
         this.renderer.setClearColor(this.get_style_color('background-color'))
         this.x_axis.visible = this.get_style('axes.x.visible axes.visible')
