@@ -3,3 +3,5 @@ import './figure';
 import './selectors';
 import './values';
 import './scatter';
+import './mesh';
+import './volume';

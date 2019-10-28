@@ -5,7 +5,12 @@
 // already be loaded by the notebook otherwise.
 
 // Export widget models and views, and the npm package version number.
-var _ = require('underscore')
-// Export widget models and views, and the npm package version number.
-module.exports = _.extend({}, require('./figure.js'), require('./tf.js'), require('./scatter.js'),  require('./mesh.js'), require('./volume.js'), require('./utils.js'));
-module.exports['version'] = require('../package.json').version;
+export * from "./figure";
+export * from "./tf";
+export * from "./scatter";
+export * from "./volume";
+export * from "./mesh";
+export * from "./utils";
+export * from "./selectors";
+export * from "./values";
+export {semver_range as version} from "./utils";
