@@ -1,13 +1,21 @@
-import * as services from '@jupyterlab/services';
-import * as Backbone from 'backbone';
-import * as widgets from '@jupyter-widgets/controls';
-import * as base from '@jupyter-widgets/base';
-import * as sinon from 'sinon';
+import * as base from "@jupyter-widgets/base";
+import * as widgets from "@jupyter-widgets/controls";
+import * as services from "@jupyterlab/services";
+import * as Backbone from "backbone";
+import * as sinon from "sinon";
 
 let numComms = 0;
 
 export
 class MockComm {
+    comm_id: string;
+    target_name: string;
+    // tslint:disable-next-line: ban-types
+    _on_msg: Function = null;
+    // tslint:disable-next-line: ban-types
+    _on_open: Function = null;
+    // tslint:disable-next-line: ban-types
+    _on_close: Function = null;
     constructor() {
         this.comm_id = `mock-comm-id-${numComms}`;
         numComms += 1;
@@ -32,62 +40,39 @@ class MockComm {
         if (this._on_open) {
             this._on_open();
         }
-        return '';
+        return "";
     }
     close() {
         if (this._on_close) {
             this._on_close();
         }
-        return '';
+        return "";
     }
     send() {
-        return '';
+        return "";
     }
-    comm_id: string;
-    target_name: string;
-    _on_msg: Function = null;
-    _on_open: Function = null;
-    _on_close: Function = null;
 }
 
 export
 class DummyManager extends base.ManagerBase<HTMLElement> {
+
+    el: HTMLElement;
+    library: any;
     constructor(library: any) {
         super();
-        this.el = window.document.createElement('div');
-        window.document.body.appendChild(this.el)
+        this.el = window.document.createElement("div");
+        window.document.body.appendChild(this.el);
         this.library = library;
     }
 
-    display_view(msg: services.KernelMessage.IMessage, view: Backbone.View<Backbone.Model>, options: any) {
-        return Promise.resolve(view).then(view => {
+    display_view(msg: services.KernelMessage.IMessage, view_promise: Backbone.View<Backbone.Model>, options: any) {
+        return Promise.resolve(view_promise).then((view) => {
             this.el.appendChild(view.el);
-            view.on('remove', () => console.log('view removed', view));
-            (<any>window).last_view = view
-            view.trigger('displayed')
+            view.on("remove", () => console.log("view removed", view));
+            ( window as any).last_view = view;
+            view.trigger("displayed");
             return view.el;
         });
-    }
-
-
-    protected loadClass(className: string, moduleName: string, moduleVersion: string): Promise<any> {
-        if (moduleName === '@jupyter-widgets/base') {
-            if (base[className]) {
-                return Promise.resolve(base[className]);
-            } else {
-                return Promise.reject(`Cannot find class ${className}`)
-            }
-        } else if (moduleName === '@jupyter-widgets/controls') {
-            if (widgets[className]) {
-                return Promise.resolve(widgets[className]);
-            } else {
-                return Promise.reject(`Cannot find class ${className}`)
-            }
-        } else if(moduleName in this.library) {
-            return Promise.resolve(this.library[moduleName][className]);
-        } else {
-            return Promise.reject(`Cannot find module ${moduleName}`);
-        }
     }
 
     _get_comm_info() {
@@ -98,7 +83,23 @@ class DummyManager extends base.ManagerBase<HTMLElement> {
         return Promise.resolve(new MockComm());
     }
 
-    el: HTMLElement;
-    library: any;
+    protected loadClass(className: string, moduleName: string, moduleVersion: string): Promise<any> {
+        if (moduleName === "@jupyter-widgets/base") {
+            if (base[className]) {
+                return Promise.resolve(base[className]);
+            } else {
+                return Promise.reject(`Cannot find class ${className}`);
+            }
+        } else if (moduleName === "@jupyter-widgets/controls") {
+            if (widgets[className]) {
+                return Promise.resolve(widgets[className]);
+            } else {
+                return Promise.reject(`Cannot find class ${className}`);
+            }
+        } else if (moduleName in this.library) {
+            return Promise.resolve(this.library[moduleName][className]);
+        } else {
+            return Promise.reject(`Cannot find module ${moduleName}`);
+        }
+    }
 }
-
