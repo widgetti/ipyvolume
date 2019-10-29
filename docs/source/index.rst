@@ -136,6 +136,7 @@ Contents
     animation
     api
     vr
+    pythreejs
 
 
 Changelog
