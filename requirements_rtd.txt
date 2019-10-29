@@ -1,4 +1,4 @@
-jupyter_sphinx>=0.1.4
+jupyter_sphinx==0.1.4
 #git+https://github.com/maartenbreddels/jupyter-sphinx@ipywidgets7require_d
 ipyvolume==0.5.1
 ipywidgets>=7.4.0
