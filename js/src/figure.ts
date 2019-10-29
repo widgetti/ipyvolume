@@ -515,15 +515,17 @@ class FigureView extends widgets.DOMWidgetView {
             this.model.get("camera").on("change", () => {
                 // the threejs' lookAt ignore the quaternion, and uses the up vector
                 // we manually set it ourselve
-                const up = new THREE.Vector3(0, 1, 0);
-                up.applyQuaternion(this.camera.quaternion);
-                this.camera.up = up;
-                this.camera.lookAt(0, 0, 0);
-                // TODO: shouldn't we do the same with the orbit control?
-                this.control_trackball.position0 = this.camera.position.clone();
-                this.control_trackball.up0 = this.camera.up.clone();
-                // TODO: if we implement figure.look_at, we should update control's target as well
-                this.update();
+                if (!this.control_external) {
+                    const up = new THREE.Vector3(0, 1, 0);
+                    up.applyQuaternion(this.camera.quaternion);
+                    this.camera.up = up;
+                    this.camera.lookAt(0, 0, 0);
+                    // TODO: shouldn't we do the same with the orbit control?
+                    this.control_trackball.position0 = this.camera.position.clone();
+                    this.control_trackball.up0 = this.camera.up.clone();
+                    // TODO: if we implement figure.look_at, we should update control's target as well
+                    this.update();
+                }
             });
         } else {
             this.camera = new THREE.PerspectiveCamera(46, 1, NEAR, FAR);
@@ -1651,10 +1653,18 @@ class FigureView extends widgets.DOMWidgetView {
 
     _real_update() {
         this.control_trackball.handleResize();
+        if (this.control_external) {
+            this.control_external.update();
+            // it's very likely the controller will update the camera, so we sync it to the kernel
+            this.camera.ipymodel.syncToModel(true);
+        }
+
         this._update_requested = false;
         // since the threejs animation system can update the camera,
-        // make sure we keep looking at the center
-        this.camera.lookAt(0, 0, 0);
+        // make sure we keep looking at the center (only for ipyvolume's own control)
+        if (!this.control_external) {
+            this.camera.lookAt(0, 0, 0);
+        }
 
         this.renderer.setClearColor(this.get_style_color("background-color"));
         this.x_axis.visible = this.get_style("axes.x.visible axes.visible");
