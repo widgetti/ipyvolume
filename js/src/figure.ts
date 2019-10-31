@@ -24,6 +24,7 @@ const axis_names = ["x", "y", "z"];
 
 (window as any).THREE = THREE;
 
+import { RenderTarget } from "three";
 import "./three/CombinedCamera.js";
 import "./three/DeviceOrientationControls.js";
 import "./three/OrbitControls.js";
@@ -32,10 +33,10 @@ import "./three/THREEx.FullScreen.js";
 import "./three/TrackballControls.js";
 
 const shaders = {
-    screen_fragment: require("raw-loader!../glsl/screen-fragment.glsl"),
-    screen_vertex: require("raw-loader!../glsl/screen-vertex.glsl"),
-    volr_fragment: require("raw-loader!../glsl/volr-fragment.glsl"),
-    volr_vertex: require("raw-loader!../glsl/volr-vertex.glsl"),
+    screen_fragment: (require("raw-loader!../glsl/screen-fragment.glsl") as any).default,
+    screen_vertex: (require("raw-loader!../glsl/screen-vertex.glsl") as any).default,
+    volr_fragment: (require("raw-loader!../glsl/volr-fragment.glsl") as any).default,
+    volr_vertex: (require("raw-loader!../glsl/volr-vertex.glsl") as any).default,
 };
 
 // similar to _.bind, except it
@@ -107,6 +108,7 @@ class FigureModel extends widgets.DOMWidgetModel {
         camera: { deserialize: widgets.unpack_models },
         scene: { deserialize: widgets.unpack_models },
         controls: { deserialize: widgets.unpack_models },
+        scales: { deserialize: widgets.unpack_models },
     };
     defaults() {
         return {...super.defaults(),
@@ -133,9 +135,7 @@ class FigureModel extends widgets.DOMWidgetModel {
             meshes: null,
             volumes: null,
             show: "Volume",
-            xlim: [0., 1.],
-            ylim: [0., 1.],
-            zlim: [0., 1.],
+            scales: {},
             xlabel: "x",
             ylabel: "y",
             zlabel: "z",
@@ -213,7 +213,7 @@ class FigureView extends widgets.DOMWidgetView {
     geometry_depth_target: THREE.WebGLRenderTarget;
     color_pass_target: THREE.WebGLRenderTarget;
     screen_pass_target: THREE.WebGLRenderTarget;
-    coordinate_texture: THREE.WebGLRenderTarget;
+    coordinate_target: THREE.WebGLRenderTarget;
     screen_scene: THREE.Scene;
     screen_scene_cube: THREE.Scene;
     screen_plane: THREE.PlaneBufferGeometry;
@@ -233,17 +233,21 @@ class FigureView extends widgets.DOMWidgetView {
     last_zoom_coordinate: any;
     rrenderer: any;
     mouse_down_position: { x: any; y: any; };
-    mouse_down_limits: { x: any; y: any; z: any; };
+    mouse_down_domain: { x: any; y: any; z: any; };
     last_pan_coordinate: THREE.Vector3;
     selector: any;
     last_tick_selection: d3.Selection<d3.BaseType, unknown, d3.BaseType, unknown>;
     model: FigureModel;
     control_external: any = null;
     // helper methods for testing/debugging
-    debug_readPixel(x, y) {
+    readPixel(x, y) {
+        return this.readPixelFrom(this.screen_texture, x, y);
+    }
+    readPixelFrom(target: RenderTarget, x, y) {
         const buffer = new Uint8Array(4);
         const height = this.renderer.domElement.clientHeight;
-        this.renderer.readRenderTargetPixels(this.screen_texture, x, y, 1, 1, buffer);
+        const pixel_ratio = this.model.get("pixel_ratio") || window.devicePixelRatio;
+        this.renderer.readRenderTargetPixels(target, x * pixel_ratio, (height - y) * pixel_ratio, 1, 1, buffer);
         return buffer;
     }
 
@@ -695,7 +699,7 @@ class FigureView extends widgets.DOMWidgetView {
             magFilter: THREE.LinearFilter,
         });
 
-        this.coordinate_texture = new THREE.WebGLRenderTarget(render_width, render_height, {
+        this.coordinate_target = new THREE.WebGLRenderTarget(render_width, render_height, {
             minFilter: THREE.LinearFilter,
             magFilter: THREE.NearestFilter,
         });
@@ -939,8 +943,11 @@ class FigureView extends widgets.DOMWidgetView {
         this.model.on("change:xlabel change:ylabel change:zlabel", this.update, this);
         this.model.on("change:render_continuous", this.update, this);
         this.model.on("change:style", this.update, this);
+        const scales = this.model.get("scales");
+        for (const coordinate of ["x", "y", "z"]) {
+            scales[coordinate].on("change", this.update, this);
+        }
         this.model.on("change:xlim change:ylim change:zlim ", this.update, this);
-        this.model.on("change:xlim change:ylim change:zlim ", this._save_matrices, this);
         this.model.on("change:stereo", this.update_size, this);
 
         this.model.on("change:eye_separation", this.update, this);
@@ -1059,8 +1066,9 @@ class FigureView extends widgets.DOMWidgetView {
         const buffer = new Uint8Array(4);
         const height = this.renderer.domElement.clientHeight;
         if (!this.last_zoom_coordinate) {
-            this.renderer.readRenderTargetPixels(this.coordinate_texture, mouseX,
-                height - mouseY, 1, 1, buffer);
+            const pixel_ratio = this.model.get("pixel_ratio") || window.devicePixelRatio;
+            this.renderer.readRenderTargetPixels(this.coordinate_target, mouseX * pixel_ratio,
+                (height - mouseY) * pixel_ratio, 1, 1, buffer);
 
             if (buffer[3] > 1) {
                 // at least something got drawn
@@ -1072,8 +1080,8 @@ class FigureView extends widgets.DOMWidgetView {
 
         if (this.last_zoom_coordinate) { // at least something got drawn
             // clear it so that we don't use it again
-            this.renderer.setRenderTarget(this.coordinate_texture);
-            this.rrenderer.clear(true, true, true);
+            this.renderer.setRenderTarget(this.coordinate_target);
+            this.renderer.clear(true, true, true);
 
             const center = this.last_zoom_coordinate;
 
@@ -1082,19 +1090,21 @@ class FigureView extends widgets.DOMWidgetView {
             const np2 = center.clone().add(center.clone().negate().addScalar(1).multiplyScalar(factor));
 
             // and rescale to x/y/z lim
-            const xlim = this.model.get("xlim");
-            const ylim = this.model.get("ylim");
-            const zlim = this.model.get("zlim");
-            const p1 = new THREE.Vector3(xlim[0], ylim[0], zlim[0]);
-            const p2 = new THREE.Vector3(xlim[1], ylim[1], zlim[1]);
+            const scales = this.model.get("scales");
+            const p1 = new THREE.Vector3(scales.x.domain[0], scales.y.domain[0], scales.z.domain[0]);
+            const p2 = new THREE.Vector3(scales.x.domain[1], scales.y.domain[1], scales.z.domain[1]);
             const scale = p2.clone().sub(p1);
             const new_p1 = np1.clone().multiply(scale).add(p1);
             const new_p2 = np2.clone().multiply(scale).add(p1);
-            this.model.set("xlim", [new_p1.x, new_p2.x]);
-            this.model.set("ylim", [new_p1.y, new_p2.y]);
-            this.model.set("zlim", [new_p1.z, new_p2.z]);
-
-            this.touch();
+            scales.x.set("min", new_p1.x);
+            scales.x.set("max", new_p2.x);
+            scales.y.set("min", new_p1.y);
+            scales.y.set("max", new_p2.y);
+            scales.z.set("min", new_p1.z);
+            scales.z.set("max", new_p2.z);
+            scales.x.save_changes();
+            scales.y.save_changes();
+            scales.z.save_changes();
         }
         return false;
     }
@@ -1111,18 +1121,24 @@ class FigureView extends widgets.DOMWidgetView {
             mouseX = e.layerX;
             mouseY = e.layerY;
         }
+        this.mouseDown(mouseX, mouseY);
+    }
+
+    mouseDown(mouseX, mouseY, e?) {
         this.mouse_down_position = {
             x: mouseX,
             y: mouseY,
         };
-        this.mouse_down_limits = {
-            x: this.model.get("xlim"),
-            y: this.model.get("ylim"),
-            z: this.model.get("zlim"),
+        const scales = this.model.get("scales");
+        this.mouse_down_domain = {
+            x: scales.x.domain.slice(),
+            y: scales.y.domain.slice(),
+            z: scales.z.domain.slice(),
         };
         const height = this.renderer.domElement.clientHeight;
         const buffer = new Uint8Array(4);
-        this.renderer.readRenderTargetPixels(this.coordinate_texture, mouseX, height - mouseY, 1, 1, buffer);
+        const pixel_ratio = this.model.get("pixel_ratio") || window.devicePixelRatio;
+        this.renderer.readRenderTargetPixels(this.coordinate_target, mouseX * pixel_ratio, (height - mouseY) * pixel_ratio, 1, 1, buffer);
         if (buffer[3] > 1) { // at least something got drawn
             const center = new THREE.Vector3(buffer[0], buffer[1], buffer[2]);
             center.multiplyScalar(1 / 255.); // normalize
@@ -1132,8 +1148,10 @@ class FigureView extends widgets.DOMWidgetView {
         if (this.model.get("mouse_mode") === "select") {
             const cls = selectors[this.model.get("selector")];
             this.selector = new cls(this.canvas_overlay);
-            e.preventDefault();
-            e.stopPropagation();
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
         }
     }
 
@@ -1165,53 +1183,64 @@ class FigureView extends widgets.DOMWidgetView {
 
         if (this.model.get("mouse_mode") === "zoom" && this.last_pan_coordinate) {
             if (e.buttons === 1) {
-                const canvas = this.renderer.domElement;
                 const pixels_right = mouse_position.x - this.mouse_down_position.x;
                 const pixels_up = -(mouse_position.y - this.mouse_down_position.y);
-                // normalized GL screen coordinates
-                const right = (pixels_right / canvas.clientWidth) * 2;
-                const up = (pixels_up / canvas.clientHeight) * 2;
-                const P = this.camera.projectionMatrix;
-                const W = this._get_view_matrix();
-                // M goes from world to screen
-                const M = P.clone().multiply(W);
-                const Mi = M.clone().getInverse(M);
-
-                const xlim = this.mouse_down_limits.x;
-                const ylim = this.mouse_down_limits.y;
-                const zlim = this.mouse_down_limits.z;
-                const l1 = new THREE.Vector3(xlim[0], ylim[0], zlim[0]);
-                const l2 = new THREE.Vector3(xlim[1], ylim[1], zlim[1]);
-                const scale = l2.clone().sub(l1);
-
-                // start pos in world cooordinates
-                const p1 = this.last_pan_coordinate.clone().multiply(scale).add(l1);
-                // project to screen coordinates
-                const sp1 = p1.clone().applyMatrix4(M);
-                // move p2 in screen coordinates
-                const sp2 = sp1.clone();
-                sp2.x += right;
-                sp2.y += up;
-
-                // move them back to world coordinates
-                const np1 = sp1.applyMatrix4(Mi);
-                const np2 = sp2.applyMatrix4(Mi);
-                const delta = np2.clone().sub(np1);
-
-                l1.sub(delta);
-                l2.sub(delta);
-                this.model.set("xlim", [l1.x, l2.x]);
-                this.model.set("ylim", [l1.y, l2.y]);
-                this.model.set("zlim", [l1.z, l2.z]);
+                this.mouseDrag(pixels_right, pixels_up);
             }
         }
     }
 
+    mouseDrag(pixels_right, pixels_up) {
+        const canvas = this.renderer.domElement;
+        // normalized GL screen coordinates
+        const right = (pixels_right / canvas.clientWidth) * 2;
+        const up = (pixels_up / canvas.clientHeight) * 2;
+        const P = this.camera.projectionMatrix;
+        const W = this._get_view_matrix();
+        // M goes from world to screen
+        const M = P.clone().multiply(W);
+        const Mi = M.clone().getInverse(M);
+
+        const xlim = this.mouse_down_domain.x;
+        const ylim = this.mouse_down_domain.y;
+        const zlim = this.mouse_down_domain.z;
+        const l1 = new THREE.Vector3(xlim[0], ylim[0], zlim[0]);
+        const l2 = new THREE.Vector3(xlim[1], ylim[1], zlim[1]);
+        const scale = l2.clone().sub(l1);
+
+        // start pos in world cooordinates
+        const p1 = this.last_pan_coordinate.clone().multiply(scale).add(l1);
+        // project to screen coordinates
+        const sp1 = p1.clone().applyMatrix4(M);
+        // move p2 in screen coordinates
+        const sp2 = sp1.clone();
+        sp2.x += right;
+        sp2.y += up;
+
+        // move them back to world coordinates
+        const np1 = sp1.clone().applyMatrix4(Mi);
+        const np2 = sp2.clone().applyMatrix4(Mi);
+        const delta = np2.clone().sub(np1);
+
+        l1.sub(delta);
+        l2.sub(delta);
+        const scales = this.model.get("scales");
+        scales.x.set("min", l1.x);
+        scales.x.set("max", l2.x);
+        scales.y.set("min", l1.y);
+        scales.y.set("max", l2.y);
+        scales.z.set("min", l1.z);
+        scales.z.set("max", l2.z);
+        scales.x.save_changes();
+        scales.y.save_changes();
+        scales.z.save_changes();
+    }
+
     _mouse_dbl_click(e) {
         if (this.model.get("mouse_mode") === "zoom" && this.last_pan_coordinate) {
-            const xlim = this.mouse_down_limits.x;
-            const ylim = this.mouse_down_limits.y;
-            const zlim = this.mouse_down_limits.z;
+            const xlim = this.mouse_down_domain.x;
+            const ylim = this.mouse_down_domain.y;
+            const zlim = this.mouse_down_domain.z;
             let l1 = new THREE.Vector3(xlim[0], ylim[0], zlim[0]);
             let l2 = new THREE.Vector3(xlim[1], ylim[1], zlim[1]);
             const scale = l2.clone().sub(l1);
@@ -1220,9 +1249,16 @@ class FigureView extends widgets.DOMWidgetView {
             const half_scale = scale.clone().multiplyScalar(0.5);
             l1 = center.clone().sub(half_scale);
             l2 = center.clone().add(half_scale);
-            this.model.set("xlim", [l1.x, l2.x]);
-            this.model.set("ylim", [l1.y, l2.y]);
-            this.model.set("zlim", [l1.z, l2.z]);
+            const scales = this.model.get("scales");
+            scales.x.set("min", l1.x);
+            scales.x.set("max", l2.x);
+            scales.y.set("min", l1.y);
+            scales.y.set("max", l2.y);
+            scales.z.set("min", l1.z);
+            scales.z.set("max", l2.z);
+            scales.x.save_changes();
+            scales.y.save_changes();
+            scales.z.save_changes();
         }
     }
 
@@ -1380,7 +1416,8 @@ class FigureView extends widgets.DOMWidgetView {
         axis.add(label);
         d.object_label = label;
         d.object = axis;
-        d.scale = d3.scaleLinear().domain(this.model.get(d.name + "lim")).range([-0.5, 0.5]);
+        const scale = this.model.get("scales")[d.name];
+        d.scale = d3.scaleLinear().domain(scale.domain).range([-0.5, 0.5]);
         d.ticks = null;
         this._d3_update_axis(node, d, i);
     }
@@ -1389,6 +1426,8 @@ class FigureView extends widgets.DOMWidgetView {
         d.object_label.text = d.label;
         d.object_label.fillStyle = d.fillStyle;
         const n = d.name; // x, y or z
+        const scale = this.model.get("scales")[d.name];
+        d.scale = d3.scaleLinear().domain(scale.domain).range([-0.5, 0.5]);
         d.object_label.fillStyle = this.get_style("axes." + n + ".label.color axes." + n + ".color axes.label.color axes.color");
         d.object_label.visible = this.get_style("axes." + n + ".label.visible axes." + n + ".visible axes.label.visible axes.visible");
     }
@@ -1592,9 +1631,10 @@ class FigureView extends widgets.DOMWidgetView {
         matrix.makeTranslation(-0.5, -0.5, -0.5);
 
         const matrix_scale = new THREE.Matrix4();
-        const x = this.model.get("xlim");
-        const y = this.model.get("ylim");
-        const z = this.model.get("zlim");
+        const scales = this.model.get("scales");
+        const x = scales.x.domain;
+        const y = scales.y.domain;
+        const z = scales.z.domain;
         const sx = 1 / (x[1] - x[0]);
         const sy = 1 / (y[1] - y[0]);
         const sz = 1 / (z[1] - z[0]);
@@ -1852,18 +1892,10 @@ class FigureView extends widgets.DOMWidgetView {
 
         // set material to rgb
         for (const scatter_view of Object.values(this.scatter_views)) {
-            scatter_view.set_limits({
-                xlim: this.model.attributes.xlim,
-                ylim: this.model.attributes.ylim,
-                zlim: this.model.attributes.zlim,
-            });
+            scatter_view.set_scales(this.model.get("scales"));
         }
         for (const mesh_view of Object.values(this.mesh_views)) {
-            mesh_view.set_limits({
-                xlim: this.model.attributes.xlim,
-                ylim: this.model.attributes.ylim,
-                zlim: this.model.attributes.zlim,
-            });
+            mesh_view.set_scales(this.model.get("scales"));
         }
 
         if (panorama) {
@@ -1909,11 +1941,7 @@ class FigureView extends widgets.DOMWidgetView {
                 volume_view.box_material.side = THREE.BackSide;
                 volume_view.box_material.depthFunc = THREE.GreaterDepth;
                 volume_view.vol_box_mesh.material = volume_view.box_material;
-                volume_view.set_limits({
-                    xlim: this.model.attributes.xlim,
-                    ylim: this.model.attributes.ylim,
-                    zlim: this.model.attributes.zlim,
-                });
+                volume_view.set_scales(this.model.get("scales"));
             }
             this.renderer.setRenderTarget(this.volume_back_target);
             this.renderer.clear(true, true, true);
@@ -1962,7 +1990,8 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.autoClear = false;
             // we want to keep the colors and z-buffer as they are
             this.renderer.setRenderTarget(this.color_pass_target);
-            this.renderer.clear(false, false, false);
+            // threejs does not want to be called with all three false
+            // this.renderer.clear(false, false, false);
             this.renderer.render(this.scene_volume, camera, this.color_pass_target);
             this.renderer.autoClear = true;
         }
@@ -1980,9 +2009,9 @@ class FigureView extends widgets.DOMWidgetView {
         // we also render this for the zoom coordinate
         this.renderer.autoClear = false;
         this.renderer.setClearAlpha(0);
-        this.renderer.setRenderTarget(this.coordinate_texture);
+        this.renderer.setRenderTarget(this.coordinate_target);
         this.renderer.clear(true, true, true);
-        this.renderer.render(this.scene_scatter, camera, this.coordinate_texture);
+        this.renderer.render(this.scene_scatter, camera, this.coordinate_target);
         this.renderer.autoClear = true;
 
         // now we render the weighted coordinate for the volumetric data
@@ -2011,8 +2040,9 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.autoClear = false;
             // we want to keep the colors and z-buffer as they are
             this.renderer.setRenderTarget(this.color_pass_target);
-            this.renderer.clear(false, false, false);
-            this.renderer.render(this.scene_volume, camera, this.coordinate_texture);
+            // threejs does not want to be called with all three false
+            // this.renderer.clear(false, false, false);
+            this.renderer.render(this.scene_volume, camera, this.coordinate_target);
             this.renderer.autoClear = true;
 
         }
@@ -2032,11 +2062,12 @@ class FigureView extends widgets.DOMWidgetView {
             Volume: this.color_pass_target,
             Back: this.volume_back_target,
             Geometry_back: this.geometry_depth_target,
-            Coordinate: this.coordinate_texture,
+            Coordinate: this.coordinate_target,
         }[this.model.get("show")];
         // TODO: remove any
         this.screen_material.uniforms.tex.value = (this.screen_texture as any).texture;
 
+        this.renderer.setRenderTarget(null);
         this.renderer.clear(true, true, true);
         this.renderer.render(this.screen_scene, this.screen_camera);
     }
@@ -2164,7 +2195,7 @@ class FigureView extends widgets.DOMWidgetView {
         this.geometry_depth_target.setSize(render_width, render_height);
         this.color_pass_target.setSize(render_width, render_height);
         this.screen_pass_target.setSize(render_width, render_height);
-        this.coordinate_texture.setSize(render_width, render_height);
+        this.coordinate_target.setSize(render_width, render_height);
 
         this.screen_texture = this.color_pass_target.texture;
         if (!skip_update) {

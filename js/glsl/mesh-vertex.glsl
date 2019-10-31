@@ -1,3 +1,9 @@
+#include <scales>
+
+#define SCALE_X(x) scale_transform_linear(x, vec2(-0.5, 0.5), domain_x)
+#define SCALE_Y(x) scale_transform_linear(x, vec2(-0.5, 0.5), domain_y)
+#define SCALE_Z(x) scale_transform_linear(x, vec2(-0.5, 0.5), domain_z)
+
  // for animation, all between 0 and 1
 uniform float animation_time_x;
 uniform float animation_time_y;
@@ -6,9 +12,9 @@ uniform float animation_time_u;
 uniform float animation_time_v;
 uniform float animation_time_color;
 
-uniform vec2 xlim;
-uniform vec2 ylim;
-uniform vec2 zlim;
+uniform vec2 domain_x;
+uniform vec2 domain_y;
+uniform vec2 domain_z;
 
 varying vec4 vertex_color;
 varying vec3 vertex_position;
@@ -29,22 +35,21 @@ attribute vec4 color_previous;
 
 
 void main(void) {
-    vec3 origin = vec3(xlim.x, ylim.x, zlim.x);
-    vec3 size_viewport = vec3(xlim.y, ylim.y, zlim.y) - origin;
+    vec3 animation_time = vec3(animation_time_x, animation_time_y, animation_time_z);
+    vec3 animated_position = mix(position_previous, position, animation_time);
 
-    vec3 pos = (mix(position_previous, position, vec3(animation_time_x, animation_time_y, animation_time_z))
-                - origin) / size_viewport - 0.5;
+    vec3 model_pos = vec3(SCALE_X(animated_position.x), SCALE_Y(animated_position.y), SCALE_Z(animated_position.z));
     gl_Position = projectionMatrix *
                 modelViewMatrix *
-                vec4(pos,1.0);
-    vec3 positionEye = ( modelViewMatrix * vec4( pos, 1.0 ) ).xyz;
+                vec4(model_pos, 1.0);
+    vec3 positionEye = ( modelViewMatrix * vec4(model_pos, 1.0 ) ).xyz;
     vertex_position = positionEye;
 #ifdef USE_TEXTURE
     vertex_uv = vec2(mix(u_previous, u, animation_time_u), mix(v_previous, v, animation_time_v));
 #endif
 
 #ifdef USE_RGB
-    vertex_color = vec4(pos + vec3(0.5, 0.5, 0.5), 1.0);
+    vertex_color = vec4(model_pos + vec3(0.5, 0.5, 0.5), 1.0);
 #else
     vertex_color = mix(color_previous, color, animation_time_color);
 #endif

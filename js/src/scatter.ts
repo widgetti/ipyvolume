@@ -1,6 +1,7 @@
 import * as widgets from "@jupyter-widgets/base";
 import { isArray, isNumber } from "lodash";
 import * as THREE from "three";
+import { patchMaterial } from "./scales";
 import * as serialize from "./serialize.js";
 import { semver_range } from "./utils";
 import * as values from "./values.js";
@@ -86,9 +87,9 @@ class ScatterView extends widgets.WidgetView {
         };
 
         this.uniforms = {
-                xlim : { type: "2f", value: [0., 1.] },
-                ylim : { type: "2f", value: [0., 1.] },
-                zlim : { type: "2f", value: [0., 1.] },
+                domain_x : { type: "2f", value: [0., 1.] },
+                domain_y : { type: "2f", value: [0., 1.] },
+                domain_z : { type: "2f", value: [0., 1.] },
                 animation_time_x : { type: "f", value: 1. },
                 animation_time_y : { type: "f", value: 1. },
                 animation_time_z : { type: "f", value: 1. },
@@ -167,9 +168,10 @@ class ScatterView extends widgets.WidgetView {
         this._update_materials();
         this.renderer.update();
     }
-    set_limits(limits) {
-        for (const key of Object.keys(limits)) {
-            this.material.uniforms[key].value = limits[key];
+    set_scales(scales) {
+        for (const key of Object.keys(scales)) {
+            this.material.uniforms[`domain_${key}`].value = scales[key].domain;
+            this.material_rgb.uniforms[`domain_${key}`].value = scales[key].domain;
         }
     }
     add_to_scene() {
@@ -286,13 +288,14 @@ class ScatterView extends widgets.WidgetView {
         this.line_material.visible = this.line_material.visible && this.model.get("visible");
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
         this.materials.forEach((material) => {
-            material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
-            material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
+            material.vertexShader = (require("raw-loader!../glsl/scatter-vertex.glsl") as any).default;
+            material.fragmentShader = (require("raw-loader!../glsl/scatter-fragment.glsl") as any).default;
             material.uniforms = {...material.uniforms, ...this.uniforms};
             material.depthWrite = true;
             material.transparant = true;
             material.depthTest = true;
             material.needsUpdate = true;
+            patchMaterial(material);
         });
         const geo = this.model.get("geo");
         const sprite = geo.endsWith("2d");

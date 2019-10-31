@@ -1,3 +1,4 @@
+import * as bqplot from "bqplot";
 import { expect } from "chai";
 import * as ipyvolume from "../";
 import {DummyManager} from "./dummy-manager";
@@ -8,9 +9,9 @@ const test_x = 300;
 const test_y = 300;
 const pixel_red = [255, 0, 0, 255];
 
-describe("mesh >", () => {
+describe("volume >", () => {
     beforeEach(async function() {
-        this.manager = new DummyManager({ipyvolume});
+        this.manager = new DummyManager({ipyvolume, bqplot});
     });
 
     it("canvas/png render check", async function() {
@@ -28,7 +29,7 @@ describe("mesh >", () => {
         const extent = [[0, 2], [0, 2], [0, 2]];
         const { volume, figure } = await create_figure_volume(this.manager, data, extent, tf);
         figure._real_update();
-        const pixel = await figure.debug_readPixel(test_x, test_y);
+        const pixel = await figure.readPixel(test_x, test_y);
         const [red, green, blue, alpha] = pixel;
         expect(red).to.be.eq(0);
         expect(green).to.gt(120); // this gives different results on travis/headless

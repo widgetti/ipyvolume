@@ -1,4 +1,5 @@
 import * as widgets from "@jupyter-widgets/base";
+import * as d3 from "d3";
 import { max } from "lodash";
 import * as THREE from "three";
 import { FigureView } from "./figure.js";
@@ -6,8 +7,8 @@ import * as serialize from "./serialize.js";
 import {semver_range} from "./utils";
 
 const shaders = {
-    box_fragment: require("raw-loader!../glsl/box-fragment.glsl"),
-    box_vertex: require("raw-loader!../glsl/box-vertex.glsl"),
+    box_fragment: (require("raw-loader!../glsl/box-fragment.glsl") as any).default,
+    box_vertex: (require("raw-loader!../glsl/box-vertex.glsl") as any).default,
 };
 
 export
@@ -225,23 +226,20 @@ class VolumeView extends widgets.WidgetView {
         this.renderer.update();
     }
 
-    set_limits(limits) {
-        const xlim = limits.xlim;
-        const ylim = limits.ylim;
-        const zlim = limits.zlim;
-        const dx = (xlim[1] - xlim[0]);
-        const dy = (ylim[1] - ylim[0]);
-        const dz = (zlim[1] - zlim[0]);
+    set_scales(scales) {
+        const sx = d3.scaleLinear().domain(scales.x.domain).range([0, 1]);
+        const sy = d3.scaleLinear().domain(scales.y.domain).range([0, 1]);
+        const sz = d3.scaleLinear().domain(scales.z.domain).range([0, 1]);
 
         const extent = this.model.get("extent");
 
        // normalized coordinates of the corners of the box
-        const x0n = (extent[0][0] - xlim[0]) / dx;
-        const x1n = (extent[0][1] - xlim[0]) / dx;
-        const y0n = (extent[1][0] - ylim[0]) / dy;
-        const y1n = (extent[1][1] - ylim[0]) / dy;
-        const z0n = (extent[2][0] - zlim[0]) / dz;
-        const z1n = (extent[2][1] - zlim[0]) / dz;
+        const x0n = sx(extent[0][0]);
+        const x1n = sx(extent[0][1]);
+        const y0n = sy(extent[1][0]);
+        const y1n = sy(extent[1][1]);
+        const z0n = sz(extent[2][0]);
+        const z1n = sz(extent[2][1]);
 
         // clipped coordinates
         const cx0 = Math.max(x0n,  0);

@@ -14,6 +14,7 @@ import pythreejs
 import traitlets
 from traitlets import Unicode, Integer
 from traittypes import Array
+from bqplot import scales
 
 import ipyvolume
 import ipyvolume as ipv  # we should not have ipyvolume under two names either
@@ -292,9 +293,37 @@ class Figure(ipywebrtc.MediaStream):
 
     show = traitlets.Unicode("Volume").tag(sync=True)  # for debugging
 
-    xlim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
-    ylim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
-    zlim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+    @property
+    def xlim(self):
+        return self.scales['x'].min, self.scales['x'].max
+
+    @xlim.setter
+    def xlim(self, value):
+        self.scales['x'].min, self.scales['x'].max = value
+
+    @property
+    def ylim(self):
+        return self.scales['y'].min, self.scales['y'].max
+
+    @ylim.setter
+    def ylim(self, value):
+        self.scales['y'].min, self.scales['y'].max = value
+
+    @property
+    def zlim(self):
+        return self.scales['z'].min, self.scales['z'].max
+
+    @zlim.setter
+    def zlim(self, value):
+        self.scales['z'].min, self.scales['z'].max = value
+
+
+    scales = traitlets.Dict(trait=traitlets.Instance(scales.Scale)).tag(sync=True, **widgets.widget_serialization)
+    @traitlets.default('scales')
+    def _default_scene(self):
+        return dict(x=scales.LinearScale(min=0, max=1), y=scales.LinearScale(min=0, max=1), z=scales.LinearScale(min=0, max=1))
+
+
 
     matrix_projection = traitlets.List(
         traitlets.CFloat(), default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16

@@ -1,3 +1,4 @@
+import * as bqplot from "bqplot";
 import { expect } from "chai";
 import * as ipyvolume from "../";
 import {DummyManager} from "./dummy-manager";
@@ -10,7 +11,7 @@ const pixel_red = [255, 0, 0, 255];
 
 describe("mesh >", () => {
     beforeEach(async function() {
-        this.manager = new DummyManager({ipyvolume});
+        this.manager = new DummyManager({ipyvolume, bqplot});
     });
 
     it("canvas/png render check", async function() {
@@ -19,7 +20,7 @@ describe("mesh >", () => {
         const z = data_float32([0.5, 0.5, 0.5, 0.5]);
         const { mesh, figure } = await create_figure_mesh_triangles(this.manager, [x], [y], [z], [data_uint32([0, 2, 3, 0, 3, 1])]);
         figure._real_update();
-        const pixel = await figure.debug_readPixel(test_x, test_y);
+        const pixel = await figure.readPixel(test_x, test_y);
         const [red, green, blue, alpha] = pixel;
         expect(red).to.be.gt(150);
         expect(green).to.eq(0);

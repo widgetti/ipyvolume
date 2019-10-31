@@ -1,8 +1,15 @@
+import { MeshModel, ScatterModel, VolumeModel } from "..";
+
 // some helper functions to quickly create widgets
 
 export
 async function create_model_ipyvolume(manager, name: string, id: string, args: object) {
     return create_model(manager, "ipyvolume", `${name}Model`, `${name}View`, id, args);
+}
+
+export
+async function create_model_bqplot(manager, name: string, id: string, args: object) {
+    return create_model(manager, "bqplot", `${name}Model`, name, id, args);
 }
 
 export
@@ -17,7 +24,12 @@ async function create_model(manager, module: string, model: string, view: string
             model_id: id,
     }, args );
     return model_widget;
+}
 
+export
+async function create_linear_scale(manager, scale_name, min, max) {
+    return await create_model_bqplot(manager, "LinearScale", scale_name, {
+        min, max, _view_module_version: "*", _view_module: "bqplot"});
 }
 
 export
@@ -35,24 +47,38 @@ async function create_widget(manager, name: string, id: string, args: object) {
 }
 
 export
-async function create_figure_scatter(manager, x, y, z) {
+async function create_figure(manager, markModel) {
     const layout = await create_model(manager, "@jupyter-widgets/base", "LayoutModel", "LayoutView", "layout_figure1", {_dom_classes: "", width: "400px", height: "500px"});
 
-    const scatterModel = await create_model_ipyvolume(manager, "Scatter", "scatter1", {
-        x, y, z, _view_module_version: "*", _view_module: "ipyvolume"});
     let figureModel;
+    const scale_x = await create_linear_scale(manager, "scale_x", 0, 1);
+    const scale_y = await create_linear_scale(manager, "scale_y", 0, 1);
+    const scale_z = await create_linear_scale(manager, "scale_z", 0, 1);
+    const scales = {x: "IPY_MODEL_scale_x", y: "IPY_MODEL_scale_y", z: "IPY_MODEL_scale_z"};
     try {
         figureModel = await create_model_ipyvolume(manager, "Figure", "figure1", {
             layout: "IPY_MODEL_layout_figure1",
-            scatters: ["IPY_MODEL_scatter1"],
-            meshes: [],
-            volumes: [],
+            scatters: markModel instanceof ScatterModel ? [`IPY_MODEL_${markModel.model_id}`] : [],
+            meshes: markModel instanceof MeshModel ? [`IPY_MODEL_${markModel.model_id}`] : [],
+            volumes: markModel instanceof VolumeModel ? [`IPY_MODEL_${markModel.model_id}`] : [],
             animation: 0,
+            scales,
         });
     } catch (e) {
         console.error("error", e);
     }
     const figure  = await create_view(manager, figureModel);
+    await manager.display_view(undefined, figure);
+    return figure;
+}
+
+export
+async function create_figure_scatter(manager, x, y, z) {
+    const layout = await create_model(manager, "@jupyter-widgets/base", "LayoutModel", "LayoutView", "layout_figure1", {_dom_classes: "", width: "400px", height: "500px"});
+
+    const scatterModel = await create_model_ipyvolume(manager, "Scatter", "scatter1", {
+        x, y, z, _view_module_version: "*", _view_module: "ipyvolume"});
+    const figure  = await create_figure(manager, scatterModel);
     await manager.display_view(undefined, figure);
     return {figure, scatter: await figure.scatter_views[scatterModel.cid]};
 }
@@ -63,19 +89,7 @@ async function create_figure_mesh_triangles(manager, x, y, z, triangles) {
 
     const meshModel = await create_model_ipyvolume(manager, "Mesh", "mesh1", {
         x, y, z, triangles, color: "red", _view_module_version: "*", _view_module: "ipyvolume"});
-    let figureModel;
-    try {
-        figureModel = await create_model_ipyvolume(manager, "Figure", "figure1", {
-            layout: "IPY_MODEL_layout_figure1",
-            scatters: [],
-            meshes: ["IPY_MODEL_mesh1"],
-            volumes: [],
-            animation: 0,
-        });
-    } catch (e) {
-        console.error("error", e);
-    }
-    const figure  = await create_view(manager, figureModel);
+    const figure  = await create_figure(manager, meshModel);
     await manager.display_view(undefined, figure);
     return {figure, mesh: await figure.mesh_views[meshModel.cid]};
 }
@@ -104,19 +118,7 @@ async function create_figure_volume(manager, data, extent, transfer_function) {
 
     const volumeModel = await create_model_ipyvolume(manager, "Volume", "volume1", {
         data, extent, tf: "IPY_MODEL_" + String(transfer_function.model_id), _view_module_version: "*", _view_module: "ipyvolume"});
-    let figureModel;
-    try {
-        figureModel = await create_model_ipyvolume(manager, "Figure", "figure1", {
-            layout: "IPY_MODEL_layout_figure1",
-            scatters: [],
-            meshes: [],
-            volumes: ["IPY_MODEL_volume1"],
-            animation: 0,
-        });
-    } catch (e) {
-        console.error("error", e);
-    }
-    const figure = await create_view(manager, figureModel);
+    const figure  = await create_figure(manager, volumeModel);
     await manager.display_view(undefined, figure);
     return {figure, volume: await figure.mesh_views[volumeModel.cid]};
 }

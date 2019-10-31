@@ -2,6 +2,7 @@ import * as widgets from "@jupyter-widgets/base";
 import { isArray, isNumber } from "lodash";
 import * as THREE from "three";
 import { FigureView } from "./figure";
+import { patchMaterial } from "./scales";
 import * as serialize from "./serialize.js";
 import { semver_range } from "./utils";
 import * as values from "./values.js";
@@ -41,9 +42,9 @@ class MeshView extends widgets.WidgetView {
         }
 
         this.uniforms = {
-                xlim : { type: "2f", value: [0., 1.] },
-                ylim : { type: "2f", value: [0., 1.] },
-                zlim : { type: "2f", value: [0., 1.] },
+                domain_x: { type: "2f", value: [0., 1.] },
+                domain_y: { type: "2f", value: [0., 1.] },
+                domain_z: { type: "2f", value: [0., 1.] },
                 // tslint:disable-next-line: object-literal-sort-keys
                 animation_time_x : { type: "f", value: 1. },
                 animation_time_y : { type: "f", value: 1. },
@@ -131,9 +132,10 @@ class MeshView extends widgets.WidgetView {
         }
     }
 
-    set_limits(limits) {
-        for (const key of Object.keys(limits)) {
-            this.material.uniforms[key].value = limits[key];
+    set_scales(scales) {
+        for (const key of Object.keys(scales)) {
+            this.material.uniforms[`domain_${key}`].value = scales[key].domain;
+            this.material_rgb.uniforms[`domain_${key}`].value = scales[key].domain;
         }
     }
 
@@ -276,12 +278,13 @@ class MeshView extends widgets.WidgetView {
         this.line_material.visible = this.line_material.visible && this.model.get("visible");
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
         this.materials.forEach((material) => {
-            material.vertexShader = require("raw-loader!../glsl/mesh-vertex.glsl");
-            material.fragmentShader = require("raw-loader!../glsl/mesh-fragment.glsl");
+            material.vertexShader = (require("raw-loader!../glsl/mesh-vertex.glsl") as any).default;
+            material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment.glsl") as any).default;
             material.uniforms = this.uniforms;
             material.depthWrite = true;
             material.transparant = true;
             material.depthTest = true;
+            patchMaterial(material);
         });
         const texture = this.model.get("texture");
         if (texture && this.textures) {
