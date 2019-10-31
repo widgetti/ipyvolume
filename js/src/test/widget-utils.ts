@@ -33,6 +33,12 @@ async function create_linear_scale(manager, scale_name, min, max) {
 }
 
 export
+async function create_log_scale(manager, scale_name, min, max) {
+    return await create_model_bqplot(manager, "LogScale", scale_name, {
+        min, max, _view_module_version: "*", _view_module: "bqplot"});
+}
+
+export
 async function create_view(manager, model, options = {}) {
     const view = await manager.create_view(model, options);
     return view;
@@ -52,7 +58,8 @@ async function create_figure(manager, markModel) {
 
     let figureModel;
     const scale_x = await create_linear_scale(manager, "scale_x", 0, 1);
-    const scale_y = await create_linear_scale(manager, "scale_y", 0, 1);
+    const scale_y = await create_log_scale(manager, "scale_y", 0.1, 1000);
+    // const scale_y = await create_linear_scale(manager, "scale_y", 0, 1);
     const scale_z = await create_linear_scale(manager, "scale_z", 0, 1);
     const scales = {x: "IPY_MODEL_scale_x", y: "IPY_MODEL_scale_y", z: "IPY_MODEL_scale_z"};
     try {

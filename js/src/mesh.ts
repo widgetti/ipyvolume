@@ -1,8 +1,8 @@
 import * as widgets from "@jupyter-widgets/base";
-import { isArray, isNumber } from "lodash";
+import { isArray, isEqual, isNumber } from "lodash";
 import * as THREE from "three";
 import { FigureView } from "./figure";
-import { patchMaterial } from "./scales";
+import { patchMaterial, scaleTypeMap } from "./scales";
 import * as serialize from "./serialize.js";
 import { semver_range } from "./utils";
 import * as values from "./values.js";
@@ -23,6 +23,7 @@ class MeshView extends widgets.WidgetView {
     line_material: any;
     line_material_rgb: any;
     materials: any;
+    scale_defines: {};
 
     texture_loader: any;
     textures: any;
@@ -133,9 +134,15 @@ class MeshView extends widgets.WidgetView {
     }
 
     set_scales(scales) {
+        const new_scale_defines = {};
         for (const key of Object.keys(scales)) {
             this.material.uniforms[`domain_${key}`].value = scales[key].domain;
             this.material_rgb.uniforms[`domain_${key}`].value = scales[key].domain;
+            new_scale_defines[`SCALE_TYPE_${key}`] = scaleTypeMap[scales[key].type];
+        }
+        if (!isEqual(this.scale_defines, new_scale_defines) ) {
+            this.scale_defines = new_scale_defines;
+            this._update_materials();
         }
     }
 
@@ -268,9 +275,10 @@ class MeshView extends widgets.WidgetView {
         if (this.model.get("line_material")) {
             this.line_material_rgb.copy(this.model.get("line_material").obj);
         }
-        this.material_rgb.defines = {USE_RGB: true};
-        this.line_material.defines = {AS_LINE: true};
-        this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true};
+        this.material.defines = {...this.scale_defines};
+        this.material_rgb.defines = {USE_RGB: true, ...this.scale_defines};
+        this.line_material.defines = {AS_LINE: true, ...this.scale_defines};
+        this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true, ...this.scale_defines};
         this.material.extensions = {derivatives: true};
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");

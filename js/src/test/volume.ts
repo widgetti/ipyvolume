@@ -26,7 +26,7 @@ describe("volume >", () => {
                 columns: 2,
                 slices: 2,
             };
-        const extent = [[0, 2], [0, 2], [0, 2]];
+        const extent = [[0, 2], [0.1, 1000], [0, 2]];
         const { volume, figure } = await create_figure_volume(this.manager, data, extent, tf);
         figure._real_update();
         const pixel = await figure.readPixel(test_x, test_y);

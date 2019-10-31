@@ -1,7 +1,7 @@
 import * as widgets from "@jupyter-widgets/base";
-import { isArray, isNumber } from "lodash";
+import { isArray, isEqual, isNumber } from "lodash";
 import * as THREE from "three";
-import { patchMaterial } from "./scales";
+import { patchMaterial, scaleTypeMap } from "./scales";
 import * as serialize from "./serialize.js";
 import { semver_range } from "./utils";
 import * as values from "./values.js";
@@ -13,6 +13,7 @@ class ScatterView extends widgets.WidgetView {
     renderer: any;
     previous_values: {color?: any, size?: any, sequence_index?: any, selected?: any};
     attributes_changed: {color?: any, size?: any, sequence_index?: any, selected?: any};
+    scale_defines: {};
     texture_loader: THREE.TextureLoader;
     textures: any;
     uniforms: any;
@@ -169,9 +170,15 @@ class ScatterView extends widgets.WidgetView {
         this.renderer.update();
     }
     set_scales(scales) {
+        const new_scale_defines = {};
         for (const key of Object.keys(scales)) {
             this.material.uniforms[`domain_${key}`].value = scales[key].domain;
             this.material_rgb.uniforms[`domain_${key}`].value = scales[key].domain;
+            new_scale_defines[`SCALE_TYPE_${key}`] = scaleTypeMap[scales[key].type];
+        }
+        if (!isEqual(this.scale_defines, new_scale_defines) ) {
+            this.scale_defines = new_scale_defines;
+            this._update_materials();
         }
     }
     add_to_scene() {
@@ -277,10 +284,11 @@ class ScatterView extends widgets.WidgetView {
             // not present on .copy.. bug?
             this.line_material_rgb.linewidth = this.line_material.linewidth = this.model.get("line_material").obj.linewidth;
         }
+        this.material.defines = {...this.scale_defines};
         this.material.extensions = {derivatives: true};
-        this.material_rgb.defines = {USE_RGB: true};
+        this.material_rgb.defines = {USE_RGB: true, ...this.scale_defines};
         this.material_rgb.extensions = {derivatives: true};
-        this.line_material.defines = {AS_LINE: true};
+        this.line_material.defines = {AS_LINE: true, ...this.scale_defines};
         this.line_material_rgb.defines = {USE_RGB: true, AS_LINE: true};
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");

@@ -16,7 +16,7 @@ describe("mesh >", () => {
 
     it("canvas/png render check", async function() {
         const x = data_float32([0.0, 0, 1., 1.]);
-        const y = data_float32([0.0, 1.0, 0.0, 1.0]);
+        const y = data_float32([0.1, 1000.0, 0.1, 1000.0]);
         const z = data_float32([0.5, 0.5, 0.5, 0.5]);
         const { mesh, figure } = await create_figure_mesh_triangles(this.manager, [x], [y], [z], [data_uint32([0, 2, 3, 0, 3, 1])]);
         figure._real_update();

@@ -1,9 +1,9 @@
 #include <fog_pars_vertex>
-#include <scales>
 
-#define SCALE_X(x) scale_transform_linear(x, vec2(-0.5, 0.5), domain_x)
-#define SCALE_Y(x) scale_transform_linear(x, vec2(-0.5, 0.5), domain_y)
-#define SCALE_Z(x) scale_transform_linear(x, vec2(-0.5, 0.5), domain_z)
+#define USE_SCALE_X
+#define USE_SCALE_Y
+#define USE_SCALE_Z
+#include <scales>
 
  // for animation, all between 0 and 1
 uniform float animation_time_x;

@@ -31,6 +31,7 @@ import "./three/OrbitControls.js";
 import "./three/StereoEffect.js";
 import "./three/THREEx.FullScreen.js";
 import "./three/TrackballControls.js";
+import { createD3Scale } from "./scales";
 
 const shaders = {
     screen_fragment: (require("raw-loader!../glsl/screen-fragment.glsl") as any).default,
@@ -1413,7 +1414,7 @@ class FigureView extends widgets.DOMWidgetView {
         d.object_label = label;
         d.object = axis;
         const scale = this.model.get("scales")[d.name];
-        d.scale = d3.scaleLinear().domain(scale.domain).range([-0.5, 0.5]);
+        d.scale = createD3Scale(scale).range([-0.5, 0.5]);
         d.ticks = null;
         this._d3_update_axis(node, d, i);
     }
@@ -1423,7 +1424,7 @@ class FigureView extends widgets.DOMWidgetView {
         d.object_label.fillStyle = d.fillStyle;
         const n = d.name; // x, y or z
         const scale = this.model.get("scales")[d.name];
-        d.scale = d3.scaleLinear().domain(scale.domain).range([-0.5, 0.5]);
+        d.scale = createD3Scale(scale).range([-0.5, 0.5]);
         d.object_label.fillStyle = this.get_style("axes." + n + ".label.color axes." + n + ".color axes.label.color axes.color");
         d.object_label.visible = this.get_style("axes." + n + ".label.visible axes." + n + ".visible axes.label.visible axes.visible");
     }
@@ -1435,6 +1436,9 @@ class FigureView extends widgets.DOMWidgetView {
 
         const tick_format = scale.tickFormat(this.ticks, ".1f");
         const tick_text = tick_format(d.value);
+        if (!tick_text) {
+            return;
+        }
 
         // TODO: puzzled by the align not working as expected..
         const aligns = {
@@ -1473,11 +1477,13 @@ class FigureView extends widgets.DOMWidgetView {
         const scale = (parent_data as any).scale;
         const tick_format = scale.tickFormat(this.ticks, ".1f");
         const tick_text = tick_format(d.value);
-        d.object_ticklabel.text = tick_text;
-        d.object_ticklabel.position.x = scale(d.value);
-        const n = (parent_data as any).name; // x, y or z
-        d.object_ticklabel.fillStyle = this.get_style("axes." + n + ".ticklabel.color axes.ticklabel.color axes." + n + ".color axes.color");
-        d.object_ticklabel.visible = this.get_style("axes." + n + ".ticklabel.visible axes." + n + ".visible axes.visible");
+        if (d.object_ticklabel) {
+            d.object_ticklabel.text = tick_text;
+            d.object_ticklabel.position.x = scale(d.value);
+            const n = (parent_data as any).name; // x, y or z
+            d.object_ticklabel.fillStyle = this.get_style("axes." + n + ".ticklabel.color axes.ticklabel.color axes." + n + ".color axes.color");
+            d.object_ticklabel.visible = this.get_style("axes." + n + ".ticklabel.visible axes." + n + ".visible axes.visible");
+        }
     }
 
     _d3_remove_axis_tick(node, d, i) {

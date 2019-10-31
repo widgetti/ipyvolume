@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { FigureView } from "./figure.js";
 import * as serialize from "./serialize.js";
 import {semver_range} from "./utils";
+import { createD3Scale } from "./scales.js";
 
 const shaders = {
     box_fragment: (require("raw-loader!../glsl/box-fragment.glsl") as any).default,
@@ -227,9 +228,9 @@ class VolumeView extends widgets.WidgetView {
     }
 
     set_scales(scales) {
-        const sx = d3.scaleLinear().domain(scales.x.domain).range([0, 1]);
-        const sy = d3.scaleLinear().domain(scales.y.domain).range([0, 1]);
-        const sz = d3.scaleLinear().domain(scales.z.domain).range([0, 1]);
+        const sx = createD3Scale(scales.x).range([0, 1]);
+        const sy = createD3Scale(scales.y).range([0, 1]);
+        const sz = createD3Scale(scales.z).range([0, 1]);
 
         const extent = this.model.get("extent");
 
