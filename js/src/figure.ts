@@ -239,10 +239,11 @@ class FigureView extends widgets.DOMWidgetView {
     last_tick_selection: d3.Selection<d3.BaseType, unknown, d3.BaseType, unknown>;
     model: FigureModel;
     control_external: any = null;
-    // helper methods for testing/debugging
+
     readPixel(x, y) {
         return this.readPixelFrom(this.screen_texture, x, y);
     }
+
     readPixelFrom(target: RenderTarget, x, y) {
         const buffer = new Uint8Array(4);
         const height = this.renderer.domElement.clientHeight;
@@ -1063,16 +1064,13 @@ class FigureView extends widgets.DOMWidgetView {
         }
         amount *= 10;
         const factor = Math.pow(10, amount);
-        const buffer = new Uint8Array(4);
         const height = this.renderer.domElement.clientHeight;
         if (!this.last_zoom_coordinate) {
-            const pixel_ratio = this.model.get("pixel_ratio") || window.devicePixelRatio;
-            this.renderer.readRenderTargetPixels(this.coordinate_target, mouseX * pixel_ratio,
-                (height - mouseY) * pixel_ratio, 1, 1, buffer);
+            const [red, green, blue, alpha] = this.readPixelFrom(this.coordinate_target, mouseX, mouseY);
 
-            if (buffer[3] > 1) {
+            if (alpha > 1) {
                 // at least something got drawn
-                const center = new THREE.Vector3(buffer[0], buffer[1], buffer[2]);
+                const center = new THREE.Vector3(red, green, blue);
                 center.multiplyScalar(1. / 255.); // normalize
                 this.last_zoom_coordinate = center;
             }
@@ -1136,11 +1134,9 @@ class FigureView extends widgets.DOMWidgetView {
             z: scales.z.domain.slice(),
         };
         const height = this.renderer.domElement.clientHeight;
-        const buffer = new Uint8Array(4);
-        const pixel_ratio = this.model.get("pixel_ratio") || window.devicePixelRatio;
-        this.renderer.readRenderTargetPixels(this.coordinate_target, mouseX * pixel_ratio, (height - mouseY) * pixel_ratio, 1, 1, buffer);
-        if (buffer[3] > 1) { // at least something got drawn
-            const center = new THREE.Vector3(buffer[0], buffer[1], buffer[2]);
+        const [red, green, blue, alpha] = this.readPixelFrom(this.coordinate_target, mouseX, mouseY);
+        if (alpha > 1) { // at least something got drawn
+            const center = new THREE.Vector3(red, green, blue);
             center.multiplyScalar(1 / 255.); // normalize
             this.last_pan_coordinate = center;
         }
