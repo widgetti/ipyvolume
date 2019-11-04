@@ -11,7 +11,7 @@ import { copy_image_to_clipboard, download_image, select_text} from "./utils";
 import { semver_range} from "./utils";
 import { VolumeModel, VolumeView } from "./volume.js";
 
-import { range } from "lodash";
+import { mapValues, range } from "lodash";
 import { selectors } from "./selectors";
 import { Transition } from "./transition";
 
@@ -25,13 +25,13 @@ const axis_names = ["x", "y", "z"];
 (window as any).THREE = THREE;
 
 import { RenderTarget } from "three";
+import { createD3Scale } from "./scales";
 import "./three/CombinedCamera.js";
 import "./three/DeviceOrientationControls.js";
 import "./three/OrbitControls.js";
 import "./three/StereoEffect.js";
 import "./three/THREEx.FullScreen.js";
 import "./three/TrackballControls.js";
-import { createD3Scale } from "./scales";
 
 const shaders = {
     screen_fragment: (require("raw-loader!../glsl/screen-fragment.glsl") as any).default,
@@ -1090,17 +1090,18 @@ class FigureView extends widgets.DOMWidgetView {
 
             // and rescale to x/y/z lim
             const scales = this.model.get("scales");
-            const p1 = new THREE.Vector3(scales.x.domain[0], scales.y.domain[0], scales.z.domain[0]);
-            const p2 = new THREE.Vector3(scales.x.domain[1], scales.y.domain[1], scales.z.domain[1]);
-            const scale = p2.clone().sub(p1);
-            const new_p1 = np1.clone().multiply(scale).add(p1);
-            const new_p2 = np2.clone().multiply(scale).add(p1);
-            scales.x.set("min", new_p1.x);
-            scales.x.set("max", new_p2.x);
-            scales.y.set("min", new_p1.y);
-            scales.y.set("max", new_p2.y);
-            scales.z.set("min", new_p1.z);
-            scales.z.set("max", new_p2.z);
+            const scales_d3 = mapValues(scales, createD3Scale);
+            scales_d3.x.range([0, 1]);
+            scales_d3.y.range([0, 1]);
+            scales_d3.z.range([0, 1]);
+
+            scales.x.set("min", scales_d3.x.invert(np1.x));
+            scales.x.set("max", scales_d3.x.invert(np2.x));
+            scales.y.set("min", scales_d3.y.invert(np1.y));
+            scales.y.set("max", scales_d3.y.invert(np2.y));
+            scales.z.set("min", scales_d3.z.invert(np1.z));
+            scales.z.set("max", scales_d3.z.invert(np2.z));
+
             scales.x.save_changes();
             scales.y.save_changes();
             scales.z.save_changes();
@@ -1193,20 +1194,32 @@ class FigureView extends widgets.DOMWidgetView {
         const right = (pixels_right / canvas.clientWidth) * 2;
         const up = (pixels_up / canvas.clientHeight) * 2;
         const P = this.camera.projectionMatrix;
-        const W = this._get_view_matrix();
+        const W = this.camera.matrixWorldInverse;
         // M goes from world to screen
         const M = P.clone().multiply(W);
         const Mi = M.clone().getInverse(M);
+        const Pi = P.clone().getInverse(P);
 
         const xlim = this.mouse_down_domain.x;
         const ylim = this.mouse_down_domain.y;
         const zlim = this.mouse_down_domain.z;
-        const l1 = new THREE.Vector3(xlim[0], ylim[0], zlim[0]);
-        const l2 = new THREE.Vector3(xlim[1], ylim[1], zlim[1]);
-        const scale = l2.clone().sub(l1);
+        const scales = this.model.get("scales");
+
+        const scales_d3 = mapValues(scales, createD3Scale);
+        scales_d3.x.domain(this.mouse_down_domain.x).range([0, 1]);
+        scales_d3.y.domain(this.mouse_down_domain.y).range([0, 1]);
+        scales_d3.z.domain(this.mouse_down_domain.z).range([0, 1]);
+
+        // start with normalized coordinate
+        let n1 = this.last_pan_coordinate.clone();
+        // project to screen coordinates
+        const sn1 = n1.clone().applyMatrix4(M);
+        const sn2 = sn1.clone();
+        sn2.x += right;
+        sn2.y += up;
 
         // start pos in world cooordinates
-        const p1 = this.last_pan_coordinate.clone().multiply(scale).add(l1);
+        const p1 = this.last_pan_coordinate.clone();
         // project to screen coordinates
         const sp1 = p1.clone().applyMatrix4(M);
         // move p2 in screen coordinates
@@ -1215,19 +1228,22 @@ class FigureView extends widgets.DOMWidgetView {
         sp2.y += up;
 
         // move them back to world coordinates
-        const np1 = sp1.clone().applyMatrix4(Mi);
-        const np2 = sp2.clone().applyMatrix4(Mi);
-        const delta = np2.clone().sub(np1);
+        n1 = sn1.clone().applyMatrix4(Mi);
+        const n2 = sn2.clone().applyMatrix4(Mi);
+        const delta = n2.clone().sub(n1);
+
+        const l1 = new THREE.Vector3(0, 0, 0);
+        const l2 = new THREE.Vector3(1, 1, 1);
+        const scale = l2.clone().sub(l1);
 
         l1.sub(delta);
         l2.sub(delta);
-        const scales = this.model.get("scales");
-        scales.x.set("min", l1.x);
-        scales.x.set("max", l2.x);
-        scales.y.set("min", l1.y);
-        scales.y.set("max", l2.y);
-        scales.z.set("min", l1.z);
-        scales.z.set("max", l2.z);
+        scales.x.set("min", scales_d3.x.invert(l1.x));
+        scales.x.set("max", scales_d3.x.invert(l2.x));
+        scales.y.set("min", scales_d3.y.invert(l1.y));
+        scales.y.set("max", scales_d3.y.invert(l2.y));
+        scales.z.set("min", scales_d3.z.invert(l1.z));
+        scales.z.set("max", scales_d3.z.invert(l2.z));
         scales.x.save_changes();
         scales.y.save_changes();
         scales.z.save_changes();
@@ -1436,9 +1452,6 @@ class FigureView extends widgets.DOMWidgetView {
 
         const tick_format = scale.tickFormat(this.ticks, ".1f");
         const tick_text = tick_format(d.value);
-        if (!tick_text) {
-            return;
-        }
 
         // TODO: puzzled by the align not working as expected..
         const aligns = {
@@ -1465,7 +1478,9 @@ class FigureView extends widgets.DOMWidgetView {
         const n = (parent_data as any).name; // x, y or z
 
         sprite.fillStyle = this.get_style("axes." + n + ".ticklabel.color axes.ticklabel.color axes." + n + ".color axes.color");
-        (parent_data as any).object.add(sprite);
+        if (tick_text) {
+            (parent_data as any).object.add(sprite);
+        }
         d.object_ticklabel = sprite;
         this._d3_update_axis_tick(node, d, i);
         return sprite;
@@ -1477,17 +1492,25 @@ class FigureView extends widgets.DOMWidgetView {
         const scale = (parent_data as any).scale;
         const tick_format = scale.tickFormat(this.ticks, ".1f");
         const tick_text = tick_format(d.value);
-        if (d.object_ticklabel) {
-            d.object_ticklabel.text = tick_text;
-            d.object_ticklabel.position.x = scale(d.value);
-            const n = (parent_data as any).name; // x, y or z
-            d.object_ticklabel.fillStyle = this.get_style("axes." + n + ".ticklabel.color axes.ticklabel.color axes." + n + ".color axes.color");
-            d.object_ticklabel.visible = this.get_style("axes." + n + ".ticklabel.visible axes." + n + ".visible axes.visible");
+        // if we have text, but didn't have it before
+        if (tick_text && !d.object_ticklabel.text) {
+            (parent_data as any).object.add(d.object_ticklabel);
         }
+        // if we don't have text, but had it before
+        if (!tick_text && d.object_ticklabel.text) {
+            (parent_data as any).object.remove(d.object_ticklabel);
+        }
+        d.object_ticklabel.text = tick_text;
+        d.object_ticklabel.position.x = scale(d.value);
+        const n = (parent_data as any).name; // x, y or z
+        d.object_ticklabel.fillStyle = this.get_style("axes." + n + ".ticklabel.color axes.ticklabel.color axes." + n + ".color axes.color");
+        d.object_ticklabel.visible = this.get_style("axes." + n + ".ticklabel.visible axes." + n + ".visible axes.visible");
     }
 
     _d3_remove_axis_tick(node, d, i) {
-        d.object_ticklabel.parent.remove(d.object_ticklabel);
+        if (d.object_ticklabel.text) {
+            d.object_ticklabel.parent.remove(d.object_ticklabel);
+        }
     }
 
     update_scatters() {
