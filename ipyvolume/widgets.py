@@ -36,6 +36,17 @@ logger = logging.getLogger("ipyvolume")
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
 
 
+def _typefix(value):
+    if isinstance(value, (list, tuple)):
+        return [_typefix(k) for k in value]
+    else:
+        try:
+            value = value.item()
+        except:
+            pass
+        return value
+
+
 @widgets.register
 class Mesh(widgets.Widget):
     _view_name = Unicode('MeshView').tag(sync=True)
@@ -299,7 +310,7 @@ class Figure(ipywebrtc.MediaStream):
 
     @xlim.setter
     def xlim(self, value):
-        self.scales['x'].min, self.scales['x'].max = value
+        self.scales['x'].min, self.scales['x'].max = _typefix(value)
 
     @property
     def ylim(self):
@@ -307,7 +318,7 @@ class Figure(ipywebrtc.MediaStream):
 
     @ylim.setter
     def ylim(self, value):
-        self.scales['y'].min, self.scales['y'].max = value
+        self.scales['y'].min, self.scales['y'].max = _typefix(value)
 
     @property
     def zlim(self):
@@ -315,7 +326,7 @@ class Figure(ipywebrtc.MediaStream):
 
     @zlim.setter
     def zlim(self, value):
-        self.scales['z'].min, self.scales['z'].max = value
+        self.scales['z'].min, self.scales['z'].max = _typefix(value)
 
 
     scales = traitlets.Dict(trait=traitlets.Instance(scales.Scale)).tag(sync=True, **widgets.widget_serialization)
