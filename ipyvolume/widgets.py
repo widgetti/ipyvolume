@@ -328,13 +328,11 @@ class Figure(ipywebrtc.MediaStream):
     def zlim(self, value):
         self.scales['z'].min, self.scales['z'].max = _typefix(value)
 
-
     scales = traitlets.Dict(trait=traitlets.Instance(scales.Scale)).tag(sync=True, **widgets.widget_serialization)
+
     @traitlets.default('scales')
-    def _default_scene(self):
+    def _default_scale(self):
         return dict(x=scales.LinearScale(min=0, max=1), y=scales.LinearScale(min=0, max=1), z=scales.LinearScale(min=0, max=1))
-
-
 
     matrix_projection = traitlets.List(
         traitlets.CFloat(), default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16
