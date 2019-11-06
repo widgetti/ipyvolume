@@ -1,7 +1,7 @@
 import * as widgets from "@jupyter-widgets/base";
 import { isArray, isEqual, isNumber } from "lodash";
 import * as THREE from "three";
-import { patchMaterial, scaleTypeMap } from "./scales";
+import { createColormap, patchMaterial, scaleTypeMap } from "./scales";
 import * as serialize from "./serialize.js";
 import { semver_range } from "./utils";
 import * as values from "./values.js";
@@ -91,6 +91,7 @@ class ScatterView extends widgets.WidgetView {
                 domain_x : { type: "2f", value: [0., 1.] },
                 domain_y : { type: "2f", value: [0., 1.] },
                 domain_z : { type: "2f", value: [0., 1.] },
+                domain_color : { type: "2f", value: [0., 1.] },
                 animation_time_x : { type: "f", value: 1. },
                 animation_time_y : { type: "f", value: 1. },
                 animation_time_z : { type: "f", value: 1. },
@@ -101,6 +102,7 @@ class ScatterView extends widgets.WidgetView {
                 animation_time_color : { type: "f", value: 1. },
                 texture: { type: "t", value: null },
                 texture_previous: { type: "t", value: null },
+                colormap: {type: "t", value: null},
             };
         const get_material = (name)  => {
             if (this.model.get(name)) {
@@ -127,12 +129,13 @@ class ScatterView extends widgets.WidgetView {
                 this.renderer.update();
             });
         }
-
+        this._update_color_scale();
         this.create_mesh();
         this.add_to_scene();
         this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:selected change:vx change:vy change:vz",
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
+        this.model.on("change:color_scale", this._update_color_scale, this);
         this.model.on("change:texture", this._load_textures, this);
         this.model.on("change:visible", this.update_visibility, this);
         this.model.on("change:geo", () => {
@@ -269,7 +272,58 @@ class ScatterView extends widgets.WidgetView {
     get_previous_vec3(name, index, default_value) {
         return this._get_value_vec3(this.previous_values[name] || this.model.get(name), index, default_value);
     }
-    _update_materials() {
+    _update_color_scale() {
+        const color_scale_previous = this.model.previous("color_scale");
+        const color_scale = this.model.get("color_scale");
+        if (color_scale_previous) {
+            color_scale_previous.off("domain_changed", this._update_color_scale_domain);
+            color_scale_previous.off("colors_changed", this._update_color_scale_texture);
+        }
+        if ((!color_scale_previous && color_scale) || (color_scale_previous && !color_scale_previous)) {
+            // this will toggle a preprocessor variable
+            this._update_materials();
+        }
+        if (color_scale) {
+            color_scale.on("domain_changed", this._update_color_scale_domain, this);
+            color_scale.on("colors_changed", this._update_color_scale_texture, this);
+            this._update_color_scale_texture();
+            this._update_color_scale_domain();
+            this.renderer.update();
+        }
+    }
+    _update_color_scale_texture() {
+        const color_scale = this.model.get("color_scale");
+        this.uniforms.colormap.value = createColormap(color_scale);
+        this.renderer.update();
+    }
+    _update_color_scale_domain() {
+        const color_scale = this.model.get("color_scale");
+        const color = this.model.get("color");
+        if (color) {
+            let min;
+            let max;
+            if (color_scale.min !== null) {
+                min = color_scale.min;
+            } else {
+                min = Math.min(...color);
+            }
+            if (color_scale.max !== null) {
+                max = color_scale.max;
+            } else {
+                max = Math.max(...color);
+            }
+            this.uniforms.domain_color.value = [min, max];
+        } else {
+            if (color_scale.min !== null && color_scale.max !== null) {
+                this.uniforms.domain_color.value = [color_scale.min, color_scale.max];
+            } else {
+                console.warn("no color set, and color scale does not have a min or max");
+            }
+
+        }
+        this.renderer.update();
+    }
+     _update_materials() {
         if (this.model.get("material")) {
             this.material.copy(this.model.get("material").obj);
         }
@@ -285,6 +339,7 @@ class ScatterView extends widgets.WidgetView {
             this.line_material_rgb.linewidth = this.line_material.linewidth = this.model.get("line_material").obj.linewidth;
         }
         this.material.defines = {...this.scale_defines};
+        this.material.defines.USE_COLORMAP = this.model.get("color_scale") !== null;
         this.material.extensions = {derivatives: true};
         this.material_rgb.defines = {USE_RGB: true, ...this.scale_defines};
         this.material_rgb.extensions = {derivatives: true};
@@ -340,9 +395,13 @@ class ScatterView extends widgets.WidgetView {
         if (typeof sequence_index_previous === "undefined") {
             sequence_index_previous = sequence_index;
         }
-
         const scalar_names = ["x", "y", "z", "vx", "vy", "vz", "size", "size_selected"];
-        const vector4_names = ["color", "color_selected"];
+        const vector4_names = [];
+        if (this.model.get("color_scale")) {
+            scalar_names.push("color", "color_selected");
+        } else {
+            vector4_names.push("color", "color_selected");
+        }
         const current  = new values.Values(scalar_names, [], this.get_current.bind(this), sequence_index, vector4_names);
         const previous = new values.Values(scalar_names, [], this.get_previous.bind(this), sequence_index_previous, vector4_names);
 
@@ -409,8 +468,13 @@ class ScatterView extends widgets.WidgetView {
 
             current.ensure_array(["color"]);
             previous.ensure_array(["color"]);
-            geometry.addAttribute("color", new THREE.BufferAttribute(current.array_vec4.color, 4));
-            geometry.addAttribute("color_previous", new THREE.BufferAttribute(previous.array_vec4.color, 4));
+            if (this.model.get("color_scale")) {
+                geometry.addAttribute("color", new THREE.BufferAttribute(current.array.color, 1));
+                geometry.addAttribute("color_previous", new THREE.BufferAttribute(previous.array.color, 1));
+            } else {
+                geometry.addAttribute("color", new THREE.BufferAttribute(current.array_vec4.color, 4));
+                geometry.addAttribute("color_previous", new THREE.BufferAttribute(previous.array_vec4.color, 4));
+            }
 
             this.line_segments = new THREE.Line(geometry, this.line_material);
             this.line_segments.frustumCulled = false;
@@ -451,6 +515,7 @@ class ScatterModel extends widgets.WidgetModel {
         size: serialize.array_or_json,
         size_selected: serialize.array_or_json,
         color: serialize.color_or_json,
+        color_scale: { deserialize: widgets.unpack_models },
         color_selected: serialize.color_or_json,
         texture: serialize.texture,
         material: { deserialize: widgets.unpack_models },
@@ -468,6 +533,7 @@ class ScatterModel extends widgets.WidgetModel {
             size: 5,
             size_selected: 7,
             color: "red",
+            color_scale: null,
             color_selected: "white",
             geo: "diamond",
             sequence_index: 0,

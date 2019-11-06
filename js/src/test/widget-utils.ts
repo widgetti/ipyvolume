@@ -39,6 +39,12 @@ async function create_log_scale(manager, scale_name, min, max) {
 }
 
 export
+async function create_color_scale(manager, scale_name, min, max) {
+    return await create_model_bqplot(manager, "ColorScale", scale_name, {
+        min, max, colors: ["#f00", "#0f0", "#00f"], _view_module_version: "*", _view_module: "bqplot"});
+}
+
+export
 async function create_view(manager, model, options = {}) {
     const view = await manager.create_view(model, options);
     return view;
@@ -80,22 +86,22 @@ async function create_figure(manager, markModel) {
 }
 
 export
-async function create_figure_scatter(manager, x, y, z) {
+async function create_figure_scatter(manager, x, y, z, extra = {}) {
     const layout = await create_model(manager, "@jupyter-widgets/base", "LayoutModel", "LayoutView", "layout_figure1", {_dom_classes: "", width: "400px", height: "500px"});
 
     const scatterModel = await create_model_ipyvolume(manager, "Scatter", "scatter1", {
-        x, y, z, _view_module_version: "*", _view_module: "ipyvolume"});
+        x, y, z, ...extra, _view_module_version: "*", _view_module: "ipyvolume"});
     const figure  = await create_figure(manager, scatterModel);
     await manager.display_view(undefined, figure);
     return {figure, scatter: await figure.scatter_views[scatterModel.cid]};
 }
 
 export
-async function create_figure_mesh_triangles(manager, x, y, z, triangles) {
+async function create_figure_mesh_triangles(manager, x, y, z, triangles, extra = {}) {
     const layout = await create_model(manager, "@jupyter-widgets/base", "LayoutModel", "LayoutView", "layout_figure1", {_dom_classes: "", width: "400px", height: "500px"});
 
     const meshModel = await create_model_ipyvolume(manager, "Mesh", "mesh1", {
-        x, y, z, triangles, color: "red", _view_module_version: "*", _view_module: "ipyvolume"});
+        x, y, z, triangles, color: "red", ...extra, _view_module_version: "*", _view_module: "ipyvolume"});
     const figure  = await create_figure(manager, meshModel);
     await manager.display_view(undefined, figure);
     return {figure, mesh: await figure.mesh_views[meshModel.cid]};

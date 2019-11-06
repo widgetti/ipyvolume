@@ -178,7 +178,9 @@ function deserialize_color_or_json(data, manager) {
         // arrays = new Float32Array([color.r, color.g, color.b]) // no sequence, scalar
         return data; // special case, if we keep it a string, we can control it via colorppicker
     } else {
-        if (typeof data[0].dtype !== "undefined") { // we have a list of ndarrays
+        if (typeof data.dtype !== "undefined") { // we have a list of ndarrays
+            arrays = [deserialize_typed_array(data, manager)];
+        } else if (typeof data[0].dtype !== "undefined") { // we have a list of ndarrays
             arrays = data.map((element) => deserialize_typed_array(element, manager));
         } else {
             const dimension = utils.get_array_dimension(data);

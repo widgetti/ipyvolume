@@ -3,9 +3,9 @@ import * as d3 from "d3";
 import { max } from "lodash";
 import * as THREE from "three";
 import { FigureView } from "./figure.js";
+import { createD3Scale } from "./scales.js";
 import * as serialize from "./serialize.js";
 import {semver_range} from "./utils";
-import { createD3Scale } from "./scales.js";
 
 const shaders = {
     box_fragment: (require("raw-loader!../glsl/box-fragment.glsl") as any).default,

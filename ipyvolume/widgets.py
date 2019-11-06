@@ -62,6 +62,8 @@ class Mesh(widgets.Widget):
     v = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     triangles = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
     lines = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+    color_scale = traitlets.Instance(scales.ColorScale, default_value=None, allow_none=True)\
+        .tag(sync=True, **widgets.widget_serialization)
     texture = traitlets.Union(
         [
             traitlets.Instance(ipywebrtc.MediaStream),
@@ -107,6 +109,8 @@ class Scatter(widgets.Widget):
     vx = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     vy = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     vz = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    color_scale = traitlets.Instance(scales.ColorScale, default_value=None, allow_none=True)\
+        .tag(sync=True, **widgets.widget_serialization)
     selected = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     sequence_index = Integer(default_value=0).tag(sync=True)
     size = traitlets.Union(

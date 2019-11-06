@@ -335,11 +335,11 @@ def color_to_binary_or_json(ar, obj=None):
         return array_to_json(ar)
     if dimension == 0:  # scalars are passed as is (json)
         return ar
-    if ar.shape[-1] == 3:
+    if ar.ndim > 1 and ar.shape[-1] == 3:
         # we add an alpha channel
         ones = np.ones(ar.shape[:-1])
         ar = np.stack([ar[..., 0], ar[..., 1], ar[..., 2], ones], axis=-1)
-    elif ar.shape[-1] != 4:
+    elif ar.ndim > 1 and ar.shape[-1] != 4:
         raise ValueError('array should be of shape (...,3) or (...,4), not %r' % (ar.shape,))
 
     if dimension == 3:
