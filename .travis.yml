@@ -28,7 +28,7 @@ before_install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create -q -n test-environment python=$PYTHON_VERSION numpy scipy runipy
+  - conda create -q -n test-environment python=$PYTHON_VERSION numpy scipy runipy matplotlib
   - source activate test-environment
   - conda install -c conda-forge pytest==3.8.1 pytest-cov bokeh nodejs matplotlib scikit-image shapely flake8
   - pip install PyChromeDevTools
