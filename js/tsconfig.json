@@ -1,22 +1,25 @@
 {
-"compilerOptions": {
-    "noImplicitAny": true,
-    "lib": ["dom", "es5", "es2015.promise", "es2015.iterable"],
-    "noEmitOnError": true,
-    "strictNullChecks": true,
+  "compilerOptions": {
+    "esModuleInterop": true,
     "module": "commonjs",
     "moduleResolution": "node",
-    "target": "es2015",
+    "noEmitOnError": true,
+    "noUnusedLocals": false,
     "outDir": "lib",
+    "preserveWatchOutput": true,
+    "rootDir": "src",
+    "inlineSourceMap": true,
     "skipLibCheck": true,
-    "sourceMap": true,
-    "allowJs": true
+    "strictNullChecks": false,
+    "target": "es2017",
+    "types": ["mocha", "node"],
+    "allowJs": true,
   },
   "include": [
-        "./src/**/*"
+    "./src/**/*"
   ],
   "exclude": [
-        "node_modules",
-        "**/*.spec.ts"
+    "node_modules",
+    "**/*.spec.ts"
   ]
 }

@@ -1,13 +1,14 @@
 from __future__ import absolute_import
-from ._version import __version__
 
-from . import styles
-from .widgets import *
-from .transferfunction import *
-from . import examples
-from . import datasets
-from . import embed
-from .pylab import *
+from ipyvolume._version import __version__  # noqa: F401
+from ipyvolume import styles  # noqa: F401
+from ipyvolume import examples  # noqa: F401
+from ipyvolume import datasets  # noqa: F401
+from ipyvolume import embed  # noqa: F401
+from ipyvolume.widgets import *  # noqa: F401, F403
+from ipyvolume.transferfunction import *  # noqa: F401, F403
+from ipyvolume.pylab import *  # noqa: F401, F403
+
 
 def _jupyter_nbextension_paths():
     return [{

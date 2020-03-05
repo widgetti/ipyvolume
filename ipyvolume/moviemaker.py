@@ -1,22 +1,34 @@
-import json
-import numpy as np
 import os
+import json
 
+import numpy as np
 import ipywidgets as widgets
 import pythreejs
 import ipywebrtc
+from IPython.display import display
+
 
 class MovieMaker(object):
-    def __init__(self, stream, camera, positions=None, quaternions=None, times=None,
-                 filename_camera='moviemaker.json', filename_movie='movie.webm',
-                 overwrite_video=False):
+    def __init__(
+        self,
+        stream,
+        camera,
+        positions=None,
+        quaternions=None,
+        times=None,
+        filename_camera='moviemaker.json',
+        filename_movie='movie.webm',
+        overwrite_video=False,
+    ):
         self.stream = stream
         self.camera = camera
         self.recorder = ipywebrtc.VideoRecorder(stream=self.stream)
         self.filename_camera = filename_camera
         self.filename_movie = filename_movie
         self.overwrite_video = overwrite_video
-        self.button_record = widgets.ToggleButton(description='Record', icon='circle', value=False)#, style={'font-color': 'red'})
+        self.button_record = widgets.ToggleButton(
+            description='Record', icon='circle', value=False
+        )  # , style={'font-color': 'red'})
         widgets.jslink((self.button_record, 'value'), (self.recorder, 'recording'))
         self.recorder.video.observe(lambda *x: self.write_movie(), 'value')
         self.button_add = widgets.Button(description='Add')
@@ -35,13 +47,14 @@ class MovieMaker(object):
         self.times = []
         self.camera_action_box = widgets.HBox()
         self.output = widgets.Output()
-        
-        self.options_interpolation = [('discrete', 'InterpolateDiscrete'),
-                                      ('linear','InterpolateLinear'),
-                                      ('smooth','InterpolateSmooth')]
+
+        self.options_interpolation = [
+            ('discrete', 'InterpolateDiscrete'),
+            ('linear', 'InterpolateLinear'),
+            ('smooth', 'InterpolateSmooth'),
+        ]
         self.select_interpolation = widgets.Dropdown(options=self.options_interpolation, index=1)
-        
-        
+
         self.select_interpolation.observe(lambda x: self.update_keyframes(), 'index')
         self.select_keyframes.observe(lambda x: self.sync_camera(), 'index')
         if positions is None and quaternions is None and times is None:
@@ -55,21 +68,25 @@ class MovieMaker(object):
 
         box_io = widgets.HBox([self.button_save, self.button_load])
         box_control = widgets.HBox([self.button_add, self.button_replace, self.button_remove])
-        self.widget_main = widgets.VBox([self.button_record, self.select_interpolation,box_io,
-                              box_control, self.select_keyframes, self.camera_action_box,
-                             self.output])
+        self.widget_main = widgets.VBox(
+            [
+                self.button_record,
+                self.select_interpolation,
+                box_io,
+                box_control,
+                self.select_keyframes,
+                self.camera_action_box,
+                self.output,
+            ]
+        )
 
-        
-#         self.positon_track = pythreejs.VectorKeyframeTrack(name='.position', times=[0], values=[self.camera.position])
-#         self.rotation_track = pythreejs.QuaternionKeyframeTrack(name='.quaternion', times=[0], values=[self.camera.quaternion])
-        
     def sync_camera(self):
         with self.output:
             index = self.select_keyframes.index
             if index is not None:
                 self.camera.position = self.positions[index]
                 self.camera.quaternion = self.quaternions[index]
-            
+
     def write_movie(self):
         with self.output:
             filename = self.filename_movie
@@ -94,11 +111,11 @@ class MovieMaker(object):
             self.times.append(0)
             self.update_keyframes()
         else:
-            self.positions.insert(index+1, p)
-            self.quaternions.insert(index+1, q)
-            self.times.insert(index+1, self.times[index]+5)
+            self.positions.insert(index + 1, p)
+            self.quaternions.insert(index + 1, q)
+            self.times.insert(index + 1, self.times[index] + 5)
             self.update_keyframes()
-            self.select_keyframes.index = index+1
+            self.select_keyframes.index = index + 1
 
     def replace(self):
         p = self.camera.position
@@ -108,7 +125,7 @@ class MovieMaker(object):
             self.positions[index] = p
             self.quaternions[index] = q
             self.update_keyframes()
-        
+
     def remove(self):
         index = self.select_keyframes.index
         if index is not None:
@@ -121,8 +138,7 @@ class MovieMaker(object):
     def save(self, filename=None):
         filename = filename or self.filename_camera
         with open(filename, 'w') as f:
-            json.dump(dict(positions=self.positions, quaternions=self.quaternions,
-                          times=self.times), f)
+            json.dump(dict(positions=self.positions, quaternions=self.quaternions, times=self.times), f)
         print('wrote', filename)
 
     def load(self, filename=None):
@@ -137,42 +153,54 @@ class MovieMaker(object):
 
     def format_keyframe(self, time, p, q):
         x, y, z = p
-        r = np.sqrt(x**2 + y**2 + z**2)
-        lon = np.arctan2(y, x) * 180/np.pi
-        lat = (-np.arccos(z/r)+np.pi/2)*180/np.pi
+        r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+        lon = np.arctan2(y, x) * 180 / np.pi
+        lat = (-np.arccos(z / r) + np.pi / 2) * 180 / np.pi
         return "{:.1f}s-r={:.2f}, {:.0f}/{:.0f}".format(time, r, lon, lat)
 
     def update_keyframes(self):
         with self.output:
-            fp = lambda x: "%f,%f,%f" % x
-            fq = lambda x: "%f,%f,%f,%f" % x
-            options = [(self.format_keyframe(t, p, q), i) for i, (t, p, q) in
-                       enumerate(zip(self.times, self.positions, self.quaternions))]
+            options = [
+                (self.format_keyframe(t, p, q), i)
+                for i, (t, p, q) in enumerate(zip(self.times, self.positions, self.quaternions))
+            ]
             self.select_keyframes.options = options
-            self.position_track = pythreejs.VectorKeyframeTrack(name='.position',
-                                    times=self.times, values=self.positions,
-                                    interpolation=self.select_interpolation.value)
-            self.rotation_track = pythreejs.QuaternionKeyframeTrack(name='.quaternion',
-                                    times=self.times, values=self.quaternions,
-                                    interpolation=self.select_interpolation.value)
+            self.position_track = pythreejs.VectorKeyframeTrack(
+                name='.position', times=self.times, values=self.positions, interpolation=self.select_interpolation.value
+            )
+            self.rotation_track = pythreejs.QuaternionKeyframeTrack(
+                name='.quaternion',
+                times=self.times,
+                values=self.quaternions,
+                interpolation=self.select_interpolation.value,
+            )
 
             if len(self.positions):
-                self.camera_clip = pythreejs.AnimationClip(tracks=[self.position_track,self.rotation_track])
+                self.camera_clip = pythreejs.AnimationClip(tracks=[self.position_track, self.rotation_track])
                 self.mixer = pythreejs.AnimationMixer(self.camera)
                 self.camera_action = pythreejs.AnimationAction(self.mixer, self.camera_clip, self.camera)
                 self.camera_action_box.children = [self.camera_action]
             else:
                 self.camera_action_box.children = []
+
     #         self.position_track.times = self.times
     #         self.position_track.values = self.positions
     #         self.rotation_track.times = self.times
     #         self.rotation_track.valeus = self.quaternions
 
-        
-        
     def show(self):
         box_io = widgets.HBox([self.button_save, self.button_load])
         box_control = widgets.HBox([self.button_add, self.button_replace, self.button_remove])
-        display(widgets.VBox([self.button_record, self.select_interpolation,box_io,
-                              box_control, self.select_keyframes, self.camera_action_box,
-                             self.output]))
+        display(
+            widgets.VBox(
+                [
+                    self.button_record,
+                    self.select_interpolation,
+                    box_io,
+                    box_control,
+                    self.select_keyframes,
+                    self.camera_action_box,
+                    self.output,
+                ]
+            )
+        )

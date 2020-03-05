@@ -1,17 +1,21 @@
 from __future__ import print_function
-import collections
-import requests
-import io
+
 import os
-import numpy as np
+import io
+import time
 import functools
 import collections
-import time
+
+import numpy as np
+import requests
+import IPython
+import zmq
 
 
 # https://stackoverflow.com/questions/14267555/find-the-smallest-power-of-2-greater-than-n-in-python
 def next_power_of_2(x):
-    return 1 if x == 0 else 2**(x - 1).bit_length()
+    return 1 if x == 0 else 2 ** (x - 1).bit_length()
+
 
 # original from http://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
 def dict_deep_update(d, u):
@@ -23,6 +27,7 @@ def dict_deep_update(d, u):
             d[k] = u[k]
     return d
 
+
 def nested_setitem(obj, dotted_name, value):
     items = dotted_name.split(".")
     for item in items[:-1]:
@@ -32,8 +37,8 @@ def nested_setitem(obj, dotted_name, value):
     obj[items[-1]] = value
 
 
-def download_to_bytes(url, chunk_size=1024*1024*10, loadbar_length=10):
-    """ download a url to bytes
+def download_to_bytes(url, chunk_size=1024 * 1024 * 10, loadbar_length=10):
+    """Download a url to bytes.
 
     if chunk_size is not None, prints a simple loading bar [=*loadbar_length] to show progress (in console and notebook)
 
@@ -42,7 +47,6 @@ def download_to_bytes(url, chunk_size=1024*1024*10, loadbar_length=10):
     :param loadbar_length: int length of load bar
     :return: (bytes, encoding)
     """
-
     stream = False if chunk_size is None else True
 
     print("Downloading {0:s}: ".format(url), end="")
@@ -91,14 +95,13 @@ def download_to_bytes(url, chunk_size=1024*1024*10, loadbar_length=10):
     return content, encoding
 
 
-def download_yield_bytes(url, chunk_size=1024*1024*10):
-    """ yield a downloaded url as byte chunks
+def download_yield_bytes(url, chunk_size=1024 * 1024 * 10):
+    """Yield a downloaded url as byte chunks.
 
     :param url: str or url
     :param chunk_size: None or int in bytes
     :yield: byte chunks
     """
-
     response = requests.get(url, stream=True)
     # raise error if download was unsuccessful
     response.raise_for_status()
@@ -116,8 +119,8 @@ def download_yield_bytes(url, chunk_size=1024*1024*10):
     response.close()
 
 
-def download_to_file(url, filepath, resume=False, overwrite=False, chunk_size=1024*1024*10, loadbar_length=10):
-    """ download a url
+def download_to_file(url, filepath, resume=False, overwrite=False, chunk_size=1024 * 1024 * 10, loadbar_length=10):
+    """Download a url.
 
     prints a simple loading bar [=*loadbar_length] to show progress (in console and notebook)
 
@@ -130,7 +133,6 @@ def download_to_file(url, filepath, resume=False, overwrite=False, chunk_size=10
     :param loadbar_length: int length of load bar
     :return:
     """
-
     resume_header = None
     loaded_size = 0
     write_mode = 'wb'
@@ -177,7 +179,7 @@ def download_to_file(url, filepath, resume=False, overwrite=False, chunk_size=10
             if chunk:  # filter out keep-alive new chunks
                 # print our progress bar
                 if total_length is not None and chunk_size is not None:
-                    while loaded < loadbar_length*loaded_size/total_length:
+                    while loaded < loadbar_length * loaded_size / total_length:
                         print("=", end='')
                         loaded += 1
                     loaded_size += chunk_size
@@ -190,28 +192,33 @@ def download_to_file(url, filepath, resume=False, overwrite=False, chunk_size=10
                 loaded += 1
     print("] Finished")
 
+
 def reduce_size(data, max_size, extent):
     new_extent = []
     for axis in range(3):
         shape = data.shape
-        xmin, xmax = extent[2-axis]
+        xmin, xmax = extent[2 - axis]
         while shape[axis] > max_size:
             slices1 = [slice(None, None, None)] * 3
             slices1[axis] = slice(0, -1, 2)
             slices2 = [slice(None, None, None)] * 3
             slices2[axis] = slice(1, None, 2)
-            #print(data.shape, data.__getitem__(slices1).shape, data.__getitem__(slices2).shape)
-            data = (data[slices1] + data[slices2])/2
+            # print(data.shape, data.__getitem__(slices1).shape, data.__getitem__(slices2).shape)
+            data = (data[slices1] + data[slices2]) / 2
             if shape[axis] % 2:
                 width = xmax - xmin
-                xmax = xmin + width / shape[axis] * (shape[axis]-1)
+                xmax = xmin + width / shape[axis] * (shape[axis] - 1)
             shape = data.shape
         new_extent.append((xmin, xmax))
     return data, new_extent[::-1]
 
+
 def grid_slice(amin, amax, shape, bmin, bmax):
-    '''Given a grid with shape, and begin and end coordinates amin, amax, what slice
+    """Give a slice such that [amin, amax] is in [bmin, bmax].
+
+    Given a grid with shape, and begin and end coordinates amin, amax, what slice
     do we need to take such that it minimally covers bmin, bmax.
+
     amin, amax = 0, 1; shape = 4
     0  0.25  0.5  0.75  1
     |    |    |    |    |
@@ -229,8 +236,8 @@ def grid_slice(amin, amax, shape, bmin, bmax):
     |    |    |    |    |
     bmin, bmax = 0.5, 1.0 should give 0,2, 1.0, 0.5
     bmin, bmax = 0.4, 1.0 should give 0,3, 1.0, 0.25
-    '''
-    width = (amax - amin)
+    """
+    width = amax - amin
     bmin, bmax = min(bmin, bmax), max(bmin, bmax)
     # normalize the coordinates
     nmin = (bmin - amin) / width
@@ -245,17 +252,17 @@ def grid_slice(amin, amax, shape, bmin, bmax):
     # transform back to the coordinate system of x
     nmin = imin / shape
     nmax = imax / shape
-#     if width < 0:
-#         return imin, imax, amin + nmax * width, amin + nmin * width
-#     else:
+    #     if width < 0:
+    #         return imin, imax, amin + nmax * width, amin + nmin * width
+    #     else:
     return (imin, imax), (amin + nmin * width, amin + nmax * width)
 
+
 def get_ioloop():
-    import IPython
-    import zmq
     ipython = IPython.get_ipython()
     if ipython and hasattr(ipython, 'kernel'):
         return zmq.eventloop.ioloop.IOLoop.instance()
+
 
 def debounced(delay_seconds=0.5, method=False):
     def wrapped(f):
@@ -272,6 +279,7 @@ def debounced(delay_seconds=0.5, method=False):
             def debounced_execute(counter=counters[key]):
                 if counter == counters[key]:  # only execute if the counter wasn't changed in the meantime
                     f(*args, **kwargs)
+
             ioloop = get_ioloop()
 
             def thread_safe():
@@ -281,5 +289,7 @@ def debounced(delay_seconds=0.5, method=False):
                 debounced_execute()
             else:
                 ioloop.add_callback(thread_safe)
+
         return execute
+
     return wrapped

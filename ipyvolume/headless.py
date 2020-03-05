@@ -1,4 +1,4 @@
-"""Generate images from ipyvolume using chrome headless
+r"""Generate images from ipyvolume using chrome headless.
 
 Assuming osx, define the following aliases for convenience, and start in headless mode::
 
@@ -6,11 +6,11 @@ Assuming osx, define the following aliases for convenience, and start in headles
      $ chrome --remote-debugging-port=9222 --headless
 
 Make sure you have `PyChromeDevTools` installed::
-    
+
     $ pip install PyChromeDevTools
 
 Now run the following snippet (doesn't have to be from the Jupyter notebook) ::
-    
+
     import ipyvolume as ipv
     ipv.examples.klein_bottle()
     ipv.view(10,30)
@@ -20,10 +20,13 @@ Now run the following snippet (doesn't have to be from the Jupyter notebook) ::
 """
 
 import os
-import subprocess
+import time
 
+import numpy as np
 import PyChromeDevTools
-from . import pylab
+
+import ipyvolume as ipv
+
 
 def _get_browser():
     options = []
@@ -37,7 +40,10 @@ def _get_browser():
             return path
     raise ValueError("no browser found, try setting the IPYVOLUME_HEADLESS_BROWSER environmental variable")
 
-def _screenshot_data(html_filename, timeout_seconds=10, output_widget=None, format="png", width=None, height=None, fig=None):
+
+def _screenshot_data(
+    html_filename, timeout_seconds=10, output_widget=None, format="png", width=None, height=None, fig=None
+):
     # browser = _get_browser()
     # if fig is None:
     #     fig = gcf()
@@ -48,9 +54,6 @@ def _screenshot_data(html_filename, timeout_seconds=10, output_widget=None, form
     chrome.Network.enable()
     chrome.Page.enable()
     chrome.Page.navigate(url=html_filename)
-    import time
-    #time.sleep(2)
-    # loadEventFired
     chrome.wait_event("Page.frameStoppedLoading", timeout=60)
     chrome.wait_event("Page.loadEventFired", timeout=60)
     time.sleep(0.5)
@@ -68,12 +71,13 @@ def _screenshot_data(html_filename, timeout_seconds=10, output_widget=None, form
                 print('error getting result, return value was:', result)
                 raise
 
+
 def _main():
-    import numpy as np
     print(_get_browser())
-    pylab.figure()
-    pylab.scatter(*np.random.random((3,100)))
-    pylab.savefig('test.png', headless=True)
+    ipv.figure()
+    ipv.scatter(*np.random.random((3, 100)))
+    ipv.savefig('test.png', headless=True)
+
 
 if __name__ == "__main__":
     _main()

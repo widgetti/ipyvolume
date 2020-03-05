@@ -7,8 +7,14 @@
 // dynamically.
 // __webpack_public_path__ = document.querySelector('body').getAttribute('data-base-url') + 'nbextensions/ipyvolume/';
 
-var _ = require('underscore')
 // Export widget models and views, and the npm package version number.
-module.exports = _.extend({}, require('./figure.js'), require('./tf.js'), require('./scatter.js'), require('./volume.js'), require('./mesh.js'), require('./utils.js'));
-module.exports['version'] = require('../package.json').version;
-module.exports.mqtt = require('mqtt')
+
+export * from "./figure";
+export * from "./tf";
+export * from "./scatter";
+export * from "./volume";
+export * from "./mesh";
+export * from "./utils";
+export * from "./selectors";
+export * from "./values";
+export {semver_range as version} from "./utils";

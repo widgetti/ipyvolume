@@ -7,18 +7,11 @@ var pyname = 'ipyvolume'
 var rules = [
     { test: /\.css$/, use: ['style-loader', 'css-loader']},
     {test: /\.png$/,use: 'url-loader?limit=10000000'},
-    // { test: /\.js$/, loader: 'babel-loader', exclude: /node_modules/},
-    { test: /\.(ts|js)?$/, use: [
-         { loader: 'cache-loader' },
-         {
-                    loader: 'thread-loader',
-                    options: {
-                        // there should be 1 cpu for the fork-ts-checker-webpack-plugin
-                        workers: require('os').cpus().length - 1,
-                    },
-         },
-         { loader: "ts-loader", options: {transpileOnly: true,happyPackMode: true} }
-        ]}
+    {
+        test: /\.(js|ts)$/,
+        use: ["source-map-loader"],
+        enforce: "pre"
+      }
 ];
 
 var resolve =  {
@@ -35,7 +28,7 @@ module.exports = [
      // "load_ipython_extension" function which is required for any notebook
      // extension.
      //
-        entry: './src/extension.js',
+        entry: './lib/extension.js',
         devtool: 'inline-source-map',
         output: {
             filename: 'extension.js',
@@ -50,14 +43,13 @@ module.exports = [
      // custom widget.
      // It must be an amd module
      //
-        entry: './src/index.js',
+        entry: './lib/index.js',
         devtool: 'inline-source-map',
         output: {
             filename: 'index.js',
             path: path.resolve(__dirname, `../${pyname}/static`),
             libraryTarget: 'amd'
         },
-        devtool: 'source-map',
         module: {
             rules: rules
         },
@@ -78,7 +70,7 @@ module.exports = [
      // The target bundle is always `dist/index.js`, which is the path required
      // by the custom widget embedder.
      //
-        entry: './src/embed.js',
+        entry: './lib/embed.js',
         devtool: 'inline-source-map',
         resolve: {
             extensions: ['.ts', '.js', '']
