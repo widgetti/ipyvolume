@@ -40,7 +40,8 @@ class MeshView extends widgets.WidgetView {
             this._load_textures();
         }
 
-        this.uniforms = {
+        this.uniforms = THREE.UniformsUtils.merge( [
+            {
                 xlim : { type: "2f", value: [0., 1.] },
                 ylim : { type: "2f", value: [0., 1.] },
                 zlim : { type: "2f", value: [0., 1.] },
@@ -54,13 +55,31 @@ class MeshView extends widgets.WidgetView {
                 animation_time_texture : { type: "f", value: 1. },
                 texture: { type: "t", value: null },
                 texture_previous: { type: "t", value: null },
-        };
+            },
+            THREE.UniformsLib[ "common" ],
+            THREE.UniformsLib[ "lights" ],
+            
+            {
+                emissive: { value: new THREE.Color( 0x000000 ) },
+                specular: { value: new THREE.Color( 0x111111 ) },
+                shininess: { value: 30 }
+            },
+            
+        ] );
+
+        //this.uniforms.emissive.set = new THREE.Color(0,255,0);
+
         const get_material = (name)  => {
             if (this.model.get(name)) {
                 return this.model.get(name).obj.clone();
             } else {
                 const mat = new THREE.ShaderMaterial();
                 mat.side = THREE.DoubleSide;
+
+                mat.flatShading = false;
+                mat.transparent = true;
+                mat.needsUpdate = true;
+
                 return mat;
             }
 
@@ -140,6 +159,31 @@ class MeshView extends widgets.WidgetView {
     add_to_scene() {
         this.meshes.forEach((mesh) => {
             this.renderer.scene_scatter.add(mesh);
+
+            var globalIntensity = 1;
+
+            /*
+            var amTest = new THREE.AmbientLight(0x000000, globalIntensity);
+            amTest.color = new THREE.Color(1,1,1);
+            amTest.intensity = 0.1;
+            this.renderer.scene_scatter.add(amTest);
+*/
+            
+            var dlTest = new THREE.DirectionalLight(0x000000, globalIntensity);
+            dlTest.castShadow = true;
+            dlTest.color = new THREE.Color("rgb(0, 255, 255)"); 
+            dlTest.position.set(100, 100, 100).normalize();
+            dlTest.lookAt(mesh.position);
+            this.renderer.scene_scatter.add(dlTest);
+            
+/*
+            var dlTest2 = new THREE.DirectionalLight(0x000000, globalIntensity);
+            dlTest2.castShadow = true;
+            dlTest2.color = new THREE.Color("rgb(0, 0, 155)");
+            dlTest2.position.set(0, 0, 100);//.normalize();
+            dlTest2.lookAt(mesh.position);
+            this.renderer.scene_scatter.add(dlTest2);
+            */
         });
     }
 
@@ -266,9 +310,13 @@ class MeshView extends widgets.WidgetView {
         if (this.model.get("line_material")) {
             this.line_material_rgb.copy(this.model.get("line_material").obj);
         }
-        this.material_rgb.defines = {USE_RGB: true};
+
+        //VERY IMPORTANT
+        this.material.defines = {USE_COLOR: true};
+        //
+        this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true};
         this.line_material.defines = {AS_LINE: true};
-        this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true};
+        this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true, USE_COLOR: true};
         this.material.extensions = {derivatives: true};
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");
@@ -276,13 +324,25 @@ class MeshView extends widgets.WidgetView {
         this.line_material.visible = this.line_material.visible && this.model.get("visible");
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
         this.materials.forEach((material) => {
-            material.vertexShader = require("raw-loader!../glsl/mesh-vertex.glsl");
-            material.fragmentShader = require("raw-loader!../glsl/mesh-fragment.glsl");
             material.uniforms = this.uniforms;
+            material.vertexShader = require("raw-loader!../glsl/mesh-vertex-phong.glsl");
+            material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-phong.glsl");
             material.depthWrite = true;
             material.transparant = true;
             material.depthTest = true;
+            //VERY IMPORTANT
+            material.lights = true;
         });
+
+        this.material.uniforms.diffuse.value = new THREE.Color(1, 1, 1);//BUG? keep hardcoded
+        this.material.uniforms.opacity.value = 1.0;
+        
+        this.material.uniforms.specular.value = new THREE.Color(0.5,0.5,0.5);
+        this.material.uniforms.shininess.value = 100;
+
+        this.material.uniforms.emissive.value = new THREE.Color(0,0,0);
+        //this.material.uniforms.emissiveIntensity.value = 0.1; //TODO missing
+
         const texture = this.model.get("texture");
         if (texture && this.textures) {
             this.material.defines.USE_TEXTURE = true;
@@ -396,7 +456,7 @@ class MeshView extends widgets.WidgetView {
             const geometry = new THREE.BufferGeometry();
             geometry.addAttribute("position", new THREE.BufferAttribute(current.array_vec3.vertices, 3));
             geometry.addAttribute("position_previous", new THREE.BufferAttribute(previous.array_vec3.vertices, 3));
-            geometry.addAttribute("color", new THREE.BufferAttribute(current.array_vec4.color, 4));
+            geometry.addAttribute("color_current", new THREE.BufferAttribute(current.array_vec4.color, 4));
             geometry.addAttribute("color_previous", new THREE.BufferAttribute(previous.array_vec4.color, 4));
             geometry.setIndex(new THREE.BufferAttribute(triangles, 1));
             const texture = this.model.get("texture");
@@ -414,10 +474,12 @@ class MeshView extends widgets.WidgetView {
                 geometry.addAttribute("u_previous", new THREE.BufferAttribute(u_previous, 1));
                 geometry.addAttribute("v_previous", new THREE.BufferAttribute(v_previous, 1));
             }
-
+            geometry.computeVertexNormals();
+            //geometry.normalizeNormals();
             this.surface_mesh = new THREE.Mesh(geometry, this.material);
             // BUG? because of our custom shader threejs thinks our object if out
             // of the frustum
+
             this.surface_mesh.frustumCulled = false;
             this.surface_mesh.material_rgb = this.material_rgb;
             this.surface_mesh.material_normal = this.material;
@@ -432,7 +494,7 @@ class MeshView extends widgets.WidgetView {
             geometry.addAttribute("position_previous", new THREE.BufferAttribute(previous.array_vec3.vertices, 3));
             const color = new THREE.BufferAttribute(current.array_vec4.color, 4);
             color.normalized = true;
-            geometry.addAttribute("color", color);
+            geometry.addAttribute("color_current", color);
             const color_previous = new THREE.BufferAttribute(previous.array_vec4.color, 4);
             color_previous.normalized = true;
             geometry.addAttribute("color_previous", color_previous);
