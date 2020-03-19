@@ -127,7 +127,7 @@ class MeshView extends widgets.WidgetView {
             
             var slTest = new THREE.SpotLight(0x000000, globalIntensity);
             slTest.castShadow = true;
-            slTest.color = new THREE.Color("rgb(0, 255, 255)"); 
+            slTest.color = new THREE.Color("rgb(100, 100, 100)"); 
             slTest.position.set(20, 30, 20);//.normalize();
             slTest.angle = Math.PI/9;
             slTest.penumbra = 0.25;
@@ -141,20 +141,20 @@ class MeshView extends widgets.WidgetView {
             slTest.shadow.mapSize.height = 512;     // default
             slTest.shadow.camera.near = 0.5;        // default
             slTest.shadow.camera.far = 500          // default
-            slTest.shadow.bias = -0.0005;           //prevent shadow acne
+            slTest.shadow.bias = -0.00005;          // prevent shadow acne
             
             this.renderer.scene_scatter.add(slTest); 
 
-
-            /*  
+            /*
             var dlTest = new THREE.DirectionalLight(0x000000, globalIntensity);
             dlTest.castShadow = true;
             dlTest.color = new THREE.Color("rgb(0, 255, 255)"); 
             dlTest.position.set(100, 100, 100).normalize();
             dlTest.lookAt(new THREE.Vector3(0,0,0));//
             this.renderer.scene_scatter.add(dlTest);
-            
+            */          
 
+            /*  
             var dlTest2 = new THREE.DirectionalLight(0x000000, globalIntensity);
             dlTest2.castShadow = true;
             dlTest2.color = new THREE.Color("rgb(0, 0, 155)");
@@ -163,12 +163,14 @@ class MeshView extends widgets.WidgetView {
             this.renderer.scene_scatter.add(dlTest2);
             */
 
-            /*
+            
             var amTest = new THREE.AmbientLight(0x000000, globalIntensity);
-            amTest.color = new THREE.Color(1,1,1);
+            amTest.color = new THREE.Color(1,0,0);
             amTest.intensity = 0.1;
             this.renderer.scene_scatter.add(amTest);
-            */
+
+
+            
 
         }
         
@@ -368,8 +370,8 @@ class MeshView extends widgets.WidgetView {
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
         this.materials.forEach((material) => {
             material.uniforms = this.uniforms;
-            material.vertexShader = require("raw-loader!../glsl/mesh-vertex-phong.glsl");
-            material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-phong.glsl");
+            material.vertexShader = require("raw-loader!../glsl/mesh-vertex-lambert.glsl");
+            material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-lambert.glsl");
             material.depthWrite = true;
             material.transparant = true;
             material.depthTest = true;
