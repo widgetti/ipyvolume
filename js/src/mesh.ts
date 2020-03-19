@@ -26,9 +26,12 @@ class MeshView extends widgets.WidgetView {
     texture_loader: any;
     textures: any;
     texture_video: any;
+
+    lightCountTemp : any;
     render() {
         // console.log("created mesh view, parent is")
         // console.log(this.options.parent)
+        this.lightCountTemp = 0;
         this.renderer = this.options.parent;
         this.previous_values = {};
         this.attributes_changed = {};
@@ -73,7 +76,7 @@ class MeshView extends widgets.WidgetView {
             if (this.model.get(name)) {
                 return this.model.get(name).obj.clone();
             } else {
-                const mat = new THREE.ShaderMaterial();
+                const mat = new THREE.MeshPhongMaterial();
                 mat.side = THREE.DoubleSide;
 
                 mat.flatShading = false;
@@ -109,6 +112,68 @@ class MeshView extends widgets.WidgetView {
 
         this.create_mesh();
         this.add_to_scene();
+
+        //LIGHTING
+/////////////////////
+        var globalIntensity = 1;
+
+
+        if(this.lightCountTemp == 0)
+        {
+            this.lightCountTemp = 1;
+
+            this.renderer.renderer.shadowMap.enabled = true;
+            this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            var slTest = new THREE.SpotLight(0x000000, globalIntensity);
+            slTest.castShadow = true;
+            slTest.color = new THREE.Color("rgb(0, 255, 255)"); 
+            slTest.position.set(20, 30, 20);//.normalize();
+            slTest.angle = Math.PI/9;
+            slTest.penumbra = 0.25;
+            slTest.lookAt(new THREE.Vector3(0,-20,0));
+
+            
+            slTest.shadow = new THREE.SpotLightShadow(new THREE.PerspectiveCamera(100, 1, 0.5, 5000));
+            //Set up shadow properties for the light
+            slTest.shadow.camera.position.set(slTest.position.x, slTest.position.y, slTest.position.z);
+            slTest.shadow.mapSize.width = 512;      // default
+            slTest.shadow.mapSize.height = 512;     // default
+            slTest.shadow.camera.near = 0.5;        // default
+            slTest.shadow.camera.far = 500          // default
+            slTest.shadow.bias = -0.0005;           //prevent shadow acne
+            
+            this.renderer.scene_scatter.add(slTest); 
+
+
+            /*  
+            var dlTest = new THREE.DirectionalLight(0x000000, globalIntensity);
+            dlTest.castShadow = true;
+            dlTest.color = new THREE.Color("rgb(0, 255, 255)"); 
+            dlTest.position.set(100, 100, 100).normalize();
+            dlTest.lookAt(new THREE.Vector3(0,0,0));//
+            this.renderer.scene_scatter.add(dlTest);
+            
+
+            var dlTest2 = new THREE.DirectionalLight(0x000000, globalIntensity);
+            dlTest2.castShadow = true;
+            dlTest2.color = new THREE.Color("rgb(0, 0, 155)");
+            dlTest2.position.set(0, 0, 100);//.normalize();
+            dlTest2.lookAt(mesh.position);
+            this.renderer.scene_scatter.add(dlTest2);
+            */
+
+            /*
+            var amTest = new THREE.AmbientLight(0x000000, globalIntensity);
+            amTest.color = new THREE.Color(1,1,1);
+            amTest.intensity = 0.1;
+            this.renderer.scene_scatter.add(amTest);
+            */
+
+        }
+        
+
+
         this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles change:lines",
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
@@ -158,32 +223,10 @@ class MeshView extends widgets.WidgetView {
 
     add_to_scene() {
         this.meshes.forEach((mesh) => {
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
             this.renderer.scene_scatter.add(mesh);
 
-            var globalIntensity = 1;
-
-            /*
-            var amTest = new THREE.AmbientLight(0x000000, globalIntensity);
-            amTest.color = new THREE.Color(1,1,1);
-            amTest.intensity = 0.1;
-            this.renderer.scene_scatter.add(amTest);
-*/
-            
-            var dlTest = new THREE.DirectionalLight(0x000000, globalIntensity);
-            dlTest.castShadow = true;
-            dlTest.color = new THREE.Color("rgb(0, 255, 255)"); 
-            dlTest.position.set(100, 100, 100).normalize();
-            dlTest.lookAt(mesh.position);
-            this.renderer.scene_scatter.add(dlTest);
-            
-/*
-            var dlTest2 = new THREE.DirectionalLight(0x000000, globalIntensity);
-            dlTest2.castShadow = true;
-            dlTest2.color = new THREE.Color("rgb(0, 0, 155)");
-            dlTest2.position.set(0, 0, 100);//.normalize();
-            dlTest2.lookAt(mesh.position);
-            this.renderer.scene_scatter.add(dlTest2);
-            */
         });
     }
 
@@ -475,7 +518,7 @@ class MeshView extends widgets.WidgetView {
                 geometry.addAttribute("v_previous", new THREE.BufferAttribute(v_previous, 1));
             }
             geometry.computeVertexNormals();
-            //geometry.normalizeNormals();
+
             this.surface_mesh = new THREE.Mesh(geometry, this.material);
             // BUG? because of our custom shader threejs thinks our object if out
             // of the frustum
@@ -483,6 +526,10 @@ class MeshView extends widgets.WidgetView {
             this.surface_mesh.frustumCulled = false;
             this.surface_mesh.material_rgb = this.material_rgb;
             this.surface_mesh.material_normal = this.material;
+
+            this.surface_mesh.castShadow = true;
+            this.surface_mesh.receiveShadow = true;
+
             this.meshes.push(this.surface_mesh);
         }
 
