@@ -141,7 +141,7 @@ class MeshView extends widgets.WidgetView {
             slTest.shadow.mapSize.height = 512;     // default
             slTest.shadow.camera.near = 0.5;        // default
             slTest.shadow.camera.far = 500          // default
-            slTest.shadow.bias = -0.00005;          // prevent shadow acne
+            slTest.shadow.bias = -0.0005;          // prevent shadow acne
             
             this.renderer.scene_scatter.add(slTest); 
 
@@ -165,7 +165,7 @@ class MeshView extends widgets.WidgetView {
 
             
             var amTest = new THREE.AmbientLight(0x000000, globalIntensity);
-            amTest.color = new THREE.Color(1,0,0);
+            amTest.color = new THREE.Color(0,0,1);
             amTest.intensity = 0.1;
             this.renderer.scene_scatter.add(amTest);
 
@@ -370,8 +370,8 @@ class MeshView extends widgets.WidgetView {
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
         this.materials.forEach((material) => {
             material.uniforms = this.uniforms;
-            material.vertexShader = require("raw-loader!../glsl/mesh-vertex-lambert.glsl");
-            material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-lambert.glsl");
+            material.vertexShader = require("raw-loader!../glsl/mesh-vertex-physical.glsl");
+            material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-physical.glsl");
             material.depthWrite = true;
             material.transparant = true;
             material.depthTest = true;
