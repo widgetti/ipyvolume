@@ -230,7 +230,15 @@ class Light(widgets.Widget):
     
     color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
     intensity = traitlets.CFloat(1).tag(sync=True)
-    light_type = traitlets.Enum(values=['AMBIENTAL', 'DIRECTIONAL', 'SPOT', 'POINT', 'HEMISPHERE'], default_value='AMBIENTAL').tag(sync=True)
+    light_type = traitlets.Enum(values=['AMBIENT', 'DIRECTIONAL', 'SPOT', 'POINT', 'HEMISPHERE'], default_value='AMBIENT').tag(sync=True)
+
+    cast_shadow = traitlets.Bool(False).tag(sync=True)
+    # TODO - should use array serialization instead
+    #position = Array(default_value=(0, 1, 0), allow_none=True).tag(sync=True, **array_serialization)
+    position_x = traitlets.CFloat(0).tag(sync=True)
+    position_y = traitlets.CFloat(1).tag(sync=True)
+    position_z = traitlets.CFloat(0).tag(sync=True)
+    
 
     
 @widgets.register

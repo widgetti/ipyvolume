@@ -18,11 +18,14 @@ class LightView extends widgets.WidgetView {
     color: any;
     intensity: any;
     light_type: any;
+    cast_shadow: any;
+    position: any;
+    target: any;
     
     render() {
 
         this.LIGHT_TYPES = {
-            AMBIENTAL: 'AMBIENTAL',
+            AMBIENT: 'AMBIENT',
             DIRECTIONAL: 'DIRECTIONAL',
             SPOT: 'SPOT',
             POINT: 'POINT',
@@ -65,11 +68,27 @@ class LightView extends widgets.WidgetView {
         this.intensity = this.model.get("intensity");
         this.light_type = this.model.get("light_type");
         
-        if(this.light_type === this.LIGHT_TYPES.AMBIENTAL){
+        if(this.light_type === this.LIGHT_TYPES.AMBIENT){
             console.log("Create Ambient Light w color " + this.color + " intensity : " + this.intensity);
             this.current_light = new THREE.AmbientLight(this.color, this.intensity);
             this.lights.push(this.current_light);
         }
+        else {
+            this.cast_shadow = this.model.get("cast_shadow");
+            this.position = new THREE.Vector3(this.model.get("position_x"), this.model.get("position_y"), this.model.get("position_z"));
+            this.target = new THREE.Vector3(this.model.get("target_x"), this.model.get("target_y"), this.model.get("target_z"));
+
+            if(this.light_type === this.LIGHT_TYPES.DIRECTIONAL){
+                console.log("Create Directional Light w color " + this.color + " intensity : " + this.intensity + " position :"+ this.position + " cast_shadow: " + this.cast_shadow);
+                this.current_light = new THREE.DirectionalLight(this.color, this.intensity);
+                
+                this.current_light.position.set(this.position.x, this.position.y, this.position.z);
+                this.current_light.cast_shadow = this.cast_shadow;
+                this.lights.push(this.current_light);
+                
+            }
+        } 
+
         
     }
 }
@@ -80,6 +99,12 @@ class LightModel extends widgets.WidgetModel {
         ...widgets.WidgetModel.serializers,
         color: serialize.color_or_json,
         intensity: serialize.array_or_json,
+        position_x: serialize.array_or_json,
+        position_y: serialize.array_or_json,
+        position_z: serialize.array_or_json,
+        target_x: serialize.array_or_json,
+        target_y: serialize.array_or_json,
+        target_z: serialize.array_or_json,
     };
     defaults() {
         return {
@@ -92,7 +117,14 @@ class LightModel extends widgets.WidgetModel {
             _view_module_version: semver_range,
             color: "red",
             intensity: 1,
-            light_type: 'AMBIENTAL',
+            light_type: 'AMBIENT',
+            cast_shadow: false,
+            position_x: 0,
+            position_y: 1,
+            position_z: 0,
+            target_x: 0,
+            target_y: 0,
+            target_z: 0,
         };
     }
 }

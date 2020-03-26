@@ -1520,17 +1520,24 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
 def ambient_light(color=default_color, intensity = 1):
     print("ADD AMBIENT LIGHT (from pylab) " + color)
     
-    light = ipv.Light(color=color, intensity=intensity, light_type='AMBIENTAL')
+    light = ipv.Light(color=color, intensity=intensity, light_type='AMBIENT')
     fig = gcf()
     fig.lights = fig.lights + [light]
 
     return light
 
 
-def directional_light(color=default_color, intensity = 1):
-    print("ADD DIRECTIONAL LIGHT (from pylab) " + color)
+def directional_light(color=default_color, intensity = 1, position=[0, 1, 0], cast_shadow=False):
+    print("ADD DIRECTIONAL LIGHT (from pylab) " + color + " "+ str(position[0]) + str(position[1])+ str(position[2]))
     
-    light = ipv.Light(color=color, intensity=intensity, light_type='DIRECTIONAL')
+    light = ipv.Light(
+        color=color, 
+        intensity=intensity, 
+        cast_shadow=cast_shadow, 
+        light_type='DIRECTIONAL',
+        position_x=position[0],
+        position_y=position[1],
+        position_z=position[2])
     fig = gcf()
     fig.lights = fig.lights + [light]
 
