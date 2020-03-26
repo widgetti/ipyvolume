@@ -40,6 +40,11 @@ __all__ = [
     'style',
     'plot_plane',
     'selector_default',
+    'ambient_light',
+    'directional_light',
+    'spot_light',
+    'point_light',
+    'hemisphere_light'
 ]
 
 import os
@@ -1511,3 +1516,31 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
     lines[3::4, 0], lines[3::4, 1] = t1[1], t2[1]
 
     return triangles, lines
+
+def ambient_light(color=default_color, intensity = 1):
+    print("ADD AMBIENT LIGHT (from pylab) " + color)
+    
+    light = ipv.Light(color=color, intensity=intensity, light_type='AMBIENTAL')
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+
+def directional_light(color=default_color, intensity = 1):
+    print("ADD DIRECTIONAL LIGHT (from pylab) " + color)
+    
+    light = ipv.Light(color=color, intensity=intensity, light_type='DIRECTIONAL')
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+def spot_light():
+    return 0
+
+def point_light():
+    return 0
+
+def hemisphere_light():
+    return 0

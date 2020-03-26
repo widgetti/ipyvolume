@@ -76,7 +76,7 @@ class MeshView extends widgets.WidgetView {
             if (this.model.get(name)) {
                 return this.model.get(name).obj.clone();
             } else {
-                const mat = new THREE.MeshPhongMaterial();
+                const mat = new THREE.ShaderMaterial();
                 mat.side = THREE.DoubleSide;
 
                 mat.flatShading = false;
@@ -121,7 +121,7 @@ class MeshView extends widgets.WidgetView {
         if(this.lightCountTemp == 0)
         {
             this.lightCountTemp = 1;
-
+            /*
             this.renderer.renderer.shadowMap.enabled = true;
             this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             
@@ -144,7 +144,9 @@ class MeshView extends widgets.WidgetView {
             slTest.shadow.bias = -0.0005;          // prevent shadow acne
             
             this.renderer.scene_scatter.add(slTest); 
-
+                        
+            */
+           
             /*
             var dlTest = new THREE.DirectionalLight(0x000000, globalIntensity);
             dlTest.castShadow = true;
@@ -163,12 +165,12 @@ class MeshView extends widgets.WidgetView {
             this.renderer.scene_scatter.add(dlTest2);
             */
 
-            
+            /*
             var amTest = new THREE.AmbientLight(0x000000, globalIntensity);
             amTest.color = new THREE.Color(0,0,1);
             amTest.intensity = 0.1;
             this.renderer.scene_scatter.add(amTest);
-
+            */
 
             
 

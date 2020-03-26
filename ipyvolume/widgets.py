@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import
 
-__all__ = ['Mesh', 'Scatter', 'Volume', 'Figure', 'quickquiver', 'quickscatter', 'quickvolshow']
+__all__ = ['Light', 'Mesh', 'Scatter', 'Volume', 'Figure', 'quickquiver', 'quickscatter', 'quickvolshow']
 
 import logging
 import warnings
@@ -217,7 +217,22 @@ class Volume(widgets.Widget):
         self.data = np.array(data_view)
         self.extent = extent
 
+@widgets.register
+class Light(widgets.Widget):
+    """Widget class representing light addition to scene using three.js."""
 
+    _view_name = Unicode('LightView').tag(sync=True)
+    _view_module = Unicode('ipyvolume').tag(sync=True)
+    _model_name = Unicode('LightModel').tag(sync=True)
+    _model_module = Unicode('ipyvolume').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    
+    color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
+    intensity = traitlets.CFloat(1).tag(sync=True)
+    light_type = traitlets.Enum(values=['AMBIENTAL', 'DIRECTIONAL', 'SPOT', 'POINT', 'HEMISPHERE'], default_value='AMBIENTAL').tag(sync=True)
+
+    
 @widgets.register
 class Figure(ipywebrtc.MediaStream):
     """Widget class representing a volume (rendering) using three.js."""
@@ -238,6 +253,9 @@ class Figure(ipywebrtc.MediaStream):
         sync=True, **widgets.widget_serialization
     )
     volumes = traitlets.List(traitlets.Instance(Volume), [], allow_none=False).tag(
+        sync=True, **widgets.widget_serialization
+    )
+    lights = traitlets.List(traitlets.Instance(Light), [], allow_none=False).tag(
         sync=True, **widgets.widget_serialization
     )
 
