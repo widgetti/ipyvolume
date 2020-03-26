@@ -1520,7 +1520,10 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
 def ambient_light(color=default_color, intensity = 1):
     print("ADD AMBIENT LIGHT (from pylab) " + color)
     
-    light = ipv.Light(color=color, intensity=intensity, light_type='AMBIENT')
+    light = ipv.Light(
+        color=color, 
+        intensity=intensity, 
+        light_type='AMBIENT')
     fig = gcf()
     fig.lights = fig.lights + [light]
 
@@ -1528,6 +1531,7 @@ def ambient_light(color=default_color, intensity = 1):
 
 
 def directional_light(color=default_color, intensity = 1, position=[0, 1, 0], cast_shadow=False):
+
     print("ADD DIRECTIONAL LIGHT (from pylab) " + color + " "+ str(position[0]) + str(position[1])+ str(position[2]))
     
     light = ipv.Light(
@@ -1549,5 +1553,20 @@ def spot_light():
 def point_light():
     return 0
 
-def hemisphere_light():
-    return 0
+def hemisphere_light(color=default_color, color2=default_color_selected, intensity = 1, position=[0, 1, 0], cast_shadow=False):
+
+    print("ADD HEMISPHERE LIGHT (from pylab) " + color + " "+ str(position[0]) + str(position[1])+ str(position[2]))
+    
+    light = ipv.Light(
+        color=color, 
+        color2=color2,
+        intensity=intensity, 
+        cast_shadow=cast_shadow, 
+        light_type='HEMISPHERE',
+        position_x=position[0],
+        position_y=position[1],
+        position_z=position[2])
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
