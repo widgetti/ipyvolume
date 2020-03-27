@@ -29,6 +29,7 @@ class LightView extends widgets.WidgetView {
     cast_shadow: any;
     shadow_map_size: any;
     shadow_bias: any;
+    shadow_radius: any;
     shadow_camera_near: any;
     shadow_camera_far: any;
     shadow_camera_perspective_fov: any;
@@ -105,31 +106,42 @@ class LightView extends widgets.WidgetView {
                 this.cast_shadow = this.model.get("cast_shadow");
                 this.distance = this.model.get("distance");
                 this.decay = this.model.get("decay");
+                this.shadow_map_size = this.model.get("shadow_map_size");
+                this.shadow_bias = this.model.get("shadow_bias");
+                this.shadow_radius = this.model.get("shadow_radius");
+                this.shadow_camera_near = this.model.get("shadow_camera_near");
+                this.shadow_camera_far = this.model.get("shadow_camera_far");
 
                 if(this.light_type === this.LIGHT_TYPES.POINT) { 
-                    console.log("Create Point Light ");
+                    console.log("Create Point Light");
                     this.current_light = new THREE.PointLight(this.color, this.intensity);
 
                     this.current_light.position.set(this.position.x, this.position.y, this.position.z);
                     this.current_light.distance = this.distance;
                     this.current_light.decay = this.decay;
+                    this.current_light.castShadow = this.cast_shadow;
                     
+                    this.current_light.shadow.mapSize.width = this.shadow_map_size;
+                    this.current_light.shadow.mapSize.height = this.shadow_map_size;
+                    this.current_light.shadow.bias = this.shadow_bias; // prevent shadow acne
+                    this.current_light.shadow.radius = this.shadow_radius;
+
+                    this.current_light.shadow.camera.position.set(this.position.x, this.position.y, this.position.z);
+                    this.current_light.shadow.camera.near = this.shadow_camera_near;
+                    this.current_light.shadow.camera.far =  this.shadow_camera_far;
+
                     this.lights.push(this.current_light);
                 }
                 else {
+                    //TODO - move to a separate function
                     this.target = new THREE.Object3D();
                     this.target.position.set(this.model.get("target_x"), this.model.get("target_y"), this.model.get("target_z"));
                     this.target.updateMatrixWorld();
                     this.renderer.scene_scatter.add(this.target);
     
-                    this.shadow_map_size = this.model.get("shadow_map_size");
-                    this.shadow_bias = this.model.get("shadow_bias");
-                    this.shadow_camera_near = this.model.get("shadow_camera_near");
-                    this.shadow_camera_far = this.model.get("shadow_camera_far");
-
                     if(this.light_type === this.LIGHT_TYPES.DIRECTIONAL) {
                         console.log("Create Directional Light");
-                        
+
                         this.shadow_camera_orthographic_size = this.model.get("shadow_camera_orthographic_size");
 
                         this.current_light = new THREE.DirectionalLight(this.color, this.intensity);
@@ -137,20 +149,19 @@ class LightView extends widgets.WidgetView {
                         this.current_light.target = this.target;
                         this.current_light.castShadow = this.cast_shadow;
             
-                        this.current_light.shadow = new THREE.DirectionalLightShadow(new THREE.OrthographicCamera(-5,5,-5,5,0.5,500));
-                                    
+                        this.current_light.shadow.mapSize.width = this.shadow_map_size;
+                        this.current_light.shadow.mapSize.height = this.shadow_map_size;
+                        this.current_light.shadow.bias = this.shadow_bias; // prevent shadow acne
+                        this.current_light.shadow.radius = this.shadow_radius;
+
+                        this.current_light.shadow.camera.position.set(this.position.x, this.position.y, this.position.z);
+                        this.current_light.shadow.camera.near = this.shadow_camera_near;
+                        this.current_light.shadow.camera.far =  this.shadow_camera_far;
+
                         this.current_light.shadow.camera.left = - this.shadow_camera_orthographic_size;
                         this.current_light.shadow.camera.right = this.shadow_camera_orthographic_size;
                         this.current_light.shadow.camera.top = this.shadow_camera_orthographic_size;
                         this.current_light.shadow.camera.bottom = - this.shadow_camera_orthographic_size;
-            
-                        this.current_light.shadow.mapSize.width = this.shadow_map_size;
-                        this.current_light.shadow.mapSize.height = this.shadow_map_size;
-                        this.current_light.shadow.bias = this.shadow_bias; // prevent shadow acne
-                
-                        this.current_light.shadow.camera.position.set(this.position.x, this.position.y, this.position.z);
-                        this.current_light.shadow.camera.near = this.shadow_camera_near;
-                        this.current_light.shadow.camera.far =  this.shadow_camera_far;
 
                         this.lights.push(this.current_light);
                     }
@@ -173,12 +184,11 @@ class LightView extends widgets.WidgetView {
                             this.current_light.penumbra = this.penumbra;
                             this.current_light.castShadow = this.cast_shadow;
                             
-                            this.current_light.shadow = new THREE.SpotLightShadow(new THREE.PerspectiveCamera());
-                              
                             this.current_light.shadow.mapSize.width = this.shadow_map_size;
                             this.current_light.shadow.mapSize.height = this.shadow_map_size;
                             this.current_light.shadow.bias = this.shadow_bias; // prevent shadow acne
-                    
+                            this.current_light.shadow.radius = this.shadow_radius;
+
                             this.current_light.shadow.camera.position.set(this.position.x, this.position.y, this.position.z);
                             this.current_light.shadow.camera.near = this.shadow_camera_near;
                             this.current_light.shadow.camera.far = this.shadow_camera_far;
@@ -217,6 +227,7 @@ class LightModel extends widgets.WidgetModel {
         penumbra: serialize.array_or_json,
         shadow_map_size: serialize.array_or_json,
         shadow_bias: serialize.array_or_json,
+        shadow_radius: serialize.array_or_json,
         shadow_camera_near: serialize.array_or_json,
         shadow_camera_far: serialize.array_or_json,
         shadow_camera_perspective_fov: serialize.array_or_json,
@@ -249,6 +260,7 @@ class LightModel extends widgets.WidgetModel {
             cast_shadow: false,
             shadow_map_size: 512,
             shadow_bias: -0.0005,
+            shadow_radius: 1,
             shadow_camera_near: 0.5,
             shadow_camera_far: 500,
             shadow_camera_perspective_fov: 50,

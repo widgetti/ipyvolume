@@ -252,6 +252,7 @@ class Light(widgets.Widget):
 
     shadow_map_size=traitlets.CFloat(512).tag(sync=True)
     shadow_bias=traitlets.CFloat(-0.0005).tag(sync=True)
+    shadow_radius=traitlets.CFloat(1).tag(sync=True)
     shadow_camera_near=traitlets.CFloat(0.5).tag(sync=True)
     shadow_camera_far=traitlets.CFloat(500).tag(sync=True)
     shadow_camera_perspective_fov=traitlets.CFloat(50).tag(sync=True)

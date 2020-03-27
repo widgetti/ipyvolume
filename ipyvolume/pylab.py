@@ -1569,6 +1569,7 @@ def directional_light(
     cast_shadow=False,
     shadow_map_size=512,
     shadow_bias=-0.0005,
+    shadow_radius=1,
     shadow_camera_near=0.5,
     shadow_camera_far=500,
     shadow_camera_orthographic_size=5):
@@ -1582,6 +1583,7 @@ def directional_light(
     if cast_shadow:
         print("shadow_map_size: " + str(shadow_map_size))
         print("shadow_bias: " + str(shadow_bias))
+        print("shadow_radius: " + str(shadow_radius))
         print("shadow_camera_near: " + str(shadow_camera_near))
         print("shadow_camera_far: " + str(shadow_camera_far))
 
@@ -1598,6 +1600,7 @@ def directional_light(
         cast_shadow=cast_shadow,
         shadow_map_size=shadow_map_size,
         shadow_bias=shadow_bias,
+        shadow_radius=shadow_radius,
         shadow_camera_near=shadow_camera_near,
         shadow_camera_far=shadow_camera_far,
         shadow_camera_orthographic_size=shadow_camera_orthographic_size)
@@ -1619,6 +1622,7 @@ def spot_light(
     cast_shadow=False,
     shadow_map_size=512,
     shadow_bias=-0.0005,
+    shadow_radius=1,
     shadow_camera_near=0.5,
     shadow_camera_far=500,
     shadow_camera_perspective_fov=50,
@@ -1637,6 +1641,7 @@ def spot_light(
     if cast_shadow:
         print("shadow_map_size: " + str(shadow_map_size))
         print("shadow_bias: " + str(shadow_bias))
+        print("shadow_radius: " + str(shadow_radius))
         print("shadow_camera_near: " + str(shadow_camera_near))
         print("shadow_camera_far: " + str(shadow_camera_far))
         print("shadow_camera_perspective_fov: " + str(shadow_camera_perspective_fov))
@@ -1659,6 +1664,7 @@ def spot_light(
         cast_shadow=cast_shadow,
         shadow_map_size=shadow_map_size,
         shadow_bias=shadow_bias,
+        shadow_radius=shadow_radius,
         shadow_camera_near=shadow_camera_near,
         shadow_camera_far=shadow_camera_far,
         shadow_camera_perspective_fov=shadow_camera_perspective_fov,
@@ -1675,7 +1681,12 @@ def point_light(
     position=[0, 1, 0],
     distance=0,
     decay=1,
-    cast_shadow=False):
+    cast_shadow=False,
+    shadow_map_size=512,
+    shadow_bias=-0.0005,
+    shadow_radius=1,
+    shadow_camera_near=0.5,
+    shadow_camera_far=500):
 
     print("ADD POINT LIGHT (from pylab) ")
     print("color: " + str(color))
@@ -1684,7 +1695,13 @@ def point_light(
     print("distance: " + str(distance))
     print("decay: " + str(decay))
     print("cast_shadow: " + str(cast_shadow))
-
+    if cast_shadow:
+        print("shadow_map_size: " + str(shadow_map_size))
+        print("shadow_bias: " + str(shadow_bias))
+        print("shadow_radius: " + str(shadow_radius))
+        print("shadow_camera_near: " + str(shadow_camera_near))
+        print("shadow_camera_far: " + str(shadow_camera_far))
+        
     light = ipv.Light(
         light_type='POINT',
         color=color, 
@@ -1694,7 +1711,12 @@ def point_light(
         position_z=position[2],
         distance=distance,
         decay=decay,
-        cast_shadow=cast_shadow)
+        cast_shadow=cast_shadow,
+        shadow_map_size=shadow_map_size,
+        shadow_bias=shadow_bias,
+        shadow_radius=shadow_radius,
+        shadow_camera_near=shadow_camera_near,
+        shadow_camera_far=shadow_camera_far)
 
     fig = gcf()
     fig.lights = fig.lights + [light]
