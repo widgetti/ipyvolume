@@ -76,67 +76,76 @@ class LightView extends widgets.WidgetView {
         this.light_type = this.model.get("light_type");
         //no shadow support
         if(this.light_type === this.LIGHT_TYPES.AMBIENT){
-            console.log("Create Ambient Light w color " + this.color + " intensity : " + this.intensity);
+            console.log("Create Ambient Light");
             this.current_light = new THREE.AmbientLight(this.color, this.intensity);
             this.lights.push(this.current_light);
         }
         else{
             this.position = new THREE.Vector3(this.model.get("position_x"), this.model.get("position_y"), this.model.get("position_z"));
             
-            //no shadow support
+            // no shadow support
             if(this.light_type === this.LIGHT_TYPES.HEMISPHERE) {
+                console.log("Create Hemisphere Light ");
+
                 this.color2 = this.model.get("color2");
-                console.log("Create Hemisphere Light w color " + this.color + " color2 " + this.color2 +" "+ " intensity : " + this.intensity);
 
                 this.current_light = new THREE.HemisphereLight(this.color, this.color2, this.intensity);
                 this.current_light.position.set(this.position.x, this.position.y, this.position.z);
                 this.lights.push(this.current_light);
             }
+            // with shadow support
             else {
-                //with shadow support
+ 
                 this.cast_shadow = this.model.get("cast_shadow");
-                this.angle = this.model.get("angle");
                 this.distance = this.model.get("distance");
                 this.decay = this.model.get("decay");
-                this.penumbra = this.model.get("penumbra");
-                
-                // TODO - move below
-                this.target = new THREE.Object3D();
-                this.target.position.set(this.model.get("target_x"), this.model.get("target_y"), this.model.get("target_z"));
-                this.target.updateMatrixWorld();
-                this.renderer.scene_scatter.add(this.target);
 
+                if(this.light_type === this.LIGHT_TYPES.POINT) { 
+                    console.log("Create Point Light ");
+                    this.current_light = new THREE.PointLight(this.color, this.intensity);
 
-                if(this.light_type === this.LIGHT_TYPES.DIRECTIONAL){
-                    console.log("Create Directional Light w color " + this.color + " intensity : " + this.intensity + " position :"+ this.position + " cast_shadow: " + this.cast_shadow);
-                    this.current_light = new THREE.DirectionalLight(this.color, this.intensity);
-                
                     this.current_light.position.set(this.position.x, this.position.y, this.position.z);
-                    this.current_light.target = this.target;
-                    this.current_light.cast_shadow = this.cast_shadow;
+                    this.current_light.distance = this.distance;
+                    this.current_light.decay = this.decay;
+                    
                     this.lights.push(this.current_light);
                 }
                 else {
-                    if(this.light_type === this.LIGHT_TYPES.SPOT) {
-                        console.log("Create Spot Light w color " + this.color + " intensity : " + this.intensity + " position :"+ this.position + " cast_shadow: " + this.cast_shadow);
-
-                        this.current_light = new THREE.SpotLight(this.color, this.intensity);
-                
+                    this.target = new THREE.Object3D();
+                    this.target.position.set(this.model.get("target_x"), this.model.get("target_y"), this.model.get("target_z"));
+                    this.target.updateMatrixWorld();
+                    this.renderer.scene_scatter.add(this.target);
+    
+                    if(this.light_type === this.LIGHT_TYPES.DIRECTIONAL){
+                        console.log("Create Directional Light ");
+                        this.current_light = new THREE.DirectionalLight(this.color, this.intensity);
+                    
                         this.current_light.position.set(this.position.x, this.position.y, this.position.z);
-
                         this.current_light.target = this.target;
-
-                        this.current_light.angle = this.angle;
-                        this.current_light.distance = this.distance;
-                        this.current_light.decay = this.decay;
-                        this.current_light.penumbra = this.penumbra;
                         this.current_light.cast_shadow = this.cast_shadow;
-
                         this.lights.push(this.current_light);
                     }
-                    else if(this.light_type === this.LIGHT_TYPES.POINT) { //redundant if, easier to read
+                    else if(this.light_type === this.LIGHT_TYPES.SPOT) {
+                            console.log("Create Spot Light");
+                            
+                            this.angle = this.model.get("angle");
+                            this.penumbra = this.model.get("penumbra");
+
+                            this.current_light = new THREE.SpotLight(this.color, this.intensity);
+                    
+                            this.current_light.position.set(this.position.x, this.position.y, this.position.z);
+                            this.current_light.target = this.target;
+                            this.current_light.angle = this.angle;
+                            this.current_light.distance = this.distance;
+                            this.current_light.decay = this.decay;
+                            this.current_light.penumbra = this.penumbra;
+                            this.current_light.cast_shadow = this.cast_shadow;
+    
+                            this.lights.push(this.current_light);
                     }
+                       
                 }
+
             }
         } 
 

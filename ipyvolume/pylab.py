@@ -1635,8 +1635,37 @@ def spot_light(
 
     return light
 
-def point_light():
-    return 0
+def point_light(
+    color=default_color_selected, 
+    intensity = 1, 
+    position=[0, 1, 0],
+    distance=0,
+    decay=1,
+    cast_shadow=False):
+
+    print("ADD POINT LIGHT (from pylab) ")
+    print("color: " + str(color))
+    print("intensity: " + str(intensity))
+    print("position: " +  str(position[0])+" "+str(position[1])+" "+str(position[2]))
+    print("distance: " + str(distance))
+    print("decay: " + str(decay))
+    print("cast_shadow: " + str(cast_shadow))
+
+    light = ipv.Light(
+        light_type='POINT',
+        color=color, 
+        intensity=intensity, 
+        position_x=position[0],
+        position_y=position[1],
+        position_z=position[2],
+        distance=distance,
+        decay=decay,
+        cast_shadow=cast_shadow)
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
 
 
 
