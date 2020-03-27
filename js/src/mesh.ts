@@ -115,7 +115,7 @@ class MeshView extends widgets.WidgetView {
 
         //LIGHTING
 /////////////////////
-        var globalIntensity = 1;
+        var globalIntensity = 0.5;
         this.renderer.renderer.shadowMap.enabled = true;
         this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -149,14 +149,28 @@ class MeshView extends widgets.WidgetView {
             */
            
             /*
-            var dlTest = new THREE.DirectionalLight(0x000000, globalIntensity);
-            dlTest.castShadow = true;
-            dlTest.color = new THREE.Color("rgb(0, 255, 255)"); 
-            dlTest.position.set(100, 100, 100).normalize();
-            dlTest.lookAt(new THREE.Vector3(0,0,0));//
-            this.renderer.scene_scatter.add(dlTest);
-            */          
+            var dlTest = new THREE.DirectionalLight("rgb(0, 255, 255)", globalIntensity);
+            dlTest.position.set(100, 100, 100);
+            dlTest.castShadow = true; 
 
+            dlTest.shadow = new THREE.DirectionalLightShadow(new THREE.OrthographicCamera(-5,5,-5,5,0.5,500));
+                        
+            var d = 100;
+            dlTest.shadow.camera.left = - d;
+            dlTest.shadow.camera.right = d;
+            dlTest.shadow.camera.top = d;
+            dlTest.shadow.camera.bottom = - d;
+
+            dlTest.shadow.mapSize.width = 512;//this.shadow_map_width;
+            dlTest.shadow.mapSize.height = 512;//this.shadow_map_height;
+            dlTest.shadow.bias = -0.0005; // prevent shadow acne
+    
+            dlTest.shadow.camera.position.set(100,100,100);//(this.position.x, this.position.y, this.position.z);
+            dlTest.shadow.camera.near = 0.5;//this.shadow_camera_near;
+            dlTest.shadow.camera.far = 10000;// this.shadow_camera_far;
+            this.renderer.scene_scatter.add(dlTest);
+
+            */
             /*  
             var dlTest2 = new THREE.DirectionalLight(0x000000, globalIntensity);
             dlTest2.castShadow = true;

@@ -1566,7 +1566,12 @@ def directional_light(
     intensity = 1, 
     position=[0, 1, 0],
     target=[0, 0, 0], 
-    cast_shadow=False):
+    cast_shadow=False,
+    shadow_map_size=512,
+    shadow_bias=-0.0005,
+    shadow_camera_near=0.5,
+    shadow_camera_far=500,
+    shadow_camera_orthographic_size=5):
 
     print("ADD DIRECTIONAL LIGHT (from pylab) ")
     print("color: " + str(color))
@@ -1574,6 +1579,11 @@ def directional_light(
     print("position: " +  str(position[0])+" "+str(position[1])+" "+str(position[2]))
     print("target: " +  str(target[0])+" "+str(target[1])+" "+str(target[2]))
     print("cast_shadow: " + str(cast_shadow))
+    if cast_shadow:
+        print("shadow_map_size: " + str(shadow_map_size))
+        print("shadow_bias: " + str(shadow_bias))
+        print("shadow_camera_near: " + str(shadow_camera_near))
+        print("shadow_camera_far: " + str(shadow_camera_far))
 
     light = ipv.Light(
         light_type='DIRECTIONAL',
@@ -1585,7 +1595,12 @@ def directional_light(
         target_x=target[0],
         target_y=target[1],
         target_z=target[2],
-        cast_shadow=cast_shadow)
+        cast_shadow=cast_shadow,
+        shadow_map_size=shadow_map_size,
+        shadow_bias=shadow_bias,
+        shadow_camera_near=shadow_camera_near,
+        shadow_camera_far=shadow_camera_far,
+        shadow_camera_orthographic_size=shadow_camera_orthographic_size)
 
     fig = gcf()
     fig.lights = fig.lights + [light]
@@ -1602,8 +1617,7 @@ def spot_light(
     decay=1,
     penumbra=0,
     cast_shadow=False,
-    shadow_map_width=512,
-    shadow_map_height=512,
+    shadow_map_size=512,
     shadow_bias=-0.0005,
     shadow_camera_near=0.5,
     shadow_camera_far=500,
@@ -1621,8 +1635,7 @@ def spot_light(
     print("penumbra: " + str(penumbra))
     print("cast_shadow: " + str(cast_shadow))
     if cast_shadow:
-        print("shadow_map_width: " + str(shadow_map_width))
-        print("shadow_map_height: " + str(shadow_map_height))
+        print("shadow_map_size: " + str(shadow_map_size))
         print("shadow_bias: " + str(shadow_bias))
         print("shadow_camera_near: " + str(shadow_camera_near))
         print("shadow_camera_far: " + str(shadow_camera_far))
@@ -1644,8 +1657,7 @@ def spot_light(
         decay=decay,
         penumbra=penumbra,
         cast_shadow=cast_shadow,
-        shadow_map_width=shadow_map_width,
-        shadow_map_height=shadow_map_height,
+        shadow_map_size=shadow_map_size,
         shadow_bias=shadow_bias,
         shadow_camera_near=shadow_camera_near,
         shadow_camera_far=shadow_camera_far,

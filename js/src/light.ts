@@ -27,13 +27,13 @@ class LightView extends widgets.WidgetView {
     decay: any;
     penumbra: any;
     cast_shadow: any;
-    shadow_map_width: any;
-    shadow_map_height: any;
+    shadow_map_size: any;
     shadow_bias: any;
     shadow_camera_near: any;
     shadow_camera_far: any;
     shadow_camera_perspective_fov: any;
     shadow_camera_perspective_aspect: any;
+    shadow_camera_orthographic_size: any;
     
     render() {
 
@@ -122,13 +122,36 @@ class LightView extends widgets.WidgetView {
                     this.target.updateMatrixWorld();
                     this.renderer.scene_scatter.add(this.target);
     
-                    if(this.light_type === this.LIGHT_TYPES.DIRECTIONAL){
-                        console.log("Create Directional Light ");
+                    this.shadow_map_size = this.model.get("shadow_map_size");
+                    this.shadow_bias = this.model.get("shadow_bias");
+                    this.shadow_camera_near = this.model.get("shadow_camera_near");
+                    this.shadow_camera_far = this.model.get("shadow_camera_far");
+
+                    if(this.light_type === this.LIGHT_TYPES.DIRECTIONAL) {
+                        console.log("Create Directional Light");
+                        
+                        this.shadow_camera_orthographic_size = this.model.get("shadow_camera_orthographic_size");
+
                         this.current_light = new THREE.DirectionalLight(this.color, this.intensity);
-                    
                         this.current_light.position.set(this.position.x, this.position.y, this.position.z);
                         this.current_light.target = this.target;
-                        this.current_light.cast_shadow = this.cast_shadow;
+                        this.current_light.castShadow = this.cast_shadow;
+            
+                        this.current_light.shadow = new THREE.DirectionalLightShadow(new THREE.OrthographicCamera(-5,5,-5,5,0.5,500));
+                                    
+                        this.current_light.shadow.camera.left = - this.shadow_camera_orthographic_size;
+                        this.current_light.shadow.camera.right = this.shadow_camera_orthographic_size;
+                        this.current_light.shadow.camera.top = this.shadow_camera_orthographic_size;
+                        this.current_light.shadow.camera.bottom = - this.shadow_camera_orthographic_size;
+            
+                        this.current_light.shadow.mapSize.width = this.shadow_map_size;
+                        this.current_light.shadow.mapSize.height = this.shadow_map_size;
+                        this.current_light.shadow.bias = this.shadow_bias; // prevent shadow acne
+                
+                        this.current_light.shadow.camera.position.set(this.position.x, this.position.y, this.position.z);
+                        this.current_light.shadow.camera.near = this.shadow_camera_near;
+                        this.current_light.shadow.camera.far =  this.shadow_camera_far;
+
                         this.lights.push(this.current_light);
                     }
                     else if(this.light_type === this.LIGHT_TYPES.SPOT) {
@@ -137,11 +160,6 @@ class LightView extends widgets.WidgetView {
                             this.angle = this.model.get("angle");
                             this.penumbra = this.model.get("penumbra");
 
-                            this.shadow_map_width = this.model.get("shadow_map_width");
-                            this.shadow_map_height = this.model.get("shadow_map_height");
-                            this.shadow_bias = this.model.get("shadow_bias");
-                            this.shadow_camera_near = this.model.get("shadow_camera_near");
-                            this.shadow_camera_far = this.model.get("shadow_camera_far");
                             this.shadow_camera_perspective_fov = this.model.get("shadow_camera_perspective_fov");
                             this.shadow_camera_perspective_aspect = this.model.get("shadow_camera_perspective_aspect");
 
@@ -155,10 +173,10 @@ class LightView extends widgets.WidgetView {
                             this.current_light.penumbra = this.penumbra;
                             this.current_light.castShadow = this.cast_shadow;
                             
-                            this.current_light.shadow = new THREE.SpotLightShadow(new THREE.PerspectiveCamera(100, 1, 0.5, 5000));
+                            this.current_light.shadow = new THREE.SpotLightShadow(new THREE.PerspectiveCamera());
                               
-                            this.current_light.shadow.mapSize.width = this.shadow_map_width;
-                            this.current_light.shadow.mapSize.height = this.shadow_map_height;
+                            this.current_light.shadow.mapSize.width = this.shadow_map_size;
+                            this.current_light.shadow.mapSize.height = this.shadow_map_size;
                             this.current_light.shadow.bias = this.shadow_bias; // prevent shadow acne
                     
                             this.current_light.shadow.camera.position.set(this.position.x, this.position.y, this.position.z);
@@ -197,13 +215,13 @@ class LightModel extends widgets.WidgetModel {
         distance: serialize.array_or_json,
         decay: serialize.array_or_json,
         penumbra: serialize.array_or_json,
-        shadow_map_width: serialize.array_or_json,
-        shadow_map_height: serialize.array_or_json,
+        shadow_map_size: serialize.array_or_json,
         shadow_bias: serialize.array_or_json,
         shadow_camera_near: serialize.array_or_json,
         shadow_camera_far: serialize.array_or_json,
         shadow_camera_perspective_fov: serialize.array_or_json,
         shadow_camera_perspective_aspect: serialize.array_or_json,
+        shadow_camera_orthographic_size: serialize.array_or_json,
     };
     defaults() {
         return {
@@ -229,13 +247,13 @@ class LightModel extends widgets.WidgetModel {
             decay: 1,
             penumbra: 0,
             cast_shadow: false,
-            shadow_map_width: 512,
-            shadow_map_height: 512,
+            shadow_map_size: 512,
             shadow_bias: -0.0005,
             shadow_camera_near: 0.5,
             shadow_camera_far: 500,
             shadow_camera_perspective_fov: 50,
             shadow_camera_perspective_aspect: 1,
+            shadow_camera_orthographic_size: 5
         };
     }
 }
