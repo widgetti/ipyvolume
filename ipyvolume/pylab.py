@@ -1601,7 +1601,14 @@ def spot_light(
     distance=0,
     decay=1,
     penumbra=0,
-    cast_shadow=False):
+    cast_shadow=False,
+    shadow_map_width=512,
+    shadow_map_height=512,
+    shadow_bias=-0.0005,
+    shadow_camera_near=0.5,
+    shadow_camera_far=500,
+    shadow_camera_perspective_fov=50,
+    shadow_camera_perspective_aspect=1):
 
     print("ADD SPOT LIGHT (from pylab) ")
     print("color: " + str(color))
@@ -1613,6 +1620,14 @@ def spot_light(
     print("decay: " + str(decay))
     print("penumbra: " + str(penumbra))
     print("cast_shadow: " + str(cast_shadow))
+    if cast_shadow:
+        print("shadow_map_width: " + str(shadow_map_width))
+        print("shadow_map_height: " + str(shadow_map_height))
+        print("shadow_bias: " + str(shadow_bias))
+        print("shadow_camera_near: " + str(shadow_camera_near))
+        print("shadow_camera_far: " + str(shadow_camera_far))
+        print("shadow_camera_perspective_fov: " + str(shadow_camera_perspective_fov))
+        print("shadow_camera_perspective_aspect: " + str(shadow_camera_perspective_aspect))
 
     light = ipv.Light(
         light_type='SPOT',
@@ -1628,7 +1643,14 @@ def spot_light(
         distance=distance,
         decay=decay,
         penumbra=penumbra,
-        cast_shadow=cast_shadow)
+        cast_shadow=cast_shadow,
+        shadow_map_width=shadow_map_width,
+        shadow_map_height=shadow_map_height,
+        shadow_bias=shadow_bias,
+        shadow_camera_near=shadow_camera_near,
+        shadow_camera_far=shadow_camera_far,
+        shadow_camera_perspective_fov=shadow_camera_perspective_fov,
+        shadow_camera_perspective_aspect=shadow_camera_perspective_aspect)
 
     fig = gcf()
     fig.lights = fig.lights + [light]

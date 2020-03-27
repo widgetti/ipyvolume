@@ -249,6 +249,14 @@ class Light(widgets.Widget):
     angle = traitlets.CFloat(math.pi/3).tag(sync=True)
     decay = traitlets.CFloat(1).tag(sync=True)
     penumbra = traitlets.CFloat(0).tag(sync=True)
+
+    shadow_map_width=traitlets.CFloat(512).tag(sync=True)
+    shadow_map_height=traitlets.CFloat(512).tag(sync=True)
+    shadow_bias=traitlets.CFloat(-0.0005).tag(sync=True)
+    shadow_camera_near=traitlets.CFloat(0.5).tag(sync=True)
+    shadow_camera_far=traitlets.CFloat(500).tag(sync=True)
+    shadow_camera_perspective_fov=traitlets.CFloat(50).tag(sync=True)
+    shadow_camera_perspective_aspect=traitlets.CFloat(1).tag(sync=True)
     
 
     

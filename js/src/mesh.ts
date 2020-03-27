@@ -116,18 +116,19 @@ class MeshView extends widgets.WidgetView {
         //LIGHTING
 /////////////////////
         var globalIntensity = 1;
-
+        this.renderer.renderer.shadowMap.enabled = true;
+        this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         if(this.lightCountTemp == 0)
         {
             this.lightCountTemp = 1;
-            /*
+            
             this.renderer.renderer.shadowMap.enabled = true;
             this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            
+            /*
             var slTest = new THREE.SpotLight(0x000000, globalIntensity);
             slTest.castShadow = true;
-            slTest.color = new THREE.Color("rgb(100, 100, 100)"); 
+            slTest.color = new THREE.Color("rgb(100, 0, 100)"); 
             slTest.position.set(20, 30, 20);//.normalize();
             slTest.angle = Math.PI/9;
             slTest.penumbra = 0.25;
