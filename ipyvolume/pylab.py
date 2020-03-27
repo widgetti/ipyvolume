@@ -80,7 +80,7 @@ from IPython.display import display
 import ipyvolume as ipv
 import ipyvolume.embed
 from ipyvolume import utils
-
+import math
 
 _last_figure = None
 
@@ -1517,56 +1517,131 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
 
     return triangles, lines
 
-def ambient_light(color=default_color, intensity = 1):
-    print("ADD AMBIENT LIGHT (from pylab) " + color)
-    
+def ambient_light(color=default_color_selected, intensity = 1):
+    print("ADD AMBIENT LIGHT (from pylab) ")
+    print("color: " + str(color))
+    print("intensity: " + str(intensity))
+
     light = ipv.Light(
+        light_type='AMBIENT',
         color=color, 
-        intensity=intensity, 
-        light_type='AMBIENT')
+        intensity=intensity)
+
     fig = gcf()
     fig.lights = fig.lights + [light]
 
     return light
 
+def hemisphere_light(
+    color=default_color_selected, 
+    color2=default_color, 
+    intensity = 1, 
+    position=[0, 1, 0], 
+    cast_shadow=False):
 
-def directional_light(color=default_color, intensity = 1, position=[0, 1, 0], cast_shadow=False):
+    print("ADD HEMISPHERE LIGHT (from pylab) ")
+    print("color: " + str(color))
+    print("color2: " + str(color2))
+    print("intensity: " + str(intensity))
+    print("position: " +  str(position[0])+" "+str(position[1])+" "+str(position[2]))
+    print("cast_shadow: " + str(cast_shadow))
 
-    print("ADD DIRECTIONAL LIGHT (from pylab) " + color + " "+ str(position[0]) + str(position[1])+ str(position[2]))
-    
     light = ipv.Light(
+        light_type='HEMISPHERE',
         color=color, 
+        color2=color2,
         intensity=intensity, 
-        cast_shadow=cast_shadow, 
-        light_type='DIRECTIONAL',
         position_x=position[0],
         position_y=position[1],
-        position_z=position[2])
+        position_z=position[2],
+        cast_shadow=cast_shadow)
+        
     fig = gcf()
     fig.lights = fig.lights + [light]
 
     return light
 
-def spot_light():
-    return 0
+def directional_light(
+    color=default_color_selected, 
+    intensity = 1, 
+    position=[0, 1, 0],
+    target=[0, 0, 0], 
+    cast_shadow=False):
+
+    print("ADD DIRECTIONAL LIGHT (from pylab) ")
+    print("color: " + str(color))
+    print("intensity: " + str(intensity))
+    print("position: " +  str(position[0])+" "+str(position[1])+" "+str(position[2]))
+    print("target: " +  str(target[0])+" "+str(target[1])+" "+str(target[2]))
+    print("cast_shadow: " + str(cast_shadow))
+
+    light = ipv.Light(
+        light_type='DIRECTIONAL',
+        color=color, 
+        intensity=intensity, 
+        position_x=position[0],
+        position_y=position[1],
+        position_z=position[2],
+        target_x=target[0],
+        target_y=target[1],
+        target_z=target[2],
+        cast_shadow=cast_shadow)
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+def spot_light(
+    color=default_color_selected, 
+    intensity = 1, 
+    position=[0, 1, 0], 
+    target=[0, 0, 0],  
+    angle=math.pi/3, 
+    distance=0,
+    decay=1,
+    penumbra=0,
+    cast_shadow=False):
+
+    print("ADD SPOT LIGHT (from pylab) ")
+    print("color: " + str(color))
+    print("intensity: " + str(intensity))
+    print("position: " +  str(position[0])+" "+str(position[1])+" "+str(position[2]))
+    print("target: " +  str(target[0])+" "+str(target[1])+" "+str(target[2]))
+    print("angle: " + str(angle))
+    print("distance: " + str(distance))
+    print("decay: " + str(decay))
+    print("penumbra: " + str(penumbra))
+    print("cast_shadow: " + str(cast_shadow))
+
+    light = ipv.Light(
+        light_type='SPOT',
+        color=color, 
+        intensity=intensity, 
+        position_x=position[0],
+        position_y=position[1],
+        position_z=position[2],
+        target_x=target[0],
+        target_y=target[1],
+        target_z=target[2],
+        angle=angle, 
+        distance=distance,
+        decay=decay,
+        penumbra=penumbra,
+        cast_shadow=cast_shadow)
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
 
 def point_light():
     return 0
 
-def hemisphere_light(color=default_color, color2=default_color_selected, intensity = 1, position=[0, 1, 0], cast_shadow=False):
 
-    print("ADD HEMISPHERE LIGHT (from pylab) " + color + " "+ str(position[0]) + str(position[1])+ str(position[2]))
-    
-    light = ipv.Light(
-        color=color, 
-        color2=color2,
-        intensity=intensity, 
-        cast_shadow=cast_shadow, 
-        light_type='HEMISPHERE',
-        position_x=position[0],
-        position_y=position[1],
-        position_z=position[2])
-    fig = gcf()
-    fig.lights = fig.lights + [light]
 
-    return light
+
+
+
+
+

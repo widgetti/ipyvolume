@@ -11,17 +11,23 @@ import { randomBates } from "d3";
 export
 class LightView extends widgets.WidgetView {
 
-    LIGHT_TYPES: any;
     renderer: FigureView;
-    lights: any;
+    lights: any; //TODO remove
     current_light: any;
+    LIGHT_TYPES: any;
+    light_type: any;
+
     color: any;
     color2: any;
     intensity: any;
-    light_type: any;
-    cast_shadow: any;
     position: any;
     target: any;
+    angle: any; 
+    distance: any;
+    decay: any;
+    penumbra: any;
+    cast_shadow: any;
+
     
     render() {
 
@@ -89,16 +95,47 @@ class LightView extends widgets.WidgetView {
             else {
                 //with shadow support
                 this.cast_shadow = this.model.get("cast_shadow");
+                this.angle = this.model.get("angle");
+                this.distance = this.model.get("distance");
+                this.decay = this.model.get("decay");
+                this.penumbra = this.model.get("penumbra");
+                
+                // TODO - move below
+                this.target = new THREE.Object3D();
+                this.target.position.set(this.model.get("target_x"), this.model.get("target_y"), this.model.get("target_z"));
+                this.target.updateMatrixWorld();
+                this.renderer.scene_scatter.add(this.target);
 
-                //this.target = new THREE.Vector3(this.model.get("target_x"), this.model.get("target_y"), this.model.get("target_z"));
 
                 if(this.light_type === this.LIGHT_TYPES.DIRECTIONAL){
                     console.log("Create Directional Light w color " + this.color + " intensity : " + this.intensity + " position :"+ this.position + " cast_shadow: " + this.cast_shadow);
                     this.current_light = new THREE.DirectionalLight(this.color, this.intensity);
                 
                     this.current_light.position.set(this.position.x, this.position.y, this.position.z);
+                    this.current_light.target = this.target;
                     this.current_light.cast_shadow = this.cast_shadow;
                     this.lights.push(this.current_light);
+                }
+                else {
+                    if(this.light_type === this.LIGHT_TYPES.SPOT) {
+                        console.log("Create Spot Light w color " + this.color + " intensity : " + this.intensity + " position :"+ this.position + " cast_shadow: " + this.cast_shadow);
+
+                        this.current_light = new THREE.SpotLight(this.color, this.intensity);
+                
+                        this.current_light.position.set(this.position.x, this.position.y, this.position.z);
+
+                        this.current_light.target = this.target;
+
+                        this.current_light.angle = this.angle;
+                        this.current_light.distance = this.distance;
+                        this.current_light.decay = this.decay;
+                        this.current_light.penumbra = this.penumbra;
+                        this.current_light.cast_shadow = this.cast_shadow;
+
+                        this.lights.push(this.current_light);
+                    }
+                    else if(this.light_type === this.LIGHT_TYPES.POINT) { //redundant if, easier to read
+                    }
                 }
             }
         } 
@@ -117,9 +154,13 @@ class LightModel extends widgets.WidgetModel {
         position_x: serialize.array_or_json,
         position_y: serialize.array_or_json,
         position_z: serialize.array_or_json,
-        //target_x: serialize.array_or_json,
-        //target_y: serialize.array_or_json,
-        //target_z: serialize.array_or_json,
+        target_x: serialize.array_or_json,
+        target_y: serialize.array_or_json,
+        target_z: serialize.array_or_json,
+        angle: serialize.array_or_json, 
+        distance: serialize.array_or_json,
+        decay: serialize.array_or_json,
+        penumbra: serialize.array_or_json,
     };
     defaults() {
         return {
@@ -130,17 +171,21 @@ class LightModel extends widgets.WidgetModel {
             _view_module : "ipyvolume",
             _model_module_version: semver_range,
             _view_module_version: semver_range,
+            light_type: 'AMBIENT',
             color: "red",
             color2: "white",
             intensity: 1,
-            light_type: 'AMBIENT',
-            cast_shadow: false,
             position_x: 0,
             position_y: 1,
             position_z: 0,
-            //target_x: 0,
-            //target_y: 0,
-            //target_z: 0,
+            target_x: 0,
+            target_y: 0,
+            target_z: 0,
+            angle: Math.PI/3, 
+            distance: 0,
+            decay: 1,
+            penumbra: 0,
+            cast_shadow: false,
         };
     }
 }
