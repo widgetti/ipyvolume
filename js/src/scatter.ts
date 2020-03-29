@@ -42,6 +42,7 @@ class ScatterView extends widgets.WidgetView {
     receive_shadow : any;
 
     render() {
+
         this.LIGHTING_MODELS = {
             DEFAULT: 'DEFAULT',
             LAMBERT: 'LAMBERT',
@@ -147,6 +148,7 @@ class ScatterView extends widgets.WidgetView {
         this.line_material = get_material("line_material");
         this.line_material_rgb = get_material("line_material");
         this.materials = [this.material, this.material_rgb, this.line_material, this.line_material_rgb];
+
         this._update_materials();
         if (this.model.get("material")) {
             this.model.get("material").on("change", () => {
@@ -212,7 +214,7 @@ class ScatterView extends widgets.WidgetView {
         this.receive_shadow = this.model.get("receive_shadow");
         this.mesh.castShadow = this.cast_shadow;
         this.mesh.receiveShadow = this.receive_shadow;
-        
+
         this.renderer.scene_scatter.add(this.mesh);
         if (this.line_segments) {
             this.renderer.scene_scatter.add(this.line_segments);
@@ -315,11 +317,13 @@ class ScatterView extends widgets.WidgetView {
             // not present on .copy.. bug?
             this.line_material_rgb.linewidth = this.line_material.linewidth = this.model.get("line_material").obj.linewidth;
         }
+
+        this.material.defines = {USE_COLOR: true};
         this.material.extensions = {derivatives: true};
-        this.material_rgb.defines = {USE_RGB: true};
+        this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true};
         this.material_rgb.extensions = {derivatives: true};
         this.line_material.defines = {AS_LINE: true};
-        this.line_material_rgb.defines = {USE_RGB: true, AS_LINE: true};
+        this.line_material_rgb.defines = {USE_RGB: true, AS_LINE: true, USE_COLOR: true};
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");
         this.material_rgb.visible = this.material.visible && this.model.get("visible");
@@ -327,6 +331,7 @@ class ScatterView extends widgets.WidgetView {
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
 
         this.lighting_model = this.model.get("lighting_model");
+        console.log("------------------------- LIGHTING MODEL: " + this.lighting_model);
         this.materials.forEach((material) => {
 
             if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT) {
@@ -476,7 +481,7 @@ class ScatterView extends widgets.WidgetView {
 
             current.ensure_array(["color"]);
             previous.ensure_array(["color"]);
-            geometry.addAttribute("color", new THREE.BufferAttribute(current.array_vec4.color, 4));
+            geometry.addAttribute("color_current", new THREE.BufferAttribute(current.array_vec4.color, 4));
             geometry.addAttribute("color_previous", new THREE.BufferAttribute(previous.array_vec4.color, 4));
 
             this.line_segments = new THREE.Line(geometry, this.line_material);

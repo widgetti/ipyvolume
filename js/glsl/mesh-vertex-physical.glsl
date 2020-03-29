@@ -29,7 +29,6 @@ attribute vec3 position_previous;
 attribute vec4 color_current;
 attribute vec4 color_previous;
 
-//LAMBERT
 ////////////////////////////////////////////////////////////////////////////////
 varying vec3 vViewPosition;
 
@@ -83,6 +82,7 @@ void main()
 	#include <shadowmap_vertex>
 	#include <fog_vertex>
 
+////////////////////////////////////////////////////////////////////////////////
     vec3 origin = vec3(xlim.x, ylim.x, zlim.x);
     vec3 size_viewport = vec3(xlim.y, ylim.y, zlim.y) - origin;
 
