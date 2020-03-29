@@ -352,6 +352,7 @@ def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=Non
     mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles, lines=lines, color=color, u=u, v=v, texture=texture)
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
     fig.meshes = fig.meshes + [mesh]
+    print(fig.meshes)
     return mesh
 
 
@@ -1517,39 +1518,41 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
 
     return triangles, lines
 
-def ambient_light(color=default_color_selected, intensity = 1):
+def ambient_light(
+    light_color2=default_color_selected, 
+    intensity = 1):
     print("ADD AMBIENT LIGHT (from pylab) ")
-    print("color: " + str(color))
+    print("light_color2: " + str(light_color2))
     print("intensity: " + str(intensity))
 
     light = ipv.Light(
         light_type='AMBIENT',
-        color=color, 
+        light_color2=light_color2, 
         intensity=intensity)
 
     fig = gcf()
     fig.lights = fig.lights + [light]
-
+    #print(fig.lights)
     return light
 
 def hemisphere_light(
-    color=default_color_selected, 
-    color2=default_color, 
+    light_color=default_color_selected, 
+    light_color2=default_color, 
     intensity = 1, 
     position=[0, 1, 0], 
     cast_shadow=False):
 
     print("ADD HEMISPHERE LIGHT (from pylab) ")
-    print("color: " + str(color))
-    print("color2: " + str(color2))
+    print("light_color: " + str(light_color))
+    print("light_color2: " + str(light_color2))
     print("intensity: " + str(intensity))
     print("position: " +  str(position[0])+" "+str(position[1])+" "+str(position[2]))
     print("cast_shadow: " + str(cast_shadow))
 
     light = ipv.Light(
         light_type='HEMISPHERE',
-        color=color, 
-        color2=color2,
+        light_color=light_color, 
+        light_color2=light_color2,
         intensity=intensity, 
         position_x=position[0],
         position_y=position[1],
@@ -1562,7 +1565,7 @@ def hemisphere_light(
     return light
 
 def directional_light(
-    color=default_color_selected, 
+    light_color=default_color_selected, 
     intensity = 1, 
     position=[0, 1, 0],
     target=[0, 0, 0], 
@@ -1575,7 +1578,7 @@ def directional_light(
     shadow_camera_orthographic_size=5):
 
     print("ADD DIRECTIONAL LIGHT (from pylab) ")
-    print("color: " + str(color))
+    print("light_color: " + str(light_color))
     print("intensity: " + str(intensity))
     print("position: " +  str(position[0])+" "+str(position[1])+" "+str(position[2]))
     print("target: " +  str(target[0])+" "+str(target[1])+" "+str(target[2]))
@@ -1589,7 +1592,7 @@ def directional_light(
 
     light = ipv.Light(
         light_type='DIRECTIONAL',
-        color=color, 
+        light_color=light_color, 
         intensity=intensity, 
         position_x=position[0],
         position_y=position[1],
@@ -1611,7 +1614,7 @@ def directional_light(
     return light
 
 def spot_light(
-    color=default_color_selected, 
+    light_color=default_color_selected, 
     intensity = 1, 
     position=[0, 1, 0], 
     target=[0, 0, 0],  
@@ -1629,7 +1632,7 @@ def spot_light(
     shadow_camera_perspective_aspect=1):
 
     print("ADD SPOT LIGHT (from pylab) ")
-    print("color: " + str(color))
+    print("light_color: " + str(light_color))
     print("intensity: " + str(intensity))
     print("position: " +  str(position[0])+" "+str(position[1])+" "+str(position[2]))
     print("target: " +  str(target[0])+" "+str(target[1])+" "+str(target[2]))
@@ -1649,7 +1652,7 @@ def spot_light(
 
     light = ipv.Light(
         light_type='SPOT',
-        color=color, 
+        light_color=light_color, 
         intensity=intensity, 
         position_x=position[0],
         position_y=position[1],
@@ -1676,7 +1679,7 @@ def spot_light(
     return light
 
 def point_light(
-    color=default_color_selected, 
+    light_color=default_color_selected, 
     intensity = 1, 
     position=[0, 1, 0],
     distance=0,
@@ -1689,7 +1692,7 @@ def point_light(
     shadow_camera_far=500):
 
     print("ADD POINT LIGHT (from pylab) ")
-    print("color: " + str(color))
+    print("light_color: " + str(light_color))
     print("intensity: " + str(intensity))
     print("position: " +  str(position[0])+" "+str(position[1])+" "+str(position[2]))
     print("distance: " + str(distance))
@@ -1701,10 +1704,10 @@ def point_light(
         print("shadow_radius: " + str(shadow_radius))
         print("shadow_camera_near: " + str(shadow_camera_near))
         print("shadow_camera_far: " + str(shadow_camera_far))
-        
+
     light = ipv.Light(
         light_type='POINT',
-        color=color, 
+        light_color=light_color, 
         intensity=intensity, 
         position_x=position[0],
         position_y=position[1],

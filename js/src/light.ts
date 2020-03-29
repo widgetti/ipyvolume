@@ -17,8 +17,8 @@ class LightView extends widgets.WidgetView {
     LIGHT_TYPES: any;
     light_type: any;
 
-    color: any;
-    color2: any;
+    light_color: any;
+    light_color2: any;
     intensity: any;
     position: any;
     target: any;
@@ -47,15 +47,16 @@ class LightView extends widgets.WidgetView {
         };
         this.renderer = this.options.parent;
 
-        this.model.on("change:color",
+        this.model.on("change:light_color change:intensity",
         this.on_change, this);
-
-        console.log(this.LIGHT_TYPES);
+        console.log(this.renderer.scene_scatter.children)
+        //console.log(this.LIGHT_TYPES);
         this.create_light();
         this.add_to_scene();
     }
 
     on_change(attribute) {
+        console.log("CHAKA LAKA " + attribute)
         for (const key of this.model.changedAttributes()) {
             console.log("changed " +key);
         }
@@ -64,6 +65,7 @@ class LightView extends widgets.WidgetView {
     add_to_scene() {
         this.lights.forEach((light) => {
             this.renderer.scene_scatter.add(light);
+            console.log("1")
         });
         
     }
@@ -78,13 +80,13 @@ class LightView extends widgets.WidgetView {
     create_light() {
         this.lights = [];
 
-        this.color = this.model.get("color");
+        this.light_color = this.model.get("light_color");
         this.intensity = this.model.get("intensity");
         this.light_type = this.model.get("light_type");
         //no shadow support
         if(this.light_type === this.LIGHT_TYPES.AMBIENT){
-            console.log("Create Ambient Light");
-            this.current_light = new THREE.AmbientLight(this.color, this.intensity);
+            console.log("Create Ambient Light " + this.intensity);
+            this.current_light = new THREE.AmbientLight(this.light_color, this.intensity);
             this.lights.push(this.current_light);
         }
         else{
@@ -94,9 +96,9 @@ class LightView extends widgets.WidgetView {
             if(this.light_type === this.LIGHT_TYPES.HEMISPHERE) {
                 console.log("Create Hemisphere Light ");
 
-                this.color2 = this.model.get("color2");
+                this.light_color2 = this.model.get("light_color2");
 
-                this.current_light = new THREE.HemisphereLight(this.color, this.color2, this.intensity);
+                this.current_light = new THREE.HemisphereLight(this.light_color, this.light_color2, this.intensity);
                 this.current_light.position.set(this.position.x, this.position.y, this.position.z);
                 this.lights.push(this.current_light);
             }
@@ -114,7 +116,7 @@ class LightView extends widgets.WidgetView {
 
                 if(this.light_type === this.LIGHT_TYPES.POINT) { 
                     console.log("Create Point Light");
-                    this.current_light = new THREE.PointLight(this.color, this.intensity);
+                    this.current_light = new THREE.PointLight(this.light_color, this.intensity);
 
                     this.current_light.position.set(this.position.x, this.position.y, this.position.z);
                     this.current_light.distance = this.distance;
@@ -144,7 +146,7 @@ class LightView extends widgets.WidgetView {
 
                         this.shadow_camera_orthographic_size = this.model.get("shadow_camera_orthographic_size");
 
-                        this.current_light = new THREE.DirectionalLight(this.color, this.intensity);
+                        this.current_light = new THREE.DirectionalLight(this.light_color, this.intensity);
                         this.current_light.position.set(this.position.x, this.position.y, this.position.z);
                         this.current_light.target = this.target;
                         this.current_light.castShadow = this.cast_shadow;
@@ -174,7 +176,7 @@ class LightView extends widgets.WidgetView {
                             this.shadow_camera_perspective_fov = this.model.get("shadow_camera_perspective_fov");
                             this.shadow_camera_perspective_aspect = this.model.get("shadow_camera_perspective_aspect");
 
-                            this.current_light = new THREE.SpotLight(this.color, this.intensity);
+                            this.current_light = new THREE.SpotLight(this.light_color, this.intensity);
                     
                             this.current_light.position.set(this.position.x, this.position.y, this.position.z);
                             this.current_light.target = this.target;
@@ -212,8 +214,8 @@ export
 class LightModel extends widgets.WidgetModel {
     static serializers = {
         ...widgets.WidgetModel.serializers,
-        color: serialize.color_or_json,
-        color2: serialize.color_or_json,
+        light_color: serialize.color_or_json,
+        light_color2: serialize.color_or_json,
         intensity: serialize.array_or_json,
         position_x: serialize.array_or_json,
         position_y: serialize.array_or_json,
@@ -244,8 +246,8 @@ class LightModel extends widgets.WidgetModel {
             _model_module_version: semver_range,
             _view_module_version: semver_range,
             light_type: 'AMBIENT',
-            color: "red",
-            color2: "white",
+            light_color: "red",
+            light_color2: "white",
             intensity: 1,
             position_x: 0,
             position_y: 1,

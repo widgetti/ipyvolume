@@ -228,8 +228,8 @@ class Light(widgets.Widget):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
     
-    color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
-    color2 = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
+    light_color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
+    light_color2 = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
 
     intensity = traitlets.CFloat(1).tag(sync=True)
     light_type = traitlets.Enum(values=['AMBIENT', 'DIRECTIONAL', 'SPOT', 'POINT', 'HEMISPHERE'], default_value='AMBIENT').tag(sync=True)
