@@ -131,6 +131,18 @@ class Scatter(widgets.Widget):
     connected = traitlets.CBool(default_value=False).tag(sync=True)
     visible = traitlets.CBool(default_value=True).tag(sync=True)
 
+    lighting_model = traitlets.Enum(values=['DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'], default_value='DEFAULT').tag(sync=True)
+    #diffuse_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
+    opacity = traitlets.CFloat(1).tag(sync=True)
+    specular_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
+    shininess = traitlets.CFloat(1).tag(sync=True)
+    emissive_color = Array(default_value="black", allow_none=True).tag(sync=True, **color_serialization)
+    emissive_intensity = traitlets.CFloat(1).tag(sync=True)
+    roughness = traitlets.CFloat(0).tag(sync=True)
+    metalness = traitlets.CFloat(0).tag(sync=True)
+    cast_shadow = traitlets.CBool(default_value=False).tag(sync=True)
+    receive_shadow = traitlets.CBool(default_value=False).tag(sync=True)
+
     texture = traitlets.Union(
         [
             traitlets.Instance(ipywebrtc.MediaStream),

@@ -581,7 +581,23 @@ def plot_mesh(
 
 
 @_docsubst
-def plot(x, y, z, color=default_color, **kwargs):
+def plot(
+    x, 
+    y, 
+    z, 
+    color=default_color,
+    lighting_model='DEFAULT',
+    #diffuse_color='white',
+    opacity=1,
+    specular_color='white',
+    shininess=1,
+    emissive_color='black',
+    emissive_intensity=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=False,
+    receive_shadow=False, 
+    **kwargs):
     """Plot a line in 3d.
 
     :param x: {x}
@@ -597,7 +613,23 @@ def plot(x, y, z, color=default_color, **kwargs):
         visible_lines=True, color_selected=None, size_selected=1, size=1, connected=True, visible_markers=False
     )
     kwargs = dict(defaults, **kwargs)
-    s = ipv.Scatter(x=x, y=y, z=z, color=color, **kwargs)
+    s = ipv.Scatter(
+        x=x, 
+        y=y, 
+        z=z, 
+        color=color,
+        lighting_model=lighting_model,
+        #diffuse_color=diffuse_color,
+        opacity=opacity,
+        specular_color=specular_color,
+        shininess=shininess,
+        emissive_color=emissive_color,
+        emissive_intensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow, 
+        **kwargs)
     s.material.visible = False
     fig.scatters = fig.scatters + [s]
     return s
@@ -615,6 +647,17 @@ def scatter(
     marker="diamond",
     selection=None,
     grow_limits=True,
+    lighting_model='DEFAULT',
+    #diffuse_color='white',
+    opacity=1,
+    specular_color='white',
+    shininess=1,
+    emissive_color='black',
+    emissive_intensity=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=False,
+    receive_shadow=False,
     **kwargs
 ):
     """Plot many markers/symbols in 3d.
@@ -645,6 +688,17 @@ def scatter(
         size_selected=size_selected,
         geo=marker,
         selection=selection,
+        lighting_model=lighting_model,
+        #diffuse_color=diffuse_color,
+        opacity=opacity,
+        specular_color=specular_color,
+        shininess=shininess,
+        emissive_color=emissive_color,
+        emissive_intensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow,
         **kwargs
     )
     fig.scatters = fig.scatters + [s]
@@ -664,6 +718,17 @@ def quiver(
     color=default_color,
     color_selected=default_color_selected,
     marker="arrow",
+    lighting_model='DEFAULT',
+    #diffuse_color='white',
+    opacity=1,
+    specular_color='white',
+    shininess=1,
+    emissive_color='black',
+    emissive_intensity=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=False,
+    receive_shadow=False,
     **kwargs
 ):
     """Create a quiver plot, which is like a scatter plot but with arrows pointing in the direction given by u, v and w.
@@ -698,6 +763,17 @@ def quiver(
         color_selected=color_selected,
         size_selected=size_selected,
         geo=marker,
+        lighting_model=lighting_model,
+        #diffuse_color=diffuse_color,
+        opacity=opacity,
+        specular_color=specular_color,
+        shininess=shininess,
+        emissive_color=emissive_color,
+        emissive_intensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow,
         **kwargs
     )
     fig.scatters = fig.scatters + [s]

@@ -84,10 +84,10 @@ class MeshView extends widgets.WidgetView {
             {
                 emissive: { value: new THREE.Color( 0x000000 ) },
                 emissiveIntensity: { value: 1 },
-                specular: { value: new THREE.Color( 0x111111 ) },
-                shininess: { value: 30 },
-                roughness: { value: 0.5 },
-                metalness: { value: 0.5 },
+                specular: { value: new THREE.Color( 0xffffff ) },
+                shininess: { value: 0 },
+                roughness: { value: 0.0 },
+                metalness: { value: 0.0 },
             },
             
         ] );

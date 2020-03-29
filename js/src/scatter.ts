@@ -26,7 +26,29 @@ class ScatterView extends widgets.WidgetView {
     texture_video: HTMLVideoElement;
     line_segments: any;
     mesh: any;
+
+    LIGHTING_MODELS: any;
+
+    lighting_model: any;
+    diffuse_color : any;
+    opacity : any;
+    specular_color : any;
+    shininess : any;
+    emissive_color : any;
+    emissive_intensity : any;
+    roughness : any;
+    metalness : any;
+    cast_shadow : any;
+    receive_shadow : any;
+
     render() {
+        this.LIGHTING_MODELS = {
+            DEFAULT: 'DEFAULT',
+            LAMBERT: 'LAMBERT',
+            PHONG: 'PHONG',
+            PHYSICAL : 'PHYSICAL'
+        };
+
         this.renderer = this.options.parent;
         this.previous_values = {};
         this.attributes_changed = {};
@@ -85,7 +107,8 @@ class ScatterView extends widgets.WidgetView {
             triangle_2d: geo_triangle_2d,
         };
 
-        this.uniforms = {
+        this.uniforms = THREE.UniformsUtils.merge( [
+            {
                 xlim : { type: "2f", value: [0., 1.] },
                 ylim : { type: "2f", value: [0., 1.] },
                 zlim : { type: "2f", value: [0., 1.] },
@@ -99,7 +122,19 @@ class ScatterView extends widgets.WidgetView {
                 animation_time_color : { type: "f", value: 1. },
                 texture: { type: "t", value: null },
                 texture_previous: { type: "t", value: null },
-            };
+            },
+            THREE.UniformsLib[ "common" ],
+            THREE.UniformsLib[ "lights" ],
+            {
+                emissive: { value: new THREE.Color( 0x000000 ) },
+                emissiveIntensity: { value: 1 },
+                specular: { value: new THREE.Color( 0xffffff ) },
+                shininess: { value: 0 },
+                roughness: { value: 0.0 },
+                metalness: { value: 0.0 },
+            },
+            
+        ] );    
         const get_material = (name)  => {
             if (this.model.get(name)) {
                 return this.model.get(name).obj.clone();
@@ -173,6 +208,11 @@ class ScatterView extends widgets.WidgetView {
         }
     }
     add_to_scene() {
+        this.cast_shadow = this.model.get("cast_shadow");
+        this.receive_shadow = this.model.get("receive_shadow");
+        this.mesh.castShadow = this.cast_shadow;
+        this.mesh.receiveShadow = this.receive_shadow;
+        
         this.renderer.scene_scatter.add(this.mesh);
         if (this.line_segments) {
             this.renderer.scene_scatter.add(this.line_segments);
@@ -285,15 +325,53 @@ class ScatterView extends widgets.WidgetView {
         this.material_rgb.visible = this.material.visible && this.model.get("visible");
         this.line_material.visible = this.line_material.visible && this.model.get("visible");
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
+
+        this.lighting_model = this.model.get("lighting_model");
         this.materials.forEach((material) => {
-            material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
-            material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
+
+            if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT) {
+                material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
+                material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
+            }
+            else if(this.lighting_model === this.LIGHTING_MODELS.LAMBERT) {
+                material.vertexShader = require("raw-loader!../glsl/scatter-vertex-lambert.glsl");
+                material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-lambert.glsl");
+            }
+            else if(this.lighting_model === this.LIGHTING_MODELS.PHONG) {
+                material.vertexShader = require("raw-loader!../glsl/scatter-vertex-phong.glsl");
+                material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-phong.glsl");
+            }
+            else if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL) {
+                material.vertexShader = require("raw-loader!../glsl/scatter-vertex-physical.glsl");
+                material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-physical.glsl");
+            }
+            //material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
+            //material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
             material.uniforms = {...material.uniforms, ...this.uniforms};
             material.depthWrite = true;
             material.transparant = true;
             material.depthTest = true;
             material.needsUpdate = true;
         });
+
+        this.diffuse_color = this.model.get("diffuse_color");
+        this.opacity = this.model.get("opacity");
+        this.specular_color = this.model.get("specular_color");
+        this.shininess = this.model.get("shininess");
+        this.emissive_color = this.model.get("emissive_color");
+        this.emissive_intensity = this.model.get("emissive_intensity");
+        this.roughness = this.model.get("roughness");
+        this.metalness = this.model.get("metalness");
+
+        this.material.uniforms.diffuse.value = new THREE.Color(1, 1, 1);//this.diffuse_color//BUG? keep hardcoded
+        this.material.uniforms.opacity.value = this.opacity;
+        this.material.uniforms.specular.value = new THREE.Color(this.specular_color);
+        this.material.uniforms.shininess.value = this.shininess;
+        this.material.uniforms.emissive.value = new THREE.Color(this.emissive_color);
+        this.material.uniforms.emissiveIntensity.value = this.emissive_intensity; 
+        this.material.uniforms.roughness.value = this.roughness;
+        this.material.uniforms.metalness.value = this.metalness;
+
         const geo = this.model.get("geo");
         const sprite = geo.endsWith("2d");
         if (sprite) {
@@ -444,6 +522,14 @@ class ScatterModel extends widgets.WidgetModel {
         texture: serialize.texture,
         material: { deserialize: widgets.unpack_models },
         line_material: { deserialize: widgets.unpack_models },
+        diffuse_color : serialize.color_or_json,
+        opacity : serialize.array_or_json,
+        specular_color : serialize.color_or_json,
+        shininess : serialize.array_or_json,
+        emissive_color : serialize.color_or_json,
+        emissive_intensity : serialize.array_or_json,
+        roughness : serialize.array_or_json,
+        metalness : serialize.array_or_json,
     };
 
     defaults() {
@@ -463,6 +549,17 @@ class ScatterModel extends widgets.WidgetModel {
             connected: false,
             visible: true,
             selected: null,
+            lighting_model: "DEFAULT",
+            diffuse_color : "white",
+            opacity : 1,
+            specular_color : "white",
+            shininess : 1,
+            emissive_color : "black",
+            emissive_intensity : 1,
+            roughness : 0,
+            metalness : 0,
+            cast_shadow : false,
+            receive_shadow : false,
         };
     }
 }
