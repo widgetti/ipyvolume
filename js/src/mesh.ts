@@ -27,11 +27,9 @@ class MeshView extends widgets.WidgetView {
     textures: any;
     texture_video: any;
 
-    lightCountTemp : any;
     render() {
         // console.log("created mesh view, parent is")
         // console.log(this.options.parent)
-        this.lightCountTemp = 0;
         this.renderer = this.options.parent;
         this.previous_values = {};
         this.attributes_changed = {};
@@ -61,16 +59,16 @@ class MeshView extends widgets.WidgetView {
             },
             THREE.UniformsLib[ "common" ],
             THREE.UniformsLib[ "lights" ],
-            
             {
                 emissive: { value: new THREE.Color( 0x000000 ) },
+                emissiveIntensity: { value: 1 },
                 specular: { value: new THREE.Color( 0x111111 ) },
-                shininess: { value: 30 }
+                shininess: { value: 30 },
+                roughness: { value: 0.5 },
+                metalness: { value: 0.5 },
             },
             
         ] );
-
-        //this.uniforms.emissive.set = new THREE.Color(0,255,0);
 
         const get_material = (name)  => {
             if (this.model.get(name)) {
@@ -115,84 +113,10 @@ class MeshView extends widgets.WidgetView {
 
         //LIGHTING
 /////////////////////
-        var globalIntensity = 0.5;
-        this.renderer.renderer.shadowMap.enabled = true;
-        this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-        if(this.lightCountTemp == 0)
-        {
-            this.lightCountTemp = 1;
-            
-            this.renderer.renderer.shadowMap.enabled = true;
-            this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            /*
-            var slTest = new THREE.SpotLight(0x000000, globalIntensity);
-            slTest.castShadow = true;
-            slTest.color = new THREE.Color("rgb(100, 0, 100)"); 
-            slTest.position.set(20, 30, 20);//.normalize();
-            slTest.angle = Math.PI/9;
-            slTest.penumbra = 0.25;
-            slTest.lookAt(new THREE.Vector3(0,-20,0));
-
-            
-            slTest.shadow = new THREE.SpotLightShadow(new THREE.PerspectiveCamera(100, 1, 0.5, 5000));
-            //Set up shadow properties for the light
-            slTest.shadow.camera.position.set(slTest.position.x, slTest.position.y, slTest.position.z);
-            slTest.shadow.mapSize.width = 512;      // default
-            slTest.shadow.mapSize.height = 512;     // default
-            slTest.shadow.camera.near = 0.5;        // default
-            slTest.shadow.camera.far = 500          // default
-            slTest.shadow.bias = -0.0005;          // prevent shadow acne
-            
-            this.renderer.scene_scatter.add(slTest); 
-                        
-            */
-           
-            /*
-            var dlTest = new THREE.DirectionalLight("rgb(0, 255, 255)", globalIntensity);
-            dlTest.position.set(100, 100, 100);
-            dlTest.castShadow = true; 
-
-            dlTest.shadow = new THREE.DirectionalLightShadow(new THREE.OrthographicCamera(-5,5,-5,5,0.5,500));
-                        
-            var d = 100;
-            dlTest.shadow.camera.left = - d;
-            dlTest.shadow.camera.right = d;
-            dlTest.shadow.camera.top = d;
-            dlTest.shadow.camera.bottom = - d;
-
-            dlTest.shadow.mapSize.width = 512;//this.shadow_map_width;
-            dlTest.shadow.mapSize.height = 512;//this.shadow_map_height;
-            dlTest.shadow.bias = -0.0005; // prevent shadow acne
-    
-            dlTest.shadow.camera.position.set(100,100,100);//(this.position.x, this.position.y, this.position.z);
-            dlTest.shadow.camera.near = 0.5;//this.shadow_camera_near;
-            dlTest.shadow.camera.far = 10000;// this.shadow_camera_far;
-            this.renderer.scene_scatter.add(dlTest);
-
-            */
-            /*  
-            var dlTest2 = new THREE.DirectionalLight(0x000000, globalIntensity);
-            dlTest2.castShadow = true;
-            dlTest2.color = new THREE.Color("rgb(0, 0, 155)");
-            dlTest2.position.set(0, 0, 100);//.normalize();
-            dlTest2.lookAt(mesh.position);
-            this.renderer.scene_scatter.add(dlTest2);
-            */
-
-            /*
-            var amTest = new THREE.AmbientLight(0x000000, globalIntensity);
-            amTest.color = new THREE.Color(0,0,1);
-            amTest.intensity = 0.1;
-            this.renderer.scene_scatter.add(amTest);
-            */
-
-            
-
-        }
+        //this.renderer.renderer.shadowMap.enabled = true;
+        //this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+/////////////////////
         
-
-
         this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles change:lines",
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
@@ -397,13 +321,17 @@ class MeshView extends widgets.WidgetView {
         });
 
         this.material.uniforms.diffuse.value = new THREE.Color(1, 1, 1);//BUG? keep hardcoded
+
         this.material.uniforms.opacity.value = 1.0;
         
-        this.material.uniforms.specular.value = new THREE.Color(0.5,0.5,0.5);
+        this.material.uniforms.specular.value = new THREE.Color(1.0,1.0,1.0);
         this.material.uniforms.shininess.value = 100;
 
         this.material.uniforms.emissive.value = new THREE.Color(0,0,0);
-        //this.material.uniforms.emissiveIntensity.value = 0.1; //TODO missing
+        this.material.uniforms.emissiveIntensity.value = 1; 
+
+        this.material.uniforms.roughness.value = 0.0;
+        this.material.uniforms.metalness.value = 0.0; 
 
         const texture = this.model.get("texture");
         if (texture && this.textures) {
@@ -545,9 +473,6 @@ class MeshView extends widgets.WidgetView {
             this.surface_mesh.frustumCulled = false;
             this.surface_mesh.material_rgb = this.material_rgb;
             this.surface_mesh.material_normal = this.material;
-
-            this.surface_mesh.castShadow = true;
-            this.surface_mesh.receiveShadow = true;
 
             this.meshes.push(this.surface_mesh);
         }

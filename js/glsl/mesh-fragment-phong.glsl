@@ -7,6 +7,7 @@ uniform vec3 specular;
 
 uniform float shininess;
 uniform float opacity;
+uniform float emissiveIntensity;
 
 #include <common>
 #include <packing>
@@ -74,7 +75,7 @@ void main()
 
 	vec4 diffuseColor = vec4( diffuse, opacity );//0.75 * finalColor2 + 0.25 * vec4( diffuse, opacity );
 	ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
-	vec3 totalEmissiveRadiance = emissive;
+	vec3 totalEmissiveRadiance = emissive * emissiveIntensity;
 
 	#include <logdepthbuf_fragment>
 	#include <map_fragment>

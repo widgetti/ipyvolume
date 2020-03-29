@@ -15,7 +15,9 @@ class LightView extends widgets.WidgetView {
     lights: any; //TODO remove
     current_light: any;
     LIGHT_TYPES: any;
+    SHADOW_MAP_TYPES: any;
     light_type: any;
+    shadow_map_type: any;
 
     light_color: any;
     light_color2: any;
@@ -45,6 +47,13 @@ class LightView extends widgets.WidgetView {
             POINT: 'POINT',
             HEMISPHERE: 'HEMISPHERE'
         };
+
+        this.SHADOW_MAP_TYPES = {
+            BASIC: 'BASIC',
+            PCF: 'PCF',
+            PCF_SOFT: 'PCF_SOFT',
+        };
+
         this.renderer = this.options.parent;
 
         this.model.on("change:light_color change:intensity",
@@ -83,6 +92,9 @@ class LightView extends widgets.WidgetView {
         this.light_color = this.model.get("light_color");
         this.intensity = this.model.get("intensity");
         this.light_type = this.model.get("light_type");
+        this.cast_shadow = this.model.get("cast_shadow");
+        this.renderer.renderer.shadowMap.enabled = this.cast_shadow;
+        
         //no shadow support
         if(this.light_type === this.LIGHT_TYPES.AMBIENT){
             console.log("Create Ambient Light " + this.intensity);
@@ -104,8 +116,6 @@ class LightView extends widgets.WidgetView {
             }
             // with shadow support
             else {
- 
-                this.cast_shadow = this.model.get("cast_shadow");
                 this.distance = this.model.get("distance");
                 this.decay = this.model.get("decay");
                 this.shadow_map_size = this.model.get("shadow_map_size");
@@ -113,6 +123,20 @@ class LightView extends widgets.WidgetView {
                 this.shadow_radius = this.model.get("shadow_radius");
                 this.shadow_camera_near = this.model.get("shadow_camera_near");
                 this.shadow_camera_far = this.model.get("shadow_camera_far");
+
+                if(this.cast_shadow === true) {
+                    this.shadow_map_type = this.model.get("shadow_map_type");
+
+                    if(this.shadow_map_type === this.SHADOW_MAP_TYPES.BASIC) {
+                        this.renderer.renderer.shadowMap.type = THREE.BasicShadowMap;
+                    }
+                    else if(this.shadow_map_type === this.SHADOW_MAP_TYPES.PCF) {
+                        this.renderer.renderer.shadowMap.type = THREE.PCFShadowMap;
+                    }
+                    else if(this.shadow_map_type === this.SHADOW_MAP_TYPES.PCF_SOFT) {
+                        this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                    }
+                }
 
                 if(this.light_type === this.LIGHT_TYPES.POINT) { 
                     console.log("Create Point Light");
@@ -246,6 +270,7 @@ class LightModel extends widgets.WidgetModel {
             _model_module_version: semver_range,
             _view_module_version: semver_range,
             light_type: 'AMBIENT',
+            shadow_map_type: 'PCF_SOFT',
             light_color: "red",
             light_color2: "white",
             intensity: 1,

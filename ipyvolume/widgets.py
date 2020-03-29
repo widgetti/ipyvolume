@@ -80,6 +80,17 @@ class Mesh(widgets.Widget):
     def _default_line_material(self):
         return pythreejs.ShaderMaterial()
 
+    lighting_model = traitlets.Enum(values=['DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'], default_value='DEFAULT').tag(sync=True)
+    diffuse_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
+    opacity = traitlets.CFloat(1).tag(sync=True)
+    specular_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
+    shininess = traitlets.CFloat(1).tag(sync=True)
+    emissive_color = Array(default_value="black", allow_none=True).tag(sync=True, **color_serialization)
+    emissive_intensity = traitlets.CFloat(1).tag(sync=True)
+    roughness = traitlets.CFloat(0).tag(sync=True)
+    metalness = traitlets.CFloat(0).tag(sync=True)
+    cast_shadow = traitlets.CBool(default_value=False).tag(sync=True)
+    receive_shadow = traitlets.CBool(default_value=False).tag(sync=True)
 
 @widgets.register
 class Scatter(widgets.Widget):
@@ -233,7 +244,8 @@ class Light(widgets.Widget):
 
     intensity = traitlets.CFloat(1).tag(sync=True)
     light_type = traitlets.Enum(values=['AMBIENT', 'DIRECTIONAL', 'SPOT', 'POINT', 'HEMISPHERE'], default_value='AMBIENT').tag(sync=True)
-
+    shadow_map_type = traitlets.Enum(values=['BASIC', 'PCF', 'PCF_SOFT'], default_value='PCF_SOFT').tag(sync=True)
+    
     cast_shadow = traitlets.Bool(False).tag(sync=True)
     # TODO - should use array serialization instead ?
     #position = Array(default_value=(0, 1, 0), allow_none=True).tag(sync=True, **array_serialization)

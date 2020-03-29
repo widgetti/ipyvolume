@@ -1575,7 +1575,8 @@ def directional_light(
     shadow_radius=1,
     shadow_camera_near=0.5,
     shadow_camera_far=500,
-    shadow_camera_orthographic_size=5):
+    shadow_camera_orthographic_size=5,
+    shadow_map_type='PCF_SOFT'):
 
     print("ADD DIRECTIONAL LIGHT (from pylab) ")
     print("light_color: " + str(light_color))
@@ -1589,6 +1590,7 @@ def directional_light(
         print("shadow_radius: " + str(shadow_radius))
         print("shadow_camera_near: " + str(shadow_camera_near))
         print("shadow_camera_far: " + str(shadow_camera_far))
+        print("shadow_map_type: " + str(shadow_map_type))
 
     light = ipv.Light(
         light_type='DIRECTIONAL',
@@ -1606,7 +1608,8 @@ def directional_light(
         shadow_radius=shadow_radius,
         shadow_camera_near=shadow_camera_near,
         shadow_camera_far=shadow_camera_far,
-        shadow_camera_orthographic_size=shadow_camera_orthographic_size)
+        shadow_camera_orthographic_size=shadow_camera_orthographic_size,
+        shadow_map_type=shadow_map_type)
 
     fig = gcf()
     fig.lights = fig.lights + [light]
@@ -1629,7 +1632,8 @@ def spot_light(
     shadow_camera_near=0.5,
     shadow_camera_far=500,
     shadow_camera_perspective_fov=50,
-    shadow_camera_perspective_aspect=1):
+    shadow_camera_perspective_aspect=1,
+    shadow_map_type='PCF_SOFT'):
 
     print("ADD SPOT LIGHT (from pylab) ")
     print("light_color: " + str(light_color))
@@ -1649,6 +1653,7 @@ def spot_light(
         print("shadow_camera_far: " + str(shadow_camera_far))
         print("shadow_camera_perspective_fov: " + str(shadow_camera_perspective_fov))
         print("shadow_camera_perspective_aspect: " + str(shadow_camera_perspective_aspect))
+        print("shadow_map_type: " + str(shadow_map_type))
 
     light = ipv.Light(
         light_type='SPOT',
@@ -1671,7 +1676,8 @@ def spot_light(
         shadow_camera_near=shadow_camera_near,
         shadow_camera_far=shadow_camera_far,
         shadow_camera_perspective_fov=shadow_camera_perspective_fov,
-        shadow_camera_perspective_aspect=shadow_camera_perspective_aspect)
+        shadow_camera_perspective_aspect=shadow_camera_perspective_aspect,
+        shadow_map_type=shadow_map_type)
 
     fig = gcf()
     fig.lights = fig.lights + [light]
@@ -1689,7 +1695,8 @@ def point_light(
     shadow_bias=-0.0005,
     shadow_radius=1,
     shadow_camera_near=0.5,
-    shadow_camera_far=500):
+    shadow_camera_far=500,
+    shadow_map_type='PCF_SOFT'):
 
     print("ADD POINT LIGHT (from pylab) ")
     print("light_color: " + str(light_color))
@@ -1704,6 +1711,7 @@ def point_light(
         print("shadow_radius: " + str(shadow_radius))
         print("shadow_camera_near: " + str(shadow_camera_near))
         print("shadow_camera_far: " + str(shadow_camera_far))
+        print("shadow_map_type: " + str(shadow_map_type))
 
     light = ipv.Light(
         light_type='POINT',
@@ -1719,7 +1727,8 @@ def point_light(
         shadow_bias=shadow_bias,
         shadow_radius=shadow_radius,
         shadow_camera_near=shadow_camera_near,
-        shadow_camera_far=shadow_camera_far)
+        shadow_camera_far=shadow_camera_far,
+        shadow_map_type=shadow_map_type)
 
     fig = gcf()
     fig.lights = fig.lights + [light]
