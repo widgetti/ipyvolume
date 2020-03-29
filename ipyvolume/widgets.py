@@ -64,6 +64,18 @@ class Mesh(widgets.Widget):
     color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
     visible = traitlets.CBool(default_value=True).tag(sync=True)
 
+    lighting_model = traitlets.Enum(values=['DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'], default_value='DEFAULT').tag(sync=True)
+    #diffuse_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
+    opacity = traitlets.CFloat(1).tag(sync=True)
+    specular_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
+    shininess = traitlets.CFloat(1).tag(sync=True)
+    emissive_color = Array(default_value="black", allow_none=True).tag(sync=True, **color_serialization)
+    emissive_intensity = traitlets.CFloat(1).tag(sync=True)
+    roughness = traitlets.CFloat(0).tag(sync=True)
+    metalness = traitlets.CFloat(0).tag(sync=True)
+    cast_shadow = traitlets.CBool(default_value=False).tag(sync=True)
+    receive_shadow = traitlets.CBool(default_value=False).tag(sync=True)
+
     material = traitlets.Instance(
         pythreejs.ShaderMaterial, help='A :any:`pythreejs.ShaderMaterial` that is used for the mesh'
     ).tag(sync=True, **widgets.widget_serialization)
@@ -79,18 +91,6 @@ class Mesh(widgets.Widget):
     @traitlets.default('line_material')
     def _default_line_material(self):
         return pythreejs.ShaderMaterial()
-
-    lighting_model = traitlets.Enum(values=['DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'], default_value='DEFAULT').tag(sync=True)
-    diffuse_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
-    opacity = traitlets.CFloat(1).tag(sync=True)
-    specular_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
-    shininess = traitlets.CFloat(1).tag(sync=True)
-    emissive_color = Array(default_value="black", allow_none=True).tag(sync=True, **color_serialization)
-    emissive_intensity = traitlets.CFloat(1).tag(sync=True)
-    roughness = traitlets.CFloat(0).tag(sync=True)
-    metalness = traitlets.CFloat(0).tag(sync=True)
-    cast_shadow = traitlets.CBool(default_value=False).tag(sync=True)
-    receive_shadow = traitlets.CBool(default_value=False).tag(sync=True)
 
 @widgets.register
 class Scatter(widgets.Widget):

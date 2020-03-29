@@ -58,8 +58,6 @@ class LightView extends widgets.WidgetView {
 
         this.model.on("change:light_color change:intensity",
         this.on_change, this);
-        console.log(this.renderer.scene_scatter.children)
-        //console.log(this.LIGHT_TYPES);
         this.create_light();
         this.add_to_scene();
     }

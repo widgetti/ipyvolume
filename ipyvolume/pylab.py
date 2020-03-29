@@ -314,7 +314,27 @@ default_size_selected = default_size * 1.3
 
 
 @_docsubst
-def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=None, v=None, texture=None):
+def plot_trisurf(
+    x, 
+    y, 
+    z, 
+    triangles=None, 
+    lines=None, 
+    color=default_color, 
+    u=None, 
+    v=None, 
+    texture=None,
+    lighting_model='DEFAULT',
+    #diffuse_color='white',
+    opacity=1,
+    specular_color='white',
+    shininess=1,
+    emissive_color='black',
+    emissive_intensity=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=False,
+    receive_shadow=False):
     """Draw a polygon/triangle mesh defined by a coordinate and triangle indices.
 
     The following example plots a rectangle in the z==2 plane, consisting of 2 triangles:
@@ -349,15 +369,53 @@ def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=Non
         triangles = np.array(triangles).astype(dtype=np.uint32)
     if lines is not None:
         lines = np.array(lines).astype(dtype=np.uint32)
-    mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles, lines=lines, color=color, u=u, v=v, texture=texture)
+    mesh = ipv.Mesh(
+        x=x, 
+        y=y, 
+        z=z, 
+        triangles=triangles, 
+        lines=lines, 
+        color=color, 
+        u=u, v=v, 
+        texture=texture,
+        lighting_model=lighting_model,
+        #diffuse_color=diffuse_color,
+        opacity=opacity,
+        specular_color=specular_color,
+        shininess=shininess,
+        emissive_color=emissive_color,
+        emissive_intensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow
+        )
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
     fig.meshes = fig.meshes + [mesh]
-    print(fig.meshes)
+
     return mesh
 
 
 @_docsubst
-def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
+def plot_surface(
+    x, 
+    y, 
+    z, 
+    color=default_color, 
+    wrapx=False, 
+    wrapy=False,
+    lighting_model='DEFAULT',
+    #diffuse_color='white',
+    opacity=1,
+    specular_color='white',
+    shininess=1,
+    emissive_color='black',
+    emissive_intensity=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=False,
+    receive_shadow=False
+    ):
     """Draws a 2d surface in 3d, defined by the 2d ordered arrays x,y,z.
 
     :param x: {x2d}
@@ -368,7 +426,25 @@ def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
     :param bool wrapy: simular for the y coordinate
     :return: :any:`Mesh`
     """
-    return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=False)
+    return plot_mesh(
+        x, 
+        y, 
+        z, 
+        color=color, 
+        wrapx=wrapx, 
+        wrapy=wrapy, 
+        wireframe=False,
+        lighting_model=lighting_model,
+        #diffuse_color=diffuse_color,
+        opacity=opacity,
+        specular_color=specular_color,
+        shininess=shininess,
+        emissive_color=emissive_color,
+        emissive_intensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow)
 
 
 @_docsubst
@@ -389,7 +465,18 @@ def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False):
 
 
 def plot_mesh(
-    x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None, texture=None
+    x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None, texture=None,
+    lighting_model='DEFAULT',
+    #diffuse_color='white',
+    opacity=1,
+    specular_color='white',
+    shininess=1,
+    emissive_color='black',
+    emissive_intensity=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=False,
+    receive_shadow=False
 ):
     """Draws a 2d wireframe+surface in 3d: generalization of :any:`plot_wireframe` and :any:`plot_surface`.
 
@@ -477,6 +564,17 @@ def plot_mesh(
         u=u,
         v=v,
         texture=texture,
+        lighting_model=lighting_model,
+        #diffuse_color=diffuse_color,
+        opacity=opacity,
+        specular_color=specular_color,
+        shininess=shininess,
+        emissive_color=emissive_color,
+        emissive_intensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow
     )
     fig.meshes = fig.meshes + [mesh]
     return mesh

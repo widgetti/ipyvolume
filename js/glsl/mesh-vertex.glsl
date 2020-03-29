@@ -23,10 +23,8 @@ attribute vec3 position_previous;
     varying vec2 vertex_uv;
 #endif
 
-attribute vec4 color;
+attribute vec4 color_current;
 attribute vec4 color_previous;
-
-
 
 void main(void) {
     vec3 origin = vec3(xlim.x, ylim.x, zlim.x);
@@ -46,6 +44,6 @@ void main(void) {
 #ifdef USE_RGB
     vertex_color = vec4(pos + vec3(0.5, 0.5, 0.5), 1.0);
 #else
-    vertex_color = mix(color_previous, color, animation_time_color);
+    vertex_color = mix(color_previous, color_current, animation_time_color);
 #endif
 }
