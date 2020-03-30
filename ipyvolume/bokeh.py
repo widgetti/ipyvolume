@@ -50,4 +50,4 @@ def link_data_source_selection_to_widget(data_source, widget, trait_name):
     """
         % (widget.model_id, trait_name),
     )
-    data_source.js_on_change("selected", callback)
+    data_source.selected.js_on_change("indices", callback)

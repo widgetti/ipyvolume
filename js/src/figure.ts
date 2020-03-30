@@ -2255,7 +2255,7 @@ class WidgetManagerHackModel extends widgets.WidgetModel {
 
     initialize(attributes, options) {
         console.log(this);
-        WidgetManagerHackModel.__super__.initialize.apply(this, arguments);
+        super.initialize(attributes, options);
         console.info("get reference to widget manager");
         (window as any).jupyter_widget_manager = this.widget_manager;
         (window as any).jupyter_widgets = widgets;
