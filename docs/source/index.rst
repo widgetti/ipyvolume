@@ -134,6 +134,7 @@ Contents
     examples
     api
     vr
+    pythreejs
 
 
 Changelog

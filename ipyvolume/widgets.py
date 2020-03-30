@@ -266,6 +266,10 @@ class Figure(ipywebrtc.MediaStream):
         z = 2 * np.tan(45.0 / 2.0 * np.pi / 180) / np.tan(self.camera_fov / 2.0 * np.pi / 180)
         return pythreejs.PerspectiveCamera(fov=self.camera_fov, position=(0, 0, z), width=400, height=500)
 
+    controls = traitlets.Instance(
+        pythreejs.Controls, allow_none=True, help='A :any:`pythreejs.Controls` instance to control the camera'
+    ).tag(sync=True, **widgets.widget_serialization)
+
     scene = traitlets.Instance(pythreejs.Scene, allow_none=True).tag(sync=True, **widgets.widget_serialization)
 
     @traitlets.default('scene')

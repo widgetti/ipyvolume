@@ -106,6 +106,7 @@ class FigureModel extends widgets.DOMWidgetModel {
         volumes: { deserialize: widgets.unpack_models },
         camera: { deserialize: widgets.unpack_models },
         scene: { deserialize: widgets.unpack_models },
+        controls: { deserialize: widgets.unpack_models },
     };
     defaults() {
         return {...super.defaults(),
@@ -237,6 +238,7 @@ class FigureView extends widgets.DOMWidgetView {
     selector: any;
     last_tick_selection: d3.Selection<d3.BaseType, unknown, d3.BaseType, unknown>;
     model: FigureModel;
+    control_external: any = null;
     // helper methods for testing/debugging
     debug_readPixel(x, y) {
         const buffer = new Uint8Array(4);
@@ -513,15 +515,17 @@ class FigureView extends widgets.DOMWidgetView {
             this.model.get("camera").on("change", () => {
                 // the threejs' lookAt ignore the quaternion, and uses the up vector
                 // we manually set it ourselve
-                const up = new THREE.Vector3(0, 1, 0);
-                up.applyQuaternion(this.camera.quaternion);
-                this.camera.up = up;
-                this.camera.lookAt(0, 0, 0);
-                // TODO: shouldn't we do the same with the orbit control?
-                this.control_trackball.position0 = this.camera.position.clone();
-                this.control_trackball.up0 = this.camera.up.clone();
-                // TODO: if we implement figure.look_at, we should update control's target as well
-                this.update();
+                if (!this.control_external) {
+                    const up = new THREE.Vector3(0, 1, 0);
+                    up.applyQuaternion(this.camera.quaternion);
+                    this.camera.up = up;
+                    this.camera.lookAt(0, 0, 0);
+                    // TODO: shouldn't we do the same with the orbit control?
+                    this.control_trackball.position0 = this.camera.position.clone();
+                    this.control_trackball.up0 = this.camera.up.clone();
+                    // TODO: if we implement figure.look_at, we should update control's target as well
+                    this.update();
+                }
             });
         } else {
             this.camera = new THREE.PerspectiveCamera(46, 1, NEAR, FAR);
@@ -750,6 +754,9 @@ class FigureView extends widgets.DOMWidgetView {
         this.mouse_trail = []; // list of x, y positions
         this.select_overlay = null; // lasso or sth else?
 
+        // setup controls, 2 builtin custom controls, or an external
+        // pythreejs control
+
         this.control_trackball = new THREE.TrackballControls(this.camera, this.renderer.domElement);
         this.control_orbit = new THREE.OrbitControls(this.camera, this.renderer.domElement);
         this.control_trackball.dynamicDampingFactor = 1.;
@@ -761,6 +768,42 @@ class FigureView extends widgets.DOMWidgetView {
         this.control_orbit.rotateSpeed = 0.5;
         this.control_trackball.rotateSpeed = 0.5;
         this.control_trackball.zoomSpeed = 3.;
+
+        const update_angles_bound = this.update_angles.bind(this);
+        const update_bound = this.update.bind(this);
+
+        this.control_trackball.addEventListener("end", update_angles_bound);
+        this.control_orbit.addEventListener("end", update_angles_bound);
+        this.control_trackball.addEventListener("change", update_bound);
+        this.control_orbit.addEventListener("change", update_bound);
+
+        const sync_controls_external = () => {
+            const controls = this.model.get("controls");
+            const controls_previous  = (this.model.previousAttributes as any).controls;
+            // first remove previous event handlers
+            if (controls_previous) {
+                const control_external = controls_previous.obj;
+                control_external.removeEventListener("end", update_angles_bound);
+                control_external.removeEventListener("change", update_bound);
+                control_external.dispose();
+            }
+            // and add new event handlers
+            if (controls) {
+                // get the threejs object
+                this.control_external = controls.obj;
+                this.control_external.addEventListener("end", update_angles_bound);
+                this.control_external.addEventListener("change", update_bound);
+                this.control_external.connectEvents(this.el); // custom pythreejs method
+            } else {
+                this.control_external = null;
+            }
+            this.update_mouse_mode();
+        };
+
+        sync_controls_external();
+        this.model.on("change:controls", () => {
+            sync_controls_external();
+        });
 
         window.addEventListener("deviceorientation", this.on_orientationchange.bind(this), false);
 
@@ -929,11 +972,6 @@ class FigureView extends widgets.DOMWidgetView {
         this.model.on("change:tf", this.tf_set, this);
         this.listenTo(this.model, "msg:custom", this.custom_msg.bind(this));
 
-        this.control_trackball.addEventListener("end", this.update_angles.bind(this));
-        this.control_orbit.addEventListener("end", this.update_angles.bind(this));
-        this.control_trackball.addEventListener("change", this.update.bind(this));
-        this.control_orbit.addEventListener("change", this.update.bind(this));
-
         this.renderer.domElement.addEventListener("resize", this.on_canvas_resize.bind(this), false);
         this.update();
 
@@ -987,8 +1025,13 @@ class FigureView extends widgets.DOMWidgetView {
 
     update_mouse_mode() {
         const normal_mode = this.model.get("mouse_mode") === "normal";
-        this.control_trackball.enabled = this.model.get("camera_control") === "trackball" && normal_mode;
-        this.control_orbit.enabled = this.model.get("camera_control") === "orbit" && normal_mode;
+        if (this.model.get("controls")) {
+            this.control_trackball.enabled = false;
+            this.control_orbit.enabled = false;
+        } else {
+            this.control_trackball.enabled = this.model.get("camera_control") === "trackball" && normal_mode;
+            this.control_orbit.enabled = this.model.get("camera_control") === "orbit" && normal_mode;
+        }
     }
 
     mousewheel(e) {
@@ -1610,10 +1653,18 @@ class FigureView extends widgets.DOMWidgetView {
 
     _real_update() {
         this.control_trackball.handleResize();
+        if (this.control_external) {
+            this.control_external.update();
+            // it's very likely the controller will update the camera, so we sync it to the kernel
+            this.camera.ipymodel.syncToModel(true);
+        }
+
         this._update_requested = false;
         // since the threejs animation system can update the camera,
-        // make sure we keep looking at the center
-        this.camera.lookAt(0, 0, 0);
+        // make sure we keep looking at the center (only for ipyvolume's own control)
+        if (!this.control_external) {
+            this.camera.lookAt(0, 0, 0);
+        }
 
         this.renderer.setClearColor(this.get_style_color("background-color"));
         this.x_axis.visible = this.get_style("axes.x.visible axes.visible");
