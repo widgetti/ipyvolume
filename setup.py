@@ -151,6 +151,7 @@ setup_args = {
     ],
     'install_requires': [
         'ipywidgets>=7.0.0',
+        'bqplot',
         'numpy',
         'traittypes',
         'traitlets',

@@ -9,6 +9,7 @@ Examples
    examples/animation
    examples/bqplot
    examples/bokeh
+   examples/scales
 
 Feel free to contribute new examples:
 

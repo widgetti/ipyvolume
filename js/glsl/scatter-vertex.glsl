@@ -1,5 +1,10 @@
 #include <fog_pars_vertex>
 
+#define USE_SCALE_X
+#define USE_SCALE_Y
+#define USE_SCALE_Z
+#include <scales>
+
  // for animation, all between 0 and 1
 uniform float animation_time_x;
 uniform float animation_time_y;
@@ -10,9 +15,9 @@ uniform float animation_time_vz;
 uniform float animation_time_size;
 uniform float animation_time_color;
 
-uniform vec2 xlim;
-uniform vec2 ylim;
-uniform vec2 zlim;
+uniform vec2 domain_x;
+uniform vec2 domain_y;
+uniform vec2 domain_z;
 
 varying vec4 vertex_color;
 varying vec3 vertex_position;
@@ -36,19 +41,25 @@ attribute float size;
 attribute float size_previous;
 #endif
 
+#ifdef USE_COLORMAP
+attribute float color;
+attribute float color_previous;
+uniform vec2 domain_color;
+#else
 attribute vec4 color;
 attribute vec4 color_previous;
+#endif
 
+uniform sampler2D colormap;
 
 
 void main(void) {
-    vec3 origin = vec3(xlim.x, ylim.x, zlim.x);
-    vec3 size_viewport = vec3(xlim.y, ylim.y, zlim.y) - origin;
     vec3 animation_time = vec3(animation_time_x, animation_time_y, animation_time_z);
     vec3 animation_time_v = vec3(animation_time_vx, animation_time_vy, animation_time_vz);
 
 #ifdef AS_LINE
-    vec3 model_pos = (mix(position_previous, position, animation_time) - origin) / size_viewport - 0.5;
+    vec3 animated_position = mix(position_previous, position, animation_time);
+    vec3 model_pos = vec3(SCALE_X(animated_position.x), SCALE_Y(animated_position.y), SCALE_Z(animated_position.z));
     vec4 view_pos = modelViewMatrix * vec4(model_pos, 1.0);
 #else
     vec3 vector = v;
@@ -70,7 +81,8 @@ void main(void) {
     mat3 move_to_vector = mat3(x_axis, y_axis, z_axis);
 
     float s = mix(size_previous/100., size/100., animation_time_size);
-    vec3 model_pos = (mix(position_offset_previous, position_offset, animation_time) - origin) / size_viewport - 0.5;
+    vec3 animated_position_offset = mix(position_offset_previous, position_offset, animation_time);
+    vec3 model_pos = vec3(SCALE_X(animated_position_offset.x), SCALE_Y(animated_position_offset.y), SCALE_Z(animated_position_offset.z));
     //vec3 pos = (pos_object ) / size;// - 0.5;
     #ifdef USE_SPRITE
         // if we are a sprite, we add the position in view coordinates, and need to 
@@ -89,7 +101,13 @@ void main(void) {
 #ifdef USE_RGB
     vertex_color = vec4(model_pos + vec3(0.5, 0.5, 0.5), 1.0);
 #else
-    vertex_color = mix(color_previous, color, animation_time_color);
+    #ifdef USE_COLORMAP
+        float color_animated = mix(color_previous, color, animation_time_color);
+        float color_index = scale_transform_linear(color_animated, vec2(0.0, 1.0), domain_color);
+        vertex_color = texture2D(colormap, vec2(color_index, 0));
+    #else
+        vertex_color = mix(color_previous, color, animation_time_color);
+    #endif
 #endif
 
     #include <fog_vertex>

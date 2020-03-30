@@ -14,6 +14,7 @@ import pythreejs
 import traitlets
 from traitlets import Unicode, Integer
 from traittypes import Array
+from bqplot import scales
 
 import ipyvolume
 import ipyvolume as ipv  # we should not have ipyvolume under two names either
@@ -35,6 +36,17 @@ logger = logging.getLogger("ipyvolume")
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
 
 
+def _typefix(value):
+    if isinstance(value, (list, tuple)):
+        return [_typefix(k) for k in value]
+    else:
+        try:
+            value = value.item()
+        except:
+            pass
+        return value
+
+
 @widgets.register
 class Mesh(widgets.Widget):
     _view_name = Unicode('MeshView').tag(sync=True)
@@ -50,6 +62,8 @@ class Mesh(widgets.Widget):
     v = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     triangles = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
     lines = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+    color_scale = traitlets.Instance(scales.ColorScale, default_value=None, allow_none=True)\
+        .tag(sync=True, **widgets.widget_serialization)
     texture = traitlets.Union(
         [
             traitlets.Instance(ipywebrtc.MediaStream),
@@ -95,6 +109,8 @@ class Scatter(widgets.Widget):
     vx = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     vy = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     vz = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    color_scale = traitlets.Instance(scales.ColorScale, default_value=None, allow_none=True)\
+        .tag(sync=True, **widgets.widget_serialization)
     selected = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     sequence_index = Integer(default_value=0).tag(sync=True)
     size = traitlets.Union(
@@ -292,9 +308,35 @@ class Figure(ipywebrtc.MediaStream):
 
     show = traitlets.Unicode("Volume").tag(sync=True)  # for debugging
 
-    xlim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
-    ylim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
-    zlim = traitlets.List(traitlets.CFloat(), default_value=[0, 1], minlen=2, maxlen=2).tag(sync=True)
+    @property
+    def xlim(self):
+        return self.scales['x'].min, self.scales['x'].max
+
+    @xlim.setter
+    def xlim(self, value):
+        self.scales['x'].min, self.scales['x'].max = _typefix(value)
+
+    @property
+    def ylim(self):
+        return self.scales['y'].min, self.scales['y'].max
+
+    @ylim.setter
+    def ylim(self, value):
+        self.scales['y'].min, self.scales['y'].max = _typefix(value)
+
+    @property
+    def zlim(self):
+        return self.scales['z'].min, self.scales['z'].max
+
+    @zlim.setter
+    def zlim(self, value):
+        self.scales['z'].min, self.scales['z'].max = _typefix(value)
+
+    scales = traitlets.Dict(trait=traitlets.Instance(scales.Scale)).tag(sync=True, **widgets.widget_serialization)
+
+    @traitlets.default('scales')
+    def _default_scale(self):
+        return dict(x=scales.LinearScale(min=0, max=1), y=scales.LinearScale(min=0, max=1), z=scales.LinearScale(min=0, max=1))
 
     matrix_projection = traitlets.List(
         traitlets.CFloat(), default_value=[0] * 16, allow_none=True, minlen=16, maxlen=16
