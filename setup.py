@@ -158,7 +158,8 @@ setup_args = {
         'Pillow',
         'ipywebrtc',
         'requests',
-        'pythreejs>=2.0.0'
+        'pythreejs>=2.0.0',
+        'matplotlib'
     ],
     'license': 'MIT',
     'packages': find_packages(),
