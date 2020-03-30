@@ -290,6 +290,9 @@ class ScatterView extends widgets.WidgetView {
             this._update_color_scale_domain();
             this.renderer.update();
         }
+        if (this.mesh) { // we don't need to do so on initialization
+            this.update_();
+        }
     }
     _update_color_scale_texture() {
         const color_scale = this.model.get("color_scale");
