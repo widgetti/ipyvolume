@@ -1749,7 +1749,7 @@ def directional_light(
     shadow_radius=1,
     shadow_camera_near=0.5,
     shadow_camera_far=500,
-    shadow_camera_orthographic_size=5,
+    shadow_camera_orthographic_size=100,
     shadow_map_type='PCF_SOFT'):
 
     print("ADD DIRECTIONAL LIGHT (from pylab) ")

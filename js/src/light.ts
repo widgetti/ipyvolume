@@ -38,6 +38,10 @@ class LightView extends widgets.WidgetView {
     shadow_camera_perspective_aspect: any;
     shadow_camera_orthographic_size: any;
     
+    //change:light_type //?
+    /*
+    change:light_color change:light_color2 change:intensity change:shadow_map_type change:cast_shadow change:position_x change:position_y change:position_z change:target_x change:target_y change:target_z change:distance change:angle change:decay change:penumbra change:shadow_map_size change:shadow_bias change:shadow_radius change:shadow_camera_near change:shadow_camera_far change:shadow_camera_perspective_fov change:shadow_camera_perspective_aspect change:shadow_camera_orthographic_size
+    */
     render() {
 
         this.LIGHT_TYPES = {
@@ -56,16 +60,20 @@ class LightView extends widgets.WidgetView {
 
         this.renderer = this.options.parent;
 
-        this.model.on("change:light_color change:intensity",
+        this.model.on("change:light_color change:light_color2 change:intensity change:shadow_map_type change:cast_shadow change:position_x change:position_y change:position_z change:target_x change:target_y change:target_z change:distance change:angle change:decay change:penumbra change:shadow_map_size change:shadow_bias change:shadow_radius change:shadow_camera_near change:shadow_camera_far change:shadow_camera_perspective_fov change:shadow_camera_perspective_aspect change:shadow_camera_orthographic_size",
         this.on_change, this);
-        this.create_light();
+        this.create_light(true);
         this.add_to_scene();
     }
 
     on_change(attribute) {
-        for (const key of this.model.changedAttributes()) {
-            console.log("changed " +key);
-        }
+
+
+        this.cast_shadow = this.model.get("cast_shadow");
+        this.renderer.renderer.shadowMap.enabled = this.cast_shadow;
+        console.log("CHANGE " + this.model.get("shadow_camera_orthographic_size"));
+        this.create_light(false);
+
     }
 
     add_to_scene() {
@@ -76,39 +84,56 @@ class LightView extends widgets.WidgetView {
     }
 
     remove_from_scene() {
+        this.renderer.scene_scatter.remove(this.target);
         this.lights.forEach((light) => {
             this.renderer.scene_scatter.remove(light);
         });
         
     }
 
-    create_light() {
+    create_light(instantiate=true) {
         this.lights = [];
 
         this.light_color = this.model.get("light_color");
         this.intensity = this.model.get("intensity");
-        this.light_type = this.model.get("light_type");
+        if(instantiate === true){
+            this.light_type = this.model.get("light_type");
+        }
+
         this.cast_shadow = this.model.get("cast_shadow");
         this.renderer.renderer.shadowMap.enabled = this.cast_shadow;
         
         //no shadow support
         if(this.light_type === this.LIGHT_TYPES.AMBIENT){
             console.log("Create Ambient Light ");
-            this.current_light = new THREE.AmbientLight(this.light_color, this.intensity);
-            this.lights.push(this.current_light);
+            if(instantiate === true){
+                this.current_light = new THREE.AmbientLight(this.light_color, this.intensity);
+                this.lights.push(this.current_light);
+            }
+            else{
+                this.current_light.color.set(this.light_color);
+                this.current_light.intensity = this.intensity;
+            }
         }
         else{
             this.position = new THREE.Vector3(this.model.get("position_x"), this.model.get("position_y"), this.model.get("position_z"));
             
             // no shadow support
             if(this.light_type === this.LIGHT_TYPES.HEMISPHERE) {
-                console.log("Create Hemisphere Light ");
-
                 this.light_color2 = this.model.get("light_color2");
-
-                this.current_light = new THREE.HemisphereLight(this.light_color, this.light_color2, this.intensity);
+                console.log("Create Hemisphere Light ");
+                if(instantiate === true){
+                    this.current_light = new THREE.HemisphereLight(this.light_color, this.light_color2, this.intensity);
+                }
+                else{
+                    this.current_light.color.set(this.light_color);
+                    this.current_light.groundColor.set(this.light_color2);
+                    this.current_light.intensity = this.intensity;
+                }
                 this.current_light.position.set(this.position.x, this.position.y, this.position.z);
-                this.lights.push(this.current_light);
+                if(instantiate === true){
+                    this.lights.push(this.current_light);
+                }
             }
             // with shadow support
             else {
@@ -136,8 +161,14 @@ class LightView extends widgets.WidgetView {
 
                 if(this.light_type === this.LIGHT_TYPES.POINT) { 
                     console.log("Create Point Light");
-                    this.current_light = new THREE.PointLight(this.light_color, this.intensity);
-
+                    if(instantiate === true){
+                        this.current_light = new THREE.PointLight(this.light_color, this.intensity);
+                    }
+                    else {
+                        this.current_light.color.set(this.light_color);
+                        this.current_light.intensity = this.intensity;
+                    }
+                    
                     this.current_light.position.set(this.position.x, this.position.y, this.position.z);
                     this.current_light.distance = this.distance;
                     this.current_light.decay = this.decay;
@@ -151,22 +182,31 @@ class LightView extends widgets.WidgetView {
                     this.current_light.shadow.camera.position.set(this.position.x, this.position.y, this.position.z);
                     this.current_light.shadow.camera.near = this.shadow_camera_near;
                     this.current_light.shadow.camera.far =  this.shadow_camera_far;
-
-                    this.lights.push(this.current_light);
+                    
+                    if(instantiate === true){
+                        this.lights.push(this.current_light);
+                    }
                 }
                 else {
-                    //TODO - move to a separate function
-                    this.target = new THREE.Object3D();
+                    if(instantiate === true) {
+                        this.target = new THREE.Object3D();
+                    }
                     this.target.position.set(this.model.get("target_x"), this.model.get("target_y"), this.model.get("target_z"));
                     this.target.updateMatrixWorld();
-                    this.renderer.scene_scatter.add(this.target);
-    
+                    if(instantiate === true) {
+                        this.renderer.scene_scatter.add(this.target);
+                    }
                     if(this.light_type === this.LIGHT_TYPES.DIRECTIONAL) {
                         console.log("Create Directional Light");
 
                         this.shadow_camera_orthographic_size = this.model.get("shadow_camera_orthographic_size");
-
-                        this.current_light = new THREE.DirectionalLight(this.light_color, this.intensity);
+                        if(instantiate === true) {
+                            this.current_light = new THREE.DirectionalLight(this.light_color, this.intensity);
+                        }
+                        else {
+                            this.current_light.color.set(this.light_color);
+                            this.current_light.intensity = this.intensity;
+                        }
                         this.current_light.position.set(this.position.x, this.position.y, this.position.z);
                         this.current_light.target = this.target;
                         this.current_light.castShadow = this.cast_shadow;
@@ -175,17 +215,28 @@ class LightView extends widgets.WidgetView {
                         this.current_light.shadow.mapSize.height = this.shadow_map_size;
                         this.current_light.shadow.bias = this.shadow_bias; // prevent shadow acne
                         this.current_light.shadow.radius = this.shadow_radius;
-
+                        
+                        this.current_light.shadow.camera = new THREE.OrthographicCamera( -this.shadow_camera_orthographic_size/2,
+                                                                                        this.shadow_camera_orthographic_size/2, 
+                                                                                        this.shadow_camera_orthographic_size/2, 
+                                                                                        -this.shadow_camera_orthographic_size/2, 
+                                                                                        this.shadow_camera_near, 
+                                                                                        this.shadow_camera_far );
                         this.current_light.shadow.camera.position.set(this.position.x, this.position.y, this.position.z);
+                        /*
                         this.current_light.shadow.camera.near = this.shadow_camera_near;
                         this.current_light.shadow.camera.far =  this.shadow_camera_far;
+                        this.current_light.shadow.camera.left = - this.shadow_camera_orthographic_size/2;
+                        this.current_light.shadow.camera.right = this.shadow_camera_orthographic_size/2;
+                        this.current_light.shadow.camera.top = this.shadow_camera_orthographic_size/2;
+                        this.current_light.shadow.camera.bottom = - this.shadow_camera_orthographic_size/2;
+                        this.current_light.shadow.camera.updateMatrixWorld();
+                        */
 
-                        this.current_light.shadow.camera.left = - this.shadow_camera_orthographic_size;
-                        this.current_light.shadow.camera.right = this.shadow_camera_orthographic_size;
-                        this.current_light.shadow.camera.top = this.shadow_camera_orthographic_size;
-                        this.current_light.shadow.camera.bottom = - this.shadow_camera_orthographic_size;
-
-                        this.lights.push(this.current_light);
+                        this.current_light.castShadow = this.cast_shadow;
+                        if(instantiate === true) {
+                            this.lights.push(this.current_light);
+                        }
                     }
                     else if(this.light_type === this.LIGHT_TYPES.SPOT) {
                             console.log("Create Spot Light");
@@ -195,9 +246,13 @@ class LightView extends widgets.WidgetView {
 
                             this.shadow_camera_perspective_fov = this.model.get("shadow_camera_perspective_fov");
                             this.shadow_camera_perspective_aspect = this.model.get("shadow_camera_perspective_aspect");
-
-                            this.current_light = new THREE.SpotLight(this.light_color, this.intensity);
-                    
+                            if(instantiate === true) {
+                                this.current_light = new THREE.SpotLight(this.light_color, this.intensity);
+                            }
+                            else {
+                                this.current_light.color.set(this.light_color);
+                                this.current_light.intensity = this.intensity;
+                            }
                             this.current_light.position.set(this.position.x, this.position.y, this.position.z);
                             this.current_light.target = this.target;
                             this.current_light.angle = this.angle;
@@ -211,13 +266,20 @@ class LightView extends widgets.WidgetView {
                             this.current_light.shadow.bias = this.shadow_bias; // prevent shadow acne
                             this.current_light.shadow.radius = this.shadow_radius;
 
+                            this.current_light.shadow.camera = new THREE.PerspectiveCamera(this.shadow_camera_perspective_fov,
+                                this.shadow_camera_perspective_aspect, 
+                                this.shadow_camera_near,
+                                this.shadow_camera_far);
+
                             this.current_light.shadow.camera.position.set(this.position.x, this.position.y, this.position.z);
-                            this.current_light.shadow.camera.near = this.shadow_camera_near;
-                            this.current_light.shadow.camera.far = this.shadow_camera_far;
-                            this.current_light.shadow.camera.aspect = this.shadow_camera_perspective_aspect;
-                            this.current_light.shadow.camera.fov = this.shadow_camera_perspective_fov;
-                    
-                            this.lights.push(this.current_light);
+                            //this.current_light.shadow.camera.near = this.shadow_camera_near;
+                            //this.current_light.shadow.camera.far = this.shadow_camera_far;
+                            //this.current_light.shadow.camera.aspect = this.shadow_camera_perspective_aspect;
+                            //this.current_light.shadow.camera.fov = this.shadow_camera_perspective_fov;
+                            
+                            if(instantiate === true) {
+                                this.lights.push(this.current_light);
+                            }
                            
                     }
                        
