@@ -1693,15 +1693,15 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
     return triangles, lines
 
 def ambient_light(
-    light_color2=default_color_selected, 
+    light_color=default_color_selected, 
     intensity = 1):
     print("ADD AMBIENT LIGHT (from pylab) ")
-    print("light_color2: " + str(light_color2))
+    print("light_color: " + str(light_color))
     print("intensity: " + str(intensity))
 
     light = ipv.Light(
         light_type='AMBIENT',
-        light_color2=light_color2, 
+        light_color=light_color, 
         intensity=intensity)
 
     fig = gcf()

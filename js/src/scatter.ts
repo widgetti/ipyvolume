@@ -212,12 +212,14 @@ class ScatterView extends widgets.WidgetView {
     add_to_scene() {
         this.cast_shadow = this.model.get("cast_shadow");
         this.receive_shadow = this.model.get("receive_shadow");
-        this.mesh.castShadow = this.cast_shadow;
-        this.mesh.receiveShadow = this.receive_shadow;
+        this.mesh.castShadow = true;//this.cast_shadow;
+        this.mesh.receiveShadow = true;//this.receive_shadow;
 
         this.renderer.scene_scatter.add(this.mesh);
         if (this.line_segments) {
             this.renderer.scene_scatter.add(this.line_segments);
+            this.line_segments.castShadow = true;//this.cast_shadow;
+            this.line_segments.receiveShadow = true;//this.receive_shadow;
         }
     }
     remove_from_scene() {
@@ -333,11 +335,12 @@ class ScatterView extends widgets.WidgetView {
         this.lighting_model = this.model.get("lighting_model");
         console.log("------------------------- LIGHTING MODEL: " + this.lighting_model);
         this.materials.forEach((material) => {
-
+            
             if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT) {
                 material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
                 material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
             }
+            /*
             else if(this.lighting_model === this.LIGHTING_MODELS.LAMBERT) {
                 material.vertexShader = require("raw-loader!../glsl/scatter-vertex-lambert.glsl");
                 material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-lambert.glsl");
@@ -346,17 +349,51 @@ class ScatterView extends widgets.WidgetView {
                 material.vertexShader = require("raw-loader!../glsl/scatter-vertex-phong.glsl");
                 material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-phong.glsl");
             }
-            else if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL) {
+            */
+            else {//if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL) {
                 material.vertexShader = require("raw-loader!../glsl/scatter-vertex-physical.glsl");
                 material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-physical.glsl");
             }
+            
             //material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
             //material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
             material.uniforms = {...material.uniforms, ...this.uniforms};
+
+            material.lights = true;
+
+
+            this.diffuse_color = this.model.get("diffuse_color");
+            this.opacity = this.model.get("opacity");
+            this.specular_color = this.model.get("specular_color");
+            this.shininess = this.model.get("shininess");
+            this.emissive_color = this.model.get("emissive_color");
+            this.emissive_intensity = this.model.get("emissive_intensity");
+            this.roughness = this.model.get("roughness");
+            this.metalness = this.model.get("metalness");
+
+            console.log(this.diffuse_color);
+            console.log(this.opacity);
+            console.log(this.specular_color);
+            console.log(this.shininess);
+            console.log(this.emissive_color);
+            console.log(this.emissive_intensity);
+            console.log(this.roughness);
+            console.log(this.metalness);
+    
+            material.uniforms.diffuse.value = new THREE.Color(1, 1, 1);//this.diffuse_color//BUG? keep hardcoded
+            material.uniforms.opacity.value = this.opacity;
+            material.uniforms.specular.value = new THREE.Color(this.specular_color);
+            material.uniforms.shininess.value = this.shininess;
+            material.uniforms.emissive.value = new THREE.Color(this.emissive_color);
+            material.uniforms.emissiveIntensity.value = this.emissive_intensity; 
+            material.uniforms.roughness.value = this.roughness;
+            material.uniforms.metalness.value = this.metalness;
+
             material.depthWrite = true;
             material.transparant = true;
             material.depthTest = true;
             material.needsUpdate = true;
+            
         });
 
         this.diffuse_color = this.model.get("diffuse_color");
@@ -367,7 +404,17 @@ class ScatterView extends widgets.WidgetView {
         this.emissive_intensity = this.model.get("emissive_intensity");
         this.roughness = this.model.get("roughness");
         this.metalness = this.model.get("metalness");
-
+        this.renderer.renderer.shadowMap.enabled = true;
+/*
+        console.log("this.diffuse_color:"+this.diffuse_color);
+        console.log("this.opacity:"+this.opacity);
+        console.log("this.specular_color:"+this.specular_color);
+        console.log("this.shininess:"+this.shininess);
+        console.log("this.emissive_color:"+this.emissive_color);
+        console.log("this.emissive_intensity:"+this.emissive_intensity);
+        console.log("this.roughness:"+this.roughness);
+        console.log("this.metalness:"+this.metalness);
+*/
         this.material.uniforms.diffuse.value = new THREE.Color(1, 1, 1);//this.diffuse_color//BUG? keep hardcoded
         this.material.uniforms.opacity.value = this.opacity;
         this.material.uniforms.specular.value = new THREE.Color(this.specular_color);
@@ -389,6 +436,7 @@ class ScatterView extends widgets.WidgetView {
                 this.material.defines.USE_TEXTURE = true;
             }
         }
+        this.material.lights = true;
         this.material.needsUpdate = true;
         this.material_rgb.needsUpdate = true;
         this.line_material.needsUpdate = true;
@@ -402,11 +450,12 @@ class ScatterView extends widgets.WidgetView {
         }
         const sprite = geo.endsWith("2d");
         const buffer_geo = new THREE.BufferGeometry().fromGeometry(this.geos[geo]);
+        buffer_geo.computeVertexNormals();
         const instanced_geo = new THREE.InstancedBufferGeometry();
 
         const vertices = (buffer_geo.attributes.position as any).clone();
         instanced_geo.addAttribute("position", vertices);
-
+        
         const sequence_index = this.model.get("sequence_index");
         let sequence_index_previous = this.previous_values.sequence_index;
         if (typeof sequence_index_previous === "undefined") {
@@ -417,6 +466,10 @@ class ScatterView extends widgets.WidgetView {
         const vector4_names = ["color", "color_selected"];
         const current  = new values.Values(scalar_names, [], this.get_current.bind(this), sequence_index, vector4_names);
         const previous = new values.Values(scalar_names, [], this.get_previous.bind(this), sequence_index_previous, vector4_names);
+
+        // Workaround for shader issue - color redefine 
+        current.ensure_array(["color"]);
+        instanced_geo.addAttribute("color_current", new THREE.BufferAttribute(current.array_vec4.color, 4));
 
         const length = Math.max(current.length, previous.length);
         if (length === 0) {
@@ -467,6 +520,7 @@ class ScatterView extends widgets.WidgetView {
                 this.material.uniforms.texture_previous.value = this.textures[sequence_index_previous % this.textures.length];
             }
         }
+        instanced_geo.computeVertexNormals();
         this.mesh = new THREE.Mesh(instanced_geo, this.material);
         this.mesh.material_rgb = this.material_rgb;
         this.mesh.material_normal = this.material;
@@ -483,6 +537,7 @@ class ScatterView extends widgets.WidgetView {
             previous.ensure_array(["color"]);
             geometry.addAttribute("color_current", new THREE.BufferAttribute(current.array_vec4.color, 4));
             geometry.addAttribute("color_previous", new THREE.BufferAttribute(previous.array_vec4.color, 4));
+            geometry.computeVertexNormals();
 
             this.line_segments = new THREE.Line(geometry, this.line_material);
             this.line_segments.frustumCulled = false;

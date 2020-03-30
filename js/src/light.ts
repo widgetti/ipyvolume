@@ -63,7 +63,6 @@ class LightView extends widgets.WidgetView {
     }
 
     on_change(attribute) {
-        console.log("CHAKA LAKA " + attribute)
         for (const key of this.model.changedAttributes()) {
             console.log("changed " +key);
         }
@@ -72,9 +71,8 @@ class LightView extends widgets.WidgetView {
     add_to_scene() {
         this.lights.forEach((light) => {
             this.renderer.scene_scatter.add(light);
-            console.log("1")
         });
-        
+        console.log(this.renderer.scene_scatter);
     }
 
     remove_from_scene() {
@@ -95,7 +93,7 @@ class LightView extends widgets.WidgetView {
         
         //no shadow support
         if(this.light_type === this.LIGHT_TYPES.AMBIENT){
-            console.log("Create Ambient Light " + this.intensity);
+            console.log("Create Ambient Light ");
             this.current_light = new THREE.AmbientLight(this.light_color, this.intensity);
             this.lights.push(this.current_light);
         }

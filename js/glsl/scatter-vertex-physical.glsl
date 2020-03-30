@@ -1,7 +1,8 @@
 #extension GL_OES_standard_derivatives : enable
+#define DEPTH_PACKING 3201
 #define PHYSICAL
 
-#include <fog_pars_vertex>
+//#include <fog_pars_vertex>
 
  // for animation, all between 0 and 1
 uniform float animation_time_x;
@@ -56,7 +57,7 @@ varying vec3 vViewPosition;
 #include <uv2_pars_vertex>
 #include <displacementmap_pars_vertex>
 #include <color_pars_vertex>
-//#include <fog_pars_vertex>
+#include <fog_pars_vertex>
 #include <morphtarget_pars_vertex>
 #include <skinning_pars_vertex>
 #include <shadowmap_pars_vertex>
@@ -136,7 +137,7 @@ void main(void) {
         vec4 view_pos = modelViewMatrix * vec4(model_pos, 1.0);
     #endif
 #endif
-    vec4 mvPosition = view_pos;
+    vec4 mvPosition2 = view_pos;
     gl_Position = projectionMatrix * view_pos;
     vec3 positionEye = ( modelViewMatrix * vec4( model_pos, 1.0 ) ).xyz;
     vertex_position = positionEye;
