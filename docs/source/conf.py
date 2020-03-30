@@ -40,6 +40,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'jupyter_sphinx.embed_widgets',
+    'sphinx_gallery.load_style',
 	'nbsphinx',
 ]
 
@@ -145,12 +146,9 @@ todo_include_todos = True
 #html_theme = 'alabaster'
 
 
-try:
-	import sphinx_rtd_theme
-	html_theme = "sphinx_rtd_theme"
-	html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-except:
-	print "rtd theme not found"
+import sphinx_rtd_theme
+html_theme = "sphinx_rtd_theme"
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -373,3 +371,15 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None, 'pythreejs': ('https://pythreejs.readthedocs.io/en/latest/', None)}
+
+
+nbsphinx_thumbnails = {
+    'examples/scatter': 'examples/screenshot/scatter.png',
+    'examples/volshow': 'examples/screenshot/volshow-head.png',
+    'examples/mesh': 'examples/screenshot/mesh.png',
+    'examples/animation': 'examples/screenshot/wave.gif',
+    'examples/mcmc': 'examples/screenshot/mcmc.gif',
+    'examples/bqplot': 'examples/screenshot/bqplot.png',
+    'examples/bokeh': 'examples/screenshot/bokeh.png',
+}
+exclude_patterns = ['**.ipynb_checkpoints']

@@ -132,8 +132,6 @@ Contents
 
     install
     examples
-    mesh
-    animation
     api
     vr
 
