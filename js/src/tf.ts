@@ -1,6 +1,6 @@
 // var exports = module.exports = {};
 import * as widgets from "@jupyter-widgets/base";
-import ndarray_pack from "ndarray-pack";
+import {default as ndarray_pack} from "ndarray-pack";
 import * as serialize from "./serialize.js";
 import {semver_range} from "./utils";
 
