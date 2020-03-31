@@ -71,8 +71,9 @@ class LightView extends widgets.WidgetView {
 
         this.cast_shadow = this.model.get("cast_shadow");
         this.renderer.renderer.shadowMap.enabled = this.cast_shadow;
-        console.log("CHANGE " + this.model.get("shadow_camera_orthographic_size"));
+        console.log("CHANGE ");
         this.create_light(false);
+        this.renderer.update();
 
     }
 
