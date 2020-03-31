@@ -4,6 +4,7 @@ import os
 import shutil
 import json
 import contextlib
+import math
 
 import numpy as np
 import pytest
@@ -449,3 +450,130 @@ def test_datasets():
     ipyvolume.datasets.aquariusA2.fetch()
     ipyvolume.datasets.hdz2000.fetch()
     ipyvolume.datasets.zeldovich.fetch()
+
+
+def test_mesh_material():
+    def test_material_components(mesh=None, is_scatter=False):
+        assert mesh.lighting_model == 'DEFAULT'
+        assert mesh.opacity == 1
+        assert mesh.specular_color == 'white'
+        assert mesh.shininess == 1
+        assert mesh.emissive_color == 'black'
+        assert mesh.emissive_intensity == 1
+        assert mesh.roughness == 0
+        assert mesh.metalness == 0
+        if is_scatter == False:
+            assert mesh.cast_shadow == False
+            assert mesh.receive_shadow == False
+
+        mesh.lighting_model = 'PHYSICAL'
+        mesh.opacity = 0
+        mesh.specular_color = 'blue'
+        mesh.shininess = 10
+        mesh.emissive_color = 'red'
+        mesh.emissive_intensity = 2
+        mesh.roughness = 1
+        mesh.metalness = 5
+        if is_scatter == False:
+            mesh.cast_shadow = True
+            mesh.receive_shadow = True
+
+        assert mesh.lighting_model == 'PHYSICAL'
+        assert mesh.opacity == 0
+        assert mesh.specular_color == 'blue'
+        assert mesh.shininess == 10
+        assert mesh.emissive_color == 'red'
+        assert mesh.emissive_intensity == 2
+        assert mesh.roughness == 1
+        assert mesh.metalness == 5
+        if is_scatter == False:
+            assert mesh.cast_shadow == True
+            assert mesh.receive_shadow == True
+
+    ipyvolume.figure()
+    mesh = ipyvolume.plot_mesh(0,0,0)
+    test_material_components(mesh)
+
+    surf = ipyvolume.plot_surface(0,0,0)
+    test_material_components(surf)
+
+    trisurf = ipyvolume.plot_trisurf(0,0,0)
+    test_material_components(trisurf)
+    
+    scatter = ipyvolume.plot_mesh(0,0,0)
+    test_material_components(scatter, True)
+
+
+def test_light_components():
+    ambient = ipyvolume.ambient_light()
+    assert ambient.light_type == 'AMBIENT'
+    assert ambient.light_color == 'white'
+    assert ambient.intensity == 1
+    assert ambient.cast_shadow == False
+
+    hemisphere = ipyvolume.hemisphere_light()
+    assert hemisphere.light_color == 'white' 
+    assert hemisphere.light_color2 == 'red' 
+    assert hemisphere.intensity == 1
+    assert hemisphere.position_x == 0
+    assert hemisphere.position_y == 1
+    assert hemisphere.position_z == 0
+    assert hemisphere.cast_shadow == False
+
+    directional = ipyvolume.directional_light()
+    assert directional.light_color == 'white' 
+    assert directional.intensity == 1
+    assert directional.position_x == 0
+    assert directional.position_y == 1
+    assert directional.position_z == 0
+    assert directional.target_x == 0
+    assert directional.target_y == 0
+    assert directional.target_z == 0
+    assert directional.cast_shadow==False
+    assert directional.shadow_map_size==512
+    assert directional.shadow_bias==-0.0005
+    assert directional.shadow_radius==1
+    assert directional.shadow_camera_near==0.5
+    assert directional.shadow_camera_far==500
+    assert directional.shadow_camera_orthographic_size==100
+    assert directional.shadow_map_type=='PCF_SOFT'
+
+    point = ipyvolume.point_light()
+    assert point.light_color == 'white' 
+    assert point.intensity == 1
+    assert point.position_x == 0
+    assert point.position_y == 1
+    assert point.position_z == 0
+    assert point.angle==math.pi/3 
+    assert point.distance==0
+    assert point.decay==1
+    assert point.cast_shadow==False
+    assert point.shadow_map_size==512
+    assert point.shadow_bias==-0.0005
+    assert point.shadow_radius==1
+    assert point.shadow_camera_near==0.5
+    assert point.shadow_camera_far==500
+    assert point.shadow_map_type=='PCF_SOFT'
+
+    spot = ipyvolume.spot_light()
+    assert spot.light_color == 'white' 
+    assert spot.intensity == 1
+    assert spot.position_x == 0
+    assert spot.position_y == 1
+    assert spot.position_z == 0
+    assert spot.target_x == 0
+    assert spot.target_y == 0
+    assert spot.target_z == 0
+    assert spot.angle==math.pi/3 
+    assert spot.distance==0
+    assert spot.decay==1
+    assert spot.penumbra==0
+    assert spot.cast_shadow==False
+    assert spot.shadow_map_size==512
+    assert spot.shadow_bias==-0.0005
+    assert spot.shadow_radius==1
+    assert spot.shadow_camera_near==0.5
+    assert spot.shadow_camera_far==500
+    assert spot.shadow_camera_perspective_fov==50
+    assert spot.shadow_camera_perspective_aspect==1
+    assert spot.shadow_map_type=='PCF_SOFT'
