@@ -131,7 +131,7 @@ class Scatter(widgets.Widget):
     connected = traitlets.CBool(default_value=False).tag(sync=True)
     visible = traitlets.CBool(default_value=True).tag(sync=True)
 
-    lighting_model = traitlets.Enum(values=['DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'], default_value='DEFAULT').tag(sync=True)
+    lighting_model = traitlets.Enum(values=['DEFAULT', 'PHYSICAL'], default_value='DEFAULT').tag(sync=True)
     #diffuse_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
     opacity = traitlets.CFloat(1).tag(sync=True)
     specular_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)

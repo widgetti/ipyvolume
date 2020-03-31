@@ -146,7 +146,6 @@ class MeshView extends widgets.WidgetView {
         console.log("FORCE LIGHTING MODEL TO PHYSICAL");
         if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT){
             this.model.set("lighting_model", this.LIGHTING_MODELS.PHYSICAL);
-            //this.lighting_model = this.LIGHTING_MODELS.PHYSICAL;
             this.update_visibility();
         }
     }

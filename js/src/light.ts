@@ -38,10 +38,6 @@ class LightView extends widgets.WidgetView {
     shadow_camera_perspective_aspect: any;
     shadow_camera_orthographic_size: any;
     
-    //change:light_type //?
-    /*
-    change:light_color change:light_color2 change:intensity change:shadow_map_type change:cast_shadow change:position_x change:position_y change:position_z change:target_x change:target_y change:target_z change:distance change:angle change:decay change:penumbra change:shadow_map_size change:shadow_bias change:shadow_radius change:shadow_camera_near change:shadow_camera_far change:shadow_camera_perspective_fov change:shadow_camera_perspective_aspect change:shadow_camera_orthographic_size
-    */
     render() {
 
         this.LIGHT_TYPES = {
@@ -98,6 +94,10 @@ class LightView extends widgets.WidgetView {
         for (let mesh_key in this.renderer.mesh_views) {
             console.log(mesh_key, this.renderer.mesh_views[mesh_key]);
             this.renderer.mesh_views[mesh_key].force_lighting_model();
+        }
+        for (let scatter_key in this.renderer.scatter_views) {
+            console.log(scatter_key, this.renderer.scatter_views[scatter_key]);
+            this.renderer.scatter_views[scatter_key].force_lighting_model();
         }
         
         this.lights = [];

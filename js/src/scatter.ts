@@ -45,8 +45,6 @@ class ScatterView extends widgets.WidgetView {
 
         this.LIGHTING_MODELS = {
             DEFAULT: 'DEFAULT',
-            LAMBERT: 'LAMBERT',
-            PHONG: 'PHONG',
             PHYSICAL : 'PHYSICAL'
         };
 
@@ -174,7 +172,11 @@ class ScatterView extends widgets.WidgetView {
             this._update_materials();
             this.renderer.update();
         });
+
+        this.model.on("change:lighting_model change:opacity change:specular_color change:shininess change:emissive_color change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow", 
+        this.update_visibility, this);
     }
+
     _load_textures() {
         const texture = this.model.get("texture");
         if (texture.stream) { // instanceof media.MediaStreamModel) {
@@ -200,6 +202,15 @@ class ScatterView extends widgets.WidgetView {
             );
         }
     }
+
+    public force_lighting_model() {
+        console.log("FORCE LIGHTING MODEL TO PHYSICAL");
+        if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT){
+            this.model.set("lighting_model", this.LIGHTING_MODELS.PHYSICAL);
+            this.update_visibility();
+        }
+    }
+
     update_visibility() {
         this._update_materials();
         this.renderer.update();
@@ -210,16 +221,18 @@ class ScatterView extends widgets.WidgetView {
         }
     }
     add_to_scene() {
+
+        //currently, not shadow support because of InstancedBufferGeometry
         this.cast_shadow = this.model.get("cast_shadow");
         this.receive_shadow = this.model.get("receive_shadow");
-        this.mesh.castShadow = true;//this.cast_shadow;
-        this.mesh.receiveShadow = true;//this.receive_shadow;
+        this.mesh.castShadow = false;//this.cast_shadow;
+        this.mesh.receiveShadow = false;//this.receive_shadow;
 
         this.renderer.scene_scatter.add(this.mesh);
         if (this.line_segments) {
             this.renderer.scene_scatter.add(this.line_segments);
-            this.line_segments.castShadow = true;//this.cast_shadow;
-            this.line_segments.receiveShadow = true;//this.receive_shadow;
+            this.line_segments.castShadow = false;//this.cast_shadow;
+            this.line_segments.receiveShadow = false;//this.receive_shadow;
         }
     }
     remove_from_scene() {
@@ -340,16 +353,7 @@ class ScatterView extends widgets.WidgetView {
                 material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
                 material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
             }
-            /*
-            else if(this.lighting_model === this.LIGHTING_MODELS.LAMBERT) {
-                material.vertexShader = require("raw-loader!../glsl/scatter-vertex-lambert.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-lambert.glsl");
-            }
-            else if(this.lighting_model === this.LIGHTING_MODELS.PHONG) {
-                material.vertexShader = require("raw-loader!../glsl/scatter-vertex-phong.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-phong.glsl");
-            }
-            */
+
             else {//if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL) {
                 material.vertexShader = require("raw-loader!../glsl/scatter-vertex-physical.glsl");
                 material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-physical.glsl");
@@ -390,39 +394,12 @@ class ScatterView extends widgets.WidgetView {
             material.uniforms.metalness.value = this.metalness;
 
             material.depthWrite = true;
-            material.transparant = true;
+            material.transparant = true;//?
+            material.transparent = true;
             material.depthTest = true;
             material.needsUpdate = true;
             
         });
-
-        this.diffuse_color = this.model.get("diffuse_color");
-        this.opacity = this.model.get("opacity");
-        this.specular_color = this.model.get("specular_color");
-        this.shininess = this.model.get("shininess");
-        this.emissive_color = this.model.get("emissive_color");
-        this.emissive_intensity = this.model.get("emissive_intensity");
-        this.roughness = this.model.get("roughness");
-        this.metalness = this.model.get("metalness");
-        this.renderer.renderer.shadowMap.enabled = true;
-/*
-        console.log("this.diffuse_color:"+this.diffuse_color);
-        console.log("this.opacity:"+this.opacity);
-        console.log("this.specular_color:"+this.specular_color);
-        console.log("this.shininess:"+this.shininess);
-        console.log("this.emissive_color:"+this.emissive_color);
-        console.log("this.emissive_intensity:"+this.emissive_intensity);
-        console.log("this.roughness:"+this.roughness);
-        console.log("this.metalness:"+this.metalness);
-*/
-        this.material.uniforms.diffuse.value = new THREE.Color(1, 1, 1);//this.diffuse_color//BUG? keep hardcoded
-        this.material.uniforms.opacity.value = this.opacity;
-        this.material.uniforms.specular.value = new THREE.Color(this.specular_color);
-        this.material.uniforms.shininess.value = this.shininess;
-        this.material.uniforms.emissive.value = new THREE.Color(this.emissive_color);
-        this.material.uniforms.emissiveIntensity.value = this.emissive_intensity; 
-        this.material.uniforms.roughness.value = this.roughness;
-        this.material.uniforms.metalness.value = this.metalness;
 
         const geo = this.model.get("geo");
         const sprite = geo.endsWith("2d");
