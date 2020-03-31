@@ -139,11 +139,16 @@ class MeshView extends widgets.WidgetView {
         this.model.on("change:texture", this._load_textures, this);
         this.model.on("change:visible", this.update_visibility, this);
         this.model.on("change:lighting_model change:opacity change:specular_color change:shininess change:emissive_color change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow", 
-        this.update_lighting, this);
+        this.update_visibility, this);
     }
 
-    public update_lighting() {
-        console.log("CHANGE MESH MATERIAL PARAMS");
+    public force_lighting_model() {
+        console.log("FORCE LIGHTING MODEL TO PHYSICAL");
+        if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT){
+            this.model.set("lighting_model", this.LIGHTING_MODELS.PHYSICAL);
+            //this.lighting_model = this.LIGHTING_MODELS.PHYSICAL;
+            this.update_visibility();
+        }
     }
 
     public update_visibility() {

@@ -93,6 +93,13 @@ class LightView extends widgets.WidgetView {
     }
 
     create_light(instantiate=true) {
+
+        //force meshes light model update
+        for (let mesh_key in this.renderer.mesh_views) {
+            console.log(mesh_key, this.renderer.mesh_views[mesh_key]);
+            this.renderer.mesh_views[mesh_key].force_lighting_model();
+        }
+        
         this.lights = [];
 
         this.light_color = this.model.get("light_color");
