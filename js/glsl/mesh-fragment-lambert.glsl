@@ -3,6 +3,7 @@
 
 uniform vec3 diffuse;
 uniform vec3 emissive;
+uniform float emissiveIntensity;
 uniform float opacity;
 
 varying vec3 vLightFront;
@@ -76,7 +77,7 @@ void main()
 
 	vec4 diffuseColor = vec4( vec3(1,1,1), opacity );
 	ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
-	vec3 totalEmissiveRadiance = emissive;
+	vec3 totalEmissiveRadiance = emissive * emissiveIntensity;
 
 	#include <logdepthbuf_fragment>
 	#include <map_fragment>

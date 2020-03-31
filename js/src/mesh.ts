@@ -202,6 +202,15 @@ class MeshView extends widgets.WidgetView {
         });
     }
 
+    update_shadow() {
+        this.cast_shadow = this.model.get("cast_shadow");
+        this.receive_shadow = this.model.get("receive_shadow");
+        this.meshes.forEach((mesh) => {
+            mesh.castShadow = this.cast_shadow;
+            mesh.receiveShadow = this.receive_shadow;
+        });
+    }
+
     remove_from_scene() {
         this.meshes.forEach((mesh) => {
             this.renderer.scene_scatter.remove(mesh);
@@ -359,7 +368,8 @@ class MeshView extends widgets.WidgetView {
                 material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-physical.glsl");
             }
             material.depthWrite = true;
-            material.transparant = true;
+            material.transparant = true;//?
+            material.transparent = true;
             material.depthTest = true;
             // very important
             material.lights = true;
@@ -382,6 +392,8 @@ class MeshView extends widgets.WidgetView {
         this.material.uniforms.emissiveIntensity.value = this.emissive_intensity; 
         this.material.uniforms.roughness.value = this.roughness;
         this.material.uniforms.metalness.value = this.metalness;
+
+        this.update_shadow();
 
         const texture = this.model.get("texture");
         if (texture && this.textures) {
