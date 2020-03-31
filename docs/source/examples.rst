@@ -10,6 +10,7 @@ Examples
    examples/bqplot
    examples/bokeh
    examples/scales
+   examples/moebius
 
 Feel free to contribute new examples:
 
