@@ -143,7 +143,6 @@ class MeshView extends widgets.WidgetView {
     }
 
     public force_lighting_model() {
-        console.log("FORCE LIGHTING MODEL TO PHYSICAL");
         if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT){
             this.model.set("lighting_model", this.LIGHTING_MODELS.PHYSICAL);
             this.update_visibility();
@@ -334,13 +333,13 @@ class MeshView extends widgets.WidgetView {
             this.line_material_rgb.copy(this.model.get("line_material").obj);
         }
 
-        //VERY IMPORTANT
+        // update material defines in order to run correct shader code
         this.material.defines = {USE_COLOR: true};
-        //
         this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true};
         this.line_material.defines = {AS_LINE: true};
         this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true, USE_COLOR: true};
         this.material.extensions = {derivatives: true};
+
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");
         this.material_rgb.visible = this.material.visible && this.model.get("visible");
@@ -367,10 +366,10 @@ class MeshView extends widgets.WidgetView {
                 material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-physical.glsl");
             }
             material.depthWrite = true;
-            material.transparant = true;//?
+            material.transparant = true;
             material.transparent = true;
             material.depthTest = true;
-            // very important
+            // use lighting
             material.lights = true;
         });
 
@@ -383,7 +382,7 @@ class MeshView extends widgets.WidgetView {
         this.roughness = this.model.get("roughness");
         this.metalness = this.model.get("metalness");
 
-        this.material.uniforms.diffuse.value = new THREE.Color(1, 1, 1);//this.diffuse_color//BUG? keep hardcoded
+        this.material.uniforms.diffuse.value = new THREE.Color(1, 1, 1);// keep hardcoded
         this.material.uniforms.opacity.value = this.opacity;
         this.material.uniforms.specular.value = new THREE.Color(this.specular_color);
         this.material.uniforms.shininess.value = this.shininess;

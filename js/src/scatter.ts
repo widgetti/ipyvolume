@@ -204,7 +204,6 @@ class ScatterView extends widgets.WidgetView {
     }
 
     public force_lighting_model() {
-        console.log("FORCE LIGHTING MODEL TO PHYSICAL");
         if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT){
             this.model.set("lighting_model", this.LIGHTING_MODELS.PHYSICAL);
             this.update_visibility();
@@ -222,17 +221,17 @@ class ScatterView extends widgets.WidgetView {
     }
     add_to_scene() {
 
-        //currently, not shadow support because of InstancedBufferGeometry
+        //currently, no shadow support because of InstancedBufferGeometry
         this.cast_shadow = this.model.get("cast_shadow");
         this.receive_shadow = this.model.get("receive_shadow");
-        this.mesh.castShadow = false;//this.cast_shadow;
-        this.mesh.receiveShadow = false;//this.receive_shadow;
+        this.mesh.castShadow = false;
+        this.mesh.receiveShadow = false;
 
         this.renderer.scene_scatter.add(this.mesh);
         if (this.line_segments) {
             this.renderer.scene_scatter.add(this.line_segments);
-            this.line_segments.castShadow = false;//this.cast_shadow;
-            this.line_segments.receiveShadow = false;//this.receive_shadow;
+            this.line_segments.castShadow = false;
+            this.line_segments.receiveShadow = false;
         }
     }
     remove_from_scene() {
@@ -346,7 +345,7 @@ class ScatterView extends widgets.WidgetView {
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
 
         this.lighting_model = this.model.get("lighting_model");
-        console.log("------------------------- LIGHTING MODEL: " + this.lighting_model);
+
         this.materials.forEach((material) => {
             
             if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT) {
@@ -354,17 +353,13 @@ class ScatterView extends widgets.WidgetView {
                 material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
             }
 
-            else {//if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL) {
+            else {//if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL)
                 material.vertexShader = require("raw-loader!../glsl/scatter-vertex-physical.glsl");
                 material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-physical.glsl");
             }
             
-            //material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
-            //material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
             material.uniforms = {...material.uniforms, ...this.uniforms};
-
             material.lights = true;
-
 
             this.diffuse_color = this.model.get("diffuse_color");
             this.opacity = this.model.get("opacity");
@@ -374,17 +369,8 @@ class ScatterView extends widgets.WidgetView {
             this.emissive_intensity = this.model.get("emissive_intensity");
             this.roughness = this.model.get("roughness");
             this.metalness = this.model.get("metalness");
-
-            console.log(this.diffuse_color);
-            console.log(this.opacity);
-            console.log(this.specular_color);
-            console.log(this.shininess);
-            console.log(this.emissive_color);
-            console.log(this.emissive_intensity);
-            console.log(this.roughness);
-            console.log(this.metalness);
     
-            material.uniforms.diffuse.value = new THREE.Color(1, 1, 1);//this.diffuse_color//BUG? keep hardcoded
+            material.uniforms.diffuse.value = new THREE.Color(1, 1, 1);// keep hardcoded
             material.uniforms.opacity.value = this.opacity;
             material.uniforms.specular.value = new THREE.Color(this.specular_color);
             material.uniforms.shininess.value = this.shininess;
@@ -394,7 +380,7 @@ class ScatterView extends widgets.WidgetView {
             material.uniforms.metalness.value = this.metalness;
 
             material.depthWrite = true;
-            material.transparant = true;//?
+            material.transparant = true;
             material.transparent = true;
             material.depthTest = true;
             material.needsUpdate = true;

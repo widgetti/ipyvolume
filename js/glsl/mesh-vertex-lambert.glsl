@@ -89,8 +89,6 @@ void main()
                 vec4(pos,1.0);
     vec3 positionEye = ( modelViewMatrix * vec4( pos, 1.0 ) ).xyz;
     vertex_position = positionEye;
-
-	//vViewPosition = vertex_position;//!!!
 	
 #ifdef USE_TEXTURE
     vertex_uv = vec2(mix(u_previous, u, animation_time_u), mix(v_previous, v, animation_time_v));

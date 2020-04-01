@@ -121,7 +121,4 @@ void main()
 	#include <premultiplied_alpha_fragment>
 	#include <dithering_fragment>
 
-	//gl_FragColor = 0.75 * gl_FragColor + 0.25 * finalColor2;
-	//gl_FragColor = 0.25 * gl_FragColor + 0.75 * finalColor2;
-
 }

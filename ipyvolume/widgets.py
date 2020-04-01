@@ -65,7 +65,6 @@ class Mesh(widgets.Widget):
     visible = traitlets.CBool(default_value=True).tag(sync=True)
 
     lighting_model = traitlets.Enum(values=['DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'], default_value='DEFAULT').tag(sync=True)
-    #diffuse_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
     opacity = traitlets.CFloat(1).tag(sync=True)
     specular_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
     shininess = traitlets.CFloat(1).tag(sync=True)
@@ -132,7 +131,6 @@ class Scatter(widgets.Widget):
     visible = traitlets.CBool(default_value=True).tag(sync=True)
 
     lighting_model = traitlets.Enum(values=['DEFAULT', 'PHYSICAL'], default_value='DEFAULT').tag(sync=True)
-    #diffuse_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
     opacity = traitlets.CFloat(1).tag(sync=True)
     specular_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
     shininess = traitlets.CFloat(1).tag(sync=True)
@@ -259,8 +257,7 @@ class Light(widgets.Widget):
     shadow_map_type = traitlets.Enum(values=['BASIC', 'PCF', 'PCF_SOFT'], default_value='PCF_SOFT').tag(sync=True)
     
     cast_shadow = traitlets.Bool(False).tag(sync=True)
-    # TODO - should use array serialization instead ?
-    #position = Array(default_value=(0, 1, 0), allow_none=True).tag(sync=True, **array_serialization)
+
     position_x = traitlets.CFloat(0).tag(sync=True)
     position_y = traitlets.CFloat(1).tag(sync=True)
     position_z = traitlets.CFloat(0).tag(sync=True)

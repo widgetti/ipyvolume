@@ -73,7 +73,7 @@ void main()
 
 	#include <clipping_planes_fragment>
 
-	vec4 diffuseColor = vec4( vec3(1,1,1), opacity );//0.75 * finalColor2 + 0.25 * vec4( diffuse, opacity );
+	vec4 diffuseColor = vec4( vec3(1,1,1), opacity );
 	ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
 	vec3 totalEmissiveRadiance = emissive * emissiveIntensity;
 
@@ -108,8 +108,5 @@ void main()
 	#include <fog_fragment>
 	#include <premultiplied_alpha_fragment>
 	#include <dithering_fragment>
-
-	//gl_FragColor = 0.75 * gl_FragColor + 0.25 * finalColor2;
-	//gl_FragColor = 0.25 * gl_FragColor + 0.75 * finalColor2;
 
 }

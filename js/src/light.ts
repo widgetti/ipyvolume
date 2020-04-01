@@ -12,7 +12,7 @@ export
 class LightView extends widgets.WidgetView {
 
     renderer: FigureView;
-    lights: any; //TODO remove
+    lights: any; 
     current_light: any;
     LIGHT_TYPES: any;
     SHADOW_MAP_TYPES: any;
@@ -63,21 +63,16 @@ class LightView extends widgets.WidgetView {
     }
 
     on_change(attribute) {
-
-
         this.cast_shadow = this.model.get("cast_shadow");
         this.renderer.renderer.shadowMap.enabled = this.cast_shadow;
-        console.log("CHANGE ");
         this.create_light(false);
         this.renderer.update();
-
     }
 
     add_to_scene() {
         this.lights.forEach((light) => {
             this.renderer.scene_scatter.add(light);
         });
-        console.log(this.renderer.scene_scatter);
     }
 
     remove_from_scene() {
@@ -85,18 +80,14 @@ class LightView extends widgets.WidgetView {
         this.lights.forEach((light) => {
             this.renderer.scene_scatter.remove(light);
         });
-        
     }
 
     create_light(instantiate=true) {
-
         //force meshes light model update
         for (let mesh_key in this.renderer.mesh_views) {
-            console.log(mesh_key, this.renderer.mesh_views[mesh_key]);
             this.renderer.mesh_views[mesh_key].force_lighting_model();
         }
         for (let scatter_key in this.renderer.scatter_views) {
-            console.log(scatter_key, this.renderer.scatter_views[scatter_key]);
             this.renderer.scatter_views[scatter_key].force_lighting_model();
         }
         
@@ -113,7 +104,6 @@ class LightView extends widgets.WidgetView {
         
         //no shadow support
         if(this.light_type === this.LIGHT_TYPES.AMBIENT){
-            console.log("Create Ambient Light ");
             if(instantiate === true){
                 this.current_light = new THREE.AmbientLight(this.light_color, this.intensity);
                 this.lights.push(this.current_light);
@@ -129,7 +119,6 @@ class LightView extends widgets.WidgetView {
             // no shadow support
             if(this.light_type === this.LIGHT_TYPES.HEMISPHERE) {
                 this.light_color2 = this.model.get("light_color2");
-                console.log("Create Hemisphere Light ");
                 if(instantiate === true){
                     this.current_light = new THREE.HemisphereLight(this.light_color, this.light_color2, this.intensity);
                 }
@@ -168,7 +157,6 @@ class LightView extends widgets.WidgetView {
                 }
 
                 if(this.light_type === this.LIGHT_TYPES.POINT) { 
-                    console.log("Create Point Light");
                     if(instantiate === true){
                         this.current_light = new THREE.PointLight(this.light_color, this.intensity);
                     }
@@ -205,7 +193,6 @@ class LightView extends widgets.WidgetView {
                         this.renderer.scene_scatter.add(this.target);
                     }
                     if(this.light_type === this.LIGHT_TYPES.DIRECTIONAL) {
-                        console.log("Create Directional Light");
 
                         this.shadow_camera_orthographic_size = this.model.get("shadow_camera_orthographic_size");
                         if(instantiate === true) {
@@ -231,15 +218,6 @@ class LightView extends widgets.WidgetView {
                                                                                         this.shadow_camera_near, 
                                                                                         this.shadow_camera_far );
                         this.current_light.shadow.camera.position.set(this.position.x, this.position.y, this.position.z);
-                        /*
-                        this.current_light.shadow.camera.near = this.shadow_camera_near;
-                        this.current_light.shadow.camera.far =  this.shadow_camera_far;
-                        this.current_light.shadow.camera.left = - this.shadow_camera_orthographic_size/2;
-                        this.current_light.shadow.camera.right = this.shadow_camera_orthographic_size/2;
-                        this.current_light.shadow.camera.top = this.shadow_camera_orthographic_size/2;
-                        this.current_light.shadow.camera.bottom = - this.shadow_camera_orthographic_size/2;
-                        this.current_light.shadow.camera.updateMatrixWorld();
-                        */
 
                         this.current_light.castShadow = this.cast_shadow;
                         if(instantiate === true) {
@@ -247,7 +225,6 @@ class LightView extends widgets.WidgetView {
                         }
                     }
                     else if(this.light_type === this.LIGHT_TYPES.SPOT) {
-                            console.log("Create Spot Light");
                             
                             this.angle = this.model.get("angle");
                             this.penumbra = this.model.get("penumbra");
@@ -280,10 +257,6 @@ class LightView extends widgets.WidgetView {
                                 this.shadow_camera_far);
 
                             this.current_light.shadow.camera.position.set(this.position.x, this.position.y, this.position.z);
-                            //this.current_light.shadow.camera.near = this.shadow_camera_near;
-                            //this.current_light.shadow.camera.far = this.shadow_camera_far;
-                            //this.current_light.shadow.camera.aspect = this.shadow_camera_perspective_aspect;
-                            //this.current_light.shadow.camera.fov = this.shadow_camera_perspective_fov;
                             
                             if(instantiate === true) {
                                 this.lights.push(this.current_light);
