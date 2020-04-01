@@ -668,7 +668,8 @@ def scatter(
     **kwargs
 ):
     """Plot many markers/symbols in 3d.
-
+       Due to certain shader limitations, should not use with Spot Lights and Point Lights.
+       Does not support shadow mapping.
     :param x: {x}
     :param y: {y}
     :param z: {z}
@@ -1748,7 +1749,7 @@ def directional_light(
     :param position: 3-element array (x y z) which describes the position of the Directional Light. Default [0 1 0]
     :param target: 3-element array (x y z) which describes the target of the Directional Light. Default [0 0 0]
     :param cast_shadow: Property of a Directional Light to cast shadows. Default False
-    :param shadow_map_size: Property of a Directional Light to cast shadows. Default False
+    :param shadow_map_size: Size of the projected shadow map. Default 512 (512x512)
     :param shadow_bias: Factor used to reduce shadow acne. Default is -0.0005
     :param shadow_radius: Setting this to values greater than 1 will blur the edges of the shadow. Default is 1
     :param shadow_camera_near: Camera near factor. Default is 0.5
@@ -1809,10 +1810,10 @@ def spot_light(
     :param target: 3-element array (x y z) which describes the target of the Spot Light. Default [0 0 0]
     :param angle: Spot Light angle. Default is Pi/3
     :param distance: When distance is non-zero, light will attenuate linearly from maximum intensity at the light's position down to zero at this distance from the light.
-    :param decay: The amount the light dims along the distance of the light. Default is 1. For physically correct lighting, set this to 2
+    :param decay: The amount the light dims along the distance of the light. In physically correct mode, decay = 2 leads to physically realistic light falloff. Default is 1.
     :param penumbra: Percent of the spotlight cone that is attenuated due to penumbra. Takes values between zero and 1. The default is 0.0.
     :param cast_shadow: Property of a Spot Light to cast shadows. Default False
-    :param shadow_map_size: Property of a Spot Light to cast shadows. Default False
+    :param shadow_map_size: Size of the projected shadow map. Default 512 (512x512)
     :param shadow_bias: Factor used to reduce shadow acne. Default is -0.0005
     :param shadow_radius: Setting this to values greater than 1 will blur the edges of the shadow. Default is 1
     :param shadow_camera_near: Camera near factor. Default is 0.5
@@ -1874,7 +1875,7 @@ def point_light(
     :param distance: Maximum range of the light. Default is 0 (no limit).
     :param decay: The amount the light dims along the distance of the light. Default is 1. For physically correct lighting, set this to 2
     :param cast_shadow: Property of a Point Light to cast shadows. Default False
-    :param shadow_map_size: Property of a Point Light to cast shadows. Default False
+    :param shadow_map_size: Size of the projected shadow map. Default 512 (512x512)
     :param shadow_bias: Factor used to reduce shadow acne. Default is -0.0005
     :param shadow_radius: Setting this to values greater than 1 will blur the edges of the shadow. Default is 1
     :param shadow_camera_near: Camera near factor. Default is 0.5

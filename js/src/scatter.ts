@@ -354,6 +354,8 @@ class ScatterView extends widgets.WidgetView {
             }
 
             else {//if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL)
+                //Does not support shadows because on three.js r97 the shadow mapping is not working correctly for InstancedBufferGeometry
+                //Should not use with Spot Lights and Point Lights because lighting color is the same for InstancedBufferGeometry instances
                 material.vertexShader = require("raw-loader!../glsl/scatter-vertex-physical.glsl");
                 material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-physical.glsl");
             }
