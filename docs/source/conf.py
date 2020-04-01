@@ -383,5 +383,6 @@ nbsphinx_thumbnails = {
     'examples/bokeh': 'examples/screenshot/bokeh.png',
     'examples/scales': 'examples/screenshot/scales.png',
     'examples/moebius': 'examples/screenshot/moebius.png',
+    'examples/bars': 'examples/screenshot/bars.gif',
 }
 exclude_patterns = ['**.ipynb_checkpoints']

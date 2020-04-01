@@ -11,6 +11,7 @@ Examples
    examples/bokeh
    examples/scales
    examples/moebius
+   examples/bars
 
 Feel free to contribute new examples:
 
