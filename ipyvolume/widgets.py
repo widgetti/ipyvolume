@@ -106,6 +106,7 @@ class Scatter(widgets.Widget):
     x = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
     y = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
     z = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
+    aux = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     vx = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     vy = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     vz = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
@@ -133,8 +134,10 @@ class Scatter(widgets.Widget):
         default_value="green",
     ).tag(sync=True)
     geo = traitlets.Unicode('diamond').tag(sync=True)
+    geo_matrix = pythreejs.Matrix4().tag(sync=True)
     connected = traitlets.CBool(default_value=False).tag(sync=True)
     visible = traitlets.CBool(default_value=True).tag(sync=True)
+    shader_snippets = traitlets.Dict({'size': '\n'}).tag(sync=True)
 
     texture = traitlets.Union(
         [

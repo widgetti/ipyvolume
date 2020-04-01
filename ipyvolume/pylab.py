@@ -637,7 +637,7 @@ def animation_control(object, sequence_length=None, add=True, interval=200):
         sequence_lengths = []
         for object in objects:
             sequence_lengths_previous = list(sequence_lengths)
-            values = [getattr(object, name) for name in "x y z vx vy vz".split() if hasattr(object, name)]
+            values = [getattr(object, name) for name in "x y z aux vx vy vz".split() if hasattr(object, name)]
             values = [k for k in values if k is not None]
             # sort them such that the higest dim is first
             values.sort(key=lambda key: -len(key.shape))

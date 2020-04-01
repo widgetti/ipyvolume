@@ -91,15 +91,18 @@ class ScatterView extends widgets.WidgetView {
                 domain_x : { type: "2f", value: [0., 1.] },
                 domain_y : { type: "2f", value: [0., 1.] },
                 domain_z : { type: "2f", value: [0., 1.] },
+                domain_aux : { type: "2f", value: [0., 1.] },
                 domain_color : { type: "2f", value: [0., 1.] },
                 animation_time_x : { type: "f", value: 1. },
                 animation_time_y : { type: "f", value: 1. },
                 animation_time_z : { type: "f", value: 1. },
+                animation_time_aux : { type: "f", value: 1. },
                 animation_time_vx : { type: "f", value: 1. },
                 animation_time_vy : { type: "f", value: 1. },
                 animation_time_vz : { type: "f", value: 1. },
                 animation_time_size : { type: "f", value: 1. },
                 animation_time_color : { type: "f", value: 1. },
+                geo_matrix : { type: "mat4", value: this.model.get('geo_matrix')},
                 texture: { type: "t", value: null },
                 texture_previous: { type: "t", value: null },
                 colormap: {type: "t", value: null},
@@ -129,10 +132,20 @@ class ScatterView extends widgets.WidgetView {
                 this.renderer.update();
             });
         }
+        this.model.on("change:geo_matrix", () => {
+            this.uniforms.geo_matrix.value = this.model.get('geo_matrix');
+            this._update_materials();
+            this.renderer.update();
+        });
+        this.model.on("change:shader_snippets", () => {
+            this._update_materials();
+            this.renderer.update();
+        });
+
         this._update_color_scale();
         this.create_mesh();
         this.add_to_scene();
-        this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:selected change:vx change:vy change:vz",
+        this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:aux change:selected change:vx change:vy change:vz",
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
         this.model.on("change:color_scale", this._update_color_scale, this);
@@ -210,7 +223,7 @@ class ScatterView extends widgets.WidgetView {
             // we treat changes in _selected attributes the same
             const key_animation = key.replace("_selected", "");
             if (key_animation === "sequence_index") {
-                const animated_by_sequence = ["x", "y", "z", "vx", "vy", "vz", "size", "color"];
+                const animated_by_sequence = ["x", "y", "z", "aux", "vx", "vy", "vz", "size", "color"];
                 animated_by_sequence.forEach((name) => {
                     if (isArray(this.model.get(name))) {
                         this.attributes_changed[name] = [name, "sequence_index"];
@@ -224,7 +237,7 @@ class ScatterView extends widgets.WidgetView {
             } else {
                 this.attributes_changed[key_animation] = [key];
                 // animate the size as well on x y z changes
-                if (["x", "y", "z", "vx", "vy", "vz", "color"].indexOf(key_animation) !== -1) {
+                if (["x", "y", "z", "aux", "vx", "vy", "vz", "color"].indexOf(key_animation) !== -1) {
                     // console.log("adding size to list of changed attributes")
                     this.attributes_changed.size = [];
                 }
@@ -341,12 +354,18 @@ class ScatterView extends widgets.WidgetView {
             // not present on .copy.. bug?
             this.line_material_rgb.linewidth = this.line_material.linewidth = this.model.get("line_material").obj.linewidth;
         }
-        this.material.defines = {...this.scale_defines};
-        this.material.defines.USE_COLORMAP = this.model.get("color_scale") !== null;
+
+        const shader_snippets = this.model.get('shader_snippets');
+        const snippet_defines = {};
+        for (const key of Object.keys(shader_snippets)) {
+            snippet_defines["SHADER_SNIPPET_" + key.toUpperCase()] = shader_snippets[key];
+        }
+
+        this.material.defines = {USE_COLORMAP: this.model.get("color_scale") !== null, ...this.scale_defines, ...snippet_defines};
         this.material.extensions = {derivatives: true};
-        this.material_rgb.defines = {USE_RGB: true, ...this.scale_defines};
+        this.material_rgb.defines = {USE_RGB: true, ...this.scale_defines, ...snippet_defines};
         this.material_rgb.extensions = {derivatives: true};
-        this.line_material.defines = {AS_LINE: true, ...this.scale_defines};
+        this.line_material.defines = {AS_LINE: true, ...this.scale_defines,  ...snippet_defines};
         this.line_material_rgb.defines = {USE_RGB: true, AS_LINE: true};
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");
@@ -398,7 +417,7 @@ class ScatterView extends widgets.WidgetView {
         if (typeof sequence_index_previous === "undefined") {
             sequence_index_previous = sequence_index;
         }
-        const scalar_names = ["x", "y", "z", "vx", "vy", "vz", "size", "size_selected"];
+        const scalar_names = ["x", "y", "z", "aux", "vx", "vy", "vz", "size", "size_selected"];
         const vector4_names = [];
         if (this.model.get("color_scale")) {
             scalar_names.push("color", "color_selected");
@@ -511,6 +530,7 @@ class ScatterModel extends widgets.WidgetModel {
         x: serialize.array_or_json,
         y: serialize.array_or_json,
         z: serialize.array_or_json,
+        aux: serialize.array_or_json,
         vx: serialize.array_or_json,
         vy: serialize.array_or_json,
         vz: serialize.array_or_json,
@@ -539,10 +559,12 @@ class ScatterModel extends widgets.WidgetModel {
             color_scale: null,
             color_selected: "white",
             geo: "diamond",
+            geo_matrix: [1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,  0, 0, 0, 1],
             sequence_index: 0,
             connected: false,
             visible: true,
             selected: null,
+            shader_snippets: {size: '\n'}
         };
     }
 }
