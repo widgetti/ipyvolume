@@ -104,7 +104,7 @@ _doc_snippets[
 _doc_snippets[
     "marker"
 ] = "name of the marker, options are: 'arrow', 'box', 'diamond', 'sphere', 'point_2d', 'square_2d', 'triangle_2d', "
-"'circle_2d'"
+"'circle_2d', 'cylinder', 'cylinder_hr' (hr means high resolution, meaning more triangles thus a performance impact)"
 _doc_snippets["x"] = "numpy array of shape (N,) or (S, N) with x positions. {}".format(_seq_sn)
 _doc_snippets["y"] = "idem for y"
 _doc_snippets["z"] = "idem for z"
@@ -637,7 +637,7 @@ def animation_control(object, sequence_length=None, add=True, interval=200):
         sequence_lengths = []
         for object in objects:
             sequence_lengths_previous = list(sequence_lengths)
-            values = [getattr(object, name) for name in "x y z vx vy vz".split() if hasattr(object, name)]
+            values = [getattr(object, name) for name in "x y z aux vx vy vz".split() if hasattr(object, name)]
             values = [k for k in values if k is not None]
             # sort them such that the higest dim is first
             values.sort(key=lambda key: -len(key.shape))

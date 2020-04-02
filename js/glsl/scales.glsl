@@ -26,6 +26,37 @@
     #endif
 #endif
 
+#ifdef USE_SCALE_SIZE_X
+    #if SCALE_TYPE_size_x == SCALE_TYPE_LINEAR
+        #define SCALE_SIZE_X(x) scale_transform_linear(x, vec2(0.0, 1.0), domain_size_x)
+    #elif SCALE_TYPE_size_x == SCALE_TYPE_LOG
+        #define SCALE_SIZE_X(x) scale_transform_log(x, vec2(0.0, 1.0), domain_size_x)
+    #endif
+#endif
+
+#ifdef USE_SCALE_SIZE_Y
+    #if SCALE_TYPE_size_y == SCALE_TYPE_LINEAR
+        #define SCALE_SIZE_Y(x) scale_transform_linear(x, vec2(0.0, 1.0), domain_size_y)
+    #elif SCALE_TYPE_size_y == SCALE_TYPE_LOG
+        #define SCALE_SIZE_Y(x) scale_transform_log(x, vec2(0.0, 1.0), domain_size_y)
+    #endif
+#endif
+
+#ifdef USE_SCALE_SIZE_Z
+    #if SCALE_TYPE_size_z == SCALE_TYPE_LINEAR
+        #define SCALE_SIZE_Z(x) scale_transform_linear(x, vec2(0.0, 1.0), domain_size_z)
+    #elif SCALE_TYPE_size_z == SCALE_TYPE_LOG
+        #define SCALE_SIZE_Z(x) scale_transform_log(x, vec2(0.0, 1.0), domain_size_z)
+    #endif
+#endif
+
+#ifdef USE_SCALE_AUX
+    #if SCALE_TYPE_aux == SCALE_TYPE_LINEAR
+        #define SCALE_AUX(x) scale_transform_linear(x, vec2(0.0, 1.0), domain_aux)
+    #elif SCALE_TYPE_aux == SCALE_TYPE_LOG
+        #define SCALE_AUX(x) scale_transform_log(x, vec2(0.0, 1.0), domain_aux)
+    #endif
+#endif
 
 float scale_transform_linear(float domain_value, vec2 range, vec2 domain) {
     float normalized = (domain_value - domain[0]) / (domain[1] - domain[0]);
