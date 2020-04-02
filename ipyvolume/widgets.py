@@ -107,7 +107,8 @@ class Scatter(widgets.Widget):
     y = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
     z = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
     aux = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
-    aux_scale = traitlets.Instance(scales.Scale, default_value=None, allow_none=True).tag(sync=True, **widgets.widget_serialization)
+    aux_scale = traitlets.Instance(scales.Scale, default_value=None,
+                                   allow_none=True).tag(sync=True, **widgets.widget_serialization)
     vx = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     vy = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
     vz = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
@@ -129,9 +130,12 @@ class Scatter(widgets.Widget):
         ],
         default_value=7,
     ).tag(sync=True)
-    size_x_scale = traitlets.Instance(scales.Scale, default_value=None, allow_none=True).tag(sync=True, **widgets.widget_serialization)
-    size_y_scale = traitlets.Instance(scales.Scale, default_value=None, allow_none=True).tag(sync=True, **widgets.widget_serialization)
-    size_z_scale = traitlets.Instance(scales.Scale, default_value=None, allow_none=True).tag(sync=True, **widgets.widget_serialization)
+    size_x_scale = traitlets.Instance(scales.Scale, default_value=None,
+                                      allow_none=True).tag(sync=True, **widgets.widget_serialization)
+    size_y_scale = traitlets.Instance(scales.Scale, default_value=None,
+                                      allow_none=True).tag(sync=True, **widgets.widget_serialization)
+    size_z_scale = traitlets.Instance(scales.Scale, default_value=None,
+                                      allow_none=True).tag(sync=True, **widgets.widget_serialization)
     color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
     color_selected = traitlets.Union(
         [Array(default_value=None, allow_none=True).tag(sync=True, **color_serialization), Unicode().tag(sync=True)],
