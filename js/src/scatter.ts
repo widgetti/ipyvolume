@@ -91,6 +91,9 @@ class ScatterView extends widgets.WidgetView {
                 domain_x : { type: "2f", value: [0., 1.] },
                 domain_y : { type: "2f", value: [0., 1.] },
                 domain_z : { type: "2f", value: [0., 1.] },
+                domain_size_x : { type: "2f", value: [0., 1.] },
+                domain_size_y : { type: "2f", value: [0., 1.] },
+                domain_size_z : { type: "2f", value: [0., 1.] },
                 domain_aux : { type: "2f", value: [0., 1.] },
                 domain_color : { type: "2f", value: [0., 1.] },
                 animation_time_x : { type: "f", value: 1. },
@@ -155,6 +158,58 @@ class ScatterView extends widgets.WidgetView {
             this._update_materials();
             this.renderer.update();
         });
+        const update_scale = (name) => {
+            const scale_name = name + "_scale";
+            const uniform_name = "domain_" + name;
+            const update_scale_domain = () => {
+                const scale = this.model.get(scale_name);
+                let min = 0;
+                let max = 100;
+                if (scale) {
+                    if (scale.min !== null) {
+                        min = scale.min;
+                    }
+                    if (scale.max !== null) {
+                        max = scale.max;
+                    }
+                }
+                this.uniforms[uniform_name].value = [min, max];
+                if(this.mesh) {
+                    this.renderer.update();
+                }
+            }
+            update_scale_domain();
+            return () => {
+                const scale_previous = this.model.previous(scale_name);
+                const scale = this.model.get(scale_name);
+                if (scale_previous) {
+                    scale_previous.off("domain_changed", update_scale_domain);
+                }
+                const new_scale_defines = {...this.scale_defines};
+                // if no scale, default to linear
+                new_scale_defines[`SCALE_TYPE_${name}`] = scaleTypeMap[scale ? scale.type : 'linear'];
+                const scale_types_changed = !isEqual(this.scale_defines, new_scale_defines);
+                this.scale_defines = new_scale_defines;
+                if ((!scale_previous && scale) || (scale_previous && !scale_previous) || scale_types_changed) {
+                    // this will toggle a preprocessor variable
+                    this._update_materials();
+                }
+                if (scale) {
+                    scale.on("domain_changed", update_scale_domain, this);
+                    update_scale_domain();
+                    this.renderer.update();
+                }
+                // if (this.mesh) { // we don't need to do so on initialization
+                //     this.update_();
+                // }
+            }
+        }
+        ["size_x", "size_y", "size_z", "aux"].forEach((name) => {
+            const updater = update_scale(name);
+            updater();
+            this.model.on(`change:${name}_scale`, updater, this);
+        });
+
     }
     _load_textures() {
         const texture = this.model.get("texture");
@@ -186,7 +241,7 @@ class ScatterView extends widgets.WidgetView {
         this.renderer.update();
     }
     set_scales(scales) {
-        const new_scale_defines = {};
+        const new_scale_defines = {...this.scale_defines};
         for (const key of Object.keys(scales)) {
             this.material.uniforms[`domain_${key}`].value = scales[key].domain;
             this.material_rgb.uniforms[`domain_${key}`].value = scales[key].domain;
@@ -531,12 +586,16 @@ class ScatterModel extends widgets.WidgetModel {
         y: serialize.array_or_json,
         z: serialize.array_or_json,
         aux: serialize.array_or_json,
+        aux_scale: { deserialize: widgets.unpack_models },
         vx: serialize.array_or_json,
         vy: serialize.array_or_json,
         vz: serialize.array_or_json,
         selected: serialize.array_or_json,
         size: serialize.array_or_json,
         size_selected: serialize.array_or_json,
+        size_x_scale: { deserialize: widgets.unpack_models },
+        size_y_scale: { deserialize: widgets.unpack_models },
+        size_z_scale: { deserialize: widgets.unpack_models },
         color: serialize.color_or_json,
         color_scale: { deserialize: widgets.unpack_models },
         color_selected: serialize.color_or_json,

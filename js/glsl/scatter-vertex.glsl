@@ -3,6 +3,10 @@
 #define USE_SCALE_X
 #define USE_SCALE_Y
 #define USE_SCALE_Z
+#define USE_SCALE_SIZE_X
+#define USE_SCALE_SIZE_Y
+#define USE_SCALE_SIZE_Z
+#define USE_SCALE_AUX
 #include <scales>
 
  // for animation, all between 0 and 1
@@ -20,6 +24,10 @@ uniform vec2 domain_x;
 uniform vec2 domain_y;
 uniform vec2 domain_z;
 uniform vec2 domain_aux;
+
+uniform vec2 domain_size_x;
+uniform vec2 domain_size_y;
+uniform vec2 domain_size_z;
 
 uniform mat4 geo_matrix;
 
@@ -86,11 +94,12 @@ void main(void) {
     // the following matrix should point it to the direction of 'vector'
     mat3 move_to_vector = mat3(x_axis, y_axis, z_axis);
 
-    float s = mix(size_previous/100., size/100., animation_time_size);
+    float size_scalar = mix(size_previous, size, animation_time_size);
+    // TODO: replace the 0. in SCALE_SIZE_X(0.) by a uniform, so we can make it work with log?
+    vec3 size_vector = vec3(SCALE_SIZE_X(size_scalar) - SCALE_SIZE_X(0.), SCALE_SIZE_Y(size_scalar) - SCALE_SIZE_Y(0.), SCALE_SIZE_Z(size_scalar) -  SCALE_SIZE_Z(0.));
     float aux_current = mix(aux_previous, aux, animation_time_aux);
     vec3 animated_position_offset = mix(position_offset_previous, position_offset, animation_time);
     vec3 model_pos = vec3(SCALE_X(animated_position_offset.x), SCALE_Y(animated_position_offset.y), SCALE_Z(animated_position_offset.z));
-    vec3 size_vectorial = vec3(1., 1., 1.);
     SHADER_SNIPPET_SIZE;
     //vec3 pos = (pos_object ) / size;// - 0.5;
     #ifdef USE_SPRITE
@@ -102,7 +111,7 @@ void main(void) {
         // and we also rotate it into the direction of the vector v
         vec4 position_transformed = geo_matrix * vec4(position, 1.0);
         position_transformed.xyz = position_transformed.xyz / position_transformed.w;
-        model_pos += move_to_vector * (position_transformed.xyz)*s*size_vectorial;
+        model_pos += move_to_vector * (position_transformed.xyz*size_vector);
         vec4 view_pos = modelViewMatrix * vec4(model_pos, 1.0);
     #endif
 #endif
