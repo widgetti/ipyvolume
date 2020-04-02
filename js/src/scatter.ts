@@ -17,7 +17,8 @@ class ScatterView extends widgets.WidgetView {
     texture_loader: THREE.TextureLoader;
     textures: any;
     uniforms: any;
-    geos: { diamond: THREE.SphereGeometry; box: THREE.BoxGeometry; arrow: THREE.CylinderGeometry; sphere: THREE.SphereGeometry;
+    geos: { diamond: THREE.SphereGeometry; box: THREE.BoxGeometry; arrow: THREE.CylinderGeometry;
+        cylinder: THREE.CylinderGeometry; cylinder_hr: THREE.CylinderGeometry; sphere: THREE.SphereGeometry;
         cat: THREE.Geometry; square_2d: THREE.PlaneGeometry; point_2d: THREE.PlaneGeometry; circle_2d: THREE.CircleGeometry;
         triangle_2d: THREE.CircleGeometry; };
     material: any;
@@ -75,10 +76,14 @@ class ScatterView extends widgets.WidgetView {
 
         // this.geo = new THREE.ConeGeometry(0.2, 1)
         const geo_arrow = new THREE.CylinderGeometry(0, 0.2, 1);
+        const geo_cylinder = new THREE.CylinderGeometry(0.5, 0.5, 1.0);
+        const geo_cylinder_hr = new THREE.CylinderGeometry(0.5, 0.5, 1.0, 100);
         this.geos = {
             diamond: geo_diamond,
             box: geo_box,
             arrow: geo_arrow,
+            cylinder: geo_cylinder,
+            cylinder_hr: geo_cylinder_hr,
             sphere: geo_sphere,
             cat: geo_cat,
             square_2d: geo_square_2d,
