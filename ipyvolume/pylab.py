@@ -1263,14 +1263,21 @@ class style:
         fig.style = totalstyle
 
     @staticmethod
-    def axes_off():
-        """Do not draw the axes."""
-        style.use({'axes': {'visible': False}})
+    def _axes(which=None, **values):
+        if which:
+            style.use({'axes': {name: values for name in which}})
+        else:
+            style.use({'axes': values})
 
     @staticmethod
-    def axes_on():
-        """Draw the axes."""
-        style.use({'axes': {'visible': True}})
+    def axes_off(which=None):
+        """Do not draw the axes, optionally give axis names, e.g. 'xy'."""
+        style._axes(which, visible=False)
+
+    @staticmethod
+    def axes_on(which=None):
+        """Draw the axes, optionally give axis names, e.g. 'xy'."""
+        style._axes(which, visible=True)
 
     @staticmethod
     def box_off():
