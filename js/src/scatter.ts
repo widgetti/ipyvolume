@@ -17,7 +17,8 @@ class ScatterView extends widgets.WidgetView {
     texture_loader: THREE.TextureLoader;
     textures: any;
     uniforms: any;
-    geos: { diamond: THREE.SphereGeometry; box: THREE.BoxGeometry; arrow: THREE.CylinderGeometry; sphere: THREE.SphereGeometry;
+    geos: { diamond: THREE.SphereGeometry; box: THREE.BoxGeometry; arrow: THREE.CylinderGeometry;
+        cylinder: THREE.CylinderGeometry; cylinder_hr: THREE.CylinderGeometry; sphere: THREE.SphereGeometry;
         cat: THREE.Geometry; square_2d: THREE.PlaneGeometry; point_2d: THREE.PlaneGeometry; circle_2d: THREE.CircleGeometry;
         triangle_2d: THREE.CircleGeometry; };
     material: any;
@@ -75,10 +76,14 @@ class ScatterView extends widgets.WidgetView {
 
         // this.geo = new THREE.ConeGeometry(0.2, 1)
         const geo_arrow = new THREE.CylinderGeometry(0, 0.2, 1);
+        const geo_cylinder = new THREE.CylinderGeometry(0.5, 0.5, 1.0);
+        const geo_cylinder_hr = new THREE.CylinderGeometry(0.5, 0.5, 1.0, 100);
         this.geos = {
             diamond: geo_diamond,
             box: geo_box,
             arrow: geo_arrow,
+            cylinder: geo_cylinder,
+            cylinder_hr: geo_cylinder_hr,
             sphere: geo_sphere,
             cat: geo_cat,
             square_2d: geo_square_2d,
@@ -91,15 +96,21 @@ class ScatterView extends widgets.WidgetView {
                 domain_x : { type: "2f", value: [0., 1.] },
                 domain_y : { type: "2f", value: [0., 1.] },
                 domain_z : { type: "2f", value: [0., 1.] },
+                domain_size_x : { type: "2f", value: [0., 1.] },
+                domain_size_y : { type: "2f", value: [0., 1.] },
+                domain_size_z : { type: "2f", value: [0., 1.] },
+                domain_aux : { type: "2f", value: [0., 1.] },
                 domain_color : { type: "2f", value: [0., 1.] },
                 animation_time_x : { type: "f", value: 1. },
                 animation_time_y : { type: "f", value: 1. },
                 animation_time_z : { type: "f", value: 1. },
+                animation_time_aux : { type: "f", value: 1. },
                 animation_time_vx : { type: "f", value: 1. },
                 animation_time_vy : { type: "f", value: 1. },
                 animation_time_vz : { type: "f", value: 1. },
                 animation_time_size : { type: "f", value: 1. },
                 animation_time_color : { type: "f", value: 1. },
+                geo_matrix : { type: "mat4", value: this.model.get('geo_matrix')},
                 texture: { type: "t", value: null },
                 texture_previous: { type: "t", value: null },
                 colormap: {type: "t", value: null},
@@ -129,10 +140,20 @@ class ScatterView extends widgets.WidgetView {
                 this.renderer.update();
             });
         }
+        this.model.on("change:geo_matrix", () => {
+            this.uniforms.geo_matrix.value = this.model.get('geo_matrix');
+            this._update_materials();
+            this.renderer.update();
+        });
+        this.model.on("change:shader_snippets", () => {
+            this._update_materials();
+            this.renderer.update();
+        });
+
         this._update_color_scale();
         this.create_mesh();
         this.add_to_scene();
-        this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:selected change:vx change:vy change:vz",
+        this.model.on("change:size change:size_selected change:color change:color_selected change:sequence_index change:x change:y change:z change:aux change:selected change:vx change:vy change:vz",
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
         this.model.on("change:color_scale", this._update_color_scale, this);
@@ -142,6 +163,58 @@ class ScatterView extends widgets.WidgetView {
             this._update_materials();
             this.renderer.update();
         });
+        const update_scale = (name) => {
+            const scale_name = name + "_scale";
+            const uniform_name = "domain_" + name;
+            const update_scale_domain = () => {
+                const scale = this.model.get(scale_name);
+                let min = 0;
+                let max = 100;
+                if (scale) {
+                    if (scale.min !== null) {
+                        min = scale.min;
+                    }
+                    if (scale.max !== null) {
+                        max = scale.max;
+                    }
+                }
+                this.uniforms[uniform_name].value = [min, max];
+                if(this.mesh) {
+                    this.renderer.update();
+                }
+            }
+            update_scale_domain();
+            return () => {
+                const scale_previous = this.model.previous(scale_name);
+                const scale = this.model.get(scale_name);
+                if (scale_previous) {
+                    scale_previous.off("domain_changed", update_scale_domain);
+                }
+                const new_scale_defines = {...this.scale_defines};
+                // if no scale, default to linear
+                new_scale_defines[`SCALE_TYPE_${name}`] = scaleTypeMap[scale ? scale.type : 'linear'];
+                const scale_types_changed = !isEqual(this.scale_defines, new_scale_defines);
+                this.scale_defines = new_scale_defines;
+                if ((!scale_previous && scale) || (scale_previous && !scale_previous) || scale_types_changed) {
+                    // this will toggle a preprocessor variable
+                    this._update_materials();
+                }
+                if (scale) {
+                    scale.on("domain_changed", update_scale_domain, this);
+                    update_scale_domain();
+                    this.renderer.update();
+                }
+                // if (this.mesh) { // we don't need to do so on initialization
+                //     this.update_();
+                // }
+            }
+        }
+        ["size_x", "size_y", "size_z", "aux"].forEach((name) => {
+            const updater = update_scale(name);
+            updater();
+            this.model.on(`change:${name}_scale`, updater, this);
+        });
+
     }
     _load_textures() {
         const texture = this.model.get("texture");
@@ -173,7 +246,7 @@ class ScatterView extends widgets.WidgetView {
         this.renderer.update();
     }
     set_scales(scales) {
-        const new_scale_defines = {};
+        const new_scale_defines = {...this.scale_defines};
         for (const key of Object.keys(scales)) {
             this.material.uniforms[`domain_${key}`].value = scales[key].domain;
             this.material_rgb.uniforms[`domain_${key}`].value = scales[key].domain;
@@ -210,7 +283,7 @@ class ScatterView extends widgets.WidgetView {
             // we treat changes in _selected attributes the same
             const key_animation = key.replace("_selected", "");
             if (key_animation === "sequence_index") {
-                const animated_by_sequence = ["x", "y", "z", "vx", "vy", "vz", "size", "color"];
+                const animated_by_sequence = ["x", "y", "z", "aux", "vx", "vy", "vz", "size", "color"];
                 animated_by_sequence.forEach((name) => {
                     if (isArray(this.model.get(name))) {
                         this.attributes_changed[name] = [name, "sequence_index"];
@@ -224,7 +297,7 @@ class ScatterView extends widgets.WidgetView {
             } else {
                 this.attributes_changed[key_animation] = [key];
                 // animate the size as well on x y z changes
-                if (["x", "y", "z", "vx", "vy", "vz", "color"].indexOf(key_animation) !== -1) {
+                if (["x", "y", "z", "aux", "vx", "vy", "vz", "color"].indexOf(key_animation) !== -1) {
                     // console.log("adding size to list of changed attributes")
                     this.attributes_changed.size = [];
                 }
@@ -341,12 +414,18 @@ class ScatterView extends widgets.WidgetView {
             // not present on .copy.. bug?
             this.line_material_rgb.linewidth = this.line_material.linewidth = this.model.get("line_material").obj.linewidth;
         }
-        this.material.defines = {...this.scale_defines};
-        this.material.defines.USE_COLORMAP = this.model.get("color_scale") !== null;
+
+        const shader_snippets = this.model.get('shader_snippets');
+        const snippet_defines = {};
+        for (const key of Object.keys(shader_snippets)) {
+            snippet_defines["SHADER_SNIPPET_" + key.toUpperCase()] = shader_snippets[key];
+        }
+
+        this.material.defines = {USE_COLORMAP: this.model.get("color_scale") !== null, ...this.scale_defines, ...snippet_defines};
         this.material.extensions = {derivatives: true};
-        this.material_rgb.defines = {USE_RGB: true, ...this.scale_defines};
+        this.material_rgb.defines = {USE_RGB: true, ...this.scale_defines, ...snippet_defines};
         this.material_rgb.extensions = {derivatives: true};
-        this.line_material.defines = {AS_LINE: true, ...this.scale_defines};
+        this.line_material.defines = {AS_LINE: true, ...this.scale_defines,  ...snippet_defines};
         this.line_material_rgb.defines = {USE_RGB: true, AS_LINE: true};
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");
@@ -398,7 +477,7 @@ class ScatterView extends widgets.WidgetView {
         if (typeof sequence_index_previous === "undefined") {
             sequence_index_previous = sequence_index;
         }
-        const scalar_names = ["x", "y", "z", "vx", "vy", "vz", "size", "size_selected"];
+        const scalar_names = ["x", "y", "z", "aux", "vx", "vy", "vz", "size", "size_selected"];
         const vector4_names = [];
         if (this.model.get("color_scale")) {
             scalar_names.push("color", "color_selected");
@@ -511,12 +590,17 @@ class ScatterModel extends widgets.WidgetModel {
         x: serialize.array_or_json,
         y: serialize.array_or_json,
         z: serialize.array_or_json,
+        aux: serialize.array_or_json,
+        aux_scale: { deserialize: widgets.unpack_models },
         vx: serialize.array_or_json,
         vy: serialize.array_or_json,
         vz: serialize.array_or_json,
         selected: serialize.array_or_json,
         size: serialize.array_or_json,
         size_selected: serialize.array_or_json,
+        size_x_scale: { deserialize: widgets.unpack_models },
+        size_y_scale: { deserialize: widgets.unpack_models },
+        size_z_scale: { deserialize: widgets.unpack_models },
         color: serialize.color_or_json,
         color_scale: { deserialize: widgets.unpack_models },
         color_selected: serialize.color_or_json,
@@ -539,10 +623,12 @@ class ScatterModel extends widgets.WidgetModel {
             color_scale: null,
             color_selected: "white",
             geo: "diamond",
+            geo_matrix: [1, 0, 0, 0,   0, 1, 0, 0,   0, 0, 1, 0,  0, 0, 0, 1],
             sequence_index: 0,
             connected: false,
             visible: true,
             selected: null,
+            shader_snippets: {size: '\n'}
         };
     }
 }
