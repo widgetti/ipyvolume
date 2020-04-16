@@ -4,9 +4,9 @@ os:
  - osx
 env:
  matrix:
-  - PYTHON_VERSION=2.7
   - PYTHON_VERSION=3.6
   - PYTHON_VERSION=3.7
+  - PYTHON_VERSION=3.8
 # matrix:
 #   allow_failures:
 #     env: PYTHON_VERSION=3.6
