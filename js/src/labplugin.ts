@@ -1,7 +1,6 @@
 import * as base from "@jupyter-widgets/base";
 import * as jupyter_volume from "./index";
 
-export
 const plugin = {
   id: "ipyvolume",
   requires: [base.IJupyterWidgetRegistry],
@@ -14,3 +13,5 @@ const plugin = {
   },
   autoStart: true,
 };
+
+export default plugin;

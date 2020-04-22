@@ -4,6 +4,7 @@ from setuptools.command.sdist import sdist
 from setuptools.command.build_py import build_py
 from setuptools.command.egg_info import egg_info
 from subprocess import check_call
+import json
 import os
 import sys
 import platform
@@ -27,6 +28,23 @@ def read(fname):
 
 LONG_DESCRIPTION = read("README.rst")
 
+def get_data_files():
+    with open(os.path.join('js', 'package.json')) as f:
+        package_json = json.load(f)
+    tgz = '%s-%s.tgz' % (package_json['name'], package_json['version'])
+    return [
+        (
+            'share/jupyter/nbextensions/ipyvolume',
+            [
+                'ipyvolume/static/extension.js',
+                'ipyvolume/static/index.js',
+                'ipyvolume/static/three.js',
+                'ipyvolume/static/index.js.map',
+            ],
+        ),
+        ('etc/jupyter/nbconfig/notebook.d', ['ipyvolume.json']),
+        ('share/jupyter/lab/extensions', ['js/' + tgz])
+    ]
 
 def js_prerelease(command, strict=False):
     """Decorator for building minified js/css prior to another command."""
@@ -51,14 +69,15 @@ def js_prerelease(command, strict=False):
                     log.warn('rebuilding js and css failed (not a problem)')
                     log.warn(str(e))
             command.run(self)
-            update_package_data(self.distribution)
+            update_data_files(self.distribution)
 
     return DecoratedCommand
 
 
-def update_package_data(distribution):
+def update_data_files(distribution):
     """Update package_data to catch changes during setup."""
     build_py = distribution.get_command_obj('build_py')
+    distribution.data_files = get_data_files()
     # distribution.package_data = find_package_data()
     # re-init build_py options which load package_data
     build_py.finalize_options()
@@ -114,6 +133,7 @@ class NPM(Command):
             log.info("Installing build dependencies with npm.  This may take a while...")
             npmName = self.get_npm_name()
             check_call([npmName, 'install'], cwd=node_root, stdout=sys.stdout, stderr=sys.stderr)
+            check_call([npmName, 'pack'], cwd=node_root, stdout=sys.stdout, stderr=sys.stderr)
             os.utime(self.node_modules, None)
 
         for t in self.targets:
@@ -124,7 +144,7 @@ class NPM(Command):
                 raise ValueError(msg)
 
         # update package data in case this created new files
-        update_package_data(self.distribution)
+        update_data_files(self.distribution)
 
 
 version_ns = {}
@@ -137,18 +157,7 @@ setup_args = {
     'description': 'IPython widget for rendering 3d volumes',
     'long_description': LONG_DESCRIPTION,
     'include_package_data': True,
-    'data_files': [
-        (
-            'share/jupyter/nbextensions/ipyvolume',
-            [
-                'ipyvolume/static/extension.js',
-                'ipyvolume/static/index.js',
-                'ipyvolume/static/three.js',
-                'ipyvolume/static/index.js.map',
-            ],
-        ),
-        ('etc/jupyter/nbconfig/notebook.d', ['ipyvolume.json']),
-    ],
+    'data_files': get_data_files(),
     'install_requires': [
         'ipywidgets>=7.0.0',
         'bqplot',
