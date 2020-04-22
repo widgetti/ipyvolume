@@ -23,9 +23,9 @@ Ipyvolume currenty can
  * Animations / sequences, all scatter/quiver plot properties can be a list of arrays, which can represent time snapshots.
  * Stylable (although still basic)
  * Integrates with
-  * [ipywidgets](https://github.com/ipython/ipywidgets) for adding gui controls (sliders, button etc), see an [example at the documentation homepage](http://ipyvolume.readthedocs.io/en/latest/index.html#built-on-ipywidgets)
-  * [bokeh](//bokeh.pydata.org)  by [linking the selection](http://ipyvolume.readthedocs.io/en/latest/bokeh.html)
-  * [bqplot](https://github.com/bloomberg/bqplot) by [linking the selection](http://ipyvolume.readthedocs.io/en/latest/bqplot.html)
+   * [ipywidgets](https://github.com/ipython/ipywidgets) for adding gui controls (sliders, button etc), see an [example at the documentation homepage](http://ipyvolume.readthedocs.io/en/latest/index.html#built-on-ipywidgets)
+   * [bokeh](//bokeh.pydata.org)  by [linking the selection](http://ipyvolume.readthedocs.io/en/latest/bokeh.html)
+   * [bqplot](https://github.com/bloomberg/bqplot) by [linking the selection](http://ipyvolume.readthedocs.io/en/latest/bqplot.html)
 
 Ipyvolume will probably, but not yet:
  * Render labels in latex.
