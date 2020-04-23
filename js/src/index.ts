@@ -14,7 +14,3 @@ export * from "./tf";
 export * from "./scatter";
 export * from "./volume";
 export * from "./mesh";
-export * from "./utils";
-export * from "./selectors";
-export * from "./values";
-export {semver_range as version} from "./utils";
