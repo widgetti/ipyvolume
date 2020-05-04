@@ -27,6 +27,7 @@
     "extension": "lib/labplugin"
   },
   "devDependencies": {
+    "@jupyter-widgets/controls": "^2.0.0",
     "@types/chai": "^4.1.4",
     "@types/d3": "^5.7.2",
     "@types/expect.js": "^0.3.29",
