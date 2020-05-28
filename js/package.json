@@ -27,7 +27,6 @@
     "extension": "lib/labplugin"
   },
   "devDependencies": {
-    "@jupyter-widgets/controls": "^2.0.0",
     "@types/chai": "^4.1.4",
     "@types/d3": "^5.7.2",
     "@types/expect.js": "^0.3.29",
@@ -65,6 +64,8 @@
   },
   "dependencies": {
     "@jupyter-widgets/base": "^1 || ^2 || ^3 || ^4",
+    "@jupyter-widgets/controls": "^1 || ^2",
+    "@jupyterlab/application": "^2.1.0",
     "css-loader": "^0.28.4",
     "d3": "^5.7.0",
     "gl-matrix": "^2.0.0",
