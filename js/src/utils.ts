@@ -2,7 +2,7 @@ import isTypedArray from "is-typedarray";
 
 // same strategy as: ipywidgets/jupyter-js-widgets/src/widget_core.ts, except we use ~
 // so that N.M.x is allowed (we don't care about x, but we assume 0.2.x is not compatible with 0.3.x
-export const semver_range = "~";
+export const semver_range = require('../package.json').version;
 
 export
 function is_typedarray(obj) {

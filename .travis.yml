@@ -4,10 +4,9 @@ os:
  - osx
 env:
  matrix:
-  - PYTHON_VERSION=2.7
-  - PYTHON_VERSION=3.5
   - PYTHON_VERSION=3.6
-# - PYTHON_VERSION=3.7 ipywidgets currently does not support 3.7
+  - PYTHON_VERSION=3.7
+  - PYTHON_VERSION=3.8
 # matrix:
 #   allow_failures:
 #     env: PYTHON_VERSION=3.6
@@ -28,9 +27,9 @@ before_install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create -q -n test-environment python=$PYTHON_VERSION numpy scipy runipy
+  - conda create -q -n test-environment -c conda-forge python=$PYTHON_VERSION numpy scipy
   - source activate test-environment
-  - conda install -c conda-forge pytest==3.8.1 pytest-cov bokeh nodejs matplotlib scikit-image shapely flake8
+  - conda install -c conda-forge pytest pytest-cov bokeh nodejs matplotlib scikit-image shapely flake8
   - pip install PyChromeDevTools
   - pip install coveralls
 
@@ -43,7 +42,6 @@ script:
   - flake8 ipyvolume
   - (cd js; ./node_modules/.bin/tslint src/**/*.ts)
   - (cd js; npm run test)
-#  - runipy examples/examples.ipynb
-
+  
 after_success:
   coveralls

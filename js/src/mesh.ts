@@ -1,7 +1,8 @@
 import * as widgets from "@jupyter-widgets/base";
-import { isArray, isNumber } from "lodash";
+import { isArray, isEqual, isNumber, isString } from "lodash";
 import * as THREE from "three";
 import { FigureView } from "./figure";
+import { createColormap, patchMaterial, scaleTypeMap } from "./scales";
 import * as serialize from "./serialize.js";
 import { semver_range } from "./utils";
 import * as values from "./values.js";
@@ -22,6 +23,7 @@ class MeshView extends widgets.WidgetView {
     line_material: any;
     line_material_rgb: any;
     materials: any;
+    scale_defines: {};
 
     texture_loader: any;
     textures: any;
@@ -65,9 +67,13 @@ class MeshView extends widgets.WidgetView {
 
         this.uniforms = THREE.UniformsUtils.merge( [
             {
-                xlim : { type: "2f", value: [0., 1.] },
-                ylim : { type: "2f", value: [0., 1.] },
-                zlim : { type: "2f", value: [0., 1.] },
+                //xlim : { type: "2f", value: [0., 1.] },
+                //ylim : { type: "2f", value: [0., 1.] },
+                //zlim : { type: "2f", value: [0., 1.] },
+                domain_x: { type: "2f", value: [0., 1.] },
+                domain_y: { type: "2f", value: [0., 1.] },
+                domain_z: { type: "2f", value: [0., 1.] },
+                domain_color: { type: "2f", value: [0., 1.] },
                 // tslint:disable-next-line: object-literal-sort-keys
                 animation_time_x : { type: "f", value: 1. },
                 animation_time_y : { type: "f", value: 1. },
@@ -78,6 +84,7 @@ class MeshView extends widgets.WidgetView {
                 animation_time_texture : { type: "f", value: 1. },
                 texture: { type: "t", value: null },
                 texture_previous: { type: "t", value: null },
+                colormap: {type: "t", value: null},
             },
             THREE.UniformsLib[ "common" ],
             THREE.UniformsLib[ "lights" ],
@@ -130,12 +137,14 @@ class MeshView extends widgets.WidgetView {
             });
         }
 
+        this._update_color_scale();
         this.create_mesh();
         this.add_to_scene();
         
         this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles change:lines",
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
+        this.model.on("change:color_scale", this._update_color_scale, this);
         this.model.on("change:texture", this._load_textures, this);
         this.model.on("change:visible", this.update_visibility, this);
         this.model.on("change:lighting_model change:opacity change:specular_color change:shininess change:emissive_color change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow", 
@@ -183,9 +192,16 @@ class MeshView extends widgets.WidgetView {
         }
     }
 
-    set_limits(limits) {
-        for (const key of Object.keys(limits)) {
-            this.material.uniforms[key].value = limits[key];
+    set_scales(scales) {
+        const new_scale_defines = {};
+        for (const key of Object.keys(scales)) {
+            this.material.uniforms[`domain_${key}`].value = scales[key].domain;
+            this.material_rgb.uniforms[`domain_${key}`].value = scales[key].domain;
+            new_scale_defines[`SCALE_TYPE_${key}`] = scaleTypeMap[scales[key].type];
+        }
+        if (!isEqual(this.scale_defines, new_scale_defines) ) {
+            this.scale_defines = new_scale_defines;
+            this._update_materials();
         }
     }
 
@@ -217,7 +233,7 @@ class MeshView extends widgets.WidgetView {
     }
 
     on_change(attribute) {
-        for (const key of this.model.changedAttributes()) {
+        for (const key of Object.keys(this.model.changedAttributes())) {
             // console.log("changed " +key)
             this.previous_values[key] = this.model.previous(key);
             // attributes_changed keys will say what needs to be animated, it's values are the properties in
@@ -297,7 +313,17 @@ class MeshView extends widgets.WidgetView {
     }
 
     get_previous(name, index, default_value) {
-        return this._get_value(this.previous_values[name] || this.model.get(name), index, default_value);
+        if (name === "color") {
+            // special case, if previous color was a string, we don't use the previous
+            // since we might get NaN values and then the interpolation in the shader will
+            // always give nan
+            if (this.previous_values[name] && isString(this.previous_values[name])) {
+                return this._get_value(this.model.get(name), index, default_value);
+            }
+            return this._get_value(this.previous_values[name] || this.model.get(name), index, default_value);
+        } else {
+            return this._get_value(this.previous_values[name] || this.model.get(name), index, default_value);
+        }
     }
 
     _get_value_vec3(value, index, default_value) {
@@ -319,6 +345,58 @@ class MeshView extends widgets.WidgetView {
         return this._get_value_vec3(this.previous_values[name] || this.model.get(name), index, default_value);
     }
 
+    _update_color_scale() {
+        const color_scale_previous = this.model.previous("color_scale");
+        const color_scale = this.model.get("color_scale");
+        if (color_scale_previous) {
+            color_scale_previous.off("domain_changed", this._update_color_scale_domain);
+            color_scale_previous.off("colors_changed", this._update_color_scale_texture);
+        }
+        if ((!color_scale_previous && color_scale) || (color_scale_previous && !color_scale_previous)) {
+            // this will toggle a preprocessor variable
+            this._update_materials();
+        }
+        if (color_scale) {
+            color_scale.on("domain_changed", this._update_color_scale_domain, this);
+            color_scale.on("colors_changed", this._update_color_scale_texture, this);
+            this._update_color_scale_texture();
+            this._update_color_scale_domain();
+            this.renderer.update();
+        }
+    }
+    _update_color_scale_texture() {
+        const color_scale = this.model.get("color_scale");
+        this.uniforms.colormap.value = createColormap(color_scale);
+        this.renderer.update();
+    }
+    _update_color_scale_domain() {
+        const color_scale = this.model.get("color_scale");
+        const color = this.model.get("color");
+        if (color) {
+            let min;
+            let max;
+            if (color_scale.min !== null) {
+                min = color_scale.min;
+            } else {
+                min = Math.min(...color);
+            }
+            if (color_scale.max !== null) {
+                max = color_scale.max;
+            } else {
+                max = Math.max(...color);
+            }
+            this.uniforms.domain_color.value = [min, max];
+        } else {
+            if (color_scale.min !== null && color_scale.max !== null) {
+                this.uniforms.domain_color.value = [color_scale.min, color_scale.max];
+            } else {
+                console.warn("no color set, and color scale does not have a min or max");
+            }
+
+        }
+        this.renderer.update();
+    }
+
     _update_materials() {
         if (this.model.get("material")) {
             this.material.copy(this.model.get("material").obj);
@@ -334,10 +412,15 @@ class MeshView extends widgets.WidgetView {
         }
 
         // update material defines in order to run correct shader code
-        this.material.defines = {USE_COLOR: true};
-        this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true};
-        this.line_material.defines = {AS_LINE: true};
-        this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true, USE_COLOR: true};
+        //this.material.defines = {USE_COLOR: true};
+        //this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true};
+        //this.line_material.defines = {AS_LINE: true};
+        //this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true, USE_COLOR: true};
+        this.material.defines = {...this.scale_defines, USE_COLOR: true};
+        this.material.defines.USE_COLORMAP = this.model.get("color_scale") !== null;
+        this.material_rgb.defines = {USE_RGB: true, ...this.scale_defines, USE_COLOR: true};
+        this.line_material.defines = {AS_LINE: true, ...this.scale_defines, USE_COLOR: true};
+        this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true, ...this.scale_defines, USE_COLOR: true};
         this.material.extensions = {derivatives: true};
 
         // locally and the visible with this object's visible trait
@@ -348,22 +431,24 @@ class MeshView extends widgets.WidgetView {
 
         this.lighting_model = this.model.get("lighting_model");
         this.materials.forEach((material) => {
+            material.vertexShader = (require("raw-loader!../glsl/mesh-vertex.glsl") as any).default;
+            material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment.glsl") as any).default;
             material.uniforms = this.uniforms;
             if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT) {
-                material.vertexShader = require("raw-loader!../glsl/mesh-vertex.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/mesh-fragment.glsl");
+                material.vertexShader = (require("raw-loader!../glsl/mesh-vertex.glsl") as any).default;
+                material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment.glsl") as any).default;
             }
             else if(this.lighting_model === this.LIGHTING_MODELS.LAMBERT) {
-                material.vertexShader = require("raw-loader!../glsl/mesh-vertex-lambert.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-lambert.glsl");
+                material.vertexShader = (require("raw-loader!../glsl/mesh-vertex-lambert.glsl") as any).default;
+                material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment-lambert.glsl") as any).default;
             }
             else if(this.lighting_model === this.LIGHTING_MODELS.PHONG) {
-                material.vertexShader = require("raw-loader!../glsl/mesh-vertex-phong.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-phong.glsl");
+                material.vertexShader = (require("raw-loader!../glsl/mesh-vertex-phong.glsl") as any).default;
+                material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment-phong.glsl") as any).default;
             }
             else if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL) {
-                material.vertexShader = require("raw-loader!../glsl/mesh-vertex-physical.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-physical.glsl");
+                material.vertexShader = (require("raw-loader!../glsl/mesh-vertex-physical.glsl") as any).default;
+                material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment-physical.glsl") as any).default;
             }
             material.depthWrite = true;
             material.transparant = true;
@@ -371,6 +456,7 @@ class MeshView extends widgets.WidgetView {
             material.depthTest = true;
             // use lighting
             material.lights = true;
+            patchMaterial(material);
         });
 
         this.diffuse_color = this.model.get("diffuse_color");
@@ -466,7 +552,12 @@ class MeshView extends widgets.WidgetView {
         // console.log('>>>', sequence_index, sequence_index_previous, time_offset, time_delta)
 
         const scalar_names = ["x", "y", "z", "u", "v"];
-        const vector4_names = ["color"];
+        const vector4_names = [];
+        if (this.model.get("color_scale")) {
+            scalar_names.push("color");
+        } else {
+            vector4_names.push("color");
+        }
 
         const current  = new values.Values(scalar_names,
                                         [],
@@ -506,8 +597,13 @@ class MeshView extends widgets.WidgetView {
             const geometry = new THREE.BufferGeometry();
             geometry.addAttribute("position", new THREE.BufferAttribute(current.array_vec3.vertices, 3));
             geometry.addAttribute("position_previous", new THREE.BufferAttribute(previous.array_vec3.vertices, 3));
-            geometry.addAttribute("color_current", new THREE.BufferAttribute(current.array_vec4.color, 4));
-            geometry.addAttribute("color_previous", new THREE.BufferAttribute(previous.array_vec4.color, 4));
+            if (this.model.get("color_scale")) {
+                geometry.addAttribute("color_current", new THREE.BufferAttribute(current.array.color, 1));
+                geometry.addAttribute("color_previous", new THREE.BufferAttribute(previous.array.color, 1));
+            } else {
+                geometry.addAttribute("color_current", new THREE.BufferAttribute(current.array_vec4.color, 4));
+                geometry.addAttribute("color_previous", new THREE.BufferAttribute(previous.array_vec4.color, 4));
+            }
             geometry.setIndex(new THREE.BufferAttribute(triangles, 1));
             const texture = this.model.get("texture");
             const u = current.array.u;
@@ -543,10 +639,18 @@ class MeshView extends widgets.WidgetView {
 
             geometry.addAttribute("position", new THREE.BufferAttribute(current.array_vec3.vertices, 3));
             geometry.addAttribute("position_previous", new THREE.BufferAttribute(previous.array_vec3.vertices, 3));
-            const color = new THREE.BufferAttribute(current.array_vec4.color, 4);
+            let color = null;
+            let color_previous = null;
+            if (this.model.get("color_scale")) {
+                color = new THREE.BufferAttribute(current.array.color, 1);
+                color_previous = new THREE.BufferAttribute(previous.array.color, 1);
+            } else {
+                color = new THREE.BufferAttribute(current.array_vec4.color, 4);
+                color_previous = new THREE.BufferAttribute(previous.array_vec4.color, 4);
+            }
             color.normalized = true;
             geometry.addAttribute("color_current", color);
-            const color_previous = new THREE.BufferAttribute(previous.array_vec4.color, 4);
+            //const color_previous = new THREE.BufferAttribute(previous.array_vec4.color, 4);
             color_previous.normalized = true;
             geometry.addAttribute("color_previous", color_previous);
             const indices = new Uint32Array(lines[0]);
@@ -573,7 +677,7 @@ class MeshView extends widgets.WidgetView {
             };
             // uniforms of material_rgb has a reference to these same object
             // this.renderer.transition(this.material.uniforms[property], "value", done, this)
-            this.renderer.transition(function(value) {
+            this.renderer.transition((value) => {
                 this.material.uniforms[property].value = time_offset + time_delta * value;
             }, done, this);
         }
@@ -593,6 +697,7 @@ class MeshModel extends widgets.WidgetModel {
         triangles: serialize.array_or_json,
         lines: serialize.array_or_json,
         color: serialize.color_or_json,
+        color_scale: { deserialize: widgets.unpack_models },
         texture: serialize.texture,
         material: { deserialize: widgets.unpack_models },
         line_material: { deserialize: widgets.unpack_models },
@@ -615,6 +720,7 @@ class MeshModel extends widgets.WidgetModel {
             _model_module_version: semver_range,
             _view_module_version: semver_range,
             color: "red",
+            color_scale: null,
             sequence_index: 0,
             connected: false,
             visible: true,

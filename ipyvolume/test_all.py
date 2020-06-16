@@ -214,19 +214,19 @@ def test_limits():
     # TODO: actually, default xlim should be None, and the limits should
     # then now grow, but 'move' around the new point
     f = ipv.figure()
-    assert f.xlim == [0, 1]
+    assert f.xlim == (0, 1)
     ipv.ylim(0, 10)
     ipv.zlim(-10, 0)
     ipv.scatter(3, 4, 5)
-    assert f.xlim == [0, 3]
-    assert f.ylim == [0, 10]
-    assert f.zlim == [-10, 5]
+    assert f.xlim == (0, 3)
+    assert f.ylim == (0, 10)
+    assert f.zlim == (-10, 5)
 
     f = ipv.figure()
     ipv.volshow(np.random.rand(5, 5, 5), extent=[[0.1, 0.9], [0.5, 2], [-2, 5]])
-    assert f.xlim == [0, 1]
-    assert f.ylim == [0, 2]
-    assert f.zlim == [-2, 5]
+    assert f.xlim == (0, 1)
+    assert f.ylim == (0, 2)
+    assert f.zlim == (-2, 5)
 
 
 def test_style():

@@ -3,3 +3,4 @@ include LICENSE
 include README.rst
 include README.md
 include ipyvolume.json
+include js/package.json
