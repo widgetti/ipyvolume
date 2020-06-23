@@ -12,6 +12,11 @@ uniform float animation_time_u;
 uniform float animation_time_v;
 uniform float animation_time_color;
 
+//TODO: clarify scale functionality
+uniform vec2 xlim;
+uniform vec2 ylim;
+uniform vec2 zlim;
+
 uniform vec2 domain_x;
 uniform vec2 domain_y;
 uniform vec2 domain_z;
@@ -41,10 +46,18 @@ uniform sampler2D colormap;
 
 
 void main(void) {
+
+    //TODO: clarify scale functionality
+    //vec3 origin = vec3(xlim.x, ylim.x, zlim.x);//
+    //vec3 size_viewport = vec3(xlim.y, ylim.y, zlim.z) - origin;//
+
     vec3 animation_time = vec3(animation_time_x, animation_time_y, animation_time_z);
     vec3 animated_position = mix(position_previous, position, animation_time);
 
+    //TODO: clarify scale functionality
+    //vec3 model_pos = (mix(position_previous, position, animation_time) - origin) / size_viewport - 0.5;//
     vec3 model_pos = vec3(SCALE_X(animated_position.x), SCALE_Y(animated_position.y), SCALE_Z(animated_position.z));
+
     gl_Position = projectionMatrix *
                 modelViewMatrix *
                 vec4(model_pos, 1.0);

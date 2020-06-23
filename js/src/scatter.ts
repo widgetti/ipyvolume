@@ -115,9 +115,10 @@ class ScatterView extends widgets.WidgetView {
 
         this.uniforms = THREE.UniformsUtils.merge( [
             {
-                //xlim : { type: "2f", value: [0., 1.] },
-                //ylim : { type: "2f", value: [0., 1.] },
-                //zlim : { type: "2f", value: [0., 1.] },
+                //TODO: clarify scale functionality
+                xlim : { type: "2f", value: [0., 1.] },
+                ylim : { type: "2f", value: [0., 1.] },
+                zlim : { type: "2f", value: [0., 1.] },
                 domain_x : { type: "2f", value: [0., 1.] },
                 domain_y : { type: "2f", value: [0., 1.] },
                 domain_z : { type: "2f", value: [0., 1.] },
