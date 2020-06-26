@@ -1,8 +1,11 @@
+#extension GL_OES_standard_derivatives : enable
+
 #define USE_SCALE_X
 #define USE_SCALE_Y
 #define USE_SCALE_Z
 #include <scales>
 
+//#ifdef LAMBERT_SHADING_MODEL
 
  // for animation, all between 0 and 1
 uniform float animation_time_x;
@@ -44,8 +47,58 @@ attribute vec4 color_previous;
 #endif
 uniform sampler2D colormap;
 
+#ifdef LAMBERT_SHADING_MODEL
+    //LAMBERT
+    #define LAMBERT
+    varying vec3 vLightFront;
+
+    #ifdef DOUBLE_SIDED
+
+    	varying vec3 vLightBack;
+
+    #endif
+
+    #include <common>
+    #include <uv_pars_vertex>
+    #include <uv2_pars_vertex>
+    #include <envmap_pars_vertex>
+    #include <bsdfs>
+    #include <lights_pars_begin>
+    #include <color_pars_vertex>
+    #include <fog_pars_vertex>
+    #include <morphtarget_pars_vertex>
+    #include <skinning_pars_vertex>
+    #include <shadowmap_pars_vertex>
+    #include <logdepthbuf_pars_vertex>
+    #include <clipping_planes_pars_vertex>
+#endif//LAMBERT_SHADING_MODEL
 
 void main(void) {
+
+#ifdef LAMBERT_SHADING_MODEL
+	#include <uv_vertex>
+	#include <uv2_vertex>
+	#include <color_vertex>
+
+	#include <beginnormal_vertex>
+	#include <morphnormal_vertex>
+	#include <skinbase_vertex>
+	#include <skinnormal_vertex>
+	#include <defaultnormal_vertex>
+
+	#include <begin_vertex>
+	#include <morphtarget_vertex>
+	#include <skinning_vertex>
+	#include <project_vertex>
+	#include <logdepthbuf_vertex>
+	#include <clipping_planes_vertex>
+
+	#include <worldpos_vertex>
+	#include <envmap_vertex>
+	#include <lights_lambert_vertex>
+	#include <shadowmap_vertex>
+	#include <fog_vertex>
+#endif//LAMBERT_SHADING_MODEL
 
     //TODO: clarify scale functionality
     //vec3 origin = vec3(xlim.x, ylim.x, zlim.x);//

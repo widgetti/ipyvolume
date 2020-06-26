@@ -40,6 +40,11 @@ __all__ = [
     'style',
     'plot_plane',
     'selector_default',
+    'ambient_light',
+    'directional_light',
+    'spot_light',
+    'point_light',
+    'hemisphere_light'
 ]
 
 import os
@@ -75,7 +80,7 @@ from IPython.display import display
 import ipyvolume as ipv
 import ipyvolume.embed
 from ipyvolume import utils
-
+import math
 
 _last_figure = None
 
@@ -309,7 +314,26 @@ default_size_selected = default_size * 1.3
 
 
 @_docsubst
-def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=None, v=None, texture=None):
+def plot_trisurf(
+    x, 
+    y, 
+    z, 
+    triangles=None, 
+    lines=None, 
+    color=default_color, 
+    u=None, 
+    v=None, 
+    texture=None,
+    lighting_model='DEFAULT',
+    opacity=1,
+    specular_color='white',
+    shininess=1,
+    emissive_color='black',
+    emissive_intensity=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=False,
+    receive_shadow=False):
     """Draw a polygon/triangle mesh defined by a coordinate and triangle indices.
 
     The following example plots a rectangle in the z==2 plane, consisting of 2 triangles:
@@ -337,6 +361,16 @@ def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=Non
     :param u: {u}
     :param v: {v}
     :param texture: {texture}
+    :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
+    :param opacity: 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param specular_color: {color} Color of the specular tint. Default 'white'. Only for 'PHONG' lighting model
+    :param shininess: Specular intensity. Default is 1
+    :param emissive_color: {color} Emissive (light) color of the material, essentially a solid color unaffected by other lighting. Default is 'black'
+    :param emissive_intensity: Factor multiplied with emissive_color. Takes values between 0 and 1. Default is 1
+    :param roughness: How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1. Only for 'PHYSICAL' lighting model
+    :param metalness: How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
+    :param cast_shadow: Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
+    :param receive_shadow: Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
     :return: :any:`Mesh`
     """
     fig = gcf()
@@ -344,14 +378,51 @@ def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=Non
         triangles = np.array(triangles).astype(dtype=np.uint32)
     if lines is not None:
         lines = np.array(lines).astype(dtype=np.uint32)
-    mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles, lines=lines, color=color, u=u, v=v, texture=texture)
+    mesh = ipv.Mesh(
+        x=x, 
+        y=y, 
+        z=z, 
+        triangles=triangles, 
+        lines=lines, 
+        color=color, 
+        u=u, v=v, 
+        texture=texture,
+        lighting_model=lighting_model,
+        opacity=opacity,
+        specular_color=specular_color,
+        shininess=shininess,
+        emissive_color=emissive_color,
+        emissive_intensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow
+        )
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
     fig.meshes = fig.meshes + [mesh]
+
     return mesh
 
 
 @_docsubst
-def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
+def plot_surface(
+    x, 
+    y, 
+    z, 
+    color=default_color, 
+    wrapx=False, 
+    wrapy=False,
+    lighting_model='DEFAULT',
+    opacity=1,
+    specular_color='white',
+    shininess=1,
+    emissive_color='black',
+    emissive_intensity=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=False,
+    receive_shadow=False
+    ):
     """Draws a 2d surface in 3d, defined by the 2d ordered arrays x,y,z.
 
     :param x: {x2d}
@@ -360,9 +431,36 @@ def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
     :param color: {color2d}
     :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
     :param bool wrapy: simular for the y coordinate
+    :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
+    :param opacity: 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param specular_color: {color} Color of the specular tint. Default 'white'. Only for 'PHONG' lighting model
+    :param shininess: Specular intensity. Default is 1
+    :param emissive_color:  {color} Emissive (light) color of the material, essentially a solid color unaffected by other lighting. Default is 'black'
+    :param emissive_intensity: Factor multiplied with emissive_color. Takes values between 0 and 1. Default is 1
+    :param roughness: How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1. Only for 'PHYSICAL' lighting model
+    :param metalness: How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
+    :param cast_shadow: Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
+    :param receive_shadow: Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
     :return: :any:`Mesh`
     """
-    return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=False)
+    return plot_mesh(
+        x, 
+        y, 
+        z, 
+        color=color, 
+        wrapx=wrapx, 
+        wrapy=wrapy, 
+        wireframe=False,
+        lighting_model=lighting_model,
+        opacity=opacity,
+        specular_color=specular_color,
+        shininess=shininess,
+        emissive_color=emissive_color,
+        emissive_intensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow)
 
 
 @_docsubst
@@ -383,7 +481,27 @@ def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False):
 
 
 def plot_mesh(
-    x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None, texture=None
+    x, 
+    y, 
+    z, 
+    color=default_color, 
+    wireframe=True, 
+    surface=True, 
+    wrapx=False, 
+    wrapy=False, 
+    u=None, 
+    v=None, 
+    texture=None,
+    lighting_model='DEFAULT',
+    opacity=1,
+    specular_color='white',
+    shininess=1,
+    emissive_color='black',
+    emissive_intensity=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=False,
+    receive_shadow=False
 ):
     """Draws a 2d wireframe+surface in 3d: generalization of :any:`plot_wireframe` and :any:`plot_surface`.
 
@@ -394,10 +512,20 @@ def plot_mesh(
     :param bool wireframe: draw lines between the vertices
     :param bool surface: draw faces/triangles between the vertices
     :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the begin and end points
-    :param boool wrapy: idem for y
+    :param bool wrapy: idem for y
     :param u: {u}
     :param v: {v}
     :param texture: {texture}
+    :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
+    :param opacity: 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param specular_color: {color} Color of the specular tint. Default 'white'. Only for 'PHONG' lighting model
+    :param shininess: Specular intensity. Default is 1
+    :param emissive_color: {color} Emissive (light) color of the material, essentially a solid color unaffected by other lighting. Default is 'black'
+    :param emissive_intensity: Factor multiplied with emissive_color. Takes values between 0 and 1. Default is 1
+    :param roughness: How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1. Only for 'PHYSICAL' lighting model
+    :param metalness: How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
+    :param cast_shadow: Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
+    :param receive_shadow: Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
     :return: :any:`Mesh`
     """
     fig = gcf()
@@ -471,13 +599,28 @@ def plot_mesh(
         u=u,
         v=v,
         texture=texture,
+        lighting_model=lighting_model,
+        opacity=opacity,
+        specular_color=specular_color,
+        shininess=shininess,
+        emissive_color=emissive_color,
+        emissive_intensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow
     )
     fig.meshes = fig.meshes + [mesh]
     return mesh
 
 
 @_docsubst
-def plot(x, y, z, color=default_color, **kwargs):
+def plot(
+    x, 
+    y, 
+    z, 
+    color=default_color,
+    **kwargs):
     """Plot a line in 3d.
 
     :param x: {x}
@@ -493,7 +636,12 @@ def plot(x, y, z, color=default_color, **kwargs):
         visible_lines=True, color_selected=None, size_selected=1, size=1, connected=True, visible_markers=False
     )
     kwargs = dict(defaults, **kwargs)
-    s = ipv.Scatter(x=x, y=y, z=z, color=color, **kwargs)
+    s = ipv.Scatter(
+        x=x, 
+        y=y, 
+        z=z, 
+        color=color,
+        **kwargs)
     s.material.visible = False
     fig.scatters = fig.scatters + [s]
     return s
@@ -511,10 +659,17 @@ def scatter(
     marker="diamond",
     selection=None,
     grow_limits=True,
+    lighting_model='DEFAULT',
+    opacity=1,
+    emissive_color='black',
+    emissive_intensity=1,
+    roughness=0,
+    metalness=0,
     **kwargs
 ):
     """Plot many markers/symbols in 3d.
-
+       Due to certain shader limitations, should not use with Spot Lights and Point Lights.
+       Does not support shadow mapping.
     :param x: {x}
     :param y: {y}
     :param z: {z}
@@ -525,6 +680,12 @@ def scatter(
     :param marker: {marker}
     :param selection: numpy array of shape (N,) or (S, N) with indices of x,y,z arrays of the selected markers, which
                       can have a different size and color
+    :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
+    :param opacity: 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param emissive_color: {color} Emissive (light) color of the material, essentially a solid color unaffected by other lighting. Default is 'black'
+    :param emissive_intensity: Factor multiplied with emissive_color. Takes values between 0 and 1. Default is 1
+    :param roughness: How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1. Only for 'PHYSICAL' lighting model
+    :param metalness: How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
     :param kwargs:
     :return: :any:`Scatter`
     """
@@ -541,6 +702,12 @@ def scatter(
         size_selected=size_selected,
         geo=marker,
         selection=selection,
+        lighting_model=lighting_model,
+        opacity=opacity,
+        emissive_color=emissive_color,
+        emissive_intensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
         **kwargs
     )
     fig.scatters = fig.scatters + [s]
@@ -1518,3 +1685,238 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
     lines[3::4, 0], lines[3::4, 1] = t1[1], t2[1]
 
     return triangles, lines
+
+def ambient_light(
+    light_color=default_color_selected, 
+    intensity = 1):
+    """Create a new Ambient Light 
+        An Ambient Light source represents an omni-directional, fixed-intensity and fixed-color light source that affects all objects in the scene equally (is omni-present). 
+        This light cannot be used to cast shadows.
+    :param light_color: {color} Color of the Ambient Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Ambient Light intensity. Default is 1
+    :return: :any:`Light`
+    """
+
+    light = ipv.Light(
+        light_type='AMBIENT',
+        light_color=light_color, 
+        intensity=intensity)
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+def hemisphere_light(
+    light_color=default_color_selected, 
+    light_color2=default_color, 
+    intensity = 1, 
+    position=[0, 1, 0]):
+    """Create a new Hemisphere Light 
+        A light source positioned directly above the scene, with color fading from the sky color to the ground color.
+        This light cannot be used to cast shadows.
+    :param light_color: {color} Sky color. Default 'white'
+    :param light_color2: {color} Ground color. Default 'red'
+    :param intensity: Factor used to increase or decrease the Hemisphere Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Hemisphere Light. Default [0 1 0]
+    :return: :any:`Light`
+    """
+    light = ipv.Light(
+        light_type='HEMISPHERE',
+        light_color=light_color, 
+        light_color2=light_color2,
+        intensity=intensity, 
+        position_x=position[0],
+        position_y=position[1],
+        position_z=position[2])
+        
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+def directional_light(
+    light_color=default_color_selected, 
+    intensity = 1, 
+    position=[0, 1, 0],
+    target=[0, 0, 0], 
+    cast_shadow=False,
+    shadow_map_size=512,
+    shadow_bias=-0.0005,
+    shadow_radius=1,
+    shadow_camera_near=0.5,
+    shadow_camera_far=500,
+    shadow_camera_orthographic_size=100,
+    shadow_map_type='PCF_SOFT'):
+    """Create a new Directional Light 
+        A Directional Light source illuminates all objects equally from a given direction.
+        This light can be used to cast shadows.
+    :param light_color: {color} Color of the Directional Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Directional Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Directional Light. Default [0 1 0]
+    :param target: 3-element array (x y z) which describes the target of the Directional Light. Default [0 0 0]
+    :param cast_shadow: Property of a Directional Light to cast shadows. Default False
+    :param shadow_map_size: Size of the projected shadow map. Default 512 (512x512)
+    :param shadow_bias: Factor used to reduce shadow acne. Default is -0.0005
+    :param shadow_radius: Setting this to values greater than 1 will blur the edges of the shadow. Default is 1
+    :param shadow_camera_near: Camera near factor. Default is 0.5
+    :param shadow_camera_far: Camera far factor. Default is 500
+    :param shadow_camera_orthographic_size: Size of the shadow orthographic camera. Directional Light only. Default is 100
+    :param shadow_map_type: Shadow map type. Can be 'BASIC', 'PCF', 'PCF_SOFT'. Default is 'PCF_SOFT'
+    :return: :any:`Light`
+    """
+
+    light = ipv.Light(
+        light_type='DIRECTIONAL',
+        light_color=light_color, 
+        intensity=intensity, 
+        position_x=position[0],
+        position_y=position[1],
+        position_z=position[2],
+        target_x=target[0],
+        target_y=target[1],
+        target_z=target[2],
+        cast_shadow=cast_shadow,
+        shadow_map_size=shadow_map_size,
+        shadow_bias=shadow_bias,
+        shadow_radius=shadow_radius,
+        shadow_camera_near=shadow_camera_near,
+        shadow_camera_far=shadow_camera_far,
+        shadow_camera_orthographic_size=shadow_camera_orthographic_size,
+        shadow_map_type=shadow_map_type)
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+def spot_light(
+    light_color=default_color_selected, 
+    intensity = 1, 
+    position=[0, 1, 0], 
+    target=[0, 0, 0],  
+    angle=math.pi/3, 
+    distance=0,
+    decay=1,
+    penumbra=0,
+    cast_shadow=False,
+    shadow_map_size=512,
+    shadow_bias=-0.0005,
+    shadow_radius=1,
+    shadow_camera_near=0.5,
+    shadow_camera_far=500,
+    shadow_camera_perspective_fov=50,
+    shadow_camera_perspective_aspect=1,
+    shadow_map_type='PCF_SOFT'):
+    """Create a new Spot Light 
+        A Spot Light produces a directed cone of light. The light becomes more intense closer to the spotlight source and to the center of the light cone.
+        This light can be used to cast shadows.
+    :param light_color: {color} Color of the Spot Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Spot Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Spot Light. Default [0 1 0]
+    :param target: 3-element array (x y z) which describes the target of the Spot Light. Default [0 0 0]
+    :param angle: Spot Light angle. Default is Pi/3
+    :param distance: When distance is non-zero, light will attenuate linearly from maximum intensity at the light's position down to zero at this distance from the light.
+    :param decay: The amount the light dims along the distance of the light. In physically correct mode, decay = 2 leads to physically realistic light falloff. Default is 1.
+    :param penumbra: Percent of the spotlight cone that is attenuated due to penumbra. Takes values between zero and 1. The default is 0.0.
+    :param cast_shadow: Property of a Spot Light to cast shadows. Default False
+    :param shadow_map_size: Size of the projected shadow map. Default 512 (512x512)
+    :param shadow_bias: Factor used to reduce shadow acne. Default is -0.0005
+    :param shadow_radius: Setting this to values greater than 1 will blur the edges of the shadow. Default is 1
+    :param shadow_camera_near: Camera near factor. Default is 0.5
+    :param shadow_camera_far: Camera far factor. Default is 500
+    :param shadow_camera_perspective_fov: Shadow perspective camera field of view angle. Default is 50. Spot Light only.
+    :param shadow_camera_perspective_aspect: Shadow perspective camera aspect ratio. Default is 1. Spot Light only.
+    :param shadow_map_type: Shadow map type. Can be 'BASIC', 'PCF', 'PCF_SOFT'. Default is 'PCF_SOFT'
+    :return: :any:`Light`
+    """
+
+    light = ipv.Light(
+        light_type='SPOT',
+        light_color=light_color, 
+        intensity=intensity, 
+        position_x=position[0],
+        position_y=position[1],
+        position_z=position[2],
+        target_x=target[0],
+        target_y=target[1],
+        target_z=target[2],
+        angle=angle, 
+        distance=distance,
+        decay=decay,
+        penumbra=penumbra,
+        cast_shadow=cast_shadow,
+        shadow_map_size=shadow_map_size,
+        shadow_bias=shadow_bias,
+        shadow_radius=shadow_radius,
+        shadow_camera_near=shadow_camera_near,
+        shadow_camera_far=shadow_camera_far,
+        shadow_camera_perspective_fov=shadow_camera_perspective_fov,
+        shadow_camera_perspective_aspect=shadow_camera_perspective_aspect,
+        shadow_map_type=shadow_map_type)
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+def point_light(
+    light_color=default_color_selected, 
+    intensity = 1, 
+    position=[0, 1, 0],
+    distance=0,
+    decay=1,
+    cast_shadow=False,
+    shadow_map_size=512,
+    shadow_bias=-0.0005,
+    shadow_radius=1,
+    shadow_camera_near=0.5,
+    shadow_camera_far=500,
+    shadow_map_type='PCF_SOFT'):
+    """Create a new Point Light 
+        A Point Light originates from a single point and spreads outward in all directions.
+        This light can be used to cast shadows.
+    :param light_color: {color} Color of the Point Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Point Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Point Light. Default [0 1 0]
+    :param distance: Maximum range of the light. Default is 0 (no limit).
+    :param decay: The amount the light dims along the distance of the light. Default is 1. For physically correct lighting, set this to 2
+    :param cast_shadow: Property of a Point Light to cast shadows. Default False
+    :param shadow_map_size: Size of the projected shadow map. Default 512 (512x512)
+    :param shadow_bias: Factor used to reduce shadow acne. Default is -0.0005
+    :param shadow_radius: Setting this to values greater than 1 will blur the edges of the shadow. Default is 1
+    :param shadow_camera_near: Camera near factor. Default is 0.5
+    :param shadow_camera_far: Camera far factor. Default is 500
+    :param shadow_map_type: Shadow map type. Can be 'BASIC', 'PCF', 'PCF_SOFT'. Default is 'PCF_SOFT'
+    :return: :any:`Light`
+    """
+
+    light = ipv.Light(
+        light_type='POINT',
+        light_color=light_color, 
+        intensity=intensity, 
+        position_x=position[0],
+        position_y=position[1],
+        position_z=position[2],
+        distance=distance,
+        decay=decay,
+        cast_shadow=cast_shadow,
+        shadow_map_size=shadow_map_size,
+        shadow_bias=shadow_bias,
+        shadow_radius=shadow_radius,
+        shadow_camera_near=shadow_camera_near,
+        shadow_camera_far=shadow_camera_far,
+        shadow_map_type=shadow_map_type)
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+
+
+
+
+
+
+
