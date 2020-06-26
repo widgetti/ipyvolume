@@ -436,13 +436,15 @@ class MeshView extends widgets.WidgetView {
             material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment.glsl") as any).default;
             material.uniforms = this.uniforms;
             if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT) {
-                material.vertexShader = (require("raw-loader!../glsl/mesh-vertex.glsl") as any).default;
-                material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment.glsl") as any).default;
+                material.vertexShader = (require("raw-loader!../glsl/mesh-vertex-merge.glsl") as any).default;
+                material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment-merge.glsl") as any).default;
+                material.defines.LAMBERT_SHADING_MODEL = false;
             }
             else if(this.lighting_model === this.LIGHTING_MODELS.LAMBERT) {
-                material.vertexShader = (require("raw-loader!../glsl/mesh-vertex-lambert.glsl") as any).default;
-                material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment-lambert.glsl") as any).default;
-            }
+                material.vertexShader = (require("raw-loader!../glsl/mesh-vertex-merge.glsl") as any).default;
+                material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment-merge.glsl") as any).default;
+                material.defines.LAMBERT_SHADING_MODEL = true;
+            }//this.material.defines.USE_COLORMAP
             else if(this.lighting_model === this.LIGHTING_MODELS.PHONG) {
                 material.vertexShader = (require("raw-loader!../glsl/mesh-vertex-phong.glsl") as any).default;
                 material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment-phong.glsl") as any).default;
