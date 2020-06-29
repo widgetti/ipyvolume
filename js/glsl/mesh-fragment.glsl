@@ -1,5 +1,3 @@
-#extension GL_OES_standard_derivatives : enable
-
 #ifdef LAMBERT_SHADING
     #define LAMBERT
     uniform vec3 diffuse;

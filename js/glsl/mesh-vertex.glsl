@@ -1,5 +1,3 @@
-#extension GL_OES_standard_derivatives : enable 
-
 // for animation, all between 0 and 1
 uniform float animation_time_x;
 uniform float animation_time_y;
