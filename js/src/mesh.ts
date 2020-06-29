@@ -334,10 +334,10 @@ class MeshView extends widgets.WidgetView {
         }
 
         // update material defines in order to run correct shader code
-        this.material.defines = {USE_COLOR: true};
-        this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true};
-        this.line_material.defines = {AS_LINE: true};
-        this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true, USE_COLOR: true};
+        this.material.defines = {USE_COLOR: true, DEFAULT_SHADING:true, LAMBERT_SHADING:false, PHONG_SHADING:false, PHYSICAL_SHADING:false};
+        this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true, DEFAULT_SHADING:true, LAMBERT_SHADING:false, PHONG_SHADING:false, PHYSICAL_SHADING:false};
+        this.line_material.defines = {AS_LINE: true, DEFAULT_SHADING:true, LAMBERT_SHADING:false, PHONG_SHADING:false, PHYSICAL_SHADING:false};
+        this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true, USE_COLOR: true, DEFAULT_SHADING:true, LAMBERT_SHADING:false, PHONG_SHADING:false, PHYSICAL_SHADING:false};
         this.material.extensions = {derivatives: true};
 
         // locally and the visible with this object's visible trait
@@ -349,21 +349,24 @@ class MeshView extends widgets.WidgetView {
         this.lighting_model = this.model.get("lighting_model");
         this.materials.forEach((material) => {
             material.uniforms = this.uniforms;
+            material.vertexShader = require("raw-loader!../glsl/mesh-vertex.glsl");
+            material.fragmentShader = require("raw-loader!../glsl/mesh-fragment.glsl");
+            material.defines.DEFAULT_SHADING = false;
+            material.defines.LAMBERT_SHADING = false;
+            material.defines.PHONG_SHADING = false;
+            material.defines.PHYSICAL_SHADING = false;
+
             if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT) {
-                material.vertexShader = require("raw-loader!../glsl/mesh-vertex.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/mesh-fragment.glsl");
+                material.defines.DEFAULT_SHADING = true;
             }
             else if(this.lighting_model === this.LIGHTING_MODELS.LAMBERT) {
-                material.vertexShader = require("raw-loader!../glsl/mesh-vertex-lambert.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-lambert.glsl");
+                material.defines.LAMBERT_SHADING = true;
             }
             else if(this.lighting_model === this.LIGHTING_MODELS.PHONG) {
-                material.vertexShader = require("raw-loader!../glsl/mesh-vertex-phong.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-phong.glsl");
+                material.defines.PHONG_SHADING = true;
             }
             else if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL) {
-                material.vertexShader = require("raw-loader!../glsl/mesh-vertex-physical.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/mesh-fragment-physical.glsl");
+                material.defines.PHYSICAL_SHADING = true;
             }
             material.depthWrite = true;
             material.transparant = true;
