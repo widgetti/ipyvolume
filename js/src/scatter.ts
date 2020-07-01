@@ -332,12 +332,12 @@ class ScatterView extends widgets.WidgetView {
             this.line_material_rgb.linewidth = this.line_material.linewidth = this.model.get("line_material").obj.linewidth;
         }
 
-        this.material.defines = {USE_COLOR: true};
+        this.material.defines = {USE_COLOR: true, DEFAULT_SHADING:true, PHYSICAL_SHADING:false};
         this.material.extensions = {derivatives: true};
-        this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true};
+        this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true, DEFAULT_SHADING:true, PHYSICAL_SHADING:false};
         this.material_rgb.extensions = {derivatives: true};
-        this.line_material.defines = {AS_LINE: true};
-        this.line_material_rgb.defines = {USE_RGB: true, AS_LINE: true, USE_COLOR: true};
+        this.line_material.defines = {AS_LINE: true, DEFAULT_SHADING:true, PHYSICAL_SHADING:false};
+        this.line_material_rgb.defines = {USE_RGB: true, AS_LINE: true, USE_COLOR: true, DEFAULT_SHADING:true, PHYSICAL_SHADING:false};
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");
         this.material_rgb.visible = this.material.visible && this.model.get("visible");
@@ -347,17 +347,19 @@ class ScatterView extends widgets.WidgetView {
         this.lighting_model = this.model.get("lighting_model");
 
         this.materials.forEach((material) => {
-            
+            material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
+            material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
+            material.defines.DEFAULT_SHADING = false;
+            material.defines.PHYSICAL_SHADING = false;
+
             if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT) {
-                material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
+                material.defines.DEFAULT_SHADING = true;
             }
 
             else {//if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL)
                 //Does not support shadows because on three.js r97 the shadow mapping is not working correctly for InstancedBufferGeometry
                 //Should not use with Spot Lights and Point Lights because lighting color is the same for InstancedBufferGeometry instances
-                material.vertexShader = require("raw-loader!../glsl/scatter-vertex-physical.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-physical.glsl");
+                material.defines.PHYSICAL_SHADING = true;
             }
             
             material.uniforms = {...material.uniforms, ...this.uniforms};
