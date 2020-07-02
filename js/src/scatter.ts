@@ -411,7 +411,7 @@ class ScatterView extends widgets.WidgetView {
         }
         const sprite = geo.endsWith("2d");
         const buffer_geo = new THREE.BufferGeometry().fromGeometry(this.geos[geo]);
-        buffer_geo.computeVertexNormals();
+        //buffer_geo.computeVertexNormals();
         const instanced_geo = new THREE.InstancedBufferGeometry();
 
         const vertices = (buffer_geo.attributes.position as any).clone();
@@ -428,8 +428,9 @@ class ScatterView extends widgets.WidgetView {
         const current  = new values.Values(scalar_names, [], this.get_current.bind(this), sequence_index, vector4_names);
         const previous = new values.Values(scalar_names, [], this.get_previous.bind(this), sequence_index_previous, vector4_names);
 
-        // Workaround for shader issue - color redefine 
+        //Fix for Uncaught TypeError: Cannot read property 'BYTES_PER_ELEMENT' of undefined
         current.ensure_array(["color"]);
+        // Workaround for shader issue - Threejs already uses the name color 
         instanced_geo.addAttribute("color_current", new THREE.BufferAttribute(current.array_vec4.color, 4));
 
         const length = Math.max(current.length, previous.length);
