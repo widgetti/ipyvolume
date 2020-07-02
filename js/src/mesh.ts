@@ -98,9 +98,6 @@ class MeshView extends widgets.WidgetView {
             } else {
                 const mat = new THREE.ShaderMaterial();
                 mat.side = THREE.DoubleSide;
-
-                mat.flatShading = false;
-                mat.transparent = true;
                 mat.needsUpdate = true;
 
                 return mat;
@@ -120,13 +117,11 @@ class MeshView extends widgets.WidgetView {
         if (this.model.get("material")) {
             this.model.get("material").on("change", () => {
                 this._update_materials();
-                this.renderer.update();
             });
         }
         if (this.model.get("line_material")) {
             this.model.get("line_material").on("change", () => {
                 this._update_materials();
-                this.renderer.update();
             });
         }
 
@@ -137,21 +132,16 @@ class MeshView extends widgets.WidgetView {
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
         this.model.on("change:texture", this._load_textures, this);
-        this.model.on("change:visible", this.update_visibility, this);
+        this.model.on("change:visible", this._update_materials, this);
         this.model.on("change:lighting_model change:opacity change:specular_color change:shininess change:emissive_color change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow", 
-        this.update_visibility, this);
+        this._update_materials, this);
     }
 
     public force_lighting_model() {
         if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT){
             this.model.set("lighting_model", this.LIGHTING_MODELS.PHYSICAL);
-            this.update_visibility();
+            this._update_materials();
         }
-    }
-
-    public update_visibility() {
-        this._update_materials();
-        this.renderer.update();
     }
 
     public _load_textures() {
@@ -369,7 +359,6 @@ class MeshView extends widgets.WidgetView {
                 material.defines.PHYSICAL_SHADING = true;
             }
             material.depthWrite = true;
-            material.transparant = true;
             material.transparent = true;
             material.depthTest = true;
             // use lighting
@@ -404,6 +393,8 @@ class MeshView extends widgets.WidgetView {
         this.material_rgb.needsUpdate = true;
         this.line_material.needsUpdate = true;
         this.line_material_rgb.needsUpdate = true;
+
+        this.renderer.update();
     }
 
     create_mesh() {

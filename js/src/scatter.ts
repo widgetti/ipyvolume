@@ -151,13 +151,11 @@ class ScatterView extends widgets.WidgetView {
         if (this.model.get("material")) {
             this.model.get("material").on("change", () => {
                 this._update_materials();
-                this.renderer.update();
             });
         }
         if (this.model.get("line_material")) {
             this.model.get("line_material").on("change", () => {
                 this._update_materials();
-                this.renderer.update();
             });
         }
 
@@ -167,14 +165,13 @@ class ScatterView extends widgets.WidgetView {
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
         this.model.on("change:texture", this._load_textures, this);
-        this.model.on("change:visible", this.update_visibility, this);
+        this.model.on("change:visible", this._update_materials, this);
         this.model.on("change:geo", () => {
             this._update_materials();
-            this.renderer.update();
         });
 
         this.model.on("change:lighting_model change:opacity change:specular_color change:shininess change:emissive_color change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow", 
-        this.update_visibility, this);
+        this._update_materials, this);
     }
 
     _load_textures() {
@@ -206,14 +203,10 @@ class ScatterView extends widgets.WidgetView {
     public force_lighting_model() {
         if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT){
             this.model.set("lighting_model", this.LIGHTING_MODELS.PHYSICAL);
-            this.update_visibility();
+            this._update_materials();
         }
     }
 
-    update_visibility() {
-        this._update_materials();
-        this.renderer.update();
-    }
     set_limits(limits) {
         for (const key of Object.keys(limits)) {
             this.material.uniforms[key].value = limits[key];
@@ -384,7 +377,6 @@ class ScatterView extends widgets.WidgetView {
             material.uniforms.metalness.value = this.metalness;
 
             material.depthWrite = true;
-            material.transparant = true;
             material.transparent = true;
             material.depthTest = true;
             material.needsUpdate = true;
@@ -408,6 +400,8 @@ class ScatterView extends widgets.WidgetView {
         this.material_rgb.needsUpdate = true;
         this.line_material.needsUpdate = true;
         this.line_material_rgb.needsUpdate = true;
+
+        this.renderer.update();
     }
     create_mesh() {
         let geo = this.model.get("geo");
