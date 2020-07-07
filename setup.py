@@ -25,7 +25,7 @@ log.info('$PATH=%s' % os.environ['PATH'])
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-
+name = 'ipyvolume'
 LONG_DESCRIPTION = read("README.rst")
 
 def get_data_files():
@@ -151,14 +151,14 @@ version_ns = {}
 with open(os.path.join(here, 'ipyvolume', '_version.py')) as f:
     exec(f.read(), {}, version_ns)
 
-setup_args = {
-    'name': 'ipyvolume',
-    'version': version_ns['__version__'],
-    'description': 'IPython widget for rendering 3d volumes',
-    'long_description': LONG_DESCRIPTION,
-    'include_package_data': True,
-    'data_files': get_data_files(),
-    'install_requires': [
+setup_args = dict(
+    name=name,
+    version=version_ns['__version__'],
+    description='IPython widget for rendering 3d volumes',
+    long_description=LONG_DESCRIPTION,
+    include_package_data=True,
+    data_files=get_data_files(),
+    install_requires=[
         'ipywidgets>=7.0.0',
         'bqplot',
         'numpy',
@@ -170,20 +170,20 @@ setup_args = {
         'pythreejs>=2.0.0',
         'matplotlib'
     ],
-    'license': 'MIT',
-    'packages': find_packages(),
-    'zip_safe': False,
-    'cmdclass': {
+    license='MIT',
+    packages=find_packages(),
+    zip_safe=False,
+    cmdclass={
         'build_py': js_prerelease(build_py),
         'egg_info': js_prerelease(egg_info),
         'sdist': js_prerelease(sdist, strict=True),
         'jsdeps': NPM,
     },
-    'author': 'Maarten A. Breddels',
-    'author_email': 'maartenbreddels@gmail.com',
-    'url': 'https://github.com/maartenbreddels/ipyvolume',
-    'keywords': ['ipython', 'jupyter', 'widgets', 'volume rendering'],
-    'classifiers': [
+    author='Maarten A. Breddels',
+    author_email='maartenbreddels@gmail.com',
+    url='https://github.com/maartenbreddels/ipyvolume',
+    keywords=['ipython', 'jupyter', 'widgets', 'volume rendering'],
+    classifiers=[
         'Development Status :: 4 - Beta',
         'Framework :: IPython',
         'Intended Audience :: Developers',
@@ -194,6 +194,6 @@ setup_args = {
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-}
+)
 
 setup(**setup_args)
