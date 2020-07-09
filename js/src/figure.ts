@@ -1516,37 +1516,40 @@ class FigureView extends widgets.DOMWidgetView {
         }
     }
 
-    update_lights() {
+    async update_lights() {
+        console.log("LIGHTS!");
         const lights = this.model.get("lights") as LightModel[]; 
         if (lights.length !== 0) { // So now check if list has length 0
             const current_light_cids = [];
             
-            lights.forEach((light_model) => {
-                current_light_cids.push(light_model.cid);
-                if (!(light_model.cid in this.light_views)) {
-                    const options = {
-                        parent: this,
-                    };
-                    const light_view = new LightView({
-                        options,
-                        model: light_model,
-                    });
-                    light_view.render();
-                    this.light_views[light_model.cid] = light_view;
+            lights.forEach(async (light_model) => {
+                // current_light_cids.push(light_model.cid);
+                // if (!(light_model.cid in this.light_views)) {
+                //     const options = {
+                //         parent: this,
+                //     };
+                //     const light_view = new LightView({
+                //         options,
+                //         model: light_model,
+                //     });
+                //     light_view.render();
+                //     this.light_views[light_model.cid] = light_view;
 
-                }
+                // }
+                const threejsLight = await (light_model as any).createThreeObjectAsync();
+                this.scene_scatter.add(threejsLight);
             });
 
-            // Remove old lights
-            for (const cid of Object.keys(this.light_views)) {
+            // // Remove old lights
+            // for (const cid of Object.keys(this.light_views)) {
                 
-                const light_view = this.light_views[cid];
-                if (current_light_cids.indexOf(cid) === -1) {
-                    light_view.remove_from_scene();
-                    delete this.light_views[cid];
-                }
+            //     const light_view = this.light_views[cid];
+            //     if (current_light_cids.indexOf(cid) === -1) {
+            //         light_view.remove_from_scene();
+            //         delete this.light_views[cid];
+            //     }
                 
-            }
+            // }
         } else {
             this.light_views = {};
         }

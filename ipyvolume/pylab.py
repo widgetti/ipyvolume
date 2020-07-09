@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 from __future__ import division
+import pythreejs
 
 __all__ = [
     'current',
@@ -1690,10 +1691,12 @@ def ambient_light(
     :return: :any:`Light`
     """
 
-    light = ipv.Light(
-        light_type='AMBIENT',
-        light_color=light_color, 
-        intensity=intensity)
+    #light = ipv.Light(
+    #    light_type='AMBIENT',
+    #    light_color=light_color, 
+    #    intensity=intensity)
+
+    light = pythreejs.AmbientLight(color=light_color, intensity=intensity)
 
     fig = gcf()
     fig.lights = fig.lights + [light]
@@ -1847,6 +1850,8 @@ def spot_light(
         shadow_camera_perspective_fov=shadow_camera_perspective_fov,
         shadow_camera_perspective_aspect=shadow_camera_perspective_aspect,
         shadow_map_type=shadow_map_type)
+
+    
 
     fig = gcf()
     fig.lights = fig.lights + [light]

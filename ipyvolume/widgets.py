@@ -304,7 +304,11 @@ class Figure(ipywebrtc.MediaStream):
     volumes = traitlets.List(traitlets.Instance(Volume), [], allow_none=False).tag(
         sync=True, **widgets.widget_serialization
     )
-    lights = traitlets.List(traitlets.Instance(Light), [], allow_none=False).tag(
+    
+    #lights = traitlets.List(traitlets.Instance(Light), [], allow_none=False).tag(
+    #    sync=True, **widgets.widget_serialization
+    #)
+    lights = traitlets.List(traitlets.Instance(pythreejs.Light), [], allow_none=False).tag(
         sync=True, **widgets.widget_serialization
     )
 

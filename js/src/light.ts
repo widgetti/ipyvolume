@@ -83,6 +83,7 @@ class LightView extends widgets.WidgetView {
     }
 
     create_light(instantiate=true) {
+        //TODO: move to figure.ts 
         //force meshes light model update
         for (let mesh_key in this.renderer.mesh_views) {
             this.renderer.mesh_views[mesh_key].force_lighting_model();
