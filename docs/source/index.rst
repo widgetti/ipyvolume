@@ -74,7 +74,7 @@ And surface/mesh plots, showing surfaces or wireframes.
 Built on Ipywidgets
 -------------------
 
-For anything more sophisticed, use :any:`ipyvolume.pylab`, ipyvolume's copy of matplotlib's 3d plotting (+ volume rendering).
+For anything more sophisticated, use :any:`ipyvolume.pylab`, ipyvolume's copy of matplotlib's 3d plotting (+ volume rendering).
 
 Since ipyvolume is built on `ipywidgets <http://ipywidgets.readthedocs.io/>`_, we can link widget's properties.
 
