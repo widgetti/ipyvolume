@@ -149,7 +149,6 @@ void main(void)
     #endif // USE_TEXTURE
     #endif // AS_LINE
     #endif // USE_RGB
-    //gl_FragColor = vec4(0.0, 0.3, 0.8, 0.5);
 #endif //DEFAULT_SHADING
 
 #ifdef LAMBERT_SHADING

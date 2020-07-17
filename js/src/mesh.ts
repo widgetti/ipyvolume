@@ -34,7 +34,7 @@ class MeshView extends widgets.WidgetView {
     opacity : any;
     specular_color : any;
     shininess : any;
-    emissive_color : any;
+    color : any;
     emissive_intensity : any;
     roughness : any;
     metalness : any;
@@ -132,8 +132,7 @@ class MeshView extends widgets.WidgetView {
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
         this.model.on("change:texture", this._load_textures, this);
-        this.model.on("change:visible", this._update_materials, this);
-        this.model.on("change:lighting_model change:opacity change:specular_color change:shininess change:emissive_color change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow", 
+        this.model.on("change:visible change:lighting_model change:opacity change:specular_color change:shininess change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow", 
         this._update_materials, this);
     }
 
@@ -158,7 +157,7 @@ class MeshView extends widgets.WidgetView {
                 texture.minFilter = THREE.LinearFilter;
                 // texture.wrapT = THREE.RepeatWrapping;
                 this.textures = [texture];
-                this._update_materials();
+                //this._update_materials();
                 this.update_();
             });
         } else {
@@ -166,7 +165,7 @@ class MeshView extends widgets.WidgetView {
                 this.texture_loader.load(texture_url, (threejs_texture) => {
                     threejs_texture.wrapS = THREE.RepeatWrapping;
                     threejs_texture.wrapT = THREE.RepeatWrapping;
-                    this._update_materials();
+                    //this._update_materials();
                     this.update_();
                 }),
             );
@@ -207,36 +206,43 @@ class MeshView extends widgets.WidgetView {
     }
 
     on_change(attribute) {
-        for (const key of this.model.changedAttributes()) {
-            // console.log("changed " +key)
-            this.previous_values[key] = this.model.previous(key);
-            // attributes_changed keys will say what needs to be animated, it's values are the properties in
-            // this.previous_values that need to be removed when the animation is done
-            // we treat changes in _selected attributes the same
-            const key_animation = key.replace("_selected", "");
-            if (key_animation === "sequence_index") {
-                const animated_by_sequence = ["x", "y", "z", "u", "v", "color"];
-                animated_by_sequence.forEach((name) => {
-                    if (isArray(this.model.get(name)) && this.model.get(name).length > 1) {
-                        this.attributes_changed[name] = [name, "sequence_index"];
-                    }
-                });
-                this.attributes_changed.texture = ["texture", "sequence_index"];
-            } else if (key_animation === "triangles") {
-                // direct change, no animation
-            } else if (key_animation === "lines") {
-                // direct change, no animation
-            } else if (key_animation === "selected") { // and no explicit animation on this one
-                this.attributes_changed.color = [key];
-            } else {
-                this.attributes_changed[key_animation] = [key];
-                // animate the size as well on x y z changes
-                if (["x", "y", "z", "u", "v", "color"].indexOf(key_animation) !== -1) {
-                    // console.log("adding size to list of changed attributes")
-                    // this.attributes_changed["size"] = []
-                }
 
+        try {
+            for (const key of this.model.changedAttributes()) {
+
+                // console.log("changed " +key)
+                this.previous_values[key] = this.model.previous(key);
+                // attributes_changed keys will say what needs to be animated, it's values are the properties in
+                // this.previous_values that need to be removed when the animation is done
+                // we treat changes in _selected attributes the same
+                const key_animation = key.replace("_selected", "");
+                if (key_animation === "sequence_index") {
+                    const animated_by_sequence = ["x", "y", "z", "u", "v", "color"];
+                    animated_by_sequence.forEach((name) => {
+                        if (isArray(this.model.get(name)) && this.model.get(name).length > 1) {
+                            this.attributes_changed[name] = [name, "sequence_index"];
+                        }
+                    });
+                    this.attributes_changed.texture = ["texture", "sequence_index"];
+                } else if (key_animation === "triangles") {
+                    // direct change, no animation
+                } else if (key_animation === "lines") {
+                    // direct change, no animation
+                } else if (key_animation === "selected") { // and no explicit animation on this one
+                    this.attributes_changed.color = [key];
+                } else {
+                    this.attributes_changed[key_animation] = [key];
+                    // animate the size as well on x y z changes
+                    if (["x", "y", "z", "u", "v", "color"].indexOf(key_animation) !== -1) {
+                        // console.log("adding size to list of changed attributes")
+                        // this.attributes_changed["size"] = []
+                    }
+
+                }
             }
+        }
+        catch(err) {
+            console.log("ERROR: Error setting state: this.model.changedAttributes is not a function or its return value is not iterable");
         }
         this.update_();
     }
@@ -245,7 +251,8 @@ class MeshView extends widgets.WidgetView {
         this.remove_from_scene();
         this.create_mesh();
         this.add_to_scene();
-        this.renderer.update();
+        this._update_materials();
+        //this.renderer.update();
     }
 
     _get_value(value, index, default_value) {
@@ -369,7 +376,7 @@ class MeshView extends widgets.WidgetView {
         this.opacity = this.model.get("opacity");
         this.specular_color = this.model.get("specular_color");
         this.shininess = this.model.get("shininess");
-        this.emissive_color = this.model.get("emissive_color");
+        this.color = this.model.get("color");
         this.emissive_intensity = this.model.get("emissive_intensity");
         this.roughness = this.model.get("roughness");
         this.metalness = this.model.get("metalness");
@@ -378,7 +385,7 @@ class MeshView extends widgets.WidgetView {
         this.material.uniforms.opacity.value = this.opacity;
         this.material.uniforms.specular.value = new THREE.Color(this.specular_color);
         this.material.uniforms.shininess.value = this.shininess;
-        this.material.uniforms.emissive.value = new THREE.Color(this.emissive_color);
+        this.material.uniforms.emissive.value = new THREE.Color(this.color);
         this.material.uniforms.emissiveIntensity.value = this.emissive_intensity; 
         this.material.uniforms.roughness.value = this.roughness;
         this.material.uniforms.metalness.value = this.metalness;
@@ -594,7 +601,7 @@ class MeshModel extends widgets.WidgetModel {
         opacity : serialize.array_or_json,
         specular_color : serialize.color_or_json,
         shininess : serialize.array_or_json,
-        emissive_color : serialize.color_or_json,
+        //emissive_color : serialize.color_or_json,
         emissive_intensity : serialize.array_or_json,
         roughness : serialize.array_or_json,
         metalness : serialize.array_or_json,
@@ -619,7 +626,7 @@ class MeshModel extends widgets.WidgetModel {
             opacity : 1,
             specular_color : "white",
             shininess : 1,
-            emissive_color : "black",
+            //emissive_color : "black",
             emissive_intensity : 1,
             roughness : 0,
             metalness : 0,

@@ -129,6 +129,7 @@ _doc_snippets["y2d"] = "idem for y"
 _doc_snippets["z2d"] = "idem for z"
 _doc_snippets["texture"] = "PIL.Image object or ipywebrtc.MediaStream (can be a seqence)"
 
+emissive_intensity_default = 0.2
 
 class current:
     figure = None
@@ -328,8 +329,8 @@ def plot_trisurf(
     opacity=1,
     specular_color='white',
     shininess=1,
-    emissive_color='black',
-    emissive_intensity=1,
+    #emissive_color='black',
+    emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
     cast_shadow=False,
@@ -391,7 +392,7 @@ def plot_trisurf(
         opacity=opacity,
         specular_color=specular_color,
         shininess=shininess,
-        emissive_color=emissive_color,
+        #emissive_color=emissive_color,
         emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
@@ -416,8 +417,8 @@ def plot_surface(
     opacity=1,
     specular_color='white',
     shininess=1,
-    emissive_color='black',
-    emissive_intensity=1,
+    #emissive_color='black',
+    emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
     cast_shadow=False,
@@ -455,7 +456,7 @@ def plot_surface(
         opacity=opacity,
         specular_color=specular_color,
         shininess=shininess,
-        emissive_color=emissive_color,
+        #emissive_color=emissive_color,
         emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
@@ -496,8 +497,8 @@ def plot_mesh(
     opacity=1,
     specular_color='white',
     shininess=1,
-    emissive_color='black',
-    emissive_intensity=1,
+    #emissive_color='black',
+    emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
     cast_shadow=False,
@@ -603,7 +604,7 @@ def plot_mesh(
         opacity=opacity,
         specular_color=specular_color,
         shininess=shininess,
-        emissive_color=emissive_color,
+        #emissive_color=emissive_color,
         emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
@@ -662,7 +663,7 @@ def scatter(
     lighting_model='DEFAULT',
     opacity=1,
     emissive_color='black',
-    emissive_intensity=1,
+    emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
     **kwargs
