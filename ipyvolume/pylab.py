@@ -1782,21 +1782,10 @@ def directional_light(
     #     shadow_camera_far=shadow_camera_far,
     #     shadow_camera_orthographic_size=shadow_camera_orthographic_size,
     #     shadow_map_type=shadow_map_type)
-    light = pythreejs.DirectionalLight(color=light_color, intensity=intensity)
-    light.position = tuple(position)
-
+    light = pythreejs.DirectionalLight(position=position, color=light_color, intensity=intensity)
     light.castShadow = cast_shadow
-    if cast_shadow:
-        light.shadow.mapSize.width = light.shadow.mapSize.height = shadow_map_size
-        light.shadow.bias = shadow_bias
-        light.shadow.radius = shadow_radius
-        light.shadow.camera.near = shadow_camera_near
-        light.shadow.camera.far = shadow_camera_far
-        light.shadow.camera.left = -shadow_camera_orthographic_size/2
-        light.shadow.camera.right = shadow_camera_orthographic_size/2
-        light.shadow.camera.top = shadow_camera_orthographic_size/2
-        light.shadow.camera.bottom = -shadow_camera_orthographic_size/2
-    
+    # TODO: all shadow params
+
     fig = gcf()
     fig.lights = fig.lights + [light]
 
@@ -1843,31 +1832,32 @@ def spot_light(
     :return: :any:`Light`
     """
 
-    light = ipv.Light(
-        light_type='SPOT',
-        light_color=light_color, 
-        intensity=intensity, 
-        position_x=position[0],
-        position_y=position[1],
-        position_z=position[2],
-        target_x=target[0],
-        target_y=target[1],
-        target_z=target[2],
-        angle=angle, 
-        distance=distance,
-        decay=decay,
-        penumbra=penumbra,
-        cast_shadow=cast_shadow,
-        shadow_map_size=shadow_map_size,
-        shadow_bias=shadow_bias,
-        shadow_radius=shadow_radius,
-        shadow_camera_near=shadow_camera_near,
-        shadow_camera_far=shadow_camera_far,
-        shadow_camera_perspective_fov=shadow_camera_perspective_fov,
-        shadow_camera_perspective_aspect=shadow_camera_perspective_aspect,
-        shadow_map_type=shadow_map_type)
-
-    
+    # light = ipv.Light(
+    #     light_type='SPOT',
+    #     light_color=light_color, 
+    #     intensity=intensity, 
+    #     position_x=position[0],
+    #     position_y=position[1],
+    #     position_z=position[2],
+    #     target_x=target[0],
+    #     target_y=target[1],
+    #     target_z=target[2],
+    #     angle=angle, 
+    #     distance=distance,
+    #     decay=decay,
+    #     penumbra=penumbra,
+    #     cast_shadow=cast_shadow,
+    #     shadow_map_size=shadow_map_size,
+    #     shadow_bias=shadow_bias,
+    #     shadow_radius=shadow_radius,
+    #     shadow_camera_near=shadow_camera_near,
+    #     shadow_camera_far=shadow_camera_far,
+    #     shadow_camera_perspective_fov=shadow_camera_perspective_fov,
+    #     shadow_camera_perspective_aspect=shadow_camera_perspective_aspect,
+    #     shadow_map_type=shadow_map_type)
+    # TODO: all shadow params
+    light = pythreejs.SpotLight(position=position, color=light_color, intensity=intensity, angle=angle, distance=distance, penumbra=penumbra)
+    light.castShadow = cast_shadow
 
     fig = gcf()
     fig.lights = fig.lights + [light]
@@ -1905,22 +1895,25 @@ def point_light(
     :return: :any:`Light`
     """
 
-    light = ipv.Light(
-        light_type='POINT',
-        light_color=light_color, 
-        intensity=intensity, 
-        position_x=position[0],
-        position_y=position[1],
-        position_z=position[2],
-        distance=distance,
-        decay=decay,
-        cast_shadow=cast_shadow,
-        shadow_map_size=shadow_map_size,
-        shadow_bias=shadow_bias,
-        shadow_radius=shadow_radius,
-        shadow_camera_near=shadow_camera_near,
-        shadow_camera_far=shadow_camera_far,
-        shadow_map_type=shadow_map_type)
+    # light = ipv.Light(
+    #     light_type='POINT',
+    #     light_color=light_color, 
+    #     intensity=intensity, 
+    #     position_x=position[0],
+    #     position_y=position[1],
+    #     position_z=position[2],
+    #     distance=distance,
+    #     decay=decay,
+    #     cast_shadow=cast_shadow,
+    #     shadow_map_size=shadow_map_size,
+    #     shadow_bias=shadow_bias,
+    #     shadow_radius=shadow_radius,
+    #     shadow_camera_near=shadow_camera_near,
+    #     shadow_camera_far=shadow_camera_far,
+    #     shadow_map_type=shadow_map_type)
+    light = pyhtreejs.PointLight(position=position, color=light_color, intensity=intensity, distance=distance, decay=decay)
+    light.castShadow = cast_shadow
+    # TODO: all shadow params
 
     fig = gcf()
     fig.lights = fig.lights + [light]
