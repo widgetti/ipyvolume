@@ -150,6 +150,8 @@ class FigureModel extends widgets.DOMWidgetModel {
             panorama_mode: "no",
             capture_fps: null,
             cube_resolution: 512,
+            shadow_map_type: 'PCF_SOFT',
+            enable_shadows: false,
         };
     }
 }
@@ -238,7 +240,8 @@ class FigureView extends widgets.DOMWidgetView {
     last_pan_coordinate: THREE.Vector3;
     selector: any;
     last_tick_selection: d3.Selection<d3.BaseType, unknown, d3.BaseType, unknown>;
-    shadow_type: String;
+    enable_shadows: boolean;
+    shadow_map_type: string;
     model: FigureModel;
     // helper methods for testing/debugging
     debug_readPixel(x, y) {

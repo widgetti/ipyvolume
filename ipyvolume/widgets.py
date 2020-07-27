@@ -288,6 +288,9 @@ class Figure(ipywebrtc.MediaStream):
         pythreejs.Camera, allow_none=True, help='A :any:`pythreejs.Camera` instance to control the camera'
     ).tag(sync=True, **widgets.widget_serialization)
 
+    enable_shadows = traitlets.Bool(False).tag(sync=True)
+    shadow_map_type = traitlets.Unicode(default_value='PCF_SOFT').tag(sync=True)
+
     @traitlets.default('camera')
     def _default_camera(self):
         # see https://github.com/maartenbreddels/ipyvolume/pull/40 for an explanation

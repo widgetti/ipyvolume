@@ -1726,12 +1726,12 @@ def hemisphere_light(
     #     position_y=position[1],
     #     position_z=position[2])
     light = pythreejs.HemisphereLight(color=light_color, intensity=intensity)
-    print(light.position)
+    light.position = tuple(position)
 
     fig = gcf()
     fig.lights = fig.lights + [light]
 
-    return (light, fig)
+    return light
 
 def directional_light(
     light_color=default_color_selected, 
@@ -1783,7 +1783,7 @@ def directional_light(
     #     shadow_camera_orthographic_size=shadow_camera_orthographic_size,
     #     shadow_map_type=shadow_map_type)
     light = pythreejs.DirectionalLight(color=light_color, intensity=intensity)
-    print(light.position)
+    light.position = tuple(position)
 
     light.castShadow = cast_shadow
     if cast_shadow:
@@ -1791,7 +1791,7 @@ def directional_light(
         light.shadow.bias = shadow_bias
         light.shadow.radius = shadow_radius
         light.shadow.camera.near = shadow_camera_near
-        light.shadow.camera.far = light_shadow_far
+        light.shadow.camera.far = shadow_camera_far
         light.shadow.camera.left = -shadow_camera_orthographic_size/2
         light.shadow.camera.right = shadow_camera_orthographic_size/2
         light.shadow.camera.top = shadow_camera_orthographic_size/2
@@ -1799,7 +1799,6 @@ def directional_light(
     
     fig = gcf()
     fig.lights = fig.lights + [light]
-    print(fig)
 
     return light
 
