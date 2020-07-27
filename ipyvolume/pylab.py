@@ -1717,19 +1717,21 @@ def hemisphere_light(
     :param position: 3-element array (x y z) which describes the position of the Hemisphere Light. Default [0 1 0]
     :return: :any:`Light`
     """
-    light = ipv.Light(
-        light_type='HEMISPHERE',
-        light_color=light_color, 
-        light_color2=light_color2,
-        intensity=intensity, 
-        position_x=position[0],
-        position_y=position[1],
-        position_z=position[2])
-        
+    # light = ipv.Light(
+    #     light_type='HEMISPHERE',
+    #     light_color=light_color, 
+    #     light_color2=light_color2,
+    #     intensity=intensity, 
+    #     position_x=position[0],
+    #     position_y=position[1],
+    #     position_z=position[2])
+    light = pythreejs.HemisphereLight(color=light_color, intensity=intensity)
+    print(light.position)
+
     fig = gcf()
     fig.lights = fig.lights + [light]
 
-    return light
+    return (light, fig)
 
 def directional_light(
     light_color=default_color_selected, 
@@ -1762,27 +1764,42 @@ def directional_light(
     :return: :any:`Light`
     """
 
-    light = ipv.Light(
-        light_type='DIRECTIONAL',
-        light_color=light_color, 
-        intensity=intensity, 
-        position_x=position[0],
-        position_y=position[1],
-        position_z=position[2],
-        target_x=target[0],
-        target_y=target[1],
-        target_z=target[2],
-        cast_shadow=cast_shadow,
-        shadow_map_size=shadow_map_size,
-        shadow_bias=shadow_bias,
-        shadow_radius=shadow_radius,
-        shadow_camera_near=shadow_camera_near,
-        shadow_camera_far=shadow_camera_far,
-        shadow_camera_orthographic_size=shadow_camera_orthographic_size,
-        shadow_map_type=shadow_map_type)
+    # light = ipv.Light(
+    #     light_type='DIRECTIONAL',
+    #     light_color=light_color, 
+    #     intensity=intensity, 
+    #     position_x=position[0],
+    #     position_y=position[1],
+    #     position_z=position[2],
+    #     target_x=target[0],
+    #     target_y=target[1],
+    #     target_z=target[2],
+    #     cast_shadow=cast_shadow,
+    #     shadow_map_size=shadow_map_size,
+    #     shadow_bias=shadow_bias,
+    #     shadow_radius=shadow_radius,
+    #     shadow_camera_near=shadow_camera_near,
+    #     shadow_camera_far=shadow_camera_far,
+    #     shadow_camera_orthographic_size=shadow_camera_orthographic_size,
+    #     shadow_map_type=shadow_map_type)
+    light = pythreejs.DirectionalLight(color=light_color, intensity=intensity)
+    print(light.position)
 
+    light.castShadow = cast_shadow
+    if cast_shadow:
+        light.shadow.mapSize.width = light.shadow.mapSize.height = shadow_map_size
+        light.shadow.bias = shadow_bias
+        light.shadow.radius = shadow_radius
+        light.shadow.camera.near = shadow_camera_near
+        light.shadow.camera.far = light_shadow_far
+        light.shadow.camera.left = -shadow_camera_orthographic_size/2
+        light.shadow.camera.right = shadow_camera_orthographic_size/2
+        light.shadow.camera.top = shadow_camera_orthographic_size/2
+        light.shadow.camera.bottom = -shadow_camera_orthographic_size/2
+    
     fig = gcf()
     fig.lights = fig.lights + [light]
+    print(fig)
 
     return light
 

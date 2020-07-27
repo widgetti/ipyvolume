@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import
 
-__all__ = ['Light', 'Mesh', 'Scatter', 'Volume', 'Figure', 'quickquiver', 'quickscatter', 'quickvolshow']
+__all__ = ['Mesh', 'Scatter', 'Volume', 'Figure', 'quickquiver', 'quickscatter', 'quickvolshow']
 
 import logging
 import warnings
@@ -237,49 +237,6 @@ class Volume(widgets.Widget):
         data_view, extent = reduce_size(data_view, self.data_max_shape, extent)
         self.data = np.array(data_view)
         self.extent = extent
-
-@widgets.register
-class Light(widgets.Widget):
-    """Widget class representing light addition to scene using three.js."""
-
-    _view_name = Unicode('LightView').tag(sync=True)
-    _view_module = Unicode('ipyvolume').tag(sync=True)
-    _model_name = Unicode('LightModel').tag(sync=True)
-    _model_module = Unicode('ipyvolume').tag(sync=True)
-    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    
-    light_color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
-    light_color2 = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
-
-    intensity = traitlets.CFloat(1).tag(sync=True)
-    light_type = traitlets.Enum(values=['AMBIENT', 'DIRECTIONAL', 'SPOT', 'POINT', 'HEMISPHERE'], default_value='AMBIENT').tag(sync=True)
-    shadow_map_type = traitlets.Enum(values=['BASIC', 'PCF', 'PCF_SOFT'], default_value='PCF_SOFT').tag(sync=True)
-    
-    cast_shadow = traitlets.Bool(False).tag(sync=True)
-
-    position_x = traitlets.CFloat(0).tag(sync=True)
-    position_y = traitlets.CFloat(1).tag(sync=True)
-    position_z = traitlets.CFloat(0).tag(sync=True)
-
-    target_x = traitlets.CFloat(0).tag(sync=True)
-    target_y = traitlets.CFloat(1).tag(sync=True)
-    target_z = traitlets.CFloat(0).tag(sync=True)
-
-    distance = traitlets.CFloat(0).tag(sync=True)
-    angle = traitlets.CFloat(math.pi/3).tag(sync=True)
-    decay = traitlets.CFloat(1).tag(sync=True)
-    penumbra = traitlets.CFloat(0).tag(sync=True)
-
-    shadow_map_size=traitlets.CFloat(512).tag(sync=True)
-    shadow_bias=traitlets.CFloat(-0.0005).tag(sync=True)
-    shadow_radius=traitlets.CFloat(1).tag(sync=True)
-    shadow_camera_near=traitlets.CFloat(0.5).tag(sync=True)
-    shadow_camera_far=traitlets.CFloat(500).tag(sync=True)
-    shadow_camera_perspective_fov=traitlets.CFloat(50).tag(sync=True)
-    shadow_camera_perspective_aspect=traitlets.CFloat(1).tag(sync=True)
-    shadow_camera_orthographic_size=traitlets.CFloat(5).tag(sync=True)
-    
 
     
 @widgets.register

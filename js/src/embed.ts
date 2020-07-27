@@ -10,7 +10,6 @@ export * from "./tf";
 export * from "./scatter";
 export * from "./volume";
 export * from "./mesh";
-export * from "./light";
 export * from "./utils";
 export * from "./selectors";
 export * from "./values";

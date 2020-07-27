@@ -5,7 +5,6 @@ import * as Mustache from "mustache";
 import * as screenfull from "screenfull";
 import * as THREE from "three";
 import * as THREEtext2d from "three-text2d";
-import { LightModel, LightView} from "./light";
 import { MeshModel, MeshView} from "./mesh";
 import { ScatterModel, ScatterView} from "./scatter";
 import { copy_image_to_clipboard, download_image, select_text} from "./utils";
@@ -211,7 +210,6 @@ class FigureView extends widgets.DOMWidgetView {
     mesh_views: { [key: string]: MeshView };
     scatter_views: { [key: string]: ScatterView };
     volume_views: { [key: string]: VolumeView };
-    light_views: { [key: string]: LightView };
     volume_back_target: THREE.WebGLRenderTarget;
     geometry_depth_target: THREE.WebGLRenderTarget;
     color_pass_target: THREE.WebGLRenderTarget;
@@ -240,6 +238,7 @@ class FigureView extends widgets.DOMWidgetView {
     last_pan_coordinate: THREE.Vector3;
     selector: any;
     last_tick_selection: d3.Selection<d3.BaseType, unknown, d3.BaseType, unknown>;
+    shadow_type: String;
     model: FigureModel;
     // helper methods for testing/debugging
     debug_readPixel(x, y) {
@@ -658,7 +657,6 @@ class FigureView extends widgets.DOMWidgetView {
         this.mesh_views = {};
         this.scatter_views = {};
         this.volume_views = {};
-        this.light_views = {};
 
         let render_width = width;
         const render_height = height;
@@ -1518,7 +1516,7 @@ class FigureView extends widgets.DOMWidgetView {
 
     async update_lights() {
         console.log("LIGHTS!");
-        const lights = this.model.get("lights") as LightModel[]; 
+        const lights = this.model.get("lights") as THREE.Light[]; 
         if (lights.length !== 0) { // So now check if list has length 0
             const current_light_cids = [];
             
@@ -1536,6 +1534,7 @@ class FigureView extends widgets.DOMWidgetView {
                 //     this.light_views[light_model.cid] = light_view;
 
                 // }
+                // TODO: remove existing lights from scene_scatter, see light.ts:add/remove_from_scene
                 const threejsLight = await (light_model as any).createThreeObjectAsync();
                 this.scene_scatter.add(threejsLight);
             });
@@ -1550,10 +1549,7 @@ class FigureView extends widgets.DOMWidgetView {
             //     }
                 
             // }
-        } else {
-            this.light_views = {};
         }
-
     }
 
     transition(f, on_done, context) {
