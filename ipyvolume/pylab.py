@@ -1911,7 +1911,7 @@ def point_light(
     #     shadow_camera_near=shadow_camera_near,
     #     shadow_camera_far=shadow_camera_far,
     #     shadow_map_type=shadow_map_type)
-    light = pytreejs.PointLight(position=position, color=light_color, intensity=intensity, distance=distance, decay=decay)
+    light = pythreejs.PointLight(position=position, color=light_color, intensity=intensity, distance=distance, decay=decay)
     light.castShadow = cast_shadow
     # TODO: all shadow params
 
