@@ -1863,7 +1863,8 @@ def point_light(
     :return: :any:`Light`
     """
 
-    light = ipv.PointLight(color=light_color, intensity=intensity, position=position, distance=distance, decay=decay, castShadow=cast_shadow)
+    fig = gcf()
+    light = ipv.PointLight(container=fig, color=light_color, intensity=intensity, position=position, distance=distance, decay=decay, castShadow=cast_shadow)
 
     # Shadow params
     light.shadow_map_size = tuple([shadow_map_size,shadow_map_size])
@@ -1871,9 +1872,8 @@ def point_light(
     light.shadow_bias = shadow_bias
     light.shadow_camera_near = shadow_camera_near
     light.shadow_camera_far = shadow_camera_far
+    light.shadow_map_type = shadow_map_type    
 
-    fig = gcf()
-    fig.shadow_map_type = shadow_map_type    
     fig.lights = fig.lights + [light]
 
     return light

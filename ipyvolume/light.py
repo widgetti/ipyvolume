@@ -66,8 +66,7 @@ class DirectionalLight(Light, py3.DirectionalLight):
         super().__init__(target=target, **kwargs)
         self.container = container
 
-        if self.castShadow:
-            self._enable_shadows()
+        self._enable_shadows()
 
     def _enable_shadows(self):
         # Prepare shadow camera
@@ -81,8 +80,6 @@ class DirectionalLight(Light, py3.DirectionalLight):
     @cast_shadow.setter
     def cast_shadow(self, value):
         self.castShadow = value
-        if self.castShadow:
-            self._enable_shadows()
 
     @property
     def shadow_map_type(self):
@@ -170,8 +167,7 @@ class SpotLight(Light, py3.SpotLight):
         super().__init__(target=targetObj, **kwargs)
         self.container = container
 
-        if self.castShadow:
-            self._enable_shadows()
+        self._enable_shadows()
 
     def _enable_shadows(self):
         # Prepare shadow camera
@@ -185,8 +181,6 @@ class SpotLight(Light, py3.SpotLight):
     @cast_shadow.setter
     def cast_shadow(self, value):
         self.castShadow = value
-        if self.castShadow:
-            self._enable_shadows()
 
     @property
     def shadow_map_type(self):
@@ -255,14 +249,11 @@ class SpotLight(Light, py3.SpotLight):
 
 
 class PointLight(Light, py3.PointLight):
-    def __init__(self, container, target, **kwargs):
-        targetObj = py3.Object3D(position=target)
-        
-        super().__init__(target=targetObj, **kwargs)
+    def __init__(self, container, **kwargs):
+        super().__init__(**kwargs)
         self.container = container
 
-        if self.castShadow:
-            self._enable_shadows()
+        self._enable_shadows()
 
     def _enable_shadows(self):
         # Prepare shadow camera
@@ -296,3 +287,7 @@ class PointLight(Light, py3.PointLight):
     @property
     def shadow_camera_far(self):
         return self.shadow.camera.far
+
+    @shadow_camera_far.setter
+    def shadow_camera_far(self, value):
+        self.shadow.camera.near = value
