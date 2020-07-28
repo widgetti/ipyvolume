@@ -1536,23 +1536,25 @@ class FigureView extends widgets.DOMWidgetView {
                     if (light.castShadow) {
                         this._enable_shadows()
                     }
+            
+                    this.lights[light_model.cid] = light;
 
                     this.scene_scatter.add(light);
-                    
-                    current_light_cids.push(light_model.cid);
-                    this.lights[light_model.cid] = light;
                 }
+
+                // Do not delete current lights
+                current_light_cids.push(light_model.cid);
             });
 
             // Remove previous lights
-            // for (const cid of Object.keys(this.lights)) {
-            //     const light = this.lights[cid];
+            for (const cid of Object.keys(this.lights)) {
+                const light = this.lights[cid];
                 
-            //     if (current_light_cids.indexOf(cid) === -1) {
-            //         this.scene_scatter.remove(light);
-            //         delete this.lights[cid];
-            //     }
-            // }
+                if (current_light_cids.indexOf(cid) === -1) {
+                    this.scene_scatter.remove(light);
+                    delete this.lights[cid];
+                }
+            }
         }
     }
 
