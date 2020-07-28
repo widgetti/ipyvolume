@@ -46,7 +46,7 @@ class AmbientLight(Light, py3.AmbientLight):
         super().__init__(**kwargs)
 
 
-class HemiphereLight(Light, py3.HemisphereLight):
+class HemisphereLight(Light, py3.HemisphereLight):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
