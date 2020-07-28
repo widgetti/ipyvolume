@@ -1713,7 +1713,7 @@ def hemisphere_light(
     :return: :any:`Light`
     """
 
-    light = pythreejs.HemisphereLight(skyColor=light_color, groundColor=light_color2, intensity=intensity, position=position)
+    light = ipv.HemisphereLight(skyColor=light_color, groundColor=light_color2, intensity=intensity, position=position)
 
     fig = gcf()
     fig.lights = fig.lights + [light]
@@ -1753,10 +1753,10 @@ def directional_light(
     
     fig = gcf()
 
-    light = pythreejs.DirectionalLight(
+    light = ipv.DirectionalLight(
         container=fig,
         position=position, 
-        target=target, 
+        target_pos=target, 
         color=light_color, 
         intensity=intensity, 
         castShadow=cast_shadow
