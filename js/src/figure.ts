@@ -1524,11 +1524,18 @@ class FigureView extends widgets.DOMWidgetView {
         if (!this.lights) {
             this.lights = {}
         }
-
+        
         const lights = this.model.get("lights"); 
         if (lights.length !== 0) { // So now check if list has length 0
+            // Change mesh lighting model
+            for (let mesh_key in this.mesh_views) {
+                this.mesh_views[mesh_key].force_lighting_model();
+            }
+            for (let scatter_key in this.scatter_views) {
+                this.scatter_views[scatter_key].force_lighting_model();
+            }
+
             const current_light_cids = [];
-            
             lights.forEach(async (light_model) => {
                 if (!(light_model.cid in this.lights)) {
                     
