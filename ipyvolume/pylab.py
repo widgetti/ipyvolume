@@ -1691,7 +1691,7 @@ def ambient_light(
     :return: :any:`Light`
     """
 
-    light = pythreejs.AmbientLight(color=light_color, intensity=intensity)
+    light = ipv.AmbientLight(color=light_color, intensity=intensity)
 
     fig = gcf()
     fig.lights = fig.lights + [light]

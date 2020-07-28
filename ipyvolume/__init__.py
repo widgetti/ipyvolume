@@ -8,7 +8,7 @@ from ipyvolume import embed  # noqa: F401
 from ipyvolume.widgets import *  # noqa: F401, F403
 from ipyvolume.transferfunction import *  # noqa: F401, F403
 from ipyvolume.pylab import *  # noqa: F401, F403
-
+from ipyvolume.light import *
 
 def _jupyter_nbextension_paths():
     return [{
