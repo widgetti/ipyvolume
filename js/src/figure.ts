@@ -1522,6 +1522,14 @@ class FigureView extends widgets.DOMWidgetView {
         const lights = this.model.get("lights"); 
         if (lights.length !== 0) { // So now check if list has length 0
             const current_light_cids = [];
+
+            // Update lighting models on surfaces
+            for (let mesh_key in this.renderer.mesh_views) {
+                this.renderer.mesh_views[mesh_key].force_lighting_model();
+            }
+            for (let scatter_key in this.renderer.scatter_views) {
+                this.renderer.scatter_views[scatter_key].force_lighting_model();
+            }
             
             lights.forEach(async (light_model) => {
                 // current_light_cids.push(light_model.cid);
@@ -1538,7 +1546,7 @@ class FigureView extends widgets.DOMWidgetView {
 
                 // }
                 // TODO: remove existing lights from scene_scatter, see light.ts:add/remove_from_scene
-                const light = await this._construct_light(light_model);
+                const light = light_model.obj as THREE.Light;
                 this.scene_scatter.add(light);
             });
 
@@ -1553,34 +1561,6 @@ class FigureView extends widgets.DOMWidgetView {
                 
             // }
         }
-    }
-
-    async _construct_light(light_model) {
-        const light = await (light_model as any).constructThreeObject();
-        const model = light_model.obj;
-
-        // Set position
-        light.position.copy(model.position);
-
-        // Shadows
-        light.castShadow = model.castShadow;
-
-        // Construct target
-        if (model.target) {
-            light.target = new THREE.Object3D();
-            light.target.position.copy(model.target.position)
-            
-            this.scene_scatter.add(light.target);
-        }
-
-        // Spot light
-        if (model.penumbra) {
-            light.penumbra = model.penumbra;
-            light.angle = model.angle;
-            light.distance = model.distance;
-        }
-
-        return light;
     }
 
     transition(f, on_done, context) {
