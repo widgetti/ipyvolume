@@ -30,7 +30,7 @@ import "./three/OrbitControls.js";
 import "./three/StereoEffect.js";
 import "./three/THREEx.FullScreen.js";
 import "./three/TrackballControls.js";
-import { timeThursday } from "d3";
+import { timeThursday, thresholdScott } from "d3";
 
 const shaders = {
     screen_fragment: require("raw-loader!../glsl/screen-fragment.glsl"),
@@ -152,7 +152,6 @@ class FigureModel extends widgets.DOMWidgetModel {
             capture_fps: null,
             cube_resolution: 512,
             shadow_map_type: 'PCF_SOFT',
-            enable_shadows: false,
         };
     }
 }
@@ -242,7 +241,6 @@ class FigureView extends widgets.DOMWidgetView {
     last_pan_coordinate: THREE.Vector3;
     selector: any;
     last_tick_selection: d3.Selection<d3.BaseType, unknown, d3.BaseType, unknown>;
-    enable_shadows: boolean;
     shadow_map_type: string;
     model: FigureModel;
     // helper methods for testing/debugging
@@ -1535,6 +1533,10 @@ class FigureView extends widgets.DOMWidgetView {
                 if (!(light_model.cid in this.lights)) {
                     
                     const light = light_model.obj as THREE.Light;
+                    if (light.castShadow) {
+                        this._enable_shadows()
+                    }
+
                     this.scene_scatter.add(light);
                     
                     current_light_cids.push(light_model.cid);
@@ -1551,6 +1553,24 @@ class FigureView extends widgets.DOMWidgetView {
             //         delete this.lights[cid];
             //     }
             // }
+        }
+    }
+
+    _enable_shadows() {
+        // Activate shadow mapping
+        this.renderer.shadowMap.enabled = true
+
+        const shadow_map_type = this.model.get('shadow_map_type');
+        switch(shadow_map_type) {
+            case 'BASIC':
+                this.renderer.shadowMap.type = THREE.BasicShadowMap;
+                break;
+            case 'PCF':
+                this.renderer.shadowMap.type = THREE.PCFShadowMap;
+                break;
+            case 'PCF_SOFT':
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                break;
         }
     }
 
