@@ -1519,7 +1519,7 @@ class FigureView extends widgets.DOMWidgetView {
 
     async update_lights() {
         console.log("LIGHTS!");
-        const lights = this.model.get("lights") as THREE.Light[]; 
+        const lights = this.model.get("lights"); 
         if (lights.length !== 0) { // So now check if list has length 0
             const current_light_cids = [];
             
@@ -1538,8 +1538,8 @@ class FigureView extends widgets.DOMWidgetView {
 
                 // }
                 // TODO: remove existing lights from scene_scatter, see light.ts:add/remove_from_scene
-                const threejsLight = await (light_model as any).createThreeObjectAsync();
-                this.scene_scatter.add(threejsLight);
+                const light = await this._construct_light(light_model);
+                this.scene_scatter.add(light);
             });
 
             // // Remove old lights
@@ -1553,6 +1553,27 @@ class FigureView extends widgets.DOMWidgetView {
                 
             // }
         }
+    }
+
+    async _construct_light(light_model) {
+        const light = await (light_model as any).constructThreeObject();
+        const model = light_model.obj;
+
+        // Set position
+        light.position.copy(model.position);
+
+        // Shadows
+        light.castShadow = model.castShadow;
+
+        // Construct target
+        if (model.target) {
+            light.target = new THREE.Object3D();
+            light.target.position.copy(model.target)
+            
+            this.scene_scatter.add(light.target);
+        }
+
+        return light;
     }
 
     transition(f, on_done, context) {
