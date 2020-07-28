@@ -1750,25 +1750,7 @@ def directional_light(
     :param shadow_map_type: Shadow map type. Can be 'BASIC', 'PCF', 'PCF_SOFT'. Default is 'PCF_SOFT'
     :return: :any:`Light`
     """
-
-    # light = ipv.Light(
-    #     light_type='DIRECTIONAL',
-    #     light_color=light_color, 
-    #     intensity=intensity, 
-    #     position_x=position[0],
-    #     position_y=position[1],
-    #     position_z=position[2],
-    #     target_x=target[0],
-    #     target_y=target[1],
-    #     target_z=target[2],
-    #     cast_shadow=cast_shadow,
-    #     shadow_map_size=shadow_map_size,
-    #     shadow_bias=shadow_bias,
-    #     shadow_radius=shadow_radius,
-    #     shadow_camera_near=shadow_camera_near,
-    #     shadow_camera_far=shadow_camera_far,
-    #     shadow_camera_orthographic_size=shadow_camera_orthographic_size,
-    #     shadow_map_type=shadow_map_type)
+    
     target = pythreejs.Object3D(position=target)
     light = pythreejs.DirectionalLight(position=position, target=target, color=light_color, intensity=intensity, castShadow=cast_shadow)
 
@@ -1834,30 +1816,6 @@ def spot_light(
     :return: :any:`Light`
     """
 
-    # light = ipv.Light(
-    #     light_type='SPOT',
-    #     light_color=light_color, 
-    #     intensity=intensity, 
-    #     position_x=position[0],
-    #     position_y=position[1],
-    #     position_z=position[2],
-    #     target_x=target[0],
-    #     target_y=target[1],
-    #     target_z=target[2],
-    #     angle=angle, 
-    #     distance=distance,
-    #     decay=decay,
-    #     penumbra=penumbra,
-    #     cast_shadow=cast_shadow,
-    #     shadow_map_size=shadow_map_size,
-    #     shadow_bias=shadow_bias,
-    #     shadow_radius=shadow_radius,
-    #     shadow_camera_near=shadow_camera_near,
-    #     shadow_camera_far=shadow_camera_far,
-    #     shadow_camera_perspective_fov=shadow_camera_perspective_fov,
-    #     shadow_camera_perspective_aspect=shadow_camera_perspective_aspect,
-    #     shadow_map_type=shadow_map_type)
-
     target = pythreejs.Object3D(position=target)
     light = pythreejs.SpotLight(color=light_color, intensity=intensity, position=position, target=target, angle=angle, distance=distance, decay=decay, penumbra=penumbra, castShadow=cast_shadow)
     
@@ -1909,22 +1867,6 @@ def point_light(
     :return: :any:`Light`
     """
 
-    # light = ipv.Light(
-    #     light_type='POINT',
-    #     light_color=light_color, 
-    #     intensity=intensity, 
-    #     position_x=position[0],
-    #     position_y=position[1],
-    #     position_z=position[2],
-    #     distance=distance,
-    #     decay=decay,
-    #     cast_shadow=cast_shadow,
-    #     shadow_map_size=shadow_map_size,
-    #     shadow_bias=shadow_bias,
-    #     shadow_radius=shadow_radius,
-    #     shadow_camera_near=shadow_camera_near,
-    #     shadow_camera_far=shadow_camera_far,
-    #     shadow_map_type=shadow_map_type)
     light = pythreejs.PointLight(color=light_color, intensity=intensity, position=position, distance=distance, decay=decay, castShadow=cast_shadow)
 
     # Shadow params
