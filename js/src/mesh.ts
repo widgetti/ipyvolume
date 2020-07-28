@@ -40,6 +40,7 @@ class MeshView extends widgets.WidgetView {
     metalness : any;
     cast_shadow : any;
     receive_shadow : any;
+    flat_shading : any;
 
     render() {
         // console.log("created mesh view, parent is")
@@ -132,7 +133,7 @@ class MeshView extends widgets.WidgetView {
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
         this.model.on("change:texture", this._load_textures, this);
-        this.model.on("change:visible change:lighting_model change:opacity change:specular_color change:shininess change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow", 
+        this.model.on("change:visible change:lighting_model change:opacity change:specular_color change:shininess change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow change:flat_shading", 
         this._update_materials, this);
     }
 
@@ -252,7 +253,6 @@ class MeshView extends widgets.WidgetView {
         this.create_mesh();
         this.add_to_scene();
         this._update_materials();
-        //this.renderer.update();
     }
 
     _get_value(value, index, default_value) {
@@ -370,6 +370,7 @@ class MeshView extends widgets.WidgetView {
             material.depthTest = true;
             // use lighting
             material.lights = true;
+            material.flatShading = this.model.get("flat_shading");
         });
 
         this.diffuse_color = this.model.get("diffuse_color");
@@ -632,6 +633,7 @@ class MeshModel extends widgets.WidgetModel {
             metalness : 0,
             cast_shadow : false,
             receive_shadow : false,
+            flat_shading : true
         };
     }
 }

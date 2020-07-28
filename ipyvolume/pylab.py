@@ -329,12 +329,12 @@ def plot_trisurf(
     opacity=1,
     specular_color='white',
     shininess=1,
-    #emissive_color='black',
     emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
     cast_shadow=False,
-    receive_shadow=False):
+    receive_shadow=False,
+    flat_shading=True):
     """Draw a polygon/triangle mesh defined by a coordinate and triangle indices.
 
     The following example plots a rectangle in the z==2 plane, consisting of 2 triangles:
@@ -392,12 +392,12 @@ def plot_trisurf(
         opacity=opacity,
         specular_color=specular_color,
         shininess=shininess,
-        #emissive_color=emissive_color,
         emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
         cast_shadow=cast_shadow,
-        receive_shadow=receive_shadow
+        receive_shadow=receive_shadow,
+        flat_shading=flat_shading
         )
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
     fig.meshes = fig.meshes + [mesh]
@@ -417,12 +417,12 @@ def plot_surface(
     opacity=1,
     specular_color='white',
     shininess=1,
-    #emissive_color='black',
     emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
     cast_shadow=False,
-    receive_shadow=False
+    receive_shadow=False,
+    flat_shading=True
     ):
     """Draws a 2d surface in 3d, defined by the 2d ordered arrays x,y,z.
 
@@ -456,12 +456,12 @@ def plot_surface(
         opacity=opacity,
         specular_color=specular_color,
         shininess=shininess,
-        #emissive_color=emissive_color,
         emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
         cast_shadow=cast_shadow,
-        receive_shadow=receive_shadow)
+        receive_shadow=receive_shadow,
+        flat_shading=flat_shading)
 
 
 @_docsubst
@@ -497,12 +497,12 @@ def plot_mesh(
     opacity=1,
     specular_color='white',
     shininess=1,
-    #emissive_color='black',
     emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
     cast_shadow=False,
-    receive_shadow=False
+    receive_shadow=False,
+    flat_shading=True
 ):
     """Draws a 2d wireframe+surface in 3d: generalization of :any:`plot_wireframe` and :any:`plot_surface`.
 
@@ -604,12 +604,12 @@ def plot_mesh(
         opacity=opacity,
         specular_color=specular_color,
         shininess=shininess,
-        #emissive_color=emissive_color,
         emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
         cast_shadow=cast_shadow,
-        receive_shadow=receive_shadow
+        receive_shadow=receive_shadow,
+        flat_shading=flat_shading
     )
     fig.meshes = fig.meshes + [mesh]
     return mesh
@@ -662,7 +662,7 @@ def scatter(
     grow_limits=True,
     lighting_model='DEFAULT',
     opacity=1,
-    emissive_color='black',
+    emissive_color='black', #TODO: remove emissive_color
     emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
