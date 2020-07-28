@@ -1568,9 +1568,16 @@ class FigureView extends widgets.DOMWidgetView {
         // Construct target
         if (model.target) {
             light.target = new THREE.Object3D();
-            light.target.position.copy(model.target)
+            light.target.position.copy(model.target.position)
             
             this.scene_scatter.add(light.target);
+        }
+
+        // Spot light
+        if (model.penumbra) {
+            light.penumbra = model.penumbra;
+            light.angle = model.angle;
+            light.distance = model.distance;
         }
 
         return light;
