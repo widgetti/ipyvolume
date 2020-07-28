@@ -41,12 +41,12 @@ class Light(py3.Light):
     def light_color(self, value):
         self.color = value
 
-class AmbientLight(Light):
+class AmbientLight(Light, py3.AmbientLight):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 
-class HemiphereLight(Light):
+class HemiphereLight(Light, py3.HemisphereLight):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
