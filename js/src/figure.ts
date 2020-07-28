@@ -30,6 +30,7 @@ import "./three/OrbitControls.js";
 import "./three/StereoEffect.js";
 import "./three/THREEx.FullScreen.js";
 import "./three/TrackballControls.js";
+import { timeThursday } from "d3";
 
 const shaders = {
     screen_fragment: require("raw-loader!../glsl/screen-fragment.glsl"),
@@ -212,6 +213,7 @@ class FigureView extends widgets.DOMWidgetView {
     mesh_views: { [key: string]: MeshView };
     scatter_views: { [key: string]: ScatterView };
     volume_views: { [key: string]: VolumeView };
+    lights: { [key: string]: THREE.Light };
     volume_back_target: THREE.WebGLRenderTarget;
     geometry_depth_target: THREE.WebGLRenderTarget;
     color_pass_target: THREE.WebGLRenderTarget;
@@ -1519,46 +1521,35 @@ class FigureView extends widgets.DOMWidgetView {
 
     async update_lights() {
         console.log("LIGHTS!");
+        
+        // Initialize lights if this is the first pass
+        if (!this.lights) {
+            this.lights = {}
+        }
+
         const lights = this.model.get("lights"); 
         if (lights.length !== 0) { // So now check if list has length 0
             const current_light_cids = [];
-
-            // Update lighting models on surfaces
-            for (let mesh_key in this.renderer.mesh_views) {
-                this.renderer.mesh_views[mesh_key].force_lighting_model();
-            }
-            for (let scatter_key in this.renderer.scatter_views) {
-                this.renderer.scatter_views[scatter_key].force_lighting_model();
-            }
             
             lights.forEach(async (light_model) => {
-                // current_light_cids.push(light_model.cid);
-                // if (!(light_model.cid in this.light_views)) {
-                //     const options = {
-                //         parent: this,
-                //     };
-                //     const light_view = new LightView({
-                //         options,
-                //         model: light_model,
-                //     });
-                //     light_view.render();
-                //     this.light_views[light_model.cid] = light_view;
-
-                // }
-                // TODO: remove existing lights from scene_scatter, see light.ts:add/remove_from_scene
-                const light = light_model.obj as THREE.Light;
-                this.scene_scatter.add(light);
+                if (!(light_model.cid in this.lights)) {
+                    
+                    const light = light_model.obj as THREE.Light;
+                    this.scene_scatter.add(light);
+                    
+                    current_light_cids.push(light_model.cid);
+                    this.lights[light_model.cid] = light;
+                }
             });
 
-            // // Remove old lights
-            // for (const cid of Object.keys(this.light_views)) {
+            // Remove previous lights
+            // for (const cid of Object.keys(this.lights)) {
+            //     const light = this.lights[cid];
                 
-            //     const light_view = this.light_views[cid];
             //     if (current_light_cids.indexOf(cid) === -1) {
-            //         light_view.remove_from_scene();
-            //         delete this.light_views[cid];
+            //         this.scene_scatter.remove(light);
+            //         delete this.lights[cid];
             //     }
-                
             // }
         }
     }
