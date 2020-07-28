@@ -1562,6 +1562,8 @@ class FigureView extends widgets.DOMWidgetView {
                     delete this.lights[cid];
                 }
             }
+
+            this.update();
         }
     }
 
