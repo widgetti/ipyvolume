@@ -1579,7 +1579,6 @@ class FigureView extends widgets.DOMWidgetView {
     }
 
     update_shadows() {
-        console.log('SHADOWS!');
         // Activate shadow mapping
         this.renderer.shadowMap.enabled = true
 
