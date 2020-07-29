@@ -332,8 +332,8 @@ def plot_trisurf(
     emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
-    cast_shadow=False,
-    receive_shadow=False,
+    cast_shadow=True,
+    receive_shadow=True,
     flat_shading=True):
     """Draw a polygon/triangle mesh defined by a coordinate and triangle indices.
 
@@ -420,8 +420,8 @@ def plot_surface(
     emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
-    cast_shadow=False,
-    receive_shadow=False,
+    cast_shadow=True,
+    receive_shadow=True,
     flat_shading=True
     ):
     """Draws a 2d surface in 3d, defined by the 2d ordered arrays x,y,z.
@@ -500,8 +500,8 @@ def plot_mesh(
     emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
-    cast_shadow=False,
-    receive_shadow=False,
+    cast_shadow=True,
+    receive_shadow=True,
     flat_shading=True
 ):
     """Draws a 2d wireframe+surface in 3d: generalization of :any:`plot_wireframe` and :any:`plot_surface`.
