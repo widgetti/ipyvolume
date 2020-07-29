@@ -1576,6 +1576,11 @@ class FigureView extends widgets.DOMWidgetView {
                 // Update renderer on change
                 this.update();
 
+                // Activate shadows
+                if (light.castShadow) {
+                    this._enable_shadows();
+                }
+
                 // Execute normal setter
                 return Reflect.set(target, prop, value);
             }
