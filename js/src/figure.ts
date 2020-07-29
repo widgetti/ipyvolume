@@ -867,6 +867,7 @@ class FigureView extends widgets.DOMWidgetView {
         this.update_volumes();
         this.model.on("change:lights", this.update_lights, this);
         this.update_lights();
+        this.model.on("change:shadow_map_type", this.update_shadows, this);
 
         this.update_size();
 
@@ -1537,14 +1538,19 @@ class FigureView extends widgets.DOMWidgetView {
 
             const current_light_cids = [];
             lights.forEach(async (light_model) => {
-                if (!(light_model.cid in this.lights)) {
-                    
-                    // Wrap underlying light object to catch updates
-                    light_model.obj = this.watch_light_change(light_model.obj);
+                if (!(light_model.cid in this.lights)) {                   
                     const light = light_model.obj;
                     if (light.castShadow) {
                         this.update_shadows()
                     }
+
+                    light_model.on('change', () => {
+                        if (light.castShadow) {
+                            this.update_shadows()
+                        }
+
+                        this.update();
+                    });
             
                     this.lights[light_model.cid] = light;
                     
@@ -1572,29 +1578,8 @@ class FigureView extends widgets.DOMWidgetView {
         }
     }
 
-    watch_light_change(light) {
-        const change_watcher = {
-            set: (target, prop, value) => {
-                if (prop !== 'matrixWorldNeedsUpdate' && prop !== 'parent') {
-                    console.log(`up: ${prop}`);
-                    // Update shadows
-                    if (prop === 'castShadow' || prop === 'map') {
-                        this.update_shadows();
-                    }
-
-                    // Update renderer on change
-                    this.update();
-
-                    // Execute normal setter
-                    return Reflect.set(target, prop, value);
-                }
-            }
-        }
-
-        return new Proxy(light, change_watcher);
-    }
-
     update_shadows() {
+        console.log('SHADOWS!');
         // Activate shadow mapping
         this.renderer.shadowMap.enabled = true
 
