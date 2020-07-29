@@ -1750,8 +1750,6 @@ def directional_light(
     :param shadow_map_type: Shadow map type. Can be 'BASIC', 'PCF', 'PCF_SOFT'. Default is 'PCF_SOFT'
     :return: :any:`Light`
     """
-    
-    fig = gcf()
 
     target = pythreejs.Object3D(position=target)
     light = pythreejs.DirectionalLight(
@@ -1773,14 +1771,37 @@ def directional_light(
     light.shadow.camera.left = -shadow_camera_orthographic_size/2
     light.shadow.camera.right = shadow_camera_orthographic_size/2
     light.shadow.camera.top = shadow_camera_orthographic_size/2
-    light.shadow.camera.bottom = -shadow_camera_orthographic_size/2
+    light.shadow.camera.bottom = -shadow_camera_orthographic_size/2 
 
     fig = gcf()
+    _wrap_light(light, fig)
+
     fig.shadow_map_type = shadow_map_type
     fig.lights = fig.lights + [light]
 
     return light
 
+def _wrap_light(light, fig):
+    light.container = fig
+
+
+    light_type = type(light)
+
+    if light_type is pythreejs.DirectionalLight and not hasattr(light_type, 'set_camera_size'):
+        def set_camera_size(self, value):
+            self.shadow.camera.left   = -value/2
+            self.shadow.camera.right  =  value/2
+            self.shadow.camera.top    =  value/2
+            self.shadow.camera.bottom = -value/2 
+
+            light_type.set_camera_size = set_camera_size
+
+    if not hasattr(light_type, 'set_shadow_map_type'):
+        def set_shadow_map_type(self, shadow_map_type):
+            self.container.shadow_map_type = shadow_map_type
+
+        light_type.set_shadow_map_type = set_shadow_map_type
+    
 def spot_light(
     light_color=default_color_selected, 
     intensity = 1, 
@@ -1846,6 +1867,8 @@ def spot_light(
     light.shadow.camera.fov = shadow_camera_perspective_fov
     
     fig = gcf()
+    _wrap_light(light, fig)
+
     fig.shadow_map_type = shadow_map_type
     fig.lights = fig.lights + [light]
 
@@ -1899,6 +1922,8 @@ def point_light(
     light.shadow_camera_far = shadow_camera_far
 
     fig = gcf()
+    _wrap_light(light, fig)
+
     fig.shadow_map_type = shadow_map_type    
     fig.lights = fig.lights + [light]
 
