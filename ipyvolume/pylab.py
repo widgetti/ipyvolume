@@ -1788,6 +1788,7 @@ def spot_light(
     target=[0, 0, 0],  
     angle=0.8,
     penumbra=0,
+    distance=0,
     cast_shadow=True,
     shadow_map_size=512,
     shadow_bias=-0.0008,
@@ -1828,7 +1829,7 @@ def spot_light(
         target_y=target[1],
         target_z=target[2],
         angle=angle, 
-        distance=0,
+        distance=distance,
         decay=1,
         penumbra=penumbra,
         cast_shadow=cast_shadow,
@@ -1848,15 +1849,14 @@ def spot_light(
 def point_light(
     light_color=default_color_selected, 
     intensity = 1, 
-    position=[0, 1, 0],
+    position=[10, 10, 10],
     distance=0,
-    decay=1,
-    cast_shadow=False,
+    cast_shadow=True,
     shadow_map_size=512,
-    shadow_bias=-0.0005,
+    shadow_bias=-0.0008,
     shadow_radius=1,
     shadow_camera_near=0.5,
-    shadow_camera_far=500):
+    shadow_camera_far=5000):
     """Create a new Point Light 
         A Point Light originates from a single point and spreads outward in all directions.
         This light can be used to cast shadows.
@@ -1882,7 +1882,7 @@ def point_light(
         position_y=position[1],
         position_z=position[2],
         distance=distance,
-        decay=decay,
+        decay=1,
         cast_shadow=cast_shadow,
         shadow_map_size=shadow_map_size,
         shadow_bias=shadow_bias,
