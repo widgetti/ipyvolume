@@ -1794,7 +1794,7 @@ def _wrap_light(light, fig):
             self.shadow.camera.top    =  value/2
             self.shadow.camera.bottom = -value/2 
 
-            light_type.set_camera_size = set_camera_size
+        light_type.set_camera_size = set_camera_size
 
     if not hasattr(light_type, 'set_shadow_map_type'):
         def set_shadow_map_type(self, shadow_map_type):

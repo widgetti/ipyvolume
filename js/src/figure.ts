@@ -1539,7 +1539,7 @@ class FigureView extends widgets.DOMWidgetView {
             lights.forEach(async (light_model) => {
                 if (!(light_model.cid in this.lights)) {
                     
-                    const light = light_model.obj as THREE.Light;
+                    const light = this._watch_light_changes(light_model.obj as THREE.Light);
                     if (light.castShadow) {
                         this._enable_shadows()
                     }
@@ -1565,6 +1565,20 @@ class FigureView extends widgets.DOMWidgetView {
 
             this.update();
         }
+    }
+
+    _watch_light_changes(light) {
+        const change_watcher = {
+            set: (target, prop, value) => {
+                // Update renderer on change
+                this.update();
+
+                // Execute normal setter
+                return Reflect.set(target, prop, value);
+            }
+        }
+
+        return new Proxy(light, change_watcher);
     }
 
     _enable_shadows() {
