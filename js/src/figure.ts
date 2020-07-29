@@ -1545,7 +1545,10 @@ class FigureView extends widgets.DOMWidgetView {
                     }
             
                     this.lights[light_model.cid] = light;
-
+                    
+                    if (light.target) {
+                        this.scene_scatter.add(light.target);
+                    }
                     this.scene_scatter.add(light);
                 }
 
@@ -1581,6 +1584,7 @@ class FigureView extends widgets.DOMWidgetView {
         return new Proxy(light, change_watcher);
     }
 
+    // TODO: check if this is called when shadow_map_type changes
     _enable_shadows() {
         // Activate shadow mapping
         this.renderer.shadowMap.enabled = true
