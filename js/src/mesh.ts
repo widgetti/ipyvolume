@@ -627,7 +627,6 @@ class MeshModel extends widgets.WidgetModel {
             opacity : 1,
             specular_color : "white",
             shininess : 1,
-            //emissive_color : "black",
             emissive_intensity : 1,
             roughness : 0,
             metalness : 0,
