@@ -1539,9 +1539,9 @@ class FigureView extends widgets.DOMWidgetView {
             lights.forEach(async (light_model) => {
                 if (!(light_model.cid in this.lights)) {
                     
-                    const light = this._watch_light_changes(light_model.obj as THREE.Light);
+                    const light = this.watch_light_change(light_model.obj as THREE.Light);
                     if (light.castShadow) {
-                        this._enable_shadows()
+                        this.update_shadows()
                     }
             
                     this.lights[light_model.cid] = light;
@@ -1570,7 +1570,7 @@ class FigureView extends widgets.DOMWidgetView {
         }
     }
 
-    _watch_light_changes(light) {
+    watch_light_change(light) {
         const change_watcher = {
             set: (target, prop, value) => {
                 // Update renderer on change
@@ -1578,7 +1578,7 @@ class FigureView extends widgets.DOMWidgetView {
 
                 // Activate shadows
                 if (light.castShadow) {
-                    this._enable_shadows();
+                    this.update_shadows();
                 }
 
                 // Execute normal setter
@@ -1590,7 +1590,7 @@ class FigureView extends widgets.DOMWidgetView {
     }
 
     // TODO: check if this is called when shadow_map_type changes
-    _enable_shadows() {
+    update_shadows() {
         // Activate shadow mapping
         this.renderer.shadowMap.enabled = true
 
