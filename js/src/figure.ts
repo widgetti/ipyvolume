@@ -1539,7 +1539,9 @@ class FigureView extends widgets.DOMWidgetView {
             lights.forEach(async (light_model) => {
                 if (!(light_model.cid in this.lights)) {
                     
-                    const light = this.watch_light_change(light_model.obj as THREE.Light);
+                    // Wrap underlying light object to catch updates
+                    light_model.obj = this.watch_light_change(light_model.obj);
+                    const light = light_model.obj;
                     if (light.castShadow) {
                         this.update_shadows()
                     }
@@ -1573,16 +1575,19 @@ class FigureView extends widgets.DOMWidgetView {
     watch_light_change(light) {
         const change_watcher = {
             set: (target, prop, value) => {
-                // Update renderer on change
-                this.update();
+                if (prop !== 'matrixWorldNeedsUpdate' && prop !== 'parent') {
+                    console.log(`up: ${prop}`);
+                    // Update shadows
+                    if (prop === 'castShadow' || prop === 'map') {
+                        this.update_shadows();
+                    }
 
-                // Activate shadows
-                if (light.castShadow) {
-                    this.update_shadows();
+                    // Update renderer on change
+                    this.update();
+
+                    // Execute normal setter
+                    return Reflect.set(target, prop, value);
                 }
-
-                // Execute normal setter
-                return Reflect.set(target, prop, value);
             }
         }
 
