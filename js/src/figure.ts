@@ -1589,7 +1589,6 @@ class FigureView extends widgets.DOMWidgetView {
         return new Proxy(light, change_watcher);
     }
 
-    // TODO: check if this is called when shadow_map_type changes
     update_shadows() {
         // Activate shadow mapping
         this.renderer.shadowMap.enabled = true
