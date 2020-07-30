@@ -1760,7 +1760,7 @@ def directional_light(
     )
  
     # Shadow params
-    light.shadow = pythreejs.DirectionalLightShadow()
+    light.shadow = pythreejs.LightShadow()
     light.shadow.mapSize = (shadow_map_size, shadow_map_size)
     light.shadow.radius = shadow_radius
     light.shadow.bias = shadow_bias
@@ -1851,7 +1851,7 @@ def spot_light(
     )
     
     # Shadow params
-    light.shadow = pythreejs.SpotLightShadow()
+    light.shadow = pythreejs.LightShadow()
     light.shadow.mapSize = (shadow_map_size,shadow_map_size)
     light.shadow.radius = shadow_radius
     light.shadow.bias = shadow_bias
