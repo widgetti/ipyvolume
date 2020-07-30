@@ -1760,6 +1760,8 @@ def directional_light(
     )
  
     # Shadow params
+    # TODO: to avoid sync errors in JS(like you will see in the browser logs)
+    # these should only be set from the notebook side
     light.shadow = pythreejs.LightShadow()
     light.shadow.mapSize = (shadow_map_size, shadow_map_size)
     light.shadow.radius = shadow_radius
@@ -1851,6 +1853,12 @@ def spot_light(
     )
     
     # Shadow params
+    # TODO: to avoid sync errors in JS(like you will see in the browser logs)
+    # these should only be set from the notebook side
+    # Erorrs look like 
+    # "Error: Could not process update msg for model id: 4ed1ed588bd443b98e6fd8dd28a8d256
+    # v utils.js:119
+    # utils.js:119"
     light.shadow = pythreejs.LightShadow()
     light.shadow.mapSize = (shadow_map_size,shadow_map_size)
     light.shadow.radius = shadow_radius
@@ -1906,6 +1914,8 @@ def point_light(
     )
 
     # Shadow params
+    # TODO: to avoid sync errors in JS(like you will see in the browser logs)
+    # these should only be set from the notebook side
     light.shadow = pythreejs.LightShadow()
     light.shadow.mapSize = (shadow_map_size,shadow_map_size)
     light.shadow.radius = shadow_radius
