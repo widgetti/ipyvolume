@@ -1906,11 +1906,13 @@ def point_light(
     )
 
     # Shadow params
-    light.shadow_map_size = (shadow_map_size,shadow_map_size)
-    light.shadow_radius = shadow_radius
-    light.shadow_bias = shadow_bias
-    light.shadow_camera_near = shadow_camera_near
-    light.shadow_camera_far = shadow_camera_far
+    light.shadow = pythreejs.LightShadow()
+    light.shadow.mapSize = (shadow_map_size,shadow_map_size)
+    light.shadow.radius = shadow_radius
+    light.shadow.bias = shadow_bias
+    light.shadow.camera = pythreejs.PerspectiveCamera()
+    light.shadow.camera.near = shadow_camera_near
+    light.shadow.camera.far = shadow_camera_far
 
     fig = gcf()
     _wrap_light(light, fig)
