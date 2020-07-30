@@ -1544,6 +1544,7 @@ class FigureView extends widgets.DOMWidgetView {
                         this.update_shadows()
                     }
 
+                    // TODO: fix update hooks: remove watcher if light was removed
                     light_model.on("change", () => {
                         if (light.castShadow) {
                             this.update_shadows()
