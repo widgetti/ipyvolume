@@ -1544,22 +1544,16 @@ class FigureView extends widgets.DOMWidgetView {
                         this.update_shadows()
                     }
 
-                    // TODO: fix update hooks: remove watcher if light was removed
-                    light_model.on("change", () => {
+                    const on_light_change = () => {
                         if (light.castShadow) {
                             this.update_shadows()
                         }
 
-                        this.update();
-                    });
-                    
-                    light_model.on("childchange", () => {
-                        if (light.castShadow) {
-                            this.update_shadows()
-                        }
+                        this.update();                        
+                    }
 
-                        this.update();
-                    });
+                    light_model.on("change", on_light_change);
+                    light_model.on("childchange", on_light_change);
 
                     this.lights[light_model.cid] = light;
                     
