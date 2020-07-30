@@ -74,6 +74,7 @@ class Mesh(widgets.Widget):
     metalness = traitlets.CFloat(0).tag(sync=True)
     cast_shadow = traitlets.CBool(default_value=False).tag(sync=True)
     receive_shadow = traitlets.CBool(default_value=False).tag(sync=True)
+    flat_shading = traitlets.CBool(default_value=False).tag(sync=True)
 
     material = traitlets.Instance(
         pythreejs.ShaderMaterial, help='A :any:`pythreejs.ShaderMaterial` that is used for the mesh'

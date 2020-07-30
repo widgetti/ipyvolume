@@ -151,13 +151,11 @@ class ScatterView extends widgets.WidgetView {
         if (this.model.get("material")) {
             this.model.get("material").on("change", () => {
                 this._update_materials();
-                this.renderer.update();
             });
         }
         if (this.model.get("line_material")) {
             this.model.get("line_material").on("change", () => {
                 this._update_materials();
-                this.renderer.update();
             });
         }
 
@@ -167,14 +165,13 @@ class ScatterView extends widgets.WidgetView {
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
         this.model.on("change:texture", this._load_textures, this);
-        this.model.on("change:visible", this.update_visibility, this);
+        this.model.on("change:visible", this._update_materials, this);
         this.model.on("change:geo", () => {
             this._update_materials();
-            this.renderer.update();
         });
 
         this.model.on("change:lighting_model change:opacity change:specular_color change:shininess change:emissive_color change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow", 
-        this.update_visibility, this);
+        this._update_materials, this);
     }
 
     _load_textures() {
@@ -206,14 +203,10 @@ class ScatterView extends widgets.WidgetView {
     public force_lighting_model() {
         if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT){
             this.model.set("lighting_model", this.LIGHTING_MODELS.PHYSICAL);
-            this.update_visibility();
+            this._update_materials();
         }
     }
 
-    update_visibility() {
-        this._update_materials();
-        this.renderer.update();
-    }
     set_limits(limits) {
         for (const key of Object.keys(limits)) {
             this.material.uniforms[key].value = limits[key];
@@ -332,12 +325,12 @@ class ScatterView extends widgets.WidgetView {
             this.line_material_rgb.linewidth = this.line_material.linewidth = this.model.get("line_material").obj.linewidth;
         }
 
-        this.material.defines = {USE_COLOR: true};
+        this.material.defines = {USE_COLOR: true, DEFAULT_SHADING:true, PHYSICAL_SHADING:false};
         this.material.extensions = {derivatives: true};
-        this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true};
+        this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true, DEFAULT_SHADING:true, PHYSICAL_SHADING:false};
         this.material_rgb.extensions = {derivatives: true};
-        this.line_material.defines = {AS_LINE: true};
-        this.line_material_rgb.defines = {USE_RGB: true, AS_LINE: true, USE_COLOR: true};
+        this.line_material.defines = {AS_LINE: true, DEFAULT_SHADING:true, PHYSICAL_SHADING:false};
+        this.line_material_rgb.defines = {USE_RGB: true, AS_LINE: true, USE_COLOR: true, DEFAULT_SHADING:true, PHYSICAL_SHADING:false};
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");
         this.material_rgb.visible = this.material.visible && this.model.get("visible");
@@ -347,17 +340,19 @@ class ScatterView extends widgets.WidgetView {
         this.lighting_model = this.model.get("lighting_model");
 
         this.materials.forEach((material) => {
-            
+            material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
+            material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
+            material.defines.DEFAULT_SHADING = false;
+            material.defines.PHYSICAL_SHADING = false;
+
             if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT) {
-                material.vertexShader = require("raw-loader!../glsl/scatter-vertex.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/scatter-fragment.glsl");
+                material.defines.DEFAULT_SHADING = true;
             }
 
             else {//if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL)
                 //Does not support shadows because on three.js r97 the shadow mapping is not working correctly for InstancedBufferGeometry
                 //Should not use with Spot Lights and Point Lights because lighting color is the same for InstancedBufferGeometry instances
-                material.vertexShader = require("raw-loader!../glsl/scatter-vertex-physical.glsl");
-                material.fragmentShader = require("raw-loader!../glsl/scatter-fragment-physical.glsl");
+                material.defines.PHYSICAL_SHADING = true;
             }
             
             material.uniforms = {...material.uniforms, ...this.uniforms};
@@ -382,7 +377,6 @@ class ScatterView extends widgets.WidgetView {
             material.uniforms.metalness.value = this.metalness;
 
             material.depthWrite = true;
-            material.transparant = true;
             material.transparent = true;
             material.depthTest = true;
             material.needsUpdate = true;
@@ -406,6 +400,8 @@ class ScatterView extends widgets.WidgetView {
         this.material_rgb.needsUpdate = true;
         this.line_material.needsUpdate = true;
         this.line_material_rgb.needsUpdate = true;
+
+        this.renderer.update();
     }
     create_mesh() {
         let geo = this.model.get("geo");
@@ -415,7 +411,7 @@ class ScatterView extends widgets.WidgetView {
         }
         const sprite = geo.endsWith("2d");
         const buffer_geo = new THREE.BufferGeometry().fromGeometry(this.geos[geo]);
-        buffer_geo.computeVertexNormals();
+        //buffer_geo.computeVertexNormals();
         const instanced_geo = new THREE.InstancedBufferGeometry();
 
         const vertices = (buffer_geo.attributes.position as any).clone();
@@ -432,8 +428,9 @@ class ScatterView extends widgets.WidgetView {
         const current  = new values.Values(scalar_names, [], this.get_current.bind(this), sequence_index, vector4_names);
         const previous = new values.Values(scalar_names, [], this.get_previous.bind(this), sequence_index_previous, vector4_names);
 
-        // Workaround for shader issue - color redefine 
+        //Fix for Uncaught TypeError: Cannot read property 'BYTES_PER_ELEMENT' of undefined
         current.ensure_array(["color"]);
+        // Workaround for shader issue - Threejs already uses the name color 
         instanced_geo.addAttribute("color_current", new THREE.BufferAttribute(current.array_vec4.color, 4));
 
         const length = Math.max(current.length, previous.length);

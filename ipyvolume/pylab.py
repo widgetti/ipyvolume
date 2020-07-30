@@ -130,6 +130,7 @@ _doc_snippets["y2d"] = "idem for y"
 _doc_snippets["z2d"] = "idem for z"
 _doc_snippets["texture"] = "PIL.Image object or ipywebrtc.MediaStream (can be a seqence)"
 
+emissive_intensity_default = 0.2
 
 class current:
     figure = None
@@ -329,12 +330,12 @@ def plot_trisurf(
     opacity=1,
     specular_color='white',
     shininess=1,
-    emissive_color='black',
-    emissive_intensity=1,
+    emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
-    cast_shadow=False,
-    receive_shadow=False):
+    cast_shadow=True,
+    receive_shadow=True,
+    flat_shading=True):
     """Draw a polygon/triangle mesh defined by a coordinate and triangle indices.
 
     The following example plots a rectangle in the z==2 plane, consisting of 2 triangles:
@@ -392,12 +393,12 @@ def plot_trisurf(
         opacity=opacity,
         specular_color=specular_color,
         shininess=shininess,
-        emissive_color=emissive_color,
         emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
         cast_shadow=cast_shadow,
-        receive_shadow=receive_shadow
+        receive_shadow=receive_shadow,
+        flat_shading=flat_shading
         )
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
     fig.meshes = fig.meshes + [mesh]
@@ -417,12 +418,12 @@ def plot_surface(
     opacity=1,
     specular_color='white',
     shininess=1,
-    emissive_color='black',
-    emissive_intensity=1,
+    emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
-    cast_shadow=False,
-    receive_shadow=False
+    cast_shadow=True,
+    receive_shadow=True,
+    flat_shading=True
     ):
     """Draws a 2d surface in 3d, defined by the 2d ordered arrays x,y,z.
 
@@ -456,12 +457,12 @@ def plot_surface(
         opacity=opacity,
         specular_color=specular_color,
         shininess=shininess,
-        emissive_color=emissive_color,
         emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
         cast_shadow=cast_shadow,
-        receive_shadow=receive_shadow)
+        receive_shadow=receive_shadow,
+        flat_shading=flat_shading)
 
 
 @_docsubst
@@ -497,12 +498,12 @@ def plot_mesh(
     opacity=1,
     specular_color='white',
     shininess=1,
-    emissive_color='black',
-    emissive_intensity=1,
+    emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
-    cast_shadow=False,
-    receive_shadow=False
+    cast_shadow=True,
+    receive_shadow=True,
+    flat_shading=True
 ):
     """Draws a 2d wireframe+surface in 3d: generalization of :any:`plot_wireframe` and :any:`plot_surface`.
 
@@ -604,12 +605,12 @@ def plot_mesh(
         opacity=opacity,
         specular_color=specular_color,
         shininess=shininess,
-        emissive_color=emissive_color,
         emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
         cast_shadow=cast_shadow,
-        receive_shadow=receive_shadow
+        receive_shadow=receive_shadow,
+        flat_shading=flat_shading
     )
     fig.meshes = fig.meshes + [mesh]
     return mesh
@@ -662,8 +663,8 @@ def scatter(
     grow_limits=True,
     lighting_model='DEFAULT',
     opacity=1,
-    emissive_color='black',
-    emissive_intensity=1,
+    emissive_color='black', #TODO: remove emissive_color
+    emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
     **kwargs
@@ -1723,16 +1724,15 @@ def hemisphere_light(
 def directional_light(
     light_color=default_color_selected, 
     intensity = 1, 
-    position=[0, 1, 0],
+    position=[10, 10, 10],
     target=[0, 0, 0], 
-    cast_shadow=False,
+    cast_shadow=True,
     shadow_map_size=512,
-    shadow_bias=-0.0005,
+    shadow_bias=-0.0008,
     shadow_radius=1,
     shadow_camera_near=0.5,
-    shadow_camera_far=500,
-    shadow_camera_orthographic_size=100,
-    shadow_map_type='PCF_SOFT'):
+    shadow_camera_far=5000,
+    shadow_camera_orthographic_size=100):
     """Create a new Directional Light 
         A Directional Light source illuminates all objects equally from a given direction.
         This light can be used to cast shadows.
@@ -1747,7 +1747,6 @@ def directional_light(
     :param shadow_camera_near: Camera near factor. Default is 0.5
     :param shadow_camera_far: Camera far factor. Default is 500
     :param shadow_camera_orthographic_size: Size of the shadow orthographic camera. Directional Light only. Default is 100
-    :param shadow_map_type: Shadow map type. Can be 'BASIC', 'PCF', 'PCF_SOFT'. Default is 'PCF_SOFT'
     :return: :any:`Light`
     """
 
@@ -1805,21 +1804,18 @@ def _wrap_light(light, fig):
 def spot_light(
     light_color=default_color_selected, 
     intensity = 1, 
-    position=[0, 1, 0], 
+    position=[10, 10, 10], 
     target=[0, 0, 0],  
-    angle=math.pi/3, 
-    distance=0,
-    decay=1,
+    angle=0.8,
     penumbra=0,
-    cast_shadow=False,
+    distance=0,
+    cast_shadow=True,
     shadow_map_size=512,
-    shadow_bias=-0.0005,
+    shadow_bias=-0.0008,
     shadow_radius=1,
     shadow_camera_near=0.5,
-    shadow_camera_far=500,
-    shadow_camera_perspective_fov=50,
-    shadow_camera_perspective_aspect=1,
-    shadow_map_type='PCF_SOFT'):
+    shadow_camera_far=5000,
+    ):
     """Create a new Spot Light 
         A Spot Light produces a directed cone of light. The light becomes more intense closer to the spotlight source and to the center of the light cone.
         This light can be used to cast shadows.
@@ -1839,7 +1835,6 @@ def spot_light(
     :param shadow_camera_far: Camera far factor. Default is 500
     :param shadow_camera_perspective_fov: Shadow perspective camera field of view angle. Default is 50. Spot Light only.
     :param shadow_camera_perspective_aspect: Shadow perspective camera aspect ratio. Default is 1. Spot Light only.
-    :param shadow_map_type: Shadow map type. Can be 'BASIC', 'PCF', 'PCF_SOFT'. Default is 'PCF_SOFT'
     :return: :any:`Light`
     """
 
@@ -1851,7 +1846,7 @@ def spot_light(
         target=target, 
         angle=angle, 
         distance=distance, 
-        decay=decay, 
+        decay=1, 
         penumbra=penumbra, 
         castShadow=cast_shadow
     )
@@ -1864,7 +1859,8 @@ def spot_light(
     light.shadow.camera = pythreejs.PerspectiveCamera()
     light.shadow.camera.near = shadow_camera_near
     light.shadow.camera.far = shadow_camera_far
-    light.shadow.camera.fov = shadow_camera_perspective_fov
+    light.shadow.camera.fov = 50
+    light.shadow.camera.aspect = 1
     
     fig = gcf()
     _wrap_light(light, fig)
@@ -1877,16 +1873,14 @@ def spot_light(
 def point_light(
     light_color=default_color_selected, 
     intensity = 1, 
-    position=[0, 1, 0],
+    position=[10, 10, 10],
     distance=0,
-    decay=1,
-    cast_shadow=False,
+    cast_shadow=True,
     shadow_map_size=512,
-    shadow_bias=-0.0005,
+    shadow_bias=-0.0008,
     shadow_radius=1,
     shadow_camera_near=0.5,
-    shadow_camera_far=500,
-    shadow_map_type='PCF_SOFT'):
+    shadow_camera_far=5000):
     """Create a new Point Light 
         A Point Light originates from a single point and spreads outward in all directions.
         This light can be used to cast shadows.
@@ -1901,7 +1895,6 @@ def point_light(
     :param shadow_radius: Setting this to values greater than 1 will blur the edges of the shadow. Default is 1
     :param shadow_camera_near: Camera near factor. Default is 0.5
     :param shadow_camera_far: Camera far factor. Default is 500
-    :param shadow_map_type: Shadow map type. Can be 'BASIC', 'PCF', 'PCF_SOFT'. Default is 'PCF_SOFT'
     :return: :any:`Light`
     """
 
@@ -1910,7 +1903,7 @@ def point_light(
         intensity=intensity, 
         position=position, 
         distance=distance, 
-        decay=decay, 
+        decay=1, 
         castShadow=cast_shadow
     )
 

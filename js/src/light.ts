@@ -15,7 +15,6 @@ class LightView extends widgets.WidgetView {
     lights: any; 
     current_light: any;
     LIGHT_TYPES: any;
-    SHADOW_MAP_TYPES: any;
     light_type: any;
     shadow_map_type: any;
 
@@ -46,12 +45,6 @@ class LightView extends widgets.WidgetView {
             SPOT: 'SPOT',
             POINT: 'POINT',
             HEMISPHERE: 'HEMISPHERE'
-        };
-
-        this.SHADOW_MAP_TYPES = {
-            BASIC: 'BASIC',
-            PCF: 'PCF',
-            PCF_SOFT: 'PCF_SOFT',
         };
 
         this.renderer = this.options.parent;
@@ -142,20 +135,7 @@ class LightView extends widgets.WidgetView {
                 this.shadow_radius = this.model.get("shadow_radius");
                 this.shadow_camera_near = this.model.get("shadow_camera_near");
                 this.shadow_camera_far = this.model.get("shadow_camera_far");
-
-                if(this.cast_shadow === true) {
-                    this.shadow_map_type = this.model.get("shadow_map_type");
-
-                    if(this.shadow_map_type === this.SHADOW_MAP_TYPES.BASIC) {
-                        this.renderer.renderer.shadowMap.type = THREE.BasicShadowMap;
-                    }
-                    else if(this.shadow_map_type === this.SHADOW_MAP_TYPES.PCF) {
-                        this.renderer.renderer.shadowMap.type = THREE.PCFShadowMap;
-                    }
-                    else if(this.shadow_map_type === this.SHADOW_MAP_TYPES.PCF_SOFT) {
-                        this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                    }
-                }
+                this.renderer.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
                 if(this.light_type === this.LIGHT_TYPES.POINT) { 
                     if(instantiate === true){
