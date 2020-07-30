@@ -151,7 +151,7 @@ class FigureModel extends widgets.DOMWidgetModel {
             panorama_mode: "no",
             capture_fps: null,
             cube_resolution: 512,
-            shadow_map_type: 'PCF_SOFT',
+            shadow_map_type: "PCF_SOFT",
         };
     }
 }
@@ -1544,14 +1544,22 @@ class FigureView extends widgets.DOMWidgetView {
                         this.update_shadows()
                     }
 
-                    light_model.on('change', () => {
+                    light_model.on("change", () => {
                         if (light.castShadow) {
                             this.update_shadows()
                         }
 
                         this.update();
                     });
-            
+                    
+                    light_model.on("childchange", () => {
+                        if (light.castShadow) {
+                            this.update_shadows()
+                        }
+
+                        this.update();
+                    });
+
                     this.lights[light_model.cid] = light;
                     
                     if (light.target) {
@@ -1582,15 +1590,15 @@ class FigureView extends widgets.DOMWidgetView {
         // Activate shadow mapping
         this.renderer.shadowMap.enabled = true
 
-        const shadow_map_type = this.model.get('shadow_map_type');
+        const shadow_map_type = this.model.get("shadow_map_type");
         switch(shadow_map_type) {
-            case 'BASIC':
+            case "BASIC":
                 this.renderer.shadowMap.type = THREE.BasicShadowMap;
                 break;
-            case 'PCF':
+            case "PCF":
                 this.renderer.shadowMap.type = THREE.PCFShadowMap;
                 break;
-            case 'PCF_SOFT':
+            case "PCF_SOFT":
                 this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
                 break;
         }
