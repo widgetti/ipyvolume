@@ -1775,7 +1775,6 @@ def directional_light(
     fig = gcf()
     _wrap_light(light, fig)
 
-    fig.shadow_map_type = shadow_map_type
     fig.lights = fig.lights + [light]
 
     return light
@@ -1865,7 +1864,6 @@ def spot_light(
     fig = gcf()
     _wrap_light(light, fig)
 
-    fig.shadow_map_type = shadow_map_type
     fig.lights = fig.lights + [light]
 
     return light
@@ -1917,7 +1915,6 @@ def point_light(
     fig = gcf()
     _wrap_light(light, fig)
 
-    fig.shadow_map_type = shadow_map_type    
     fig.lights = fig.lights + [light]
 
     return light
