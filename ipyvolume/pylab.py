@@ -1901,18 +1901,18 @@ def setup_material_widgets(mesh=None, tab=None, index=0):
     layout = {'width': '450px'}
     
     surf_color = ipywidgets.ColorPicker(description='Color:', value=str(mesh.color), continuous_update=True, style=style, layout=layout)
-    
-    surf_lighting_model = ipywidgets.Dropdown(options=['DEFAULT','LAMBERT','PHONG','PHYSICAL'],value=mesh.lighting_model,description='Lighting Model:',style=style, layout=layout)
+    mlm = 'PHYSICAL' if len(gcf().lights) > 0 and mesh.lighting_model=='DEFAULT' else mesh.lighting_model
+    surf_lighting_model = ipywidgets.Dropdown(options=['DEFAULT','LAMBERT','PHONG','PHYSICAL'],value=mlm, description='Lighting Model:',style=style, layout=layout)
     surf_opacity = ipywidgets.FloatSlider(description='Opacity(Non-Default):',value=mesh.opacity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
     surf_specular_color = ipywidgets.ColorPicker(description='Specular Color(Phong):',value=str(mesh.specular_color), continuous_update=True, style=style, layout=layout)
     surf_shininess = ipywidgets.FloatSlider(description='Shininess(Phong):',value=mesh.shininess, min=0.0, max=100.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
     surf_emissive_intensity = ipywidgets.FloatSlider(description='Emissive Intensity(Non-Default):',value=mesh.emissive_intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
     surf_roughness = ipywidgets.FloatSlider(description='Roughness(Physical):',value=mesh.roughness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
     surf_metalness = ipywidgets.FloatSlider(description='Metalness(Physical):',value=mesh.metalness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
-    surf_cast_shadow = ipywidgets.widgets.Checkbox(value=True, description='Cast Shadow(Non-Default)', style=style, layout=layout)
-    surf_receive_shadow = ipywidgets.widgets.Checkbox(value=True, description='Receive Shadow(Non-Default)', style=style, layout=layout)
-    surf_flat_shading = ipywidgets.widgets.Checkbox(value=True, description='Flat Shading(Non-Default)', style=style, layout=layout)
-    
+    surf_cast_shadow = ipywidgets.widgets.Checkbox(value=mesh.cast_shadow, description='Cast Shadow(Non-Default)', style=style, layout=layout)
+    surf_receive_shadow = ipywidgets.widgets.Checkbox(value=mesh.cast_shadow, description='Receive Shadow(Non-Default)', style=style, layout=layout)
+    surf_flat_shading = ipywidgets.widgets.Checkbox(value=mesh.flat_shading, description='Flat Shading(Non-Default)', style=style, layout=layout)
+
     def set_params(color, 
                    lighting_model, 
                    opacity, 
