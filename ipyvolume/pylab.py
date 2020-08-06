@@ -1893,20 +1893,20 @@ def point_light(
 
     return light
 
-def setup_material_widgets(surf=None, name="Widget", tab=None, index=0):
+def setup_material_widgets(mesh=None, tab=None, index=0):
 
-    if tab == None or surf == None:
+    if tab == None or mesh == None:
         return None
     style = {'description_width': 'initial'}
-    surf_color = ipywidgets.ColorPicker(description='Color:', value=str(surf.color), continuous_update=True)
+    surf_color = ipywidgets.ColorPicker(description='Color:', value=str(mesh.color), continuous_update=True)
     
-    surf_lighting_model = ipywidgets.Dropdown(options=['DEFAULT','LAMBERT','PHONG','PHYSICAL'],value=surf.lighting_model,description='Lighting Model:',style=style)
-    surf_opacity = ipywidgets.FloatSlider(description='Opacity(Non-Default):',value=surf.opacity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style)
-    surf_specular_color = ipywidgets.ColorPicker(description='Specular Color(Phong):',value=str(surf.specular_color), continuous_update=True, style=style)
-    surf_shininess = ipywidgets.FloatSlider(description='Shininess(Phong):',value=surf.shininess, min=0.0, max=100.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style)
-    surf_emissive_intensity = ipywidgets.FloatSlider(description='Emissive intensity(Non-Default):',value=surf.emissive_intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style)
-    surf_roughness = ipywidgets.FloatSlider(description='Roughness(Physical):',value=surf.roughness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style)
-    surf_metalness = ipywidgets.FloatSlider(description='Metalness(Physical):',value=surf.metalness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style)
+    surf_lighting_model = ipywidgets.Dropdown(options=['DEFAULT','LAMBERT','PHONG','PHYSICAL'],value=mesh.lighting_model,description='Lighting Model:',style=style)
+    surf_opacity = ipywidgets.FloatSlider(description='Opacity(Non-Default):',value=mesh.opacity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style)
+    surf_specular_color = ipywidgets.ColorPicker(description='Specular Color(Phong):',value=str(mesh.specular_color), continuous_update=True, style=style)
+    surf_shininess = ipywidgets.FloatSlider(description='Shininess(Phong):',value=mesh.shininess, min=0.0, max=100.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style)
+    surf_emissive_intensity = ipywidgets.FloatSlider(description='Emissive intensity(Non-Default):',value=mesh.emissive_intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style)
+    surf_roughness = ipywidgets.FloatSlider(description='Roughness(Physical):',value=mesh.roughness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style)
+    surf_metalness = ipywidgets.FloatSlider(description='Metalness(Physical):',value=mesh.metalness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style)
     surf_cast_shadow = ipywidgets.widgets.Checkbox(value=True, description='Cast Shadow(Non-Default)', style=style)
     surf_receive_shadow = ipywidgets.widgets.Checkbox(value=True, description='Receive Shadow(Non-Default)', style=style)
     surf_flat_shading = ipywidgets.widgets.Checkbox(value=True, description='Flat Shading(Non-Default)', style=style)
@@ -1922,17 +1922,17 @@ def setup_material_widgets(surf=None, name="Widget", tab=None, index=0):
                    cast_shadow, 
                    receive_shadow,
                    flat_shading):
-        surf.color = color
-        surf.lighting_model = lighting_model
-        surf.opacity = opacity
-        surf.specular_color = specular_color
-        surf.shininess = shininess
-        surf.emissive_intensity = emissive_intensity
-        surf.roughness = roughness
-        surf.metalness = metalness
-        surf.cast_shadow = cast_shadow
-        surf.receive_shadow = receive_shadow
-        surf.flat_shading = flat_shading
+        mesh.color = color
+        mesh.lighting_model = lighting_model
+        mesh.opacity = opacity
+        mesh.specular_color = specular_color
+        mesh.shininess = shininess
+        mesh.emissive_intensity = emissive_intensity
+        mesh.roughness = roughness
+        mesh.metalness = metalness
+        mesh.cast_shadow = cast_shadow
+        mesh.receive_shadow = receive_shadow
+        mesh.flat_shading = flat_shading
     
     interactables = ipywidgets.interactive(set_params, 
                      color=surf_color,
@@ -1949,11 +1949,11 @@ def setup_material_widgets(surf=None, name="Widget", tab=None, index=0):
     
     box = ipywidgets.VBox(children = interactables.children)
     tab.children += (box,) 
-    tab.set_title(index, name)
+    tab.set_title(index, "Mesh "+str(index))
     return None
 
 
-def setup_light_widgets(light=None, name="Widget", tab=None, index=0, light_range=100):
+def setup_light_widgets(light=None, tab=None, index=0, light_range=100):
     if tab == None or light == None:
         return None
     interactables = None
@@ -2130,7 +2130,7 @@ def setup_light_widgets(light=None, name="Widget", tab=None, index=0, light_rang
     if interactables:
         box = ipywidgets.VBox(children = interactables.children)
         tab.children += (box,) 
-        tab.set_title(index, name)
+        tab.set_title(index, light.light_type.capitalize() + " Light " + str(index))
     return None
 
 
@@ -2139,10 +2139,10 @@ def show_lighting_widgets(light_range=100):
     fig = gcf()
     index = 0
     for l in fig.lights:
-        setup_light_widgets(light=l, name="Light "+str(index), tab=tab, index=index, light_range=light_range)
+        setup_light_widgets(light=l, tab=tab, index=index, light_range=light_range)
         index+=1
     for m in fig.meshes:
-        setup_material_widgets(surf=m, name="Mesh "+str(index), tab=tab, index=index)
+        setup_material_widgets(mesh=m, tab=tab, index=index)
         index+=1
     display(tab)
 
