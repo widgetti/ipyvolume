@@ -45,8 +45,9 @@ __all__ = [
     'spot_light',
     'point_light',
     'hemisphere_light',
-    'show_material_widgets',
-    'show_figure_widgets'
+    'setup_light_widgets',
+    'setup_material_widgets',
+    'show_lighting_widgets',
 ]
 
 import os
@@ -1892,7 +1893,7 @@ def point_light(
 
     return light
 
-def show_material_widgets(surf=None, name="Widget", tab=None, index=0):
+def setup_material_widgets(surf=None, name="Widget", tab=None, index=0):
 
     if tab == None or surf == None:
         return None
@@ -1952,7 +1953,7 @@ def show_material_widgets(surf=None, name="Widget", tab=None, index=0):
     return None
 
 
-def show_light_widgets(light=None, name="Widget", tab=None, index=0, light_range=100):
+def setup_light_widgets(light=None, name="Widget", tab=None, index=0, light_range=100):
     if tab == None or light == None:
         return None
     interactables = None
@@ -2133,15 +2134,15 @@ def show_light_widgets(light=None, name="Widget", tab=None, index=0, light_range
     return None
 
 
-def show_figure_widgets(light_range=100):
+def show_lighting_widgets(light_range=100):
     tab = ipywidgets.Tab()
     fig = gcf()
     index = 0
     for l in fig.lights:
-        show_light_widgets(light=l, name="Light "+str(index), tab=tab, index=index, light_range=light_range)
+        setup_light_widgets(light=l, name="Light "+str(index), tab=tab, index=index, light_range=light_range)
         index+=1
     for m in fig.meshes:
-        show_material_widgets(surf=m, name="Mesh "+str(index), tab=tab, index=index)
+        setup_material_widgets(surf=m, name="Mesh "+str(index), tab=tab, index=index)
         index+=1
     display(tab)
 
