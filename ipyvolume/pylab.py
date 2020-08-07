@@ -45,7 +45,10 @@ __all__ = [
     'directional_light',
     'spot_light',
     'point_light',
-    'hemisphere_light'
+    'hemisphere_light',
+    'setup_light_widgets',
+    'setup_material_widgets',
+    'show_lighting_widgets',
 ]
 
 import os
@@ -1730,9 +1733,7 @@ def directional_light(
     shadow_map_size=512,
     shadow_bias=-0.0008,
     shadow_radius=1,
-    shadow_camera_near=0.5,
-    shadow_camera_far=5000,
-    shadow_camera_orthographic_size=100):
+    shadow_camera_orthographic_size=256):
     """Create a new Directional Light 
         A Directional Light source illuminates all objects equally from a given direction.
         This light can be used to cast shadows.
@@ -1751,8 +1752,8 @@ def directional_light(
     """
 
     camera = pythreejs.OrthographicCamera(
-        near=shadow_camera_near,
-        far=shadow_camera_far,
+        near=0.5,
+        far=5000,
         left=-shadow_camera_orthographic_size/2,
         right=shadow_camera_orthographic_size/2,
         top=shadow_camera_orthographic_size/2,
@@ -1814,9 +1815,7 @@ def spot_light(
     cast_shadow=True,
     shadow_map_size=512,
     shadow_bias=-0.0008,
-    shadow_radius=1,
-    shadow_camera_near=0.5,
-    shadow_camera_far=5000,
+    shadow_radius=1
     ):
     """Create a new Spot Light 
         A Spot Light produces a directed cone of light. The light becomes more intense closer to the spotlight source and to the center of the light cone.
@@ -1842,8 +1841,8 @@ def spot_light(
 
     # Shadow params
     camera = pythreejs.PerspectiveCamera(
-        near=shadow_camera_near,
-        far=shadow_camera_far,
+        near=0.5,
+        far=5000,
         fov=50,
         aspect=1
     )
@@ -1885,8 +1884,7 @@ def point_light(
     shadow_map_size=512,
     shadow_bias=-0.0008,
     shadow_radius=1,
-    shadow_camera_near=0.5,
-    shadow_camera_far=5000):
+    ):
     """Create a new Point Light 
         A Point Light originates from a single point and spreads outward in all directions.
         This light can be used to cast shadows.
@@ -1906,8 +1904,8 @@ def point_light(
 
     # Shadow params
     camera = pythreejs.PerspectiveCamera(
-        near=shadow_camera_near,
-        far=shadow_camera_far
+        near=0.5,
+        far=5000
     )
     shadow = pythreejs.LightShadow(
         mapSize=(shadow_map_size,shadow_map_size),
@@ -1934,10 +1932,259 @@ def point_light(
 
     return light
 
+def setup_material_widgets(mesh=None, tab=None, index=0):
+
+    if tab == None or mesh == None:
+        return None
+    style = {'description_width': '200px'}
+    layout = {'width': '450px'}
+    
+    surf_color = ipywidgets.ColorPicker(description='Color:', value=str(mesh.color), continuous_update=True, style=style, layout=layout)
+    mlm = 'PHYSICAL' if len(gcf().lights) > 0 and mesh.lighting_model=='DEFAULT' else mesh.lighting_model
+    surf_lighting_model = ipywidgets.Dropdown(options=['DEFAULT','LAMBERT','PHONG','PHYSICAL'],value=mlm, description='Lighting Model:',style=style, layout=layout)
+    surf_opacity = ipywidgets.FloatSlider(description='Opacity(Non-Default):',value=mesh.opacity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_specular_color = ipywidgets.ColorPicker(description='Specular Color(Phong):',value=str(mesh.specular_color), continuous_update=True, style=style, layout=layout)
+    surf_shininess = ipywidgets.FloatSlider(description='Shininess(Phong):',value=mesh.shininess, min=0.0, max=100.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_emissive_intensity = ipywidgets.FloatSlider(description='Emissive Intensity(Non-Default):',value=mesh.emissive_intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_roughness = ipywidgets.FloatSlider(description='Roughness(Physical):',value=mesh.roughness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+    surf_metalness = ipywidgets.FloatSlider(description='Metalness(Physical):',value=mesh.metalness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_cast_shadow = ipywidgets.widgets.Checkbox(value=mesh.cast_shadow, description='Cast Shadow(Non-Default)', style=style, layout=layout)
+    surf_receive_shadow = ipywidgets.widgets.Checkbox(value=mesh.cast_shadow, description='Receive Shadow(Non-Default)', style=style, layout=layout)
+    surf_flat_shading = ipywidgets.widgets.Checkbox(value=mesh.flat_shading, description='Flat Shading(Non-Default)', style=style, layout=layout)
+
+    def set_params(color, 
+                   lighting_model, 
+                   opacity, 
+                   specular_color,
+                   shininess,
+                   emissive_intensity,
+                   roughness,
+                   metalness,
+                   cast_shadow, 
+                   receive_shadow,
+                   flat_shading):
+        mesh.color = color
+        mesh.lighting_model = lighting_model
+        mesh.opacity = opacity
+        mesh.specular_color = specular_color
+        mesh.shininess = shininess
+        mesh.emissive_intensity = emissive_intensity
+        mesh.roughness = roughness
+        mesh.metalness = metalness
+        mesh.cast_shadow = cast_shadow
+        mesh.receive_shadow = receive_shadow
+        mesh.flat_shading = flat_shading
+    
+    interactables = ipywidgets.interactive(set_params, 
+                     color=surf_color,
+                     lighting_model=surf_lighting_model, 
+                     opacity=surf_opacity,
+                     specular_color = surf_specular_color,
+                     shininess = surf_shininess,
+                     emissive_intensity = surf_emissive_intensity,
+                     roughness = surf_roughness,
+                     metalness = surf_metalness,
+                     cast_shadow = surf_cast_shadow,
+                     receive_shadow = surf_receive_shadow,
+                     flat_shading = surf_flat_shading)
+    
+    box = ipywidgets.VBox(children = interactables.children)
+    tab.children += (box,) 
+    tab.set_title(index, "Mesh "+str(index))
+    return None
 
 
+def setup_light_widgets(light=None, tab=None, index=0):
+    if tab == None or light == None:
+        return None
+    interactables = None
+    style = {'description_width': '200px'}
+    layout = {'width': '450px'}
+    if light.light_type == 'AMBIENT':
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.light_color), continuous_update=True, style=style, layout=layout)
+        light_intensity = ipywidgets.FloatSlider(description='Intensity:', value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    
+        def set_params_ambiental(color, intensity):
+            light.light_color = color
+            light.intensity = intensity
+    
+        interactables = ipywidgets.interactive(set_params_ambiental, 
+                                     color=light_color,
+                                     intensity=light_intensity)
+    elif light.light_type == 'HEMISPHERE':
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.light_color), continuous_update=True, style=style, layout=layout)
+        light_color2 = ipywidgets.ColorPicker(description='Light Color2:', value=str(light.light_color2), continuous_update=True, style=style, layout=layout)
+        light_intensity = ipywidgets.FloatSlider(description='Intensity:', value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+        position_x = ipywidgets.FloatText(description='Position X:', value=light.position_x, style=style, layout=layout)
+        position_y = ipywidgets.FloatText(description='Position Y:', value=light.position_y, style=style, layout=layout)
+        position_z = ipywidgets.FloatText(description='Position Z:', value=light.position_z, style=style, layout=layout)
+        def set_params_hemisphere(color, color2, intensity, pos_x, pos_y, pos_z):
+            light.light_color = color
+            light.light_color2 = color2
+            light.intensity = intensity
+            light.position_x = pos_x
+            light.position_y = pos_y
+            light.position_z = pos_z
+    
+        interactables = ipywidgets.interactive(set_params_hemisphere, 
+                                    color=light_color,
+                                    color2=light_color2,
+                                    intensity=light_intensity,
+                                    pos_x=position_x,
+                                    pos_y=position_y,
+                                    pos_z=position_z)
+        
+    elif light.light_type == 'DIRECTIONAL':
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.light_color), continuous_update=True, style=style, layout=layout)
+        light_intensity = ipywidgets.FloatSlider(description='Intensity:', value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+        position_x = ipywidgets.FloatText(description='Position X:',value=light.position_x, style=style, layout=layout)
+        position_y = ipywidgets.FloatText(description='Position Y:',value=light.position_y, style=style, layout=layout)
+        position_z = ipywidgets.FloatText(description='Position Z:',value=light.position_z, style=style, layout=layout)
+        target_x = ipywidgets.FloatText(description='Target X:', value=light.target_x, style=style, layout=layout)
+        target_y = ipywidgets.FloatText(description='Target Y:', value=light.target_y, style=style, layout=layout)
+        target_z = ipywidgets.FloatText(description='Target Z:', value=light.target_z, style=style, layout=layout)
+        cast_shadow = ipywidgets.Checkbox(value=light.cast_shadow, description='Cast Shadow', style=style, layout=layout)
+        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:',value=light.shadow_map_size, min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow_bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal',readout=True, readout_format='.7f', style=style, layout=layout)
+        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow_radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
+        shadow_camera_orthographic_size = ipywidgets.FloatSlider(description='Shadow Cam Ortho Size:', value=light.shadow_camera_orthographic_size, min=0, max=500, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
+  
+        def set_params_directional(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, 
+                                   cast_shadow,smap_size, bias, radius, ortho_size):
+            light.light_color = color
+            light.intensity = intensity
+            light.position_x = pos_x
+            light.position_y = pos_y
+            light.position_z = pos_z
+            light.target_x = tar_x
+            light.target_y = tar_y
+            light.target_z = tar_z
+            light.cast_shadow = cast_shadow
+            light.shadow_map_size = smap_size
+            light.shadow_bias = bias
+            light.shadow_radius = radius
+            light.shadow_camera_orthographic_size = ortho_size
+    
+        interactables = ipywidgets.interactive(set_params_directional, 
+                                    color=light_color,
+                                    intensity=light_intensity,
+                                    pos_x=position_x,
+                                    pos_y=position_y,
+                                    pos_z=position_z,
+                                    tar_x=target_x,
+                                    tar_y=target_y,
+                                    tar_z=target_z,
+                                    cast_shadow=cast_shadow,
+                                    smap_size=shadow_map_size,
+                                    bias=shadow_bias,
+                                    radius=shadow_radius,
+                                    ortho_size=shadow_camera_orthographic_size)
+        
+    elif light.light_type == 'SPOT':
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.light_color), continuous_update=True, style=style, layout=layout)
+        light_intensity = ipywidgets.FloatSlider(description='Intensity:',value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+        position_x = ipywidgets.FloatText(description='Position X:',value=light.position_x, style=style, layout=layout)
+        position_y = ipywidgets.FloatText(description='Position Y:',value=light.position_y, style=style, layout=layout)
+        position_z = ipywidgets.FloatText(description='Position Z:',value=light.position_z, style=style, layout=layout)
+        target_x = ipywidgets.FloatText(description='Target X:', value=light.target_x, style=style, layout=layout)
+        target_y = ipywidgets.FloatText(description='Target Y:', value=light.target_y, style=style, layout=layout)
+        target_z = ipywidgets.FloatText(description='Target Z:', value=light.target_z, style=style, layout=layout)
+        angle = ipywidgets.FloatSlider(description='Angle:', value=light.angle, min=math.pi/100, max=math.pi/2, step=0.001,  continuous_update=True, orientation='horizontal', readout=True, readout_format='.07f', style=style, layout=layout)
+        penumbra = ipywidgets.FloatSlider(description='Penumbra:', value=light.penumbra, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+        cast_shadow = ipywidgets.Checkbox(value=light.cast_shadow, description='Cast Shadow', style=style, layout=layout)
+        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:', value=light.shadow_map_size, min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow_bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal', readout=True, readout_format='.7f', style=style, layout=layout)
+        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow_radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+
+        def set_params_spot(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, 
+                            angle, penumbra, cast_shadow, smap_size, bias, radius):
+            light.light_color = color
+            light.intensity = intensity
+            light.position_x = pos_x
+            light.position_y = pos_y
+            light.position_z = pos_z
+            light.target_x = tar_x
+            light.target_y = tar_y
+            light.target_z = tar_z
+            light.angle = angle
+            light.penumbra = penumbra
+            light.cast_shadow = cast_shadow
+            light.shadow_map_size = smap_size
+            light.shadow_bias = bias
+            light.shadow_radius = radius
+    
+        interactables = ipywidgets.interactive(set_params_spot, 
+                                    color=light_color,
+                                    intensity=light_intensity,
+                                    pos_x=position_x,
+                                    pos_y=position_y,
+                                    pos_z=position_z,
+                                    tar_x=target_x,
+                                    tar_y=target_y,
+                                    tar_z=target_z,
+                                    angle = angle,
+                                    penumbra = penumbra,
+                                    cast_shadow=cast_shadow,
+                                    smap_size=shadow_map_size,
+                                    bias=shadow_bias,
+                                    radius=shadow_radius)
+     
+    elif light.light_type == 'POINT':
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.light_color), continuous_update=True, style=style, layout=layout)
+        light_intensity = ipywidgets.FloatSlider(description='Intensity:',value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+        position_x = ipywidgets.FloatText(description='Position X:',value=light.position_x, style=style, layout=layout)
+        position_y = ipywidgets.FloatText(description='Position Y:',value=light.position_y, style=style, layout=layout)
+        position_z = ipywidgets.FloatText(description='Position Z:',value=light.position_z, style=style, layout=layout)
+        distance = ipywidgets.FloatSlider(description='Max Distance:', value=light.distance, min=0, max=200, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+        cast_shadow = ipywidgets.Checkbox(value=light.cast_shadow, description='Cast Shadow', style=style, layout=layout)
+        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:', value=light.shadow_map_size, min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow_bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal', readout=True, readout_format='.7f', style=style, layout=layout)
+        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow_radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+
+        def set_params_point(color, intensity, pos_x, pos_y, pos_z,  
+                            distance, cast_shadow, smap_size, bias, radius):
+            light.light_color = color
+            light.intensity = intensity
+            light.position_x = pos_x
+            light.position_y = pos_y
+            light.position_z = pos_z
+            light.distance = distance
+            light.cast_shadow = cast_shadow
+            light.shadow_map_size = smap_size
+            light.shadow_bias = bias
+            light.shadow_radius = radius
+
+    
+        interactables = ipywidgets.interactive(set_params_point, 
+                                    color=light_color,
+                                    intensity=light_intensity,
+                                    pos_x=position_x,
+                                    pos_y=position_y,
+                                    pos_z=position_z,
+                                    distance=distance,
+                                    cast_shadow=cast_shadow,
+                                    smap_size=shadow_map_size,
+                                    bias=shadow_bias,
+                                    radius=shadow_radius)
 
 
+    if interactables:
+        box = ipywidgets.VBox(children = interactables.children)
+        tab.children += (box,) 
+        tab.set_title(index, light.light_type.capitalize() + " Light " + str(index))
+    return None
 
 
+def show_lighting_widgets():
+    tab = ipywidgets.Tab()
+    fig = gcf()
+    index = 0
+    for l in fig.lights:
+        setup_light_widgets(light=l, tab=tab, index=index)
+        index+=1
+    for m in fig.meshes:
+        setup_material_widgets(mesh=m, tab=tab, index=index)
+        index+=1
+    display(tab)
 
+    return None
