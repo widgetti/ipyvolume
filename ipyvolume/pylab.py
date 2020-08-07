@@ -1750,29 +1750,30 @@ def directional_light(
     :return: :any:`Light`
     """
 
+    camera = pythreejs.OrthographicCamera(
+        near=shadow_camera_near,
+        far=shadow_camera_far,
+        left=-shadow_camera_orthographic_size/2,
+        right=shadow_camera_orthographic_size/2,
+        top=shadow_camera_orthographic_size/2,
+        bottom=-shadow_camera_orthographic_size/2
+    )
+    shadow = pythreejs.DirectionalLightShadow(
+        mapSize=(shadow_map_size, shadow_map_size),
+        radius=shadow_radius,
+        bias=shadow_bias,
+        camera=camera
+    )
+
     target = pythreejs.Object3D(position=target)
     light = pythreejs.DirectionalLight(
         color=light_color, 
         intensity=intensity, 
         position=position, 
         target=target, 
-        castShadow=cast_shadow
+        castShadow=cast_shadow,
+        shadow=shadow
     )
- 
-    # Shadow params
-    # TODO: to avoid sync errors in JS(like you will see in the browser logs)
-    # these should only be set from the notebook side
-    light.shadow = pythreejs.LightShadow()
-    light.shadow.mapSize = (shadow_map_size, shadow_map_size)
-    light.shadow.radius = shadow_radius
-    light.shadow.bias = shadow_bias
-    light.shadow.camera = pythreejs.OrthographicCamera()
-    light.shadow.camera.near = shadow_camera_near
-    light.shadow.camera.far = shadow_camera_far
-    light.shadow.camera.left = -shadow_camera_orthographic_size/2
-    light.shadow.camera.right = shadow_camera_orthographic_size/2
-    light.shadow.camera.top = shadow_camera_orthographic_size/2
-    light.shadow.camera.bottom = -shadow_camera_orthographic_size/2 
 
     fig = gcf()
     _wrap_light(light, fig)
