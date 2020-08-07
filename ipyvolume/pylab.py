@@ -2052,9 +2052,7 @@ def setup_light_widgets(light=None, tab=None, index=0):
             light.light_color = color
             light.intensity = intensity
             light.position = (pos_x, pos_y, pos_z)
-            light.target_x = tar_x
-            light.target_y = tar_y
-            light.target_z = tar_z
+            light.target = (tar_x, tar_y, tar_z)
             light.cast_shadow = cast_shadow
             light.shadow_map_size = smap_size
             light.shadow_bias = bias
@@ -2097,9 +2095,7 @@ def setup_light_widgets(light=None, tab=None, index=0):
             light.light_color = color
             light.intensity = intensity
             light.position = (pos_x, pos_y, pos_z)
-            light.target_x = tar_x
-            light.target_y = tar_y
-            light.target_z = tar_z
+            light.target = (tar_x, tar_y, tar_z)
             light.angle = angle
             light.penumbra = penumbra
             light.cast_shadow = cast_shadow
