@@ -2042,10 +2042,10 @@ def setup_light_widgets(light=None, tab=None, index=0):
         target_y = ipywidgets.FloatText(description='Target Y:', value=light.target_y, style=style, layout=layout)
         target_z = ipywidgets.FloatText(description='Target Z:', value=light.target_z, style=style, layout=layout)
         cast_shadow = ipywidgets.Checkbox(value=light.castShadow, description='Cast Shadow', style=style, layout=layout)
-        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:',value=light.shadow_map_size, min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
-        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow_bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal',readout=True, readout_format='.7f', style=style, layout=layout)
-        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow_radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
-        shadow_camera_orthographic_size = ipywidgets.FloatSlider(description='Shadow Cam Ortho Size:', value=light.shadow_camera_orthographic_size, min=0, max=500, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
+        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:',value=light.shadow.mapSize[0], min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow.bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal',readout=True, readout_format='.7f', style=style, layout=layout)
+        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow.radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
+        shadow_camera_orthographic_size = ipywidgets.FloatSlider(description='Shadow Cam Ortho Size:', value=light.shadow.camera.right * 2, min=0, max=500, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
   
         def set_params_directional(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, 
                                    cast_shadow,smap_size, bias, radius, ortho_size):
@@ -2057,7 +2057,11 @@ def setup_light_widgets(light=None, tab=None, index=0):
             light.shadow.mapSize = (smap_size, smap_size)
             light.shadow.bias = bias
             light.shadow.radius = radius
-            light.shadow.camera_orthographic_size = ortho_size
+            light.shadow.camera.left   = -ortho_size/2
+            light.shadow.camera.right  =  ortho_size/2
+            light.shadow.camera.top    =  ortho_size/2
+            light.shadow.camera.bottom = -ortho_size/2
+
     
         interactables = ipywidgets.interactive(set_params_directional, 
                                     color=light_color,
@@ -2086,9 +2090,9 @@ def setup_light_widgets(light=None, tab=None, index=0):
         angle = ipywidgets.FloatSlider(description='Angle:', value=light.angle, min=math.pi/100, max=math.pi/2, step=0.001,  continuous_update=True, orientation='horizontal', readout=True, readout_format='.07f', style=style, layout=layout)
         penumbra = ipywidgets.FloatSlider(description='Penumbra:', value=light.penumbra, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
         cast_shadow = ipywidgets.Checkbox(value=light.castShadow, description='Cast Shadow', style=style, layout=layout)
-        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:', value=light.shadow_map_size, min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
-        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow_bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal', readout=True, readout_format='.7f', style=style, layout=layout)
-        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow_radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:', value=light.shadow.mapSize[0], min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow.bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal', readout=True, readout_format='.7f', style=style, layout=layout)
+        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow.radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
 
         def set_params_spot(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, 
                             angle, penumbra, cast_shadow, smap_size, bias, radius):
@@ -2099,9 +2103,9 @@ def setup_light_widgets(light=None, tab=None, index=0):
             light.angle = angle
             light.penumbra = penumbra
             light.castShadow = cast_shadow
-            light.shadow_map_size = smap_size
-            light.shadow_bias = bias
-            light.shadow_radius = radius
+            light.shadow.mapSize = (smap_size, smap_size)
+            light.shadow.bias = bias
+            light.shadow.radius = radius
     
         interactables = ipywidgets.interactive(set_params_spot, 
                                     color=light_color,
@@ -2127,9 +2131,9 @@ def setup_light_widgets(light=None, tab=None, index=0):
         position_z = ipywidgets.FloatText(description='Position Z:',value=light.position_z, style=style, layout=layout)
         distance = ipywidgets.FloatSlider(description='Max Distance:', value=light.distance, min=0, max=200, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
         cast_shadow = ipywidgets.Checkbox(value=light.castShadow, description='Cast Shadow', style=style, layout=layout)
-        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:', value=light.shadow_map_size, min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
-        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow_bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal', readout=True, readout_format='.7f', style=style, layout=layout)
-        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow_radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:', value=light.shadow.mapSize[0], min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow.bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal', readout=True, readout_format='.7f', style=style, layout=layout)
+        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow.radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
 
         def set_params_point(color, intensity, pos_x, pos_y, pos_z,  
                             distance, cast_shadow, smap_size, bias, radius):
@@ -2138,9 +2142,9 @@ def setup_light_widgets(light=None, tab=None, index=0):
             light.position = (pos_x, pos_y, pos_z)
             light.distance = distance
             light.castShadow = cast_shadow
-            light.shadow_map_size = smap_size
-            light.shadow_bias = bias
-            light.shadow_radius = radius
+            light.shadow.map_size = (smap_size, smap_size)
+            light.shadow.bias = bias
+            light.shadow.radius = radius
 
     
         interactables = ipywidgets.interactive(set_params_point, 
