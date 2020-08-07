@@ -2163,7 +2163,7 @@ def setup_light_widgets(light=None, tab=None, index=0):
     if interactables:
         box = ipywidgets.VBox(children = interactables.children)
         tab.children += (box,) 
-        tab.set_title(index, light.light_type.capitalize() + " Light " + str(index))
+        tab.set_title(index, light.type + " " + str(index))
     return None
 
 
