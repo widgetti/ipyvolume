@@ -2049,10 +2049,10 @@ def setup_light_widgets(light=None, tab=None, index=0):
   
         def set_params_directional(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, 
                                    cast_shadow,smap_size, bias, radius, ortho_size):
-            light.light_color = color
+            light.color = color
             light.intensity = intensity
             light.position = (pos_x, pos_y, pos_z)
-            light.target = (tar_x, tar_y, tar_z)
+            light.target.position = (tar_x, tar_y, tar_z)
             light.castShadow = cast_shadow
             light.shadow.mapSize = (smap_size, smap_size)
             light.shadow.bias = bias
@@ -2099,7 +2099,7 @@ def setup_light_widgets(light=None, tab=None, index=0):
             light.light_color = color
             light.intensity = intensity
             light.position = (pos_x, pos_y, pos_z)
-            light.target = (tar_x, tar_y, tar_z)
+            light.target.position = (tar_x, tar_y, tar_z)
             light.angle = angle
             light.penumbra = penumbra
             light.castShadow = cast_shadow
@@ -2137,12 +2137,12 @@ def setup_light_widgets(light=None, tab=None, index=0):
 
         def set_params_point(color, intensity, pos_x, pos_y, pos_z,  
                             distance, cast_shadow, smap_size, bias, radius):
-            light.light_color = color
+            light.color = color
             light.intensity = intensity
             light.position = (pos_x, pos_y, pos_z)
             light.distance = distance
             light.castShadow = cast_shadow
-            light.shadow.map_size = (smap_size, smap_size)
+            light.shadow.mapSize = (smap_size, smap_size)
             light.shadow.bias = bias
             light.shadow.radius = radius
 
