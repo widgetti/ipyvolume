@@ -2001,19 +2001,19 @@ def setup_light_widgets(light=None, tab=None, index=0):
     style = {'description_width': '200px'}
     layout = {'width': '450px'}
     if light.type == 'AmbientLight':
-        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.light_color), continuous_update=True, style=style, layout=layout)
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.color), continuous_update=True, style=style, layout=layout)
         light_intensity = ipywidgets.FloatSlider(description='Intensity:', value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
     
         def set_params_ambiental(color, intensity):
-            light.light_color = color
+            light.color = color
             light.intensity = intensity
     
         interactables = ipywidgets.interactive(set_params_ambiental, 
                                      color=light_color,
                                      intensity=light_intensity)
     elif light.type == 'HemisphereLight':
-        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.light_color), continuous_update=True, style=style, layout=layout)
-        light_color2 = ipywidgets.ColorPicker(description='Light Color2:', value=str(light.light_color2), continuous_update=True, style=style, layout=layout)
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.color), continuous_update=True, style=style, layout=layout)
+        light_color2 = ipywidgets.ColorPicker(description='Light Color2:', value=str(light.groundColor), continuous_update=True, style=style, layout=layout)
         light_intensity = ipywidgets.FloatSlider(description='Intensity:', value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
         position_x = ipywidgets.FloatText(description='Position X:', value=light.position_x, style=style, layout=layout)
         position_y = ipywidgets.FloatText(description='Position Y:', value=light.position_y, style=style, layout=layout)
@@ -2033,7 +2033,7 @@ def setup_light_widgets(light=None, tab=None, index=0):
                                     pos_z=position_z)
         
     elif light.type == 'DirectionalLight':
-        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.light_color), continuous_update=True, style=style, layout=layout)
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.color), continuous_update=True, style=style, layout=layout)
         light_intensity = ipywidgets.FloatSlider(description='Intensity:', value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
         position_x = ipywidgets.FloatText(description='Position X:',value=light.position_x, style=style, layout=layout)
         position_y = ipywidgets.FloatText(description='Position Y:',value=light.position_y, style=style, layout=layout)
@@ -2079,7 +2079,7 @@ def setup_light_widgets(light=None, tab=None, index=0):
                                     ortho_size=shadow_camera_orthographic_size)
         
     elif light.type == 'SpotLight':
-        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.light_color), continuous_update=True, style=style, layout=layout)
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.color), continuous_update=True, style=style, layout=layout)
         light_intensity = ipywidgets.FloatSlider(description='Intensity:',value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
         position_x = ipywidgets.FloatText(description='Position X:',value=light.position_x, style=style, layout=layout)
         position_y = ipywidgets.FloatText(description='Position Y:',value=light.position_y, style=style, layout=layout)
@@ -2096,7 +2096,7 @@ def setup_light_widgets(light=None, tab=None, index=0):
 
         def set_params_spot(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, 
                             angle, penumbra, cast_shadow, smap_size, bias, radius):
-            light.light_color = color
+            light.color = color
             light.intensity = intensity
             light.position = (pos_x, pos_y, pos_z)
             light.target.position = (tar_x, tar_y, tar_z)
@@ -2124,7 +2124,7 @@ def setup_light_widgets(light=None, tab=None, index=0):
                                     radius=shadow_radius)
      
     elif light.type == 'PointLight':
-        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.light_color), continuous_update=True, style=style, layout=layout)
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.color), continuous_update=True, style=style, layout=layout)
         light_intensity = ipywidgets.FloatSlider(description='Intensity:',value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
         position_x = ipywidgets.FloatText(description='Position X:',value=light.position_x, style=style, layout=layout)
         position_y = ipywidgets.FloatText(description='Position Y:',value=light.position_y, style=style, layout=layout)
