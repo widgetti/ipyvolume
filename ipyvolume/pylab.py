@@ -1840,6 +1840,21 @@ def spot_light(
     :return: :any:`Light`
     """
 
+    # Shadow params
+    camera = pythreejs.PerspectiveCamera(
+        near=shadow_camera_near,
+        far=shadow_camera_far,
+        fov=50,
+        aspect=1
+    )
+
+    shadow = pythreejs.LightShadow(
+        mapSize=(shadow_map_size,shadow_map_size),
+        radius=shadow_radius,
+        bias=shadow_bias,
+        camera=camera
+    )
+    
     target = pythreejs.Object3D(position=target)
     light = pythreejs.SpotLight(
         color=light_color, 
@@ -1850,25 +1865,9 @@ def spot_light(
         distance=distance, 
         decay=1, 
         penumbra=penumbra, 
-        castShadow=cast_shadow
+        castShadow=cast_shadow,
+        shadow=shadow
     )
-    
-    # Shadow params
-    # TODO: to avoid sync errors in JS(like you will see in the browser logs)
-    # these should only be set from the notebook side
-    # Erorrs look like 
-    # "Error: Could not process update msg for model id: 4ed1ed588bd443b98e6fd8dd28a8d256
-    # v utils.js:119
-    # utils.js:119"
-    light.shadow = pythreejs.LightShadow()
-    light.shadow.mapSize = (shadow_map_size,shadow_map_size)
-    light.shadow.radius = shadow_radius
-    light.shadow.bias = shadow_bias
-    light.shadow.camera = pythreejs.PerspectiveCamera()
-    light.shadow.camera.near = shadow_camera_near
-    light.shadow.camera.far = shadow_camera_far
-    light.shadow.camera.fov = 50
-    light.shadow.camera.aspect = 1
     
     fig = gcf()
     _wrap_light(light, fig)
