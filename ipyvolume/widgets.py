@@ -290,7 +290,6 @@ class Figure(ipywebrtc.MediaStream):
     ).tag(sync=True, **widgets.widget_serialization)
 
     enable_shadows = traitlets.Bool(False).tag(sync=True)
-    shadow_map_type = traitlets.Unicode(default_value='PCF_SOFT').tag(sync=True)
 
     @traitlets.default('camera')
     def _default_camera(self):

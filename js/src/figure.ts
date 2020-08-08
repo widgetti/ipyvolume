@@ -151,7 +151,6 @@ class FigureModel extends widgets.DOMWidgetModel {
             panorama_mode: "no",
             capture_fps: null,
             cube_resolution: 512,
-            shadow_map_type: "PCF_SOFT",
         };
     }
 }
@@ -241,7 +240,6 @@ class FigureView extends widgets.DOMWidgetView {
     last_pan_coordinate: THREE.Vector3;
     selector: any;
     last_tick_selection: d3.Selection<d3.BaseType, unknown, d3.BaseType, unknown>;
-    shadow_map_type: string;
     model: FigureModel;
     // helper methods for testing/debugging
     debug_readPixel(x, y) {
@@ -867,7 +865,6 @@ class FigureView extends widgets.DOMWidgetView {
         this.update_volumes();
         this.model.on("change:lights", this.update_lights, this);
         this.update_lights();
-        this.model.on("change:shadow_map_type", this.update_shadows, this);
 
         this.update_size();
 
@@ -1584,19 +1581,6 @@ class FigureView extends widgets.DOMWidgetView {
         // Activate shadow mapping
         this.renderer.shadowMap.enabled = true
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-        // const shadow_map_type = this.model.get("shadow_map_type");
-        // switch(shadow_map_type) {
-        //     case "BASIC":
-        //         this.renderer.shadowMap.type = THREE.BasicShadowMap;
-        //         break;
-        //     case "PCF":
-        //         this.renderer.shadowMap.type = THREE.PCFShadowMap;
-        //         break;
-        //     case "PCF_SOFT":
-        //         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        //         break;
-        // }
     }
 
     transition(f, on_done, context) {

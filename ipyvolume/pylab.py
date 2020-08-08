@@ -1692,7 +1692,7 @@ def ambient_light(
         This light cannot be used to cast shadows.
     :param light_color: {color} Color of the Ambient Light. Default 'white'
     :param intensity: Factor used to increase or decrease the Ambient Light intensity. Default is 1
-    :return: :any:`Light`
+    :return: :any:`pythreejs.AmbientLight`
     """
 
     light = pythreejs.AmbientLight(color=light_color, intensity=intensity)
@@ -1713,8 +1713,8 @@ def hemisphere_light(
     :param light_color: {color} Sky color. Default 'white'
     :param light_color2: {color} Ground color. Default 'red'
     :param intensity: Factor used to increase or decrease the Hemisphere Light intensity. Default is 1
-    :param position: 3-element array (x y z) which describes the position of the Hemisphere Light. Default [0 1 0]
-    :return: :any:`Light`
+    :param position: 3-element array (x y z) which describes the position of the Hemisphere Light. Default [0, 1, 0]
+    :return: :any:`pythreejs.HemisphereLight`
     """
 
     light = pythreejs.HemisphereLight(skyColor=light_color, groundColor=light_color2, intensity=intensity, position=position)
@@ -1737,43 +1737,30 @@ def _wrap_light(light, fig):
 
         light_type.set_camera_size = set_camera_size
 
-    if not hasattr(light_type, 'set_shadow_map_type'):
-        def set_shadow_map_type(self, shadow_map_type):
-            self.container.shadow_map_type = shadow_map_type
-
-        light_type.set_shadow_map_type = set_shadow_map_type
-
 def directional_light(
     light_color=default_color_selected, 
     intensity = 1, 
     position=[10, 10, 10],
     target=[0, 0, 0], 
-    cast_shadow=True
-    ):
+    cast_shadow=True):
     """Create a new Directional Light 
         A Directional Light source illuminates all objects equally from a given direction.
         This light can be used to cast shadows.
     :param light_color: {color} Color of the Directional Light. Default 'white'
     :param intensity: Factor used to increase or decrease the Directional Light intensity. Default is 1
-    :param position: 3-element array (x y z) which describes the position of the Directional Light. Default [0 1 0]
-    :param target: 3-element array (x y z) which describes the target of the Directional Light. Default [0 0 0]
-    :param cast_shadow: Property of a Directional Light to cast shadows. Default False
-    :param shadow_map_size: Size of the projected shadow map. Default 512 (512x512)
-    :param shadow_bias: Factor used to reduce shadow acne. Default is -0.0005
-    :param shadow_radius: Setting this to values greater than 1 will blur the edges of the shadow. Default is 1
-    :param shadow_camera_near: Camera near factor. Default is 0.5
-    :param shadow_camera_far: Camera far factor. Default is 500
-    :param shadow_camera_orthographic_size: Size of the shadow orthographic camera. Directional Light only. Default is 100
-    :return: :any:`Light`
+    :param position: 3-element array (x y z) which describes the position of the Directional Light. Default [10, 10, 10]
+    :param target: 3-element array (x y z) which describes the target of the Directional Light. Default [0, 0, 0]
+    :param cast_shadow: Property of a Directional Light to cast shadows. Default True
+    :return: :any:`pythreejs.DirectionalLight`
     """
-
     near=0.5
     far=5000
     shadow_map_size=1024
     shadow_bias=-0.0008
-    shadow_radius=0
-    shadow_camera_orthographic_size=256
+    shadow_radius=1
+    shadow_camera_orthographic_size=128
 
+    # Shadow params
     camera = pythreejs.OrthographicCamera(
         near=near,
         far=far,
@@ -1788,7 +1775,7 @@ def directional_light(
         bias=shadow_bias,
         camera=camera
     )
-
+    # Light params
     target = pythreejs.Object3D(position=target)
     light = pythreejs.DirectionalLight(
         color=light_color, 
@@ -1841,7 +1828,7 @@ def spot_light(
     decay=1
     shadow_map_size=1024
     shadow_bias=-0.0008
-    shadow_radius=0
+    shadow_radius=1
     near=0.5
     far=5000
     fov=90
@@ -1854,7 +1841,6 @@ def spot_light(
         fov=fov,
         aspect=aspect
     )
-
     shadow = pythreejs.LightShadow(
         mapSize=(shadow_map_size,shadow_map_size),
         radius=shadow_radius,
@@ -1913,7 +1899,7 @@ def point_light(
     decay=1
     shadow_map_size=1024
     shadow_bias=-0.0008
-    shadow_radius=0
+    shadow_radius=1
 
     # Shadow params
     camera = pythreejs.PerspectiveCamera(
@@ -1957,15 +1943,15 @@ def setup_material_widgets(mesh=None, tab=None, index=0):
     surf_color = ipywidgets.ColorPicker(description='Color:', value=str(mesh.color), continuous_update=True, style=style, layout=layout)
     mlm = 'PHYSICAL' if len(gcf().lights) > 0 and mesh.lighting_model=='DEFAULT' else mesh.lighting_model
     surf_lighting_model = ipywidgets.Dropdown(options=['DEFAULT','LAMBERT','PHONG','PHYSICAL'],value=mlm, description='Lighting Model:',style=style, layout=layout)
-    surf_opacity = ipywidgets.FloatSlider(description='Opacity(Non-Default):',value=mesh.opacity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
-    surf_specular_color = ipywidgets.ColorPicker(description='Specular Color(Phong):',value=str(mesh.specular_color), continuous_update=True, style=style, layout=layout)
-    surf_shininess = ipywidgets.FloatSlider(description='Shininess(Phong):',value=mesh.shininess, min=0.0, max=100.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
-    surf_emissive_intensity = ipywidgets.FloatSlider(description='Emissive Intensity(Non-Default):',value=mesh.emissive_intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
-    surf_roughness = ipywidgets.FloatSlider(description='Roughness(Physical):',value=mesh.roughness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
-    surf_metalness = ipywidgets.FloatSlider(description='Metalness(Physical):',value=mesh.metalness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
-    surf_cast_shadow = ipywidgets.widgets.Checkbox(value=mesh.cast_shadow, description='Cast Shadow(Non-Default)', style=style, layout=layout)
-    surf_receive_shadow = ipywidgets.widgets.Checkbox(value=mesh.cast_shadow, description='Receive Shadow(Non-Default)', style=style, layout=layout)
-    surf_flat_shading = ipywidgets.widgets.Checkbox(value=mesh.flat_shading, description='Flat Shading(Non-Default)', style=style, layout=layout)
+    surf_opacity = ipywidgets.FloatSlider(description='Opacity (Non-Default):',value=mesh.opacity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_specular_color = ipywidgets.ColorPicker(description='Specular Color (Phong):',value=str(mesh.specular_color), continuous_update=True, style=style, layout=layout)
+    surf_shininess = ipywidgets.FloatSlider(description='Shininess (Phong):',value=mesh.shininess, min=0.01, max=100.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_emissive_intensity = ipywidgets.FloatSlider(description='Emissive Intensity (Non-Default):',value=mesh.emissive_intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_roughness = ipywidgets.FloatSlider(description='Roughness (Physical):',value=mesh.roughness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+    surf_metalness = ipywidgets.FloatSlider(description='Metalness (Physical):',value=mesh.metalness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_cast_shadow = ipywidgets.widgets.Checkbox(value=mesh.cast_shadow, description='Cast Shadow (Non-Default)', style=style, layout=layout)
+    surf_receive_shadow = ipywidgets.widgets.Checkbox(value=mesh.cast_shadow, description='Receive Shadow (Non-Default)', style=style, layout=layout)
+    surf_flat_shading = ipywidgets.widgets.Checkbox(value=mesh.flat_shading, description='Flat Shading (Physical, Phong)', style=style, layout=layout)
 
     def set_params(color, 
                    lighting_model, 
@@ -2059,7 +2045,7 @@ def setup_light_widgets(light=None, tab=None, index=0):
         cast_shadow = ipywidgets.Checkbox(value=light.castShadow, description='Cast Shadow', style=style, layout=layout)
         shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow.bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal',readout=True, readout_format='.7f', style=style, layout=layout)
         shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow.radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
-        shadow_camera_orthographic_size = ipywidgets.FloatSlider(description='Shadow Cam Ortho Size:', value=light.shadow.camera.right * 2, min=0, max=2048, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
+        shadow_camera_orthographic_size = ipywidgets.FloatSlider(description='Shadow Cam Ortho Size:', value=light.shadow.camera.right * 2, min=0, max=512, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
   
         def set_params_directional(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, cast_shadow, bias, radius, ortho_size):
             light.color = color
