@@ -602,7 +602,6 @@ class MeshModel extends widgets.WidgetModel {
         opacity : serialize.array_or_json,
         specular_color : serialize.color_or_json,
         shininess : serialize.array_or_json,
-        //emissive_color : serialize.color_or_json,
         emissive_intensity : serialize.array_or_json,
         roughness : serialize.array_or_json,
         metalness : serialize.array_or_json,

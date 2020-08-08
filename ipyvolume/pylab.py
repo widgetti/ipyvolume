@@ -331,9 +331,9 @@ def plot_trisurf(
     texture=None,
     lighting_model='DEFAULT',
     opacity=1,
+    emissive_intensity=emissive_intensity_default,
     specular_color='white',
     shininess=1,
-    emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
     cast_shadow=True,
@@ -362,20 +362,20 @@ def plot_trisurf(
     :param z: {z}
     :param triangles: numpy array with indices referring to the vertices, defining the triangles, with shape (M, 3)
     :param lines: numpy array with indices referring to the vertices, defining the lines, with shape (K, 2)
-    :param color: {color}
+    :param color: {color} Color of the material, essentially a solid color unaffected by other lighting. Default is 'red'
     :param u: {u}
     :param v: {v}
     :param texture: {texture}
     :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
-    :param opacity: 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
-    :param specular_color: {color} Color of the specular tint. Default 'white'. Only for 'PHONG' lighting model
-    :param shininess: Specular intensity. Default is 1
-    :param emissive_color: {color} Emissive (light) color of the material, essentially a solid color unaffected by other lighting. Default is 'black'
-    :param emissive_intensity: Factor multiplied with emissive_color. Takes values between 0 and 1. Default is 1
-    :param roughness: How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1. Only for 'PHYSICAL' lighting model
-    :param metalness: How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
-    :param cast_shadow: Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
-    :param receive_shadow: Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
+    :param opacity: (Non-Default) 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param emissive_intensity: (Non-Default) Factor multiplied with color. Takes values between 0 and 1. Default is 0.2
+    :param specular_color: {color} (Phong Only) Color of the specular tint. Default 'white'.
+    :param shininess: (Phong Only) Specular intensity. Default is 1
+    :param roughness: (Physical Only) How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1
+    :param metalness: (Physical Only) How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
+    :param cast_shadow: (Non-Default) Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
+    :param receive_shadow: (Non-Default) Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
+    :param flat_shading: (Physical, Phong) A technique for color computing where all polygons reflect as a flat surface. Default True
     :return: :any:`Mesh`
     """
     fig = gcf()
@@ -394,9 +394,9 @@ def plot_trisurf(
         texture=texture,
         lighting_model=lighting_model,
         opacity=opacity,
+        emissive_intensity=emissive_intensity,
         specular_color=specular_color,
         shininess=shininess,
-        emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
         cast_shadow=cast_shadow,
@@ -419,9 +419,9 @@ def plot_surface(
     wrapy=False,
     lighting_model='DEFAULT',
     opacity=1,
+    emissive_intensity=emissive_intensity_default,
     specular_color='white',
     shininess=1,
-    emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
     cast_shadow=True,
@@ -433,19 +433,19 @@ def plot_surface(
     :param x: {x2d}
     :param y: {y2d}
     :param z: {z2d}
-    :param color: {color2d}
+    :param color: {color2d} Color of the material, essentially a solid color unaffected by other lighting. Default is 'red'
     :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
     :param bool wrapy: simular for the y coordinate
     :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
-    :param opacity: 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
-    :param specular_color: {color} Color of the specular tint. Default 'white'. Only for 'PHONG' lighting model
-    :param shininess: Specular intensity. Default is 1
-    :param emissive_color:  {color} Emissive (light) color of the material, essentially a solid color unaffected by other lighting. Default is 'black'
-    :param emissive_intensity: Factor multiplied with emissive_color. Takes values between 0 and 1. Default is 1
-    :param roughness: How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1. Only for 'PHYSICAL' lighting model
-    :param metalness: How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
-    :param cast_shadow: Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
-    :param receive_shadow: Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
+    :param opacity: (Non-Default) 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param emissive_intensity: (Non-Default) Factor multiplied with color. Takes values between 0 and 1. Default is 0.2
+    :param specular_color: {color} (Phong Only) Color of the specular tint. Default 'white'.
+    :param shininess: (Phong Only) Specular intensity. Default is 1
+    :param roughness: (Physical Only) How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1
+    :param metalness: (Physical Only) How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
+    :param cast_shadow: (Non-Default) Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
+    :param receive_shadow: (Non-Default) Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
+    :param flat_shading: (Physical, Phong) A technique for color computing where all polygons reflect as a flat surface. Default True
     :return: :any:`Mesh`
     """
     return plot_mesh(
@@ -458,9 +458,9 @@ def plot_surface(
         wireframe=False,
         lighting_model=lighting_model,
         opacity=opacity,
+        emissive_intensity=emissive_intensity,
         specular_color=specular_color,
         shininess=shininess,
-        emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
         cast_shadow=cast_shadow,
@@ -499,9 +499,9 @@ def plot_mesh(
     texture=None,
     lighting_model='DEFAULT',
     opacity=1,
+    emissive_intensity=emissive_intensity_default,
     specular_color='white',
     shininess=1,
-    emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
     cast_shadow=True,
@@ -513,7 +513,7 @@ def plot_mesh(
     :param x: {x2d}
     :param y: {y2d}
     :param z: {z2d}
-    :param color: {color2d}
+    :param color: {color2d} Color of the material, essentially a solid color unaffected by other lighting. Default is 'red'
     :param bool wireframe: draw lines between the vertices
     :param bool surface: draw faces/triangles between the vertices
     :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the begin and end points
@@ -522,15 +522,15 @@ def plot_mesh(
     :param v: {v}
     :param texture: {texture}
     :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
-    :param opacity: 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
-    :param specular_color: {color} Color of the specular tint. Default 'white'. Only for 'PHONG' lighting model
-    :param shininess: Specular intensity. Default is 1
-    :param emissive_color: {color} Emissive (light) color of the material, essentially a solid color unaffected by other lighting. Default is 'black'
-    :param emissive_intensity: Factor multiplied with emissive_color. Takes values between 0 and 1. Default is 1
-    :param roughness: How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1. Only for 'PHYSICAL' lighting model
-    :param metalness: How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
-    :param cast_shadow: Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
-    :param receive_shadow: Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
+    :param opacity: (Non-Default) 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param emissive_intensity: (Non-Default) Factor multiplied with color. Takes values between 0 and 1. Default is 0.2
+    :param specular_color: {color} (Phong Only) Color of the specular tint. Default 'white'.
+    :param shininess: (Phong Only) Specular intensity. Default is 1
+    :param roughness: (Physical Only) How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1
+    :param metalness: (Physical Only) How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
+    :param cast_shadow: (Non-Default) Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
+    :param receive_shadow: (Non-Default) Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
+    :param flat_shading: (Physical, Phong) A technique for color computing where all polygons reflect as a flat surface. Default True
     :return: :any:`Mesh`
     """
     fig = gcf()
@@ -606,9 +606,9 @@ def plot_mesh(
         texture=texture,
         lighting_model=lighting_model,
         opacity=opacity,
+        emissive_intensity=emissive_intensity,
         specular_color=specular_color,
         shininess=shininess,
-        emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
         cast_shadow=cast_shadow,
@@ -678,7 +678,7 @@ def scatter(
     :param x: {x}
     :param y: {y}
     :param z: {z}
-    :param color: {color}
+    :param color: {color} Color of the material, essentially a solid color unaffected by other lighting. Default is 'red'
     :param size: {size}
     :param size_selected: like size, but for selected glyphs
     :param color_selected:  like color, but for selected glyphs
@@ -687,8 +687,7 @@ def scatter(
                       can have a different size and color
     :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
     :param opacity: 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
-    :param emissive_color: {color} Emissive (light) color of the material, essentially a solid color unaffected by other lighting. Default is 'black'
-    :param emissive_intensity: Factor multiplied with emissive_color. Takes values between 0 and 1. Default is 1
+    :param emissive_intensity: Factor multiplied with color. Takes values between 0 and 1. Default is 0.2
     :param roughness: How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1. Only for 'PHYSICAL' lighting model
     :param metalness: How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
     :param kwargs:
@@ -1944,9 +1943,9 @@ def setup_material_widgets(mesh=None, tab=None, index=0):
     mlm = 'PHYSICAL' if len(gcf().lights) > 0 and mesh.lighting_model=='DEFAULT' else mesh.lighting_model
     surf_lighting_model = ipywidgets.Dropdown(options=['DEFAULT','LAMBERT','PHONG','PHYSICAL'],value=mlm, description='Lighting Model:',style=style, layout=layout)
     surf_opacity = ipywidgets.FloatSlider(description='Opacity (Non-Default):',value=mesh.opacity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_emissive_intensity = ipywidgets.FloatSlider(description='Emissive Intensity (Non-Default):',value=mesh.emissive_intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
     surf_specular_color = ipywidgets.ColorPicker(description='Specular Color (Phong):',value=str(mesh.specular_color), continuous_update=True, style=style, layout=layout)
     surf_shininess = ipywidgets.FloatSlider(description='Shininess (Phong):',value=mesh.shininess, min=0.01, max=100.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
-    surf_emissive_intensity = ipywidgets.FloatSlider(description='Emissive Intensity (Non-Default):',value=mesh.emissive_intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
     surf_roughness = ipywidgets.FloatSlider(description='Roughness (Physical):',value=mesh.roughness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
     surf_metalness = ipywidgets.FloatSlider(description='Metalness (Physical):',value=mesh.metalness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
     surf_cast_shadow = ipywidgets.widgets.Checkbox(value=mesh.cast_shadow, description='Cast Shadow (Non-Default)', style=style, layout=layout)
@@ -1956,9 +1955,9 @@ def setup_material_widgets(mesh=None, tab=None, index=0):
     def set_params(color, 
                    lighting_model, 
                    opacity, 
+                   emissive_intensity,
                    specular_color,
                    shininess,
-                   emissive_intensity,
                    roughness,
                    metalness,
                    cast_shadow, 
@@ -1967,9 +1966,9 @@ def setup_material_widgets(mesh=None, tab=None, index=0):
         mesh.color = color
         mesh.lighting_model = lighting_model
         mesh.opacity = opacity
+        mesh.emissive_intensity = emissive_intensity
         mesh.specular_color = specular_color
         mesh.shininess = shininess
-        mesh.emissive_intensity = emissive_intensity
         mesh.roughness = roughness
         mesh.metalness = metalness
         mesh.cast_shadow = cast_shadow
@@ -1980,9 +1979,9 @@ def setup_material_widgets(mesh=None, tab=None, index=0):
                      color=surf_color,
                      lighting_model=surf_lighting_model, 
                      opacity=surf_opacity,
+                     emissive_intensity = surf_emissive_intensity,
                      specular_color = surf_specular_color,
                      shininess = surf_shininess,
-                     emissive_intensity = surf_emissive_intensity,
                      roughness = surf_roughness,
                      metalness = surf_metalness,
                      cast_shadow = surf_cast_shadow,
@@ -1992,7 +1991,7 @@ def setup_material_widgets(mesh=None, tab=None, index=0):
     box = ipywidgets.VBox(children = interactables.children)
     tab.children += (box,) 
     tab.set_title(index, "Mesh "+str(index))
-    return None
+    return interactables
 
 
 def setup_light_widgets(light=None, tab=None, index=0):
@@ -2153,7 +2152,7 @@ def setup_light_widgets(light=None, tab=None, index=0):
         box = ipywidgets.VBox(children = interactables.children)
         tab.children += (box,) 
         tab.set_title(index, light.type + " " + str(index))
-    return None
+    return interactables
 
 
 def show_lighting_widgets():

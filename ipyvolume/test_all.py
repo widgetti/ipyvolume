@@ -458,7 +458,7 @@ def test_mesh_material():
         assert mesh.opacity == 1
         assert mesh.specular_color == 'white'
         assert mesh.shininess == 1
-        assert mesh.emissive_color == 'black'
+        assert mesh.color == 'black'
         assert mesh.emissive_intensity == 1
         assert mesh.roughness == 0
         assert mesh.metalness == 0
@@ -470,7 +470,7 @@ def test_mesh_material():
         mesh.opacity = 0
         mesh.specular_color = 'blue'
         mesh.shininess = 10
-        mesh.emissive_color = 'red'
+        mesh.color = 'red'
         mesh.emissive_intensity = 2
         mesh.roughness = 1
         mesh.metalness = 5
@@ -482,7 +482,7 @@ def test_mesh_material():
         assert mesh.opacity == 0
         assert mesh.specular_color == 'blue'
         assert mesh.shininess == 10
-        assert mesh.emissive_color == 'red'
+        assert mesh.color == 'red'
         assert mesh.emissive_intensity == 2
         assert mesh.roughness == 1
         assert mesh.metalness == 5
