@@ -1519,7 +1519,6 @@ class FigureView extends widgets.DOMWidgetView {
     }
 
     async update_lights() {
-        console.log("LIGHTS!");
         
         // Initialize lights if this is the first pass
         if (!this.lights) {
@@ -1584,19 +1583,20 @@ class FigureView extends widgets.DOMWidgetView {
     update_shadows() {
         // Activate shadow mapping
         this.renderer.shadowMap.enabled = true
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        const shadow_map_type = this.model.get("shadow_map_type");
-        switch(shadow_map_type) {
-            case "BASIC":
-                this.renderer.shadowMap.type = THREE.BasicShadowMap;
-                break;
-            case "PCF":
-                this.renderer.shadowMap.type = THREE.PCFShadowMap;
-                break;
-            case "PCF_SOFT":
-                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                break;
-        }
+        // const shadow_map_type = this.model.get("shadow_map_type");
+        // switch(shadow_map_type) {
+        //     case "BASIC":
+        //         this.renderer.shadowMap.type = THREE.BasicShadowMap;
+        //         break;
+        //     case "PCF":
+        //         this.renderer.shadowMap.type = THREE.PCFShadowMap;
+        //         break;
+        //     case "PCF_SOFT":
+        //         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        //         break;
+        // }
     }
 
     transition(f, on_done, context) {

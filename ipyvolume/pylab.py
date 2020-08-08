@@ -1724,16 +1724,32 @@ def hemisphere_light(
 
     return light
 
+def _wrap_light(light, fig):
+    light.container = fig
+    light_type = type(light)
+
+    if light_type is pythreejs.DirectionalLight and not hasattr(light_type, 'set_camera_size'):
+        def set_camera_size(self, value):
+            self.shadow.camera.left   = -value/2
+            self.shadow.camera.right  =  value/2
+            self.shadow.camera.top    =  value/2
+            self.shadow.camera.bottom = -value/2 
+
+        light_type.set_camera_size = set_camera_size
+
+    if not hasattr(light_type, 'set_shadow_map_type'):
+        def set_shadow_map_type(self, shadow_map_type):
+            self.container.shadow_map_type = shadow_map_type
+
+        light_type.set_shadow_map_type = set_shadow_map_type
+
 def directional_light(
     light_color=default_color_selected, 
     intensity = 1, 
     position=[10, 10, 10],
     target=[0, 0, 0], 
-    cast_shadow=True,
-    shadow_map_size=512,
-    shadow_bias=-0.0008,
-    shadow_radius=1,
-    shadow_camera_orthographic_size=256):
+    cast_shadow=True
+    ):
     """Create a new Directional Light 
         A Directional Light source illuminates all objects equally from a given direction.
         This light can be used to cast shadows.
@@ -1751,9 +1767,16 @@ def directional_light(
     :return: :any:`Light`
     """
 
+    near=0.5
+    far=5000
+    shadow_map_size=1024
+    shadow_bias=-0.0008
+    shadow_radius=0
+    shadow_camera_orthographic_size=256
+
     camera = pythreejs.OrthographicCamera(
-        near=0.5,
-        far=5000,
+        near=near,
+        far=far,
         left=-shadow_camera_orthographic_size/2,
         right=shadow_camera_orthographic_size/2,
         top=shadow_camera_orthographic_size/2,
@@ -1782,40 +1805,13 @@ def directional_light(
     fig.lights = fig.lights + [light]
 
     return light
-
-def _wrap_light(light, fig):
-    light.container = fig
-
-
-    light_type = type(light)
-
-    if light_type is pythreejs.DirectionalLight and not hasattr(light_type, 'set_camera_size'):
-        def set_camera_size(self, value):
-            self.shadow.camera.left   = -value/2
-            self.shadow.camera.right  =  value/2
-            self.shadow.camera.top    =  value/2
-            self.shadow.camera.bottom = -value/2 
-
-        light_type.set_camera_size = set_camera_size
-
-    if not hasattr(light_type, 'set_shadow_map_type'):
-        def set_shadow_map_type(self, shadow_map_type):
-            self.container.shadow_map_type = shadow_map_type
-
-        light_type.set_shadow_map_type = set_shadow_map_type
     
 def spot_light(
     light_color=default_color_selected, 
     intensity = 1, 
     position=[10, 10, 10], 
-    target=[0, 0, 0],  
-    angle=0.8,
-    penumbra=0,
-    distance=0,
-    cast_shadow=True,
-    shadow_map_size=512,
-    shadow_bias=-0.0008,
-    shadow_radius=1
+    target=[0, 0, 0],
+    cast_shadow=True
     ):
     """Create a new Spot Light 
         A Spot Light produces a directed cone of light. The light becomes more intense closer to the spotlight source and to the center of the light cone.
@@ -1836,15 +1832,27 @@ def spot_light(
     :param shadow_camera_far: Camera far factor. Default is 500
     :param shadow_camera_perspective_fov: Shadow perspective camera field of view angle. Default is 50. Spot Light only.
     :param shadow_camera_perspective_aspect: Shadow perspective camera aspect ratio. Default is 1. Spot Light only.
-    :return: :any:`Light`
+    :return: :any:`pythreejs.SpotLight`
     """
+
+    angle=0.8
+    penumbra=0
+    distance=0
+    decay=1
+    shadow_map_size=1024
+    shadow_bias=-0.0008
+    shadow_radius=0
+    near=0.5
+    far=5000
+    fov=90
+    aspect=1
 
     # Shadow params
     camera = pythreejs.PerspectiveCamera(
-        near=0.5,
-        far=5000,
-        fov=50,
-        aspect=1
+        near=near,
+        far=far,
+        fov=fov,
+        aspect=aspect
     )
 
     shadow = pythreejs.LightShadow(
@@ -1853,7 +1861,7 @@ def spot_light(
         bias=shadow_bias,
         camera=camera
     )
-    
+    # Light params
     target = pythreejs.Object3D(position=target)
     light = pythreejs.SpotLight(
         color=light_color, 
@@ -1862,7 +1870,7 @@ def spot_light(
         target=target, 
         angle=angle, 
         distance=distance, 
-        decay=1, 
+        decay=decay, 
         penumbra=penumbra, 
         castShadow=cast_shadow,
         shadow=shadow
@@ -1877,13 +1885,9 @@ def spot_light(
 
 def point_light(
     light_color=default_color_selected, 
-    intensity = 1, 
+    intensity = 1,
     position=[10, 10, 10],
-    distance=0,
-    cast_shadow=True,
-    shadow_map_size=512,
-    shadow_bias=-0.0008,
-    shadow_radius=1,
+    cast_shadow=True
     ):
     """Create a new Point Light 
         A Point Light originates from a single point and spreads outward in all directions.
@@ -1899,13 +1903,24 @@ def point_light(
     :param shadow_radius: Setting this to values greater than 1 will blur the edges of the shadow. Default is 1
     :param shadow_camera_near: Camera near factor. Default is 0.5
     :param shadow_camera_far: Camera far factor. Default is 500
-    :return: :any:`Light`
+    :return: :any:`PointLight`
     """
+    near=0.5
+    far=5000
+    fov=90
+    aspect=1
+    distance=0
+    decay=1
+    shadow_map_size=1024
+    shadow_bias=-0.0008
+    shadow_radius=0
 
     # Shadow params
     camera = pythreejs.PerspectiveCamera(
-        near=0.5,
-        far=5000
+        near=near,
+        far=far,
+        fov=fov,
+        aspect=aspect
     )
     shadow = pythreejs.LightShadow(
         mapSize=(shadow_map_size,shadow_map_size),
@@ -1913,13 +1928,13 @@ def point_light(
         bias=shadow_bias,
         camera=camera
     )
-
+    # Light params
     light = pythreejs.PointLight(
         color=light_color, 
         intensity=intensity, 
         position=position, 
         distance=distance, 
-        decay=1, 
+        decay=decay, 
         castShadow=cast_shadow,
         shadow=shadow
     )
@@ -2042,19 +2057,16 @@ def setup_light_widgets(light=None, tab=None, index=0):
         target_y = ipywidgets.FloatText(description='Target Y:', value=light.target.position[1], style=style, layout=layout)
         target_z = ipywidgets.FloatText(description='Target Z:', value=light.target.position[2], style=style, layout=layout)
         cast_shadow = ipywidgets.Checkbox(value=light.castShadow, description='Cast Shadow', style=style, layout=layout)
-        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:',value=light.shadow.mapSize[0], min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
         shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow.bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal',readout=True, readout_format='.7f', style=style, layout=layout)
         shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow.radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
-        shadow_camera_orthographic_size = ipywidgets.FloatSlider(description='Shadow Cam Ortho Size:', value=light.shadow.camera.right * 2, min=0, max=500, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
+        shadow_camera_orthographic_size = ipywidgets.FloatSlider(description='Shadow Cam Ortho Size:', value=light.shadow.camera.right * 2, min=0, max=2048, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
   
-        def set_params_directional(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, 
-                                   cast_shadow,smap_size, bias, radius, ortho_size):
+        def set_params_directional(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, cast_shadow, bias, radius, ortho_size):
             light.color = color
             light.intensity = intensity
             light.position = (pos_x, pos_y, pos_z)
             light.target.position = (tar_x, tar_y, tar_z)
             light.castShadow = cast_shadow
-            light.shadow.mapSize = (smap_size, smap_size)
             light.shadow.bias = bias
             light.shadow.radius = radius
             light.shadow.camera.left   = -ortho_size/2
@@ -2073,7 +2085,6 @@ def setup_light_widgets(light=None, tab=None, index=0):
                                     tar_y=target_y,
                                     tar_z=target_z,
                                     cast_shadow=cast_shadow,
-                                    smap_size=shadow_map_size,
                                     bias=shadow_bias,
                                     radius=shadow_radius,
                                     ortho_size=shadow_camera_orthographic_size)
@@ -2090,12 +2101,10 @@ def setup_light_widgets(light=None, tab=None, index=0):
         angle = ipywidgets.FloatSlider(description='Angle:', value=light.angle, min=math.pi/100, max=math.pi/2, step=0.001,  continuous_update=True, orientation='horizontal', readout=True, readout_format='.07f', style=style, layout=layout)
         penumbra = ipywidgets.FloatSlider(description='Penumbra:', value=light.penumbra, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
         cast_shadow = ipywidgets.Checkbox(value=light.castShadow, description='Cast Shadow', style=style, layout=layout)
-        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:', value=light.shadow.mapSize[0], min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
         shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow.bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal', readout=True, readout_format='.7f', style=style, layout=layout)
         shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow.radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
 
-        def set_params_spot(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, 
-                            angle, penumbra, cast_shadow, smap_size, bias, radius):
+        def set_params_spot(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, angle, penumbra, cast_shadow, bias, radius):
             light.color = color
             light.intensity = intensity
             light.position = (pos_x, pos_y, pos_z)
@@ -2103,7 +2112,6 @@ def setup_light_widgets(light=None, tab=None, index=0):
             light.angle = angle
             light.penumbra = penumbra
             light.castShadow = cast_shadow
-            light.shadow.mapSize = (smap_size, smap_size)
             light.shadow.bias = bias
             light.shadow.radius = radius
     
@@ -2119,7 +2127,6 @@ def setup_light_widgets(light=None, tab=None, index=0):
                                     angle = angle,
                                     penumbra = penumbra,
                                     cast_shadow=cast_shadow,
-                                    smap_size=shadow_map_size,
                                     bias=shadow_bias,
                                     radius=shadow_radius)
      
@@ -2129,20 +2136,17 @@ def setup_light_widgets(light=None, tab=None, index=0):
         position_x = ipywidgets.FloatText(description='Position X:',value=light.position[0], style=style, layout=layout)
         position_y = ipywidgets.FloatText(description='Position Y:',value=light.position[1], style=style, layout=layout)
         position_z = ipywidgets.FloatText(description='Position Z:',value=light.position[2], style=style, layout=layout)
-        distance = ipywidgets.FloatSlider(description='Max Distance:', value=light.distance, min=0, max=200, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+        distance = ipywidgets.FloatSlider(description='Max Distance:', value=light.distance, min=0, max=1000, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
         cast_shadow = ipywidgets.Checkbox(value=light.castShadow, description='Cast Shadow', style=style, layout=layout)
-        shadow_map_size = ipywidgets.FloatSlider(description='Shadow Map Size:', value=light.shadow.mapSize[0], min=0.0, max=1024.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
         shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow.bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal', readout=True, readout_format='.7f', style=style, layout=layout)
         shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow.radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
 
-        def set_params_point(color, intensity, pos_x, pos_y, pos_z,  
-                            distance, cast_shadow, smap_size, bias, radius):
+        def set_params_point(color, intensity, pos_x, pos_y, pos_z, distance, cast_shadow, bias, radius):
             light.color = color
             light.intensity = intensity
             light.position = (pos_x, pos_y, pos_z)
             light.distance = distance
             light.castShadow = cast_shadow
-            light.shadow.mapSize = (smap_size, smap_size)
             light.shadow.bias = bias
             light.shadow.radius = radius
 
@@ -2155,7 +2159,6 @@ def setup_light_widgets(light=None, tab=None, index=0):
                                     pos_z=position_z,
                                     distance=distance,
                                     cast_shadow=cast_shadow,
-                                    smap_size=shadow_map_size,
                                     bias=shadow_bias,
                                     radius=shadow_radius)
 
