@@ -1795,8 +1795,7 @@ def spot_light(
     intensity = 1, 
     position=[10, 10, 10], 
     target=[0, 0, 0],
-    cast_shadow=True
-    ):
+    cast_shadow=True):
     """Create a new Spot Light 
         A Spot Light produces a directed cone of light. The light becomes more intense closer to the spotlight source and to the center of the light cone.
         This light can be used to cast shadows.
@@ -1859,8 +1858,7 @@ def point_light(
     light_color=default_color_selected, 
     intensity = 1,
     position=[10, 10, 10],
-    cast_shadow=True
-    ):
+    cast_shadow=True):
     """Create a new Point Light 
         A Point Light originates from a single point and spreads outward in all directions.
         This light can be used to cast shadows.
