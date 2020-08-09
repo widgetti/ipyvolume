@@ -1714,7 +1714,7 @@ def hemisphere_light(
     :return: :any:`pythreejs.HemisphereLight`
     """
 
-    light = pythreejs.HemisphereLight(skyColor=light_color, groundColor=light_color2, intensity=intensity, position=position)
+    light = pythreejs.HemisphereLight(color=light_color, groundColor=light_color2, intensity=intensity, position=position)
 
     fig = gcf()
     fig.lights = fig.lights + [light]
