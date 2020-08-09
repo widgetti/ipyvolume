@@ -356,6 +356,7 @@ class ScatterView extends widgets.WidgetView {
             
             material.uniforms = {...material.uniforms, ...this.uniforms};
             material.lights = true;
+            material.flatShading = true;
 
             this.diffuse_color = this.model.get("diffuse_color");
             this.opacity = this.model.get("opacity");

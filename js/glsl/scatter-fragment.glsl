@@ -128,9 +128,5 @@ void main(void)
 	#include <premultiplied_alpha_fragment>
 	#include <dithering_fragment>
 
-  #ifdef FLAT_SHADED
-  	gl_FragColor = vec4( 0.0,1.0,0.0, diffuseColor.a );
-  #endif
-
 #endif
 }
