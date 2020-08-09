@@ -666,7 +666,6 @@ def scatter(
     grow_limits=True,
     lighting_model='DEFAULT',
     opacity=1,
-    emissive_color='black', #TODO: remove emissive_color
     emissive_intensity=emissive_intensity_default,
     roughness=0,
     metalness=0,
@@ -686,10 +685,10 @@ def scatter(
     :param selection: numpy array of shape (N,) or (S, N) with indices of x,y,z arrays of the selected markers, which
                       can have a different size and color
     :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
-    :param opacity: 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
-    :param emissive_intensity: Factor multiplied with color. Takes values between 0 and 1. Default is 0.2
-    :param roughness: How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1. Only for 'PHYSICAL' lighting model
-    :param metalness: How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
+    :param opacity: (Physical Only) 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param emissive_intensity: (Physical Only) Factor multiplied with color. Takes values between 0 and 1. Default is 0.2
+    :param roughness: (Physical Only) How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1
+    :param metalness: (Physical Only) How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
     :param kwargs:
     :return: :any:`Scatter`
     """
@@ -708,7 +707,6 @@ def scatter(
         selection=selection,
         lighting_model=lighting_model,
         opacity=opacity,
-        emissive_color=emissive_color,
         emissive_intensity=emissive_intensity,
         roughness=roughness,
         metalness=metalness,
@@ -1757,7 +1755,7 @@ def directional_light(
     shadow_map_size=1024
     shadow_bias=-0.0008
     shadow_radius=1
-    shadow_camera_orthographic_size=128
+    shadow_camera_orthographic_size=256
 
     # Shadow params
     camera = pythreejs.OrthographicCamera(
@@ -1806,18 +1804,7 @@ def spot_light(
     :param intensity: Factor used to increase or decrease the Spot Light intensity. Default is 1
     :param position: 3-element array (x y z) which describes the position of the Spot Light. Default [0 1 0]
     :param target: 3-element array (x y z) which describes the target of the Spot Light. Default [0 0 0]
-    :param angle: Spot Light angle. Default is Pi/3
-    :param distance: When distance is non-zero, light will attenuate linearly from maximum intensity at the light's position down to zero at this distance from the light.
-    :param decay: The amount the light dims along the distance of the light. In physically correct mode, decay = 2 leads to physically realistic light falloff. Default is 1.
-    :param penumbra: Percent of the spotlight cone that is attenuated due to penumbra. Takes values between zero and 1. The default is 0.0.
     :param cast_shadow: Property of a Spot Light to cast shadows. Default False
-    :param shadow_map_size: Size of the projected shadow map. Default 512 (512x512)
-    :param shadow_bias: Factor used to reduce shadow acne. Default is -0.0005
-    :param shadow_radius: Setting this to values greater than 1 will blur the edges of the shadow. Default is 1
-    :param shadow_camera_near: Camera near factor. Default is 0.5
-    :param shadow_camera_far: Camera far factor. Default is 500
-    :param shadow_camera_perspective_fov: Shadow perspective camera field of view angle. Default is 50. Spot Light only.
-    :param shadow_camera_perspective_aspect: Shadow perspective camera aspect ratio. Default is 1. Spot Light only.
     :return: :any:`pythreejs.SpotLight`
     """
 
@@ -1880,14 +1867,7 @@ def point_light(
     :param light_color: {color} Color of the Point Light. Default 'white'
     :param intensity: Factor used to increase or decrease the Point Light intensity. Default is 1
     :param position: 3-element array (x y z) which describes the position of the Point Light. Default [0 1 0]
-    :param distance: Maximum range of the light. Default is 0 (no limit).
-    :param decay: The amount the light dims along the distance of the light. Default is 1. For physically correct lighting, set this to 2
     :param cast_shadow: Property of a Point Light to cast shadows. Default False
-    :param shadow_map_size: Size of the projected shadow map. Default 512 (512x512)
-    :param shadow_bias: Factor used to reduce shadow acne. Default is -0.0005
-    :param shadow_radius: Setting this to values greater than 1 will blur the edges of the shadow. Default is 1
-    :param shadow_camera_near: Camera near factor. Default is 0.5
-    :param shadow_camera_far: Camera far factor. Default is 500
     :return: :any:`PointLight`
     """
     near=0.5
@@ -2044,7 +2024,7 @@ def setup_light_widgets(light=None, tab=None, index=0):
         cast_shadow = ipywidgets.Checkbox(value=light.castShadow, description='Cast Shadow', style=style, layout=layout)
         shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow.bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal',readout=True, readout_format='.7f', style=style, layout=layout)
         shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow.radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
-        shadow_camera_orthographic_size = ipywidgets.FloatSlider(description='Shadow Cam Ortho Size:', value=light.shadow.camera.right * 2, min=0, max=512, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
+        shadow_camera_orthographic_size = ipywidgets.FloatSlider(description='Shadow Cam Ortho Size:', value=light.shadow.camera.right * 2, min=0, max=1024, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
   
         def set_params_directional(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, cast_shadow, bias, radius, ortho_size):
             light.color = color

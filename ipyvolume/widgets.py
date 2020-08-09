@@ -134,7 +134,6 @@ class Scatter(widgets.Widget):
     opacity = traitlets.CFloat(1).tag(sync=True)
     specular_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
     shininess = traitlets.CFloat(1).tag(sync=True)
-    emissive_color = Array(default_value="black", allow_none=True).tag(sync=True, **color_serialization)
     emissive_intensity = traitlets.CFloat(1).tag(sync=True)
     roughness = traitlets.CFloat(0).tag(sync=True)
     metalness = traitlets.CFloat(0).tag(sync=True)

@@ -32,9 +32,9 @@ class ScatterView extends widgets.WidgetView {
     lighting_model: any;
     diffuse_color : any;
     opacity : any;
+    color : any;
     specular_color : any;
     shininess : any;
-    emissive_color : any;
     emissive_intensity : any;
     roughness : any;
     metalness : any;
@@ -170,7 +170,7 @@ class ScatterView extends widgets.WidgetView {
             this._update_materials();
         });
 
-        this.model.on("change:lighting_model change:opacity change:specular_color change:shininess change:emissive_color change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow", 
+        this.model.on("change:lighting_model change:color change:opacity change:specular_color change:shininess change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow", 
         this._update_materials, this);
     }
 
@@ -348,8 +348,7 @@ class ScatterView extends widgets.WidgetView {
             if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT) {
                 material.defines.DEFAULT_SHADING = true;
             }
-
-            else {//if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL)
+            else {
                 //Does not support shadows because on three.js r97 the shadow mapping is not working correctly for InstancedBufferGeometry
                 //Should not use with Spot Lights and Point Lights because lighting color is the same for InstancedBufferGeometry instances
                 material.defines.PHYSICAL_SHADING = true;
@@ -362,7 +361,7 @@ class ScatterView extends widgets.WidgetView {
             this.opacity = this.model.get("opacity");
             this.specular_color = this.model.get("specular_color");
             this.shininess = this.model.get("shininess");
-            this.emissive_color = this.model.get("emissive_color");
+            this.color = this.model.get("color");
             this.emissive_intensity = this.model.get("emissive_intensity");
             this.roughness = this.model.get("roughness");
             this.metalness = this.model.get("metalness");
@@ -371,7 +370,7 @@ class ScatterView extends widgets.WidgetView {
             material.uniforms.opacity.value = this.opacity;
             material.uniforms.specular.value = new THREE.Color(this.specular_color);
             material.uniforms.shininess.value = this.shininess;
-            material.uniforms.emissive.value = new THREE.Color(this.emissive_color);
+            material.uniforms.emissive.value = new THREE.Color(this.color);
             material.uniforms.emissiveIntensity.value = this.emissive_intensity; 
             material.uniforms.roughness.value = this.roughness;
             material.uniforms.metalness.value = this.metalness;
@@ -548,7 +547,6 @@ class ScatterModel extends widgets.WidgetModel {
         opacity : serialize.array_or_json,
         specular_color : serialize.color_or_json,
         shininess : serialize.array_or_json,
-        emissive_color : serialize.color_or_json,
         emissive_intensity : serialize.array_or_json,
         roughness : serialize.array_or_json,
         metalness : serialize.array_or_json,
@@ -576,7 +574,6 @@ class ScatterModel extends widgets.WidgetModel {
             opacity : 1,
             specular_color : "white",
             shininess : 1,
-            emissive_color : "black",
             emissive_intensity : 1,
             roughness : 0,
             metalness : 0,
