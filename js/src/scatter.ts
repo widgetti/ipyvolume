@@ -396,6 +396,7 @@ class ScatterView extends widgets.WidgetView {
             }
         }
         this.material.lights = true;
+        this.material.flatShading = true;
         this.material.needsUpdate = true;
         this.material_rgb.needsUpdate = true;
         this.line_material.needsUpdate = true;
