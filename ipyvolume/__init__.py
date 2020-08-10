@@ -9,7 +9,6 @@ from ipyvolume.widgets import *  # noqa: F401, F403
 from ipyvolume.transferfunction import *  # noqa: F401, F403
 from ipyvolume.pylab import *  # noqa: F401, F403
 
-
 def _jupyter_nbextension_paths():
     return [{
         'section': 'notebook',

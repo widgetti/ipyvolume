@@ -1,4 +1,6 @@
-#include <fog_pars_vertex>
+#ifdef DEFAULT_SHADING
+    #include <fog_pars_vertex>
+#endif //DEFAULT_SHADING
 
 #define USE_SCALE_X
 #define USE_SCALE_Y
@@ -36,38 +38,99 @@ varying vec3 vertex_position;
 varying vec2 vertex_uv;
 
 #ifdef AS_LINE
-attribute vec3 position_previous;
+    attribute vec3 position_previous;
 #else
-attribute float x;
-attribute float x_previous;
-attribute float y;
-attribute float y_previous;
-attribute float z;
-attribute float z_previous;
-attribute float aux;
-attribute float aux_previous;
+    attribute float x;
+    attribute float x_previous;
+    attribute float y;
+    attribute float y_previous;
+    attribute float z;
+    attribute float z_previous;
+    attribute float aux;
+    attribute float aux_previous;
 
-attribute vec3 v;
-attribute vec3 v_previous;
+    // attribute float x;
+    // attribute float x_previous;
+    // attribute float y;
+    // attribute float y_previous;
+    // attribute float z;
+    // attribute float z_previous;
 
+    attribute vec3 v;
+    attribute vec3 v_previous;
 
-attribute float size;
-attribute float size_previous;
+    attribute float size;
+    attribute float size_previous;
 #endif
 
 #ifdef USE_COLORMAP
-attribute float color;
-attribute float color_previous;
-uniform vec2 domain_color;
+    attribute float color_current;
+    attribute float color_previous;
+    uniform vec2 domain_color;
 #else
-attribute vec4 color;
-attribute vec4 color_previous;
+    attribute vec4 color_current;
+    attribute vec4 color_previous;
 #endif
 
 uniform sampler2D colormap;
 
+#ifdef PHYSICAL_SHADING
+    //#extension GL_OES_standard_derivatives : enable
+    #define DEPTH_PACKING 3201
+    #define PHYSICAL
+    varying vec3 vViewPosition;
+
+    #ifndef FLAT_SHADED
+    	varying vec3 vNormal;
+    #endif
+
+    #include <common>
+    #include <uv_pars_vertex>
+    #include <uv2_pars_vertex>
+    #include <displacementmap_pars_vertex>
+    #include <color_pars_vertex>
+    #include <fog_pars_vertex>
+    #include <morphtarget_pars_vertex>
+    #include <skinning_pars_vertex>
+    #include <shadowmap_pars_vertex>
+    #include <logdepthbuf_pars_vertex>
+    #include <clipping_planes_pars_vertex>
+#endif //PHYSICAL_SHADING
 
 void main(void) {
+
+#ifdef PHYSICAL_SHADING
+    #include <uv_vertex>
+	#include <uv2_vertex>
+	#include <color_vertex>
+
+	#include <beginnormal_vertex>
+	#include <morphnormal_vertex>
+	#include <skinbase_vertex>
+	#include <skinnormal_vertex>
+	#include <defaultnormal_vertex>
+
+    #ifndef FLAT_SHADED // Normal computed with derivatives when FLAT_SHADED
+    	vNormal = normalize( transformedNormal );
+    #endif
+
+	#include <begin_vertex>
+	#include <morphtarget_vertex>
+	#include <skinning_vertex>
+	#include <displacementmap_vertex>
+	#include <project_vertex>
+	#include <logdepthbuf_vertex>
+	#include <clipping_planes_vertex>
+
+	vViewPosition = - mvPosition.xyz;
+
+	#include <worldpos_vertex>
+	#include <shadowmap_vertex>
+	#include <fog_vertex>
+#endif //PHYSICAL_SHADING
+
+    //vec3 origin = vec3(xlim.x, ylim.x, zlim.x);
+    //vec3 size_viewport = vec3(xlim.y, ylim.y, zlim.y) - origin;
     vec3 animation_time = vec3(animation_time_x, animation_time_y, animation_time_z);
     vec3 animation_time_v = vec3(animation_time_vx, animation_time_vy, animation_time_vz);
 
@@ -115,7 +178,7 @@ void main(void) {
         vec4 view_pos = modelViewMatrix * vec4(model_pos, 1.0);
     #endif
 #endif
-    vec4 mvPosition = view_pos;
+    vec4 mvPosition_new = view_pos;//
     gl_Position = projectionMatrix * view_pos;
     vec3 positionEye = ( modelViewMatrix * vec4( model_pos, 1.0 ) ).xyz;
     vertex_position = positionEye;
@@ -124,13 +187,17 @@ void main(void) {
     vertex_color = vec4(model_pos + vec3(0.5, 0.5, 0.5), 1.0);
 #else
     #ifdef USE_COLORMAP
-        float color_animated = mix(color_previous, color, animation_time_color);
+        float color_animated = mix(color_previous, color_current, animation_time_color);
         float color_index = scale_transform_linear(color_animated, vec2(0.0, 1.0), domain_color);
         vertex_color = texture2D(colormap, vec2(color_index, 0));
     #else
-        vertex_color = mix(color_previous, color, animation_time_color);
+        vertex_color = mix(color_previous, color_current, animation_time_color);
     #endif
+    //vertex_color = mix(color_previous, color_current, animation_time_color);
 #endif
 
-    #include <fog_vertex>
+//#include <fog_vertex>
+#ifdef USE_FOG
+ 	fogDepth = -mvPosition_new.z;
+#endif
 }

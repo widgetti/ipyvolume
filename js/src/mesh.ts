@@ -28,9 +28,33 @@ class MeshView extends widgets.WidgetView {
     texture_loader: any;
     textures: any;
     texture_video: any;
+
+    LIGHTING_MODELS: any;
+
+    lighting_model: any;
+    diffuse_color : any;
+    opacity : any;
+    specular_color : any;
+    shininess : any;
+    color : any;
+    emissive_intensity : any;
+    roughness : any;
+    metalness : any;
+    cast_shadow : any;
+    receive_shadow : any;
+    flat_shading : any;
+
     render() {
         // console.log("created mesh view, parent is")
         // console.log(this.options.parent)
+
+        this.LIGHTING_MODELS = {
+            DEFAULT: 'DEFAULT',
+            LAMBERT: 'LAMBERT',
+            PHONG: 'PHONG',
+            PHYSICAL : 'PHYSICAL'
+        };
+
         this.renderer = this.options.parent;
         this.previous_values = {};
         this.attributes_changed = {};
@@ -42,11 +66,15 @@ class MeshView extends widgets.WidgetView {
             this._load_textures();
         }
 
-        this.uniforms = {
+        this.uniforms = THREE.UniformsUtils.merge( [
+            {
                 domain_x: { type: "2f", value: [0., 1.] },
                 domain_y: { type: "2f", value: [0., 1.] },
                 domain_z: { type: "2f", value: [0., 1.] },
                 domain_color: { type: "2f", value: [0., 1.] },
+                // xlim : { type: "2f", value: [0., 1.] },
+                // ylim : { type: "2f", value: [0., 1.] },
+                // zlim : { type: "2f", value: [0., 1.] },
                 // tslint:disable-next-line: object-literal-sort-keys
                 animation_time_x : { type: "f", value: 1. },
                 animation_time_y : { type: "f", value: 1. },
@@ -58,13 +86,27 @@ class MeshView extends widgets.WidgetView {
                 texture: { type: "t", value: null },
                 texture_previous: { type: "t", value: null },
                 colormap: {type: "t", value: null},
-        };
+            },
+            THREE.UniformsLib[ "common" ],
+            THREE.UniformsLib[ "lights" ],
+            {
+                emissive: { value: new THREE.Color( 0x000000 ) },
+                emissiveIntensity: { value: 1 },
+                specular: { value: new THREE.Color( 0xffffff ) },
+                shininess: { value: 0 },
+                roughness: { value: 0.0 },
+                metalness: { value: 0.0 },
+            },
+        ] );
+
         const get_material = (name)  => {
             if (this.model.get(name)) {
                 return this.model.get(name).obj.clone();
             } else {
                 const mat = new THREE.ShaderMaterial();
                 mat.side = THREE.DoubleSide;
+                mat.needsUpdate = true;
+
                 return mat;
             }
 
@@ -82,30 +124,32 @@ class MeshView extends widgets.WidgetView {
         if (this.model.get("material")) {
             this.model.get("material").on("change", () => {
                 this._update_materials();
-                this.renderer.update();
             });
         }
         if (this.model.get("line_material")) {
             this.model.get("line_material").on("change", () => {
                 this._update_materials();
-                this.renderer.update();
             });
         }
 
         this._update_color_scale();
         this.create_mesh();
         this.add_to_scene();
+        
         this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles change:lines",
             this.on_change, this);
         this.model.on("change:geo change:connected", this.update_, this);
         this.model.on("change:color_scale", this._update_color_scale, this);
         this.model.on("change:texture", this._load_textures, this);
-        this.model.on("change:visible", this.update_visibility, this);
+        this.model.on("change:visible change:lighting_model change:opacity change:specular_color change:shininess change:emissive_intensity change:roughness change:metalness change:cast_shadow change:receive_shadow change:flat_shading", 
+        this._update_materials, this);
     }
 
-    public update_visibility() {
-        this._update_materials();
-        this.renderer.update();
+    public force_lighting_model() {
+        if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT){
+            this.model.set("lighting_model", this.LIGHTING_MODELS.PHYSICAL);
+            this._update_materials();
+        }
     }
 
     public _load_textures() {
@@ -122,7 +166,7 @@ class MeshView extends widgets.WidgetView {
                 texture.minFilter = THREE.LinearFilter;
                 // texture.wrapT = THREE.RepeatWrapping;
                 this.textures = [texture];
-                this._update_materials();
+                //this._update_materials();
                 this.update_();
             });
         } else {
@@ -130,7 +174,7 @@ class MeshView extends widgets.WidgetView {
                 this.texture_loader.load(texture_url, (threejs_texture) => {
                     threejs_texture.wrapS = THREE.RepeatWrapping;
                     threejs_texture.wrapT = THREE.RepeatWrapping;
-                    this._update_materials();
+                    //this._update_materials();
                     this.update_();
                 }),
             );
@@ -151,8 +195,22 @@ class MeshView extends widgets.WidgetView {
     }
 
     add_to_scene() {
+        this.cast_shadow = this.model.get("cast_shadow");
+        this.receive_shadow = this.model.get("receive_shadow");
+
         this.meshes.forEach((mesh) => {
+            mesh.castShadow = this.cast_shadow;
+            mesh.receiveShadow = this.receive_shadow;
             this.renderer.scene_scatter.add(mesh);
+        });
+    }
+
+    update_shadow() {
+        this.cast_shadow = this.model.get("cast_shadow");
+        this.receive_shadow = this.model.get("receive_shadow");
+        this.meshes.forEach((mesh) => {
+            mesh.castShadow = this.cast_shadow;
+            mesh.receiveShadow = this.receive_shadow;
         });
     }
 
@@ -164,36 +222,42 @@ class MeshView extends widgets.WidgetView {
     }
 
     on_change(attribute) {
-        for (const key of Object.keys(this.model.changedAttributes())) {
-            // console.log("changed " +key)
-            this.previous_values[key] = this.model.previous(key);
-            // attributes_changed keys will say what needs to be animated, it's values are the properties in
-            // this.previous_values that need to be removed when the animation is done
-            // we treat changes in _selected attributes the same
-            const key_animation = key.replace("_selected", "");
-            if (key_animation === "sequence_index") {
-                const animated_by_sequence = ["x", "y", "z", "u", "v", "color"];
-                animated_by_sequence.forEach((name) => {
-                    if (isArray(this.model.get(name)) && this.model.get(name).length > 1) {
-                        this.attributes_changed[name] = [name, "sequence_index"];
-                    }
-                });
-                this.attributes_changed.texture = ["texture", "sequence_index"];
-            } else if (key_animation === "triangles") {
-                // direct change, no animation
-            } else if (key_animation === "lines") {
-                // direct change, no animation
-            } else if (key_animation === "selected") { // and no explicit animation on this one
-                this.attributes_changed.color = [key];
-            } else {
-                this.attributes_changed[key_animation] = [key];
-                // animate the size as well on x y z changes
-                if (["x", "y", "z", "u", "v", "color"].indexOf(key_animation) !== -1) {
-                    // console.log("adding size to list of changed attributes")
-                    // this.attributes_changed["size"] = []
-                }
 
+        try {
+            for (const key of Object.keys(this.model.changedAttributes())) {
+                // console.log("changed " +key)
+                this.previous_values[key] = this.model.previous(key);
+                // attributes_changed keys will say what needs to be animated, it's values are the properties in
+                // this.previous_values that need to be removed when the animation is done
+                // we treat changes in _selected attributes the same
+                const key_animation = key.replace("_selected", "");
+                if (key_animation === "sequence_index") {
+                    const animated_by_sequence = ["x", "y", "z", "u", "v", "color"];
+                    animated_by_sequence.forEach((name) => {
+                        if (isArray(this.model.get(name)) && this.model.get(name).length > 1) {
+                            this.attributes_changed[name] = [name, "sequence_index"];
+                        }
+                    });
+                    //this.attributes_changed.texture = ["texture", "sequence_index"];
+                } 
+                // else if (key_animation === "triangles") {
+                //     // direct change, no animation
+                // } else if (key_animation === "lines") {
+                //     // direct change, no animation
+                // } else if (key_animation === "selected") { // and no explicit animation on this one
+                //     this.attributes_changed.color = [key];
+                // } else {
+                //     this.attributes_changed[key_animation] = [key];
+                //     // animate the size as well on x y z changes
+                //     if (["x", "y", "z", "u", "v", "color"].indexOf(key_animation) !== -1) {
+                //         // console.log("adding size to list of changed attributes")
+                //         // this.attributes_changed["size"] = []
+                //     }
+                // }
             }
+        }
+        catch(err) {
+            console.log("ERROR: Error setting state: this.model.changedAttributes is not a function or its return value is not iterable");
         }
         this.update_();
     }
@@ -202,7 +266,7 @@ class MeshView extends widgets.WidgetView {
         this.remove_from_scene();
         this.create_mesh();
         this.add_to_scene();
-        this.renderer.update();
+        this._update_materials();
     }
 
     _get_value(value, index, default_value) {
@@ -341,26 +405,73 @@ class MeshView extends widgets.WidgetView {
         if (this.model.get("line_material")) {
             this.line_material_rgb.copy(this.model.get("line_material").obj);
         }
-        this.material.defines = {...this.scale_defines};
+
+        // update material defines in order to run correct shader code
+        this.material.defines = {USE_COLOR: true, DEFAULT_SHADING:true, LAMBERT_SHADING:false, PHONG_SHADING:false, PHYSICAL_SHADING:false, ...this.scale_defines};
         this.material.defines.USE_COLORMAP = this.model.get("color_scale") !== null;
-        this.material_rgb.defines = {USE_RGB: true, ...this.scale_defines};
-        this.line_material.defines = {AS_LINE: true, ...this.scale_defines};
-        this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true, ...this.scale_defines};
+        this.material_rgb.defines = {USE_RGB: true, USE_COLOR: true, DEFAULT_SHADING:true, LAMBERT_SHADING:false, PHONG_SHADING:false, PHYSICAL_SHADING:false, ...this.scale_defines};
+        this.line_material.defines = {AS_LINE: true, DEFAULT_SHADING:true, LAMBERT_SHADING:false, PHONG_SHADING:false, PHYSICAL_SHADING:false, ...this.scale_defines};
+        this.line_material_rgb.defines = {AS_LINE: true, USE_RGB: true, USE_COLOR: true, DEFAULT_SHADING:true, LAMBERT_SHADING:false, PHONG_SHADING:false, PHYSICAL_SHADING:false, ...this.scale_defines};
         this.material.extensions = {derivatives: true};
+
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");
         this.material_rgb.visible = this.material.visible && this.model.get("visible");
         this.line_material.visible = this.line_material.visible && this.model.get("visible");
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
+
+        this.lighting_model = this.model.get("lighting_model");
         this.materials.forEach((material) => {
-            material.vertexShader = (require("raw-loader!../glsl/mesh-vertex.glsl") as any).default;
-            material.fragmentShader = (require("raw-loader!../glsl/mesh-fragment.glsl") as any).default;
             material.uniforms = this.uniforms;
+            material.vertexShader = require("raw-loader!../glsl/mesh-vertex.glsl");
+            material.fragmentShader = require("raw-loader!../glsl/mesh-fragment.glsl");
+            material.defines.DEFAULT_SHADING = false;
+            material.defines.LAMBERT_SHADING = false;
+            material.defines.PHONG_SHADING = false;
+            material.defines.PHYSICAL_SHADING = false;
+
+            if(this.lighting_model === this.LIGHTING_MODELS.DEFAULT) {
+                material.defines.DEFAULT_SHADING = true;
+            }
+            else if(this.lighting_model === this.LIGHTING_MODELS.LAMBERT) {
+                material.defines.LAMBERT_SHADING = true;
+            }
+            else if(this.lighting_model === this.LIGHTING_MODELS.PHONG) {
+                material.defines.PHONG_SHADING = true;
+            }
+            else if(this.lighting_model === this.LIGHTING_MODELS.PHYSICAL) {
+                material.defines.PHYSICAL_SHADING = true;
+            }
             material.depthWrite = true;
-            material.transparant = true;
+            material.transparent = true;
             material.depthTest = true;
+            // use lighting
+            material.lights = true;
+            material.flatShading = this.model.get("flat_shading");
             patchMaterial(material);
+
         });
+
+        this.diffuse_color = this.model.get("diffuse_color");
+        this.opacity = this.model.get("opacity");
+        this.specular_color = this.model.get("specular_color");
+        this.shininess = this.model.get("shininess");
+        this.color = this.model.get("color");
+        this.emissive_intensity = this.model.get("emissive_intensity");
+        this.roughness = this.model.get("roughness");
+        this.metalness = this.model.get("metalness");
+
+        this.material.uniforms.diffuse.value = new THREE.Color(1, 1, 1);// keep hardcoded
+        this.material.uniforms.opacity.value = this.opacity;
+        this.material.uniforms.specular.value = new THREE.Color(this.specular_color);
+        this.material.uniforms.shininess.value = this.shininess;
+        this.material.uniforms.emissive.value = new THREE.Color(this.color);
+        this.material.uniforms.emissiveIntensity.value = this.emissive_intensity; 
+        this.material.uniforms.roughness.value = this.roughness;
+        this.material.uniforms.metalness.value = this.metalness;
+
+        this.update_shadow();
+
         const texture = this.model.get("texture");
         if (texture && this.textures) {
             this.material.defines.USE_TEXTURE = true;
@@ -369,6 +480,8 @@ class MeshView extends widgets.WidgetView {
         this.material_rgb.needsUpdate = true;
         this.line_material.needsUpdate = true;
         this.line_material_rgb.needsUpdate = true;
+
+        this.renderer.update();
     }
 
     create_mesh() {
@@ -480,10 +593,10 @@ class MeshView extends widgets.WidgetView {
             geometry.addAttribute("position", new THREE.BufferAttribute(current.array_vec3.vertices, 3));
             geometry.addAttribute("position_previous", new THREE.BufferAttribute(previous.array_vec3.vertices, 3));
             if (this.model.get("color_scale")) {
-                geometry.addAttribute("color", new THREE.BufferAttribute(current.array.color, 1));
+                geometry.addAttribute("color_current", new THREE.BufferAttribute(current.array.color, 1));
                 geometry.addAttribute("color_previous", new THREE.BufferAttribute(previous.array.color, 1));
             } else {
-                geometry.addAttribute("color", new THREE.BufferAttribute(current.array_vec4.color, 4));
+                geometry.addAttribute("color_current", new THREE.BufferAttribute(current.array_vec4.color, 4));
                 geometry.addAttribute("color_previous", new THREE.BufferAttribute(previous.array_vec4.color, 4));
             }
             geometry.setIndex(new THREE.BufferAttribute(triangles, 1));
@@ -502,13 +615,16 @@ class MeshView extends widgets.WidgetView {
                 geometry.addAttribute("u_previous", new THREE.BufferAttribute(u_previous, 1));
                 geometry.addAttribute("v_previous", new THREE.BufferAttribute(v_previous, 1));
             }
+            geometry.computeVertexNormals();
 
             this.surface_mesh = new THREE.Mesh(geometry, this.material);
             // BUG? because of our custom shader threejs thinks our object if out
             // of the frustum
+
             this.surface_mesh.frustumCulled = false;
             this.surface_mesh.material_rgb = this.material_rgb;
             this.surface_mesh.material_normal = this.material;
+
             this.meshes.push(this.surface_mesh);
         }
 
@@ -528,7 +644,7 @@ class MeshView extends widgets.WidgetView {
                 color_previous = new THREE.BufferAttribute(previous.array_vec4.color, 4);
             }
             color.normalized = true;
-            geometry.addAttribute("color", color);
+            geometry.addAttribute("color_current", color);
             color_previous.normalized = true;
             geometry.addAttribute("color_previous", color_previous);
             const indices = new Uint32Array(lines[0]);
@@ -579,6 +695,13 @@ class MeshModel extends widgets.WidgetModel {
         texture: serialize.texture,
         material: { deserialize: widgets.unpack_models },
         line_material: { deserialize: widgets.unpack_models },
+        diffuse_color : serialize.color_or_json,
+        opacity : serialize.array_or_json,
+        specular_color : serialize.color_or_json,
+        shininess : serialize.array_or_json,
+        emissive_intensity : serialize.array_or_json,
+        roughness : serialize.array_or_json,
+        metalness : serialize.array_or_json,
     };
     defaults() {
         return {
@@ -588,7 +711,7 @@ class MeshModel extends widgets.WidgetModel {
             _model_module : "ipyvolume",
             _view_module : "ipyvolume",
             _model_module_version: semver_range,
-                _view_module_version: semver_range,
+            _view_module_version: semver_range,
             color: "red",
             color_scale: null,
             sequence_index: 0,
@@ -596,6 +719,17 @@ class MeshModel extends widgets.WidgetModel {
             visible: true,
             visible_lines: true,
             visible_faces: true,
+            lighting_model: "DEFAULT",
+            diffuse_color : "white",
+            opacity : 1,
+            specular_color : "white",
+            shininess : 1,
+            emissive_intensity : 1,
+            roughness : 0,
+            metalness : 0,
+            cast_shadow : false,
+            receive_shadow : false,
+            flat_shading : true
         };
     }
 }
