@@ -1911,7 +1911,12 @@ def point_light(
     return light
 
 def setup_material_widgets(mesh=None, tab=None, index=0):
-
+    """Set up customization widgets for Mesh object materials inside an ipywidget.Tab
+        For more accessibility call show_lighting_widgets() instead
+    :param mesh: {Mesh} Mesh object 
+    :param tab: {ipywidgets.Tab} Parent ipywidget.Tab
+    :param index: Index of current ipywidget.Tab
+    """
     if tab == None or mesh == None:
         return None
     style = {'description_width': '200px'}
@@ -1969,10 +1974,16 @@ def setup_material_widgets(mesh=None, tab=None, index=0):
     box = ipywidgets.VBox(children = interactables.children)
     tab.children += (box,) 
     tab.set_title(index, "Mesh "+str(index))
-    return interactables
+
 
 
 def setup_light_widgets(light=None, tab=None, index=0):
+    """Set up customization widgets for pythreejs.Light objects inside an ipywidget.Tab
+        For more accessibility call show_lighting_widgets() instead
+    :param mesh: {pythreejs.Light} Light object. Can be AmbientLight, HemisphereLight, DirectionalLight, SpotLight or PointLight
+    :param tab: {ipywidgets.Tab} Parent ipywidget.Tab
+    :param index: Index of current ipywidget.Tab
+    """
     if tab == None or light == None:
         return None
     interactables = None
@@ -2130,10 +2141,13 @@ def setup_light_widgets(light=None, tab=None, index=0):
         box = ipywidgets.VBox(children = interactables.children)
         tab.children += (box,) 
         tab.set_title(index, light.type + " " + str(index))
-    return interactables
+
 
 
 def show_lighting_widgets():
+    """Set up and show customization widgets for pythreejs.Light objects and Mesh object materials inside an ipywidget.Tab
+    Function will parse all lights and meshes from the current figure and will generate and display tabs for each object
+    """
     tab = ipywidgets.Tab()
     fig = gcf()
     index = 0
@@ -2145,4 +2159,4 @@ def show_lighting_widgets():
         index+=1
     display(tab)
 
-    return None
+
