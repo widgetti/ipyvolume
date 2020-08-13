@@ -110,7 +110,7 @@ class MeshView extends widgets.WidgetView {
         this.model.on("change:geo change:connected", this.update_, this);
         this.model.on("change:color_scale", this._update_color_scale, this);
         this.model.on("change:texture", this._load_textures, this);
-        this.model.on("change:visible change:lighting_model change:opacity change:material", this._update_materials, this);
+        this.model.on("change:visible change:lighting_model change:opacity change:material change:cast_shadow change:receive_shadow", this._update_materials, this);
     }
 
     public _load_textures() {

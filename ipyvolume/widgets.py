@@ -100,6 +100,9 @@ class Mesh(widgets.Widget):
     def _default_line_material(self):
         return pythreejs.ShaderMaterial()
 
+    cast_shadow = traitlets.CBool(default_value=True).tag(sync=True)
+    receive_shadow = traitlets.CBool(default_value=True).tag(sync=True)
+
 @widgets.register
 class Scatter(widgets.Widget):
     _view_name = Unicode('ScatterView').tag(sync=True)
