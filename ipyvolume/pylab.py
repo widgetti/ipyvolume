@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 from __future__ import division
+import pythreejs
 
 __all__ = [
     'current',
@@ -40,6 +41,15 @@ __all__ = [
     'style',
     'plot_plane',
     'selector_default',
+    'light_ambient',
+    'light_directional',
+    'light_spot',
+    'light_point',
+    'light_hemisphere',
+    'material_physical',
+    'material_phong',
+    'material_lambert',
+    'material_clear',
 ]
 
 import os
@@ -49,10 +59,7 @@ import tempfile
 import uuid
 import base64
 
-try:
-    from io import BytesIO as StringIO
-except:
-    from cStringIO import StringIO
+from io import BytesIO as StringIO
 
 import six
 import numpy as np
@@ -123,11 +130,19 @@ _doc_snippets["x2d"] = "numpy array of shape (N,M) or (S, N, M) with x positions
 _doc_snippets["y2d"] = "idem for y"
 _doc_snippets["z2d"] = "idem for z"
 _doc_snippets["texture"] = "PIL.Image object or ipywebrtc.MediaStream (can be a seqence)"
+_doc_snippets['cast_shadow'] = 'If this object casts a shadown on other options (default) or not. Works only with Directional, Point and Spot lights.'
+_doc_snippets['receive_shadow'] = 'If this objects receives shadows (default) or not. Works only with Directional, Point and Spot lights.'
+_doc_snippets['opacity'] = "Float in the range of 0.0 - 1.0 indicating how transparent the material is. A value of 0.0 indicates fully transparent, 1.0 is fully opaque."\
+    "If the material's transparent property is not set to true, the material will remain fully opaque and this value will only affect its color."
+_doc_snippets['transparent'] = "Defines whether this material is transparent. (NOTE: might not always render correctly, see the topic of order independant transparancy)"
+
+emissive_intensity_default = 0.2
 
 
 class current:
     figure = None
     container = None
+    material = None
     figures = {}
     containers = {}
 
@@ -136,6 +151,7 @@ def clear():
     """Remove current figure (and container)."""
     current.container = None
     current.figure = None
+    current.material = None
 
 
 def controls_light(return_widget=False):
@@ -308,8 +324,105 @@ default_size = 2
 default_size_selected = default_size * 1.3
 
 
+def material_clear():
+    '''Set the current material to the default'''
+    current.material = None
+
+
+def material_physical(color="#ffffff", emissive="#000000", emissive_intensity=emissive_intensity_default, roughness=0.5, metalness=0, flat_shading=False, opacity=1, transparent=False, **kwargs):
+    """Sets the current material to a :any:`pythreejs.MeshPhysicalMaterial`.
+
+    :param color color: Color of the material, by default set to white (0xffffff).
+    :param color emissive: Emissive (light) color of the material, essentially a solid color unaffected by other lighting. Default is black.
+    :param emissive_intensity: Factor multiplied with color. Takes values between 0 and 1. Default is 0.2
+    :param roughness: How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 0.5
+    :param metalness: How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
+    :param flat_shading: A technique for color computing where all polygons reflect as a flat surface. Default False
+    :param float opacity: {opacity}
+    :param bool transparent: {transparent}
+    :param kwargs: Arguments passed on the constructor of :any:`pythreejs.MeshPhysicalMaterial`
+    :return: :any:`pythreejs.MeshPhysicalMaterial`
+    """
+    material = pythreejs.MeshPhysicalMaterial(
+        color=color,
+        emissive=emissive,
+        emissiveIntensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
+        flat_shading=flat_shading,
+        opacity=opacity,
+        transparent=transparent,
+        side=pythreejs.enums.Side.DoubleSide,
+        **kwargs
+    )
+    current.material = material
+    return current.material
+
+
+def material_phong(emissive="#000000", specular="#111111", shininess=30, flat_shading=False, opacity=1, transparent=False, **kwargs):
+    """Sets the current material to a :any:`pythreejs.MeshPhongMaterial`.
+
+    :param color emissive: Emissive (light) color of the material, essentially a solid color unaffected by other lighting. Default is black.
+    :param color specular: Specular color of the material. Default is a Color set to 0x111111 (very dark grey). This defines how shiny the material is and the color of its shine.
+    :param snininess: How shiny the specular highlight is; a higher value gives a sharper highlight. Default is 30.
+    :param flat_shading: A technique for color computing where all polygons reflect as a flat surface. Default False
+    :param float opacity: {opacity}
+    :param bool transparent: {transparent}
+    :param kwargs: Arguments passed on the constructor of :any:`pythreejs.MeshPhongMaterial`
+    :return: :any:`pythreejs.MeshPhongMaterial`
+    """
+    material = pythreejs.MeshPhongMaterial(
+        emissive=emissive,
+        specular=specular,
+        shininess=shininess,
+        flat_shading=flat_shading,
+        opacity=opacity,
+        transparent=transparent,
+        side=pythreejs.enums.Side.DoubleSide,
+        **kwargs
+    )
+    current.material = material
+    return current.material
+
+
 @_docsubst
-def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=None, v=None, texture=None):
+def material_lambert(color="#ffffff", emissive="#000000", flat_shading=False, opacity=1, transparent=False, **kwargs):
+    """Sets the current material to a :any:`pythreejs.MeshLambertMaterial`.
+
+    :param color color: Color of the material, by default set to white (0xffffff).
+    :param color emissive: Emissive (light) color of the material, essentially a solid color unaffected by other lighting. Default is black.
+    :param flat_shading: A technique for color computing where all polygons reflect as a flat surface. Default False
+    :param float opacity: {opacity}
+    :param bool transparent: {transparent}
+    :param kwargs: Arguments passed on the constructor of :any:`pythreejs.MeshLambertMaterial`
+    :return: :any:`pythreejs.MeshLambertMaterial`
+    """
+    material = pythreejs.MeshLambertMaterial(
+        color=color,
+        emissive=emissive,
+        flat_shading=flat_shading,
+        opacity=opacity,
+        transparent=transparent,
+        side=pythreejs.enums.Side.DoubleSide,
+        **kwargs
+    )
+    current.material = material
+    return current.material
+
+
+@_docsubst
+def plot_trisurf(
+        x,
+        y,
+        z,
+        triangles=None,
+        lines=None,
+        color=default_color,
+        u=None,
+        v=None,
+        texture=None,
+        cast_shadow=True,
+        receive_shadow=True):
     """Draw a polygon/triangle mesh defined by a coordinate and triangle indices.
 
     The following example plots a rectangle in the z==2 plane, consisting of 2 triangles:
@@ -333,10 +446,12 @@ def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=Non
     :param z: {z}
     :param triangles: numpy array with indices referring to the vertices, defining the triangles, with shape (M, 3)
     :param lines: numpy array with indices referring to the vertices, defining the lines, with shape (K, 2)
-    :param color: {color}
+    :param color: {color} Color of the material, essentially a solid color unaffected by other lighting. Default is 'red'
     :param u: {u}
     :param v: {v}
     :param texture: {texture}
+    :param cast_shadow: {cast_shadow}
+    :param receive_shadow: {receive_shadow}
     :return: :any:`Mesh`
     """
     fig = gcf()
@@ -344,14 +459,31 @@ def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=Non
         triangles = np.array(triangles).astype(dtype=np.uint32)
     if lines is not None:
         lines = np.array(lines).astype(dtype=np.uint32)
-    mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles, lines=lines, color=color, u=u, v=v, texture=texture)
+    kwargs = {}
+    if current.material is not None:
+        kwargs['material'] = current.material
+
+    # TODO: PHONG and LAMBERT
+    mesh = ipv.Mesh(
+        x=x,
+        y=y,
+        z=z,
+        triangles=triangles,
+        lines=lines,
+        color=color,
+        u=u, v=v,
+        texture=texture,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow,
+        **kwargs
+    )
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
     fig.meshes = fig.meshes + [mesh]
     return mesh
 
 
 @_docsubst
-def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
+def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False, cast_shadow=True, receive_shadow=True):
     """Draws a 2d surface in 3d, defined by the 2d ordered arrays x,y,z.
 
     :param x: {x2d}
@@ -360,13 +492,15 @@ def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
     :param color: {color2d}
     :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
     :param bool wrapy: simular for the y coordinate
+    :param cast_shadow: {cast_shadow}
+    :param receive_shadow: {receive_shadow}
     :return: :any:`Mesh`
     """
-    return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=False)
+    return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=False, cast_shadow=cast_shadow, receive_shadow=receive_shadow)
 
 
 @_docsubst
-def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False):
+def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False, cast_shadow=True, receive_shadow=True):
     """Draws a 2d wireframe in 3d, defines by the 2d ordered arrays x,y,z.
 
     See also :any:`ipyvolume.pylab.plot_mesh`
@@ -377,13 +511,15 @@ def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False):
     :param color: {color2d}
     :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the begin and end points
     :param bool wrapy: idem for y
+    :param cast_shadow: {cast_shadow}
+    :param receive_shadow: {receive_shadow}
     :return: :any:`Mesh`
     """
-    return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=True, surface=False)
+    return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=True, surface=False, cast_shadow=cast_shadow, receive_shadow=receive_shadow)
 
 
 def plot_mesh(
-    x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None, texture=None
+    x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None, texture=None, cast_shadow=True, receive_shadow=True
 ):
     """Draws a 2d wireframe+surface in 3d: generalization of :any:`plot_wireframe` and :any:`plot_surface`.
 
@@ -398,6 +534,8 @@ def plot_mesh(
     :param u: {u}
     :param v: {v}
     :param texture: {texture}
+    :param cast_shadow: {cast_shadow}
+    :param receive_shadow: {receive_shadow}
     :return: :any:`Mesh`
     """
     fig = gcf()
@@ -461,6 +599,9 @@ def plot_mesh(
 
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
     triangles, lines = _make_triangles_lines((nx, ny), wrapx, wrapy)
+    kwargs = {}
+    if current.material is not None:
+        kwargs['material'] = current.material
     mesh = ipv.Mesh(
         x=x,
         y=y,
@@ -471,19 +612,24 @@ def plot_mesh(
         u=u,
         v=v,
         texture=texture,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow,
+        **kwargs
     )
     fig.meshes = fig.meshes + [mesh]
     return mesh
 
 
 @_docsubst
-def plot(x, y, z, color=default_color, **kwargs):
+def plot(x, y, z, color=default_color, cast_shadow=True, receive_shadow=True, **kwargs):
     """Plot a line in 3d.
 
     :param x: {x}
     :param y: {y}
     :param z: {z}
     :param color: {color}
+    :param cast_shadow: {cast_shadow}
+    :param receive_shadow: {receive_shadow}
     :param kwargs: extra arguments passed to the Scatter constructor
     :return: :any:`Scatter`
     """
@@ -493,7 +639,7 @@ def plot(x, y, z, color=default_color, **kwargs):
         visible_lines=True, color_selected=None, size_selected=1, size=1, connected=True, visible_markers=False
     )
     kwargs = dict(defaults, **kwargs)
-    s = ipv.Scatter(x=x, y=y, z=z, color=color, **kwargs)
+    s = ipv.Scatter(x=x, y=y, z=z, color=color, cast_shadow=True, receive_shadow=True, **kwargs)
     s.material.visible = False
     fig.scatters = fig.scatters + [s]
     return s
@@ -511,26 +657,34 @@ def scatter(
     marker="diamond",
     selection=None,
     grow_limits=True,
+    cast_shadow=True,
+    receive_shadow=True,
     **kwargs
 ):
     """Plot many markers/symbols in 3d.
-
+       Due to certain shader limitations, should not use with Spot Lights and Point Lights.
+       Does not support shadow mapping.
     :param x: {x}
     :param y: {y}
     :param z: {z}
-    :param color: {color}
+    :param color: {color} Color of the material, essentially a solid color unaffected by other lighting. Default is 'red'
     :param size: {size}
     :param size_selected: like size, but for selected glyphs
     :param color_selected:  like color, but for selected glyphs
     :param marker: {marker}
     :param selection: numpy array of shape (N,) or (S, N) with indices of x,y,z arrays of the selected markers, which
                       can have a different size and color
+    :param cast_shadow: {cast_shadow}
+    :param receive_shadow: {receive_shadow}
     :param kwargs:
     :return: :any:`Scatter`
     """
     fig = gcf()
     if grow_limits:
         _grow_limits(x, y, z)
+    kwargs = kwargs.copy()
+    if current.material is not None and 'material' not in kwargs:
+        kwargs['material'] = current.material
     s = ipv.Scatter(
         x=x,
         y=y,
@@ -541,6 +695,8 @@ def scatter(
         size_selected=size_selected,
         geo=marker,
         selection=selection,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow,
         **kwargs
     )
     fig.scatters = fig.scatters + [s]
@@ -560,6 +716,8 @@ def quiver(
     color=default_color,
     color_selected=default_color_selected,
     marker="arrow",
+    cast_shadow=True,
+    receive_shadow=True,
     **kwargs
 ):
     """Create a quiver plot, which is like a scatter plot but with arrows pointing in the direction given by u, v and w.
@@ -575,6 +733,8 @@ def quiver(
     :param color: {color}
     :param color_selected: like color, but for selected glyphs
     :param marker: (currently only 'arrow' would make sense)
+    :param cast_shadow: {cast_shadow}
+    :param receive_shadow: {receive_shadow}
     :param kwargs: extra arguments passed on to the Scatter constructor
     :return: :any:`Scatter`
     """
@@ -582,6 +742,9 @@ def quiver(
     _grow_limits(x, y, z)
     if 'vx' in kwargs or 'vy' in kwargs or 'vz' in kwargs:
         raise KeyError('Please use u, v, w instead of vx, vy, vz')
+    kwargs = kwargs.copy()
+    if current.material is not None and 'material' not in kwargs:
+        kwargs['material'] = current.material
     s = ipv.Scatter(
         x=x,
         y=y,
@@ -594,6 +757,8 @@ def quiver(
         color_selected=color_selected,
         size_selected=size_selected,
         geo=marker,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow,
         **kwargs
     )
     fig.scatters = fig.scatters + [s]
@@ -1310,7 +1475,7 @@ for style_name, __ in ipv.styles.styles.items():
 
 
 @_docsubst
-def plot_plane(where="back", texture=None):
+def plot_plane(where="back", texture=None, **kwargs):
     """Plot a plane at a particular location in the viewbox.
 
     :param str where: 'back', 'front', 'left', 'right', 'top', 'bottom'
@@ -1350,7 +1515,7 @@ def plot_plane(where="back", texture=None):
     if texture is not None:
         u = [0.0, 1.0, 1.0, 0.0]
         v = [0.0, 0.0, 1.0, 1.0]
-    mesh = plot_trisurf(x, y, z, triangles, texture=texture, u=u, v=v)
+    mesh = plot_trisurf(x, y, z, triangles, texture=texture, u=u, v=v, **kwargs)
     return mesh
 
 
@@ -1518,3 +1683,227 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
     lines[3::4, 0], lines[3::4, 1] = t1[1], t2[1]
 
     return triangles, lines
+
+
+def light_ambient(
+        light_color=default_color_selected,
+        intensity=1):
+    """Create a new Ambient Light
+        An Ambient Light source represents an omni-directional, fixed-intensity and fixed-color light source that affects all objects in the scene equally (is omni-present).
+        This light cannot be used to cast shadows.
+    :param light_color: {color} Color of the Ambient Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Ambient Light intensity. Default is 1
+    :return: :any:`pythreejs.AmbientLight`
+    """
+
+    light = pythreejs.AmbientLight(color=light_color, intensity=intensity)
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+
+def light_hemisphere(
+        light_color='#ffffbb',
+        light_color2='#080820',
+        intensity=1,
+        position=[0, 1, 0]):
+    """Create a new Hemisphere Light
+
+    A light source positioned directly above the scene, with color fading from the sky color to the ground color.
+    This light cannot be used to cast shadows.
+
+    :param light_color: {color} Sky color. Default white-ish 'ffffbb'.
+    :param light_color2: {color} Ground color. Default greyish '#080820'
+    :param intensity: Factor used to increase or decrease the Hemisphere Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Hemisphere Light. Default [0, 1, 0]
+    :return: :any:`pythreejs.HemisphereLight`
+    """
+
+    light = pythreejs.HemisphereLight(color=light_color, groundColor=light_color2, intensity=intensity, position=position)
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+
+def light_directional(
+        light_color=default_color_selected,
+        intensity=1,
+        position=[10, 10, 10],
+        target=[0, 0, 0],
+        near=0.1,
+        far=100,
+        shadow_camera_orthographic_size=10,
+        cast_shadow=True):
+    """Create a new Directional Light
+
+    A Directional Light source illuminates all objects equally from a given direction.
+    This light can be used to cast shadows.
+
+    :param light_color: {color} Color of the Directional Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Directional Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Directional Light. Default [10, 10, 10]
+    :param target: 3-element array (x y z) which describes the target of the Directional Light. Default [0, 0, 0]
+    :param cast_shadow: Property of a Directional Light to cast shadows. Default True
+    :return: :any:`pythreejs.DirectionalLight`
+    """
+    shadow_map_size = 1024
+    shadow_bias = -0.0008
+    shadow_radius = 1
+
+    # Shadow params
+    camera = pythreejs.OrthographicCamera(
+        near=near,
+        far=far,
+        left=-shadow_camera_orthographic_size / 2,
+        right=shadow_camera_orthographic_size / 2,
+        top=shadow_camera_orthographic_size / 2,
+        bottom=-shadow_camera_orthographic_size / 2
+    )
+    shadow = pythreejs.DirectionalLightShadow(
+        mapSize=(shadow_map_size, shadow_map_size),
+        radius=shadow_radius,
+        bias=shadow_bias,
+        camera=camera
+    )
+    # Light params
+    target = pythreejs.Object3D(position=target)
+    light = pythreejs.DirectionalLight(
+        color=light_color,
+        intensity=intensity,
+        position=position,
+        target=target,
+        castShadow=cast_shadow,
+        shadow=shadow
+    )
+
+    fig = gcf()
+
+    fig.lights = fig.lights + [light]
+
+    return light
+
+
+def light_spot(
+        light_color=default_color_selected,
+        intensity=1,
+        position=[10, 10, 10],
+        target=[0, 0, 0],
+        cast_shadow=True):
+    """Create a new Spot Light
+
+    A Spot Light produces a directed cone of light.
+    The light becomes more intense closer to the spotlight source and to the center of the light cone.
+    This light can be used to cast shadows.
+
+    :param light_color: {color} Color of the Spot Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Spot Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Spot Light. Default [0 1 0]
+    :param target: 3-element array (x y z) which describes the target of the Spot Light. Default [0 0 0]
+    :param cast_shadow: Property of a Spot Light to cast shadows. Default False
+    :return: :any:`pythreejs.SpotLight`
+    """
+
+    angle = 0.8
+    penumbra = 0
+    distance = 0
+    decay = 1
+    shadow_map_size = 1024
+    shadow_bias = -0.0008
+    shadow_radius = 1
+    near = 0.1
+    far = 100
+    fov = 90
+    aspect = 1
+
+    # Shadow params
+    camera = pythreejs.PerspectiveCamera(
+        near=near,
+        far=far,
+        fov=fov,
+        aspect=aspect
+    )
+    shadow = pythreejs.LightShadow(
+        mapSize=(shadow_map_size, shadow_map_size),
+        radius=shadow_radius,
+        bias=shadow_bias,
+        camera=camera
+    )
+    # Light params
+    target = pythreejs.Object3D(position=target)
+    light = pythreejs.SpotLight(
+        color=light_color,
+        intensity=intensity,
+        position=position,
+        target=target,
+        angle=angle,
+        distance=distance,
+        decay=decay,
+        penumbra=penumbra,
+        castShadow=cast_shadow,
+        shadow=shadow
+    )
+
+    fig = gcf()
+
+    fig.lights = fig.lights + [light]
+
+    return light
+
+
+def light_point(
+        light_color=default_color_selected,
+        intensity=1,
+        position=[10, 10, 10],
+        shadow_map_size=1024,
+        cast_shadow=True):
+    """Create a new Point Light
+
+    A Point Light originates from a single point and spreads outward in all directions.
+    This light can be used to cast shadows.
+
+    :param light_color: {color} Color of the Point Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Point Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Point Light. Default [0 1 0]
+    :param cast_shadow: Property of a Point Light to cast shadows. Default False
+    :return: :any:`PointLight`
+    """
+    near = 0.1
+    far = 100
+    fov = 90
+    aspect = 1
+    distance = 0
+    decay = 1
+    shadow_bias = -0.0008
+    shadow_radius = 1
+
+    # Shadow params
+    camera = pythreejs.PerspectiveCamera(
+        near=near,
+        far=far,
+        fov=fov,
+        aspect=aspect
+    )
+    shadow = pythreejs.LightShadow(
+        mapSize=(shadow_map_size, shadow_map_size),
+        radius=shadow_radius,
+        bias=shadow_bias,
+        camera=camera
+    )
+    # Light params
+    light = pythreejs.PointLight(
+        color=light_color,
+        intensity=intensity,
+        position=position,
+        distance=distance,
+        decay=decay,
+        castShadow=cast_shadow,
+        shadow=shadow
+    )
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+    return light

@@ -38,6 +38,10 @@ class VolumeView extends widgets.WidgetView {
         slice_size?: any,
         scale?: any,
         offset?: any,
+        diffuseColor?: any,
+        specular?: any,
+        shininess?: any,
+        emissive?: any;
     };
     uniform_data: { type: string; value: any[]; };
     uniform_transfer_function: { type: string; value: any[]; };
@@ -65,6 +69,8 @@ class VolumeView extends widgets.WidgetView {
             side: THREE.BackSide,
         });
         this.vol_box_mesh = new THREE.Mesh(this.vol_box_geo, this.box_material);
+        //@ts-ignore
+        this.vol_box_mesh.isVolume = true;
         // this.vol_box_mesh.position.z = -5;
         this.vol_box_mesh.updateMatrix();
         this.vol_box_mesh.matrixAutoUpdate = true;
@@ -158,6 +164,19 @@ class VolumeView extends widgets.WidgetView {
             this.renderer.rebuild_multivolume_rendering_material();
             this.renderer.update();
         });
+
+        const on_change_material = () => {
+            const material = this.model.get('material').obj;
+            // console.log('uniforms', uniforms);
+            this.uniform_volumes_values.diffuseColor = material.color;
+            this.uniform_volumes_values.specular = material.specular;
+            this.uniform_volumes_values.shininess = material.shininess;
+            this.uniform_volumes_values.emissive = material.emissive;
+            this.renderer.rebuild_multivolume_rendering_material();
+            this.renderer.update();
+        };
+        on_change_material();
+        this.model.get('material').on("change", on_change_material);
 
         (window as any).last_volume = this; // for debugging purposes
 
@@ -271,11 +290,11 @@ class VolumeView extends widgets.WidgetView {
     }
 
     add_to_scene() {
-        this.renderer.scene_volume.add(this.vol_box_mesh);
+        this.renderer.scene.add(this.vol_box_mesh);
     }
 
     remove_from_scene() {
-        this.renderer.scene_volume.remove(this.vol_box_mesh);
+        this.renderer.scene.remove(this.vol_box_mesh);
     }
 }
 
@@ -285,6 +304,7 @@ class VolumeModel extends widgets.WidgetModel {
         ...widgets.WidgetModel.serializers,
         tf: { deserialize: widgets.unpack_models },
         data: { serialize: (x) => x},
+        material: { deserialize: widgets.unpack_models },
     };
     defaults() {
         return {
@@ -311,6 +331,7 @@ class VolumeModel extends widgets.WidgetModel {
             data_min: 0,
             data_max: 1,
             ray_steps: null,
+            material: null, // TODO: this default does not match the one from the Python side
         };
     }
 }
