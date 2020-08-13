@@ -103,6 +103,7 @@ def klein_bottle(
     texture=None,
     both=False,
     interval=1000,
+    **kwargs
 ):
     """Show one or two Klein bottles."""
     import ipyvolume.pylab as p3
@@ -112,8 +113,8 @@ def klein_bottle(
     v = np.linspace(0, 2 * pi, num=40, endpoint=endpoint)
     u, v = np.meshgrid(u, v)
     if both:
-        x1, y1, z1, _u1, _v1 = klein_bottle(endpoint=endpoint, draw=False, show=False)
-        x2, y2, z2, _u2, _v2 = klein_bottle(endpoint=endpoint, draw=False, show=False, figure8=True)
+        x1, y1, z1, _u1, _v1 = klein_bottle(endpoint=endpoint, draw=False, show=False, **kwargs)
+        x2, y2, z2, _u2, _v2 = klein_bottle(endpoint=endpoint, draw=False, show=False, figure8=True, **kwargs)
         x = [x1, x2]
         y = [y1, y2]
         z = [z1, z2]
@@ -148,9 +149,10 @@ def klein_bottle(
                 v=v / (2 * np.pi),
                 wireframe=wireframe,
                 texture=texture,
+                **kwargs
             )
         else:
-            mesh = p3.plot_mesh(x, y, z, wrapx=not endpoint, wrapy=not endpoint, wireframe=wireframe, texture=texture)
+            mesh = p3.plot_mesh(x, y, z, wrapx=not endpoint, wrapy=not endpoint, wireframe=wireframe, texture=texture, **kwargs)
         if show:
             if both:
                 p3.animation_control(mesh, interval=interval)

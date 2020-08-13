@@ -33,7 +33,8 @@ module.exports = [
         output: {
             filename: 'extension.js',
             path: path.resolve(__dirname, `../share/jupyter/nbextensions/${pyname}`),
-            libraryTarget: 'amd'
+            libraryTarget: 'amd',
+            devtoolModuleFilenameTemplate: `webpack://jupyter-widgets/${pyname}/[resource-path]?[loaders]`,
         },
         resolve: resolve
     },
@@ -48,7 +49,8 @@ module.exports = [
         output: {
             filename: 'index.js',
             path: path.resolve(__dirname, `../share/jupyter/nbextensions/${pyname}`),
-            libraryTarget: 'amd'
+            libraryTarget: 'amd',
+            devtoolModuleFilenameTemplate: `webpack://jupyter-widgets/${pyname}/[resource-path]?[loaders]`,
         },
         module: {
             rules: rules
@@ -79,7 +81,8 @@ module.exports = [
             filename: 'index.js',
             path: path.resolve(__dirname, './dist/'),
             libraryTarget: 'amd',
-            publicPath: 'https://unpkg.com/ipyvolume@' + version + '/dist/'
+            publicPath: 'https://unpkg.com/ipyvolume@' + version + '/dist/',
+            devtoolModuleFilenameTemplate: `webpack://jupyter-widgets/${pyname}/[resource-path]?[loaders]`,
         },
         devtool: 'source-map',
         module: {

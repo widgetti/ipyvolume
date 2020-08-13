@@ -449,3 +449,24 @@ def test_datasets():
     ipyvolume.datasets.aquariusA2.fetch()
     ipyvolume.datasets.hdz2000.fetch()
     ipyvolume.datasets.zeldovich.fetch()
+
+
+def test_light_components():
+    ambient = ipyvolume.light_ambient()
+    assert ambient.type == 'AmbientLight'
+    assert ambient.color == 'white'
+    assert ambient.intensity == 1
+
+    hemisphere = ipyvolume.light_hemisphere()
+    assert hemisphere.type == 'HemisphereLight'
+    assert hemisphere.color == '#ffffbb'
+    assert hemisphere.groundColor == '#080820'
+
+    directional = ipyvolume.light_directional()
+    assert directional.color == 'white'
+
+    spot = ipyvolume.light_spot()
+    assert spot.color == 'white'
+
+    point = ipyvolume.light_point()
+    assert point.color == 'white'
