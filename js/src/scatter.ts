@@ -578,10 +578,7 @@ class ScatterView extends widgets.WidgetView {
                 defines.AS_SPRITE = true;
             }
             return {AS_DISTANCE: true, ...defines};
-        }, this.uniforms, vertexShader, fragmentShader, {
-            depthPacking: THREE.RGBADepthPacking,
-            alphaTest: 0.5,
-        });
+        }, this.uniforms, vertexShader, fragmentShader, {});
         this.mesh.material_rgb = this.material_rgb;
         this.mesh.material_normal = this.material;
 

@@ -543,10 +543,7 @@ class MeshView extends widgets.WidgetView {
                 // unset lighting model
                 delete defines[`AS_${this.lighting_model}`];
                 return {AS_DISTANCE: true, ...defines};
-            }, this.uniforms, vertexShader, fragmentShader, {
-                depthPacking: THREE.RGBADepthPacking,
-                alphaTest: 0.5,
-            });
+            }, this.uniforms, vertexShader, fragmentShader,  {});
             // BUG? because of our custom shader threejs thinks our object if out
             // of the frustum
             this.surface_mesh.frustumCulled = false;
