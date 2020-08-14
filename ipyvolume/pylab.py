@@ -1779,8 +1779,8 @@ def light_point(
     :param cast_shadow: Property of a Point Light to cast shadows. Default False
     :return: :any:`PointLight`
     """
-    near=0.5
-    far=5000
+    near=0.1
+    far=100
     fov=90
     aspect=1
     distance=0
