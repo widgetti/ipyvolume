@@ -1,10 +1,10 @@
 // scatter-fragment shader
+varying vec4 vertex_color;
+varying vec3 vertex_position;
+varying vec2 vertex_uv;
+
 #if defined( AS_DEFAULT ) || defined( AS_COORDINATE )
     // extra only used for the default shading
-    varying vec4 vertex_color;
-    // varying vec4 vColor;
-    varying vec3 vertex_position;
-    varying vec2 vertex_uv;
 
     #ifdef USE_TEXTURE
         uniform sampler2D texture;
@@ -287,7 +287,7 @@ void main(void)
 
 	#include <logdepthbuf_fragment>
 	#include <map_fragment>
-	//#include <color_fragment>
+	#include <color_fragment>
 
 	#include <alphamap_fragment>
 	#include <alphatest_fragment>

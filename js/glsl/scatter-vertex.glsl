@@ -329,10 +329,12 @@ void main(void) {
         vertex_color = mix(color_previous, color_next, animation_time_color);
     #endif
 #endif
+    #if defined(USE_COLOR) && !(defined(AS_DEPTH) || defined(AS_DISTANCE))
+        vColor = vertex_color.rgb;
+    #endif
 
 
 #if defined( AS_DEFAULT ) || defined( AS_COORDINATE )
-    vColor = vertex_color.rgb;
 	#include <morphtarget_vertex>
 	#include <skinning_vertex>
 	#include <displacementmap_vertex>
@@ -378,7 +380,6 @@ void main(void) {
 	#include <fog_vertex>
 #endif //AS_PHONG
 #ifdef AS_PHYSICAL
-    vColor = vertex_color.rgb;
 	#include <morphtarget_vertex>
 	#include <skinning_vertex>
 	#include <displacementmap_vertex>

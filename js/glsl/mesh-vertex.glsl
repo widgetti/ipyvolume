@@ -246,6 +246,18 @@ void main(void) {
     // vec3 positionEye = ( modelViewMatrix * vec4(model_pos, 1.0 ) ).xyz;
     // vertex_position = positionEye;
 
+    #ifdef AS_COORDINATE
+        // vertex_color = vec4(model_pos + vec3(0.5, 0.5, 0.5), 1.0);
+    #else
+        #ifdef USE_COLORMAP
+            float color_animated = mix(color_previous, color_current, animation_time_color);
+            float color_index = scale_transform_linear(color_animated, vec2(0.0, 1.0), domain_color);
+            vertex_color = texture2D(colormap, vec2(color_index, 0));
+        #else
+            vertex_color = mix(color_previous, color_current, animation_time_color);
+        #endif
+    #endif
+
 
 #if defined( AS_DEFAULT ) || defined( AS_COORDINATE )
     // vec3 model_pos = vec3(SCALE_X(animated_position.x), SCALE_Y(animated_position.y), SCALE_Z(animated_position.z));
@@ -259,6 +271,10 @@ void main(void) {
 #ifdef USE_TEXTURE
     vertex_uv = vec2(mix(u_previous, u, animation_time_u), mix(v_previous, v, animation_time_v));
 #endif
+
+    #if defined(USE_COLOR) && !(defined(AS_DEPTH) || defined(AS_DISTANCE))
+        vColor = vertex_color.rgb;
+    #endif
 
 
 #if defined( AS_DEFAULT ) || defined( AS_COORDINATE )
@@ -336,16 +352,4 @@ void main(void) {
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
 #endif //AS_DEPTH
-
-#ifdef AS_COORDINATE
-    // vertex_color = vec4(model_pos + vec3(0.5, 0.5, 0.5), 1.0);
-#else
-    #ifdef USE_COLORMAP
-        float color_animated = mix(color_previous, color_current, animation_time_color);
-        float color_index = scale_transform_linear(color_animated, vec2(0.0, 1.0), domain_color);
-        vertex_color = texture2D(colormap, vec2(color_index, 0));
-    #else
-        vertex_color = mix(color_previous, color_current, animation_time_color);
-    #endif
-#endif
 }
