@@ -122,6 +122,7 @@ class ScatterView extends widgets.WidgetView {
                 texture: { type: "t", value: null },
                 texture_previous: { type: "t", value: null },
                 colormap: {type: "t", value: null},
+                ...THREE.UniformsUtils.merge([THREE.UniformsLib["common"], THREE.UniformsLib["lights"]])
             };
         const get_material = (name)  => {
             if (this.model.get(name)) {
@@ -450,6 +451,7 @@ class ScatterView extends widgets.WidgetView {
                 patchShader(shader);
             };
             material.needsUpdate = true;
+            material.lights = true;
         });
 
         const geo = this.model.get("geo");
