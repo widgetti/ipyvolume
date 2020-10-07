@@ -5,6 +5,7 @@ import io
 import time
 import functools
 import collections
+import collections.abc
 
 import numpy as np
 import requests
