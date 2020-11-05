@@ -32,7 +32,7 @@ module.exports = [
         devtool: 'inline-source-map',
         output: {
             filename: 'extension.js',
-            path: path.resolve(__dirname, `../${pyname}/static`),
+            path: path.resolve(__dirname, `../share/jupyter/nbextensions/${pyname}`),
             libraryTarget: 'amd'
         },
         resolve: resolve
@@ -47,7 +47,7 @@ module.exports = [
         devtool: 'inline-source-map',
         output: {
             filename: 'index.js',
-            path: path.resolve(__dirname, `../${pyname}/static`),
+            path: path.resolve(__dirname, `../share/jupyter/nbextensions/${pyname}`),
             libraryTarget: 'amd'
         },
         module: {
@@ -92,7 +92,7 @@ module.exports = [
         entry: 'three',
         output: {
             filename: 'three.js',
-            path: path.resolve(__dirname, `../${pyname}/static`),
+            path: path.resolve(__dirname, `../share/jupyter/nbextensions/${pyname}`),
             libraryTarget: 'amd'
         },
         devtool: 'source-map',
