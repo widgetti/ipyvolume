@@ -1,6 +1,6 @@
 {
   "name": "ipyvolume",
-  "version": "0.6.0-alpha.4",
+  "version": "0.6.0-alpha.6",
   "description": "IPython widget for rendering 3d volumes",
   "author": "Maarten A. Breddels",
   "main": "lib/index.js",
@@ -17,16 +17,30 @@
   "scripts": {
     "install-test": "npm install && karma start --single-run",
     "test": "karma start --single-run",
+    "build": "npm run build:lib && npm run build:labextension && webpack --mode=production",
     "build:lib": "tsc --project .",
-    "prepare": "npm run build:lib && webpack --mode=production",
+    "build:labextension": "jupyter labextension build .",
+    "prepare": "npm run build",
     "watch": "npm-run-all -p watch:*",
     "watch:lib": "tsc -w --project .",
-    "watch:nbextension": "webpack --watch --mode=development"
+    "watch:nbextension": "webpack --watch --mode=development",
+    "watch:labextension": "jupyter labextension watch ."
   },
   "jupyterlab": {
-    "extension": "lib/labplugin"
+    "extension": "lib/labplugin",
+    "outputDir": "../share/jupyter/labextensions/ipyvolume",
+    "sharedPackages": {
+      "@jupyter-widgets/base": {
+        "bundled": false,
+        "singleton": true
+      },
+      "threejs": {
+        "bundled": true
+      }
+    }
   },
   "devDependencies": {
+    "@jupyterlab/builder": "^3.0.0-rc.13",
     "@types/chai": "^4.1.4",
     "@types/d3": "^5.7.2",
     "@types/expect.js": "^0.3.29",
@@ -65,7 +79,6 @@
   "dependencies": {
     "@jupyter-widgets/base": "^1 || ^2 || ^3 || ^4",
     "@jupyter-widgets/controls": "^1 || ^2",
-    "@jupyterlab/application": "^2.1.0",
     "css-loader": "^0.28.4",
     "d3": "^5.7.0",
     "gl-matrix": "^2.0.0",

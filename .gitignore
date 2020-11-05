@@ -111,3 +111,5 @@ static/
 
 # Visual Studio Code
 .vscode/
+
+share/jupyter
