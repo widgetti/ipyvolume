@@ -65,14 +65,12 @@ class DummyManager extends base.ManagerBase<HTMLElement> {
         this.library = library;
     }
 
-    display_view(msg: services.KernelMessage.IMessage, view_promise: Backbone.View<Backbone.Model>, options: any) {
-        return Promise.resolve(view_promise).then((view) => {
-            this.el.appendChild(view.el);
-            view.on("remove", () => console.log("view removed", view));
-            ( window as any).last_view = view;
-            view.trigger("displayed");
-            return view.el;
-        });
+    display_view(msg: services.KernelMessage.IMessage, view: base.DOMWidgetView, options: any) {
+        this.el.appendChild(view.el);
+        view.on("remove", () => console.log("view removed", view));
+        ( window as any).last_view = view;
+        view.trigger("displayed");
+        return Promise.resolve(view.el);
     }
 
     _get_comm_info() {
