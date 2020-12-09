@@ -4,6 +4,7 @@ import os
 import shutil
 import json
 import contextlib
+import math
 
 import numpy as np
 import pytest
@@ -449,3 +450,140 @@ def test_datasets():
     ipyvolume.datasets.aquariusA2.fetch()
     ipyvolume.datasets.hdz2000.fetch()
     ipyvolume.datasets.zeldovich.fetch()
+
+
+def test_mesh_material():
+    def test_material_components(mesh=None, is_scatter=False):
+        assert mesh.lighting_model == 'DEFAULT'
+        assert mesh.opacity == 1
+        assert mesh.specular_color == 'white'
+        assert mesh.shininess == 1
+        assert mesh.color == 'red'
+        assert mesh.emissive_intensity == 0.2
+        assert mesh.roughness == 0
+        assert mesh.metalness == 0
+        if is_scatter == False:
+            assert mesh.cast_shadow == True
+            assert mesh.receive_shadow == True
+
+        mesh.lighting_model = 'PHYSICAL'
+        mesh.opacity = 0
+        mesh.specular_color = 'blue'
+        mesh.shininess = 10
+        mesh.color = 'red'
+        mesh.emissive_intensity = 2
+        mesh.roughness = 1
+        mesh.metalness = 5
+        if is_scatter == False:
+            mesh.cast_shadow = True
+            mesh.receive_shadow = True
+
+        assert mesh.lighting_model == 'PHYSICAL'
+        assert mesh.opacity == 0
+        assert mesh.specular_color == 'blue'
+        assert mesh.shininess == 10
+        assert mesh.color == 'red'
+        assert mesh.emissive_intensity == 2
+        assert mesh.roughness == 1
+        assert mesh.metalness == 5
+        if is_scatter == False:
+            assert mesh.cast_shadow == True
+            assert mesh.receive_shadow == True
+
+    x, y, z, u, v = ipyvolume.examples.klein_bottle(draw=False)
+
+    ipyvolume.figure()
+    mesh = ipyvolume.plot_mesh( x, y, z)
+    test_material_components(mesh)
+
+    k = 20
+    h = -15
+    tx = np.array([k, -k, -k, k])
+    tz = np.array([k, k, -k, -k])
+    ty = np.array([h, h, h, h])
+    
+    tri = [(0, 1, 2), (0, 2, 3)]
+    trisurf = ipyvolume.plot_trisurf(tx, ty, tz, triangles=tri)
+    test_material_components(trisurf)
+
+    X = np.arange(-10, 10, 0.25*1)-10
+    Y = np.arange(-10, 10, 0.25*1)
+    X, Y = np.meshgrid(X, Y)
+    R = np.sqrt(X**2 + Y**2)
+    Z = np.sin(R)
+
+    surf = ipyvolume.plot_surface(X, Z, Y)
+    test_material_components(surf)
+
+    x, y, z = np.random.random((3, 10000))
+    scatter = ipyvolume.scatter(x, y, z, size=1, marker="sphere")
+    test_material_components(scatter, True)
+
+
+def test_light_components():
+    ambient = ipyvolume.ambient_light()
+    assert ambient.type == 'AmbientLight'
+    assert ambient.color == 'white'
+    assert ambient.intensity == 1
+    
+    hemisphere = ipyvolume.hemisphere_light()
+    assert hemisphere.type == 'HemisphereLight'
+    assert hemisphere.color == '#ffffff' 
+    assert hemisphere.groundColor == 'red' 
+    assert hemisphere.intensity == 1
+    assert hemisphere.position[0] == 0
+    assert hemisphere.position[1] == 1
+    assert hemisphere.position[2] == 0
+
+    directional = ipyvolume.directional_light()
+    assert directional.color == 'white' 
+    assert directional.intensity == 1
+    assert directional.position[0] == 10
+    assert directional.position[1] == 10
+    assert directional.position[2] == 10
+    assert directional.target.position[0] == 0
+    assert directional.target.position[1] == 0
+    assert directional.target.position[2] == 0
+    assert directional.castShadow==True
+    assert directional.shadow.bias==-0.0008
+    assert directional.shadow.radius==1
+    assert directional.shadow.camera.near==0.5
+    assert directional.shadow.camera.far==5000
+    assert directional.shadow.mapSize[0]==1024
+    assert directional.shadow.camera.left==-256/2
+    assert directional.shadow.camera.right==256/2
+    assert directional.shadow.camera.top==256/2
+    assert directional.shadow.camera.bottom==-256/2
+
+    spot = ipyvolume.spot_light()
+    assert spot.color == 'white' 
+    assert spot.intensity == 1
+    assert spot.position[0] == 10
+    assert spot.position[1] == 10
+    assert spot.position[2] == 10
+    assert spot.target.position[0] == 0
+    assert spot.target.position[1] == 0
+    assert spot.target.position[2] == 0
+    assert spot.shadow.camera.fov==90
+    assert spot.castShadow==True
+    assert spot.shadow.mapSize[0]==1024
+    assert spot.shadow.bias==-0.0008
+    assert spot.shadow.radius==1
+    assert spot.shadow.camera.near==0.5
+    assert spot.shadow.camera.far==5000
+
+    point = ipyvolume.point_light()
+    assert point.color == 'white' 
+    assert point.intensity == 1
+    assert point.position[0] == 10
+    assert point.position[1] == 10
+    assert point.position[2] == 10
+    assert point.shadow.camera.fov==90
+    assert point.castShadow==True
+    assert point.distance==0
+    assert point.decay==1
+    assert point.shadow.mapSize[0]==1024
+    assert point.shadow.bias==-0.0008
+    assert point.shadow.radius==1
+    assert point.shadow.camera.near==0.5
+    assert point.shadow.camera.far==5000

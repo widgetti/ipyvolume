@@ -29,7 +29,7 @@ from ipyvolume.serialize import (
 )
 from ipyvolume.transferfunction import TransferFunction
 from ipyvolume.utils import debounced, grid_slice, reduce_size
-
+import math
 
 _last_figure = None
 logger = logging.getLogger("ipyvolume")
@@ -78,6 +78,17 @@ class Mesh(widgets.Widget):
     color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
     visible = traitlets.CBool(default_value=True).tag(sync=True)
 
+    lighting_model = traitlets.Enum(values=['DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'], default_value='DEFAULT').tag(sync=True)
+    opacity = traitlets.CFloat(1).tag(sync=True)
+    emissive_intensity = traitlets.CFloat(1).tag(sync=True)
+    specular_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
+    shininess = traitlets.CFloat(1).tag(sync=True)
+    roughness = traitlets.CFloat(0).tag(sync=True)
+    metalness = traitlets.CFloat(0).tag(sync=True)
+    cast_shadow = traitlets.CBool(default_value=True).tag(sync=True)
+    receive_shadow = traitlets.CBool(default_value=True).tag(sync=True)
+    flat_shading = traitlets.CBool(default_value=True).tag(sync=True)
+
     material = traitlets.Instance(
         pythreejs.ShaderMaterial, help='A :any:`pythreejs.ShaderMaterial` that is used for the mesh'
     ).tag(sync=True, **widgets.widget_serialization)
@@ -93,7 +104,6 @@ class Mesh(widgets.Widget):
     @traitlets.default('line_material')
     def _default_line_material(self):
         return pythreejs.ShaderMaterial()
-
 
 @widgets.register
 class Scatter(widgets.Widget):
@@ -146,6 +156,16 @@ class Scatter(widgets.Widget):
     connected = traitlets.CBool(default_value=False).tag(sync=True)
     visible = traitlets.CBool(default_value=True).tag(sync=True)
     shader_snippets = traitlets.Dict({'size': '\n'}).tag(sync=True)
+
+    lighting_model = traitlets.Enum(values=['DEFAULT', 'PHYSICAL'], default_value='DEFAULT').tag(sync=True)
+    opacity = traitlets.CFloat(1).tag(sync=True)
+    specular_color = Array(default_value="white", allow_none=True).tag(sync=True, **color_serialization)
+    shininess = traitlets.CFloat(1).tag(sync=True)
+    emissive_intensity = traitlets.CFloat(1).tag(sync=True)
+    roughness = traitlets.CFloat(0).tag(sync=True)
+    metalness = traitlets.CFloat(0).tag(sync=True)
+    cast_shadow = traitlets.CBool(default_value=False).tag(sync=True)
+    receive_shadow = traitlets.CBool(default_value=False).tag(sync=True)
 
     texture = traitlets.Union(
         [
@@ -244,7 +264,7 @@ class Volume(widgets.Widget):
         self.data = np.array(data_view)
         self.extent = extent
 
-
+    
 @widgets.register
 class Figure(ipywebrtc.MediaStream):
     """Widget class representing a volume (rendering) using three.js."""
@@ -267,6 +287,13 @@ class Figure(ipywebrtc.MediaStream):
     volumes = traitlets.List(traitlets.Instance(Volume), [], allow_none=False).tag(
         sync=True, **widgets.widget_serialization
     )
+    
+    #lights = traitlets.List(traitlets.Instance(Light), [], allow_none=False).tag(
+    #    sync=True, **widgets.widget_serialization
+    #)
+    lights = traitlets.List(traitlets.Instance(pythreejs.Light), [], allow_none=False).tag(
+        sync=True, **widgets.widget_serialization
+    )
 
     animation = traitlets.Float(1000.0).tag(sync=True)
     animation_exponent = traitlets.Float(1.0).tag(sync=True)
@@ -286,6 +313,8 @@ class Figure(ipywebrtc.MediaStream):
     camera = traitlets.Instance(
         pythreejs.Camera, allow_none=True, help='A :any:`pythreejs.Camera` instance to control the camera'
     ).tag(sync=True, **widgets.widget_serialization)
+
+    enable_shadows = traitlets.Bool(False).tag(sync=True)
 
     @traitlets.default('camera')
     def _default_camera(self):

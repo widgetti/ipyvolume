@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 from __future__ import division
+import pythreejs
 
 __all__ = [
     'current',
@@ -40,6 +41,14 @@ __all__ = [
     'style',
     'plot_plane',
     'selector_default',
+    'ambient_light',
+    'directional_light',
+    'spot_light',
+    'point_light',
+    'hemisphere_light',
+    'setup_light_widgets',
+    'setup_material_widgets',
+    'show_lighting_widgets',
 ]
 
 import os
@@ -75,7 +84,7 @@ from IPython.display import display
 import ipyvolume as ipv
 import ipyvolume.embed
 from ipyvolume import utils
-
+import math
 
 _last_figure = None
 
@@ -124,6 +133,7 @@ _doc_snippets["y2d"] = "idem for y"
 _doc_snippets["z2d"] = "idem for z"
 _doc_snippets["texture"] = "PIL.Image object or ipywebrtc.MediaStream (can be a seqence)"
 
+emissive_intensity_default = 0.2
 
 class current:
     figure = None
@@ -309,7 +319,26 @@ default_size_selected = default_size * 1.3
 
 
 @_docsubst
-def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=None, v=None, texture=None):
+def plot_trisurf(
+    x, 
+    y, 
+    z, 
+    triangles=None, 
+    lines=None, 
+    color=default_color, 
+    u=None, 
+    v=None, 
+    texture=None,
+    lighting_model='DEFAULT',
+    opacity=1,
+    emissive_intensity=emissive_intensity_default,
+    specular_color='white',
+    shininess=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=True,
+    receive_shadow=True,
+    flat_shading=True):
     """Draw a polygon/triangle mesh defined by a coordinate and triangle indices.
 
     The following example plots a rectangle in the z==2 plane, consisting of 2 triangles:
@@ -333,10 +362,20 @@ def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=Non
     :param z: {z}
     :param triangles: numpy array with indices referring to the vertices, defining the triangles, with shape (M, 3)
     :param lines: numpy array with indices referring to the vertices, defining the lines, with shape (K, 2)
-    :param color: {color}
+    :param color: {color} Color of the material, essentially a solid color unaffected by other lighting. Default is 'red'
     :param u: {u}
     :param v: {v}
     :param texture: {texture}
+    :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
+    :param opacity: (Non-Default) 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param emissive_intensity: (Non-Default) Factor multiplied with color. Takes values between 0 and 1. Default is 0.2
+    :param specular_color: {color} (Phong Only) Color of the specular tint. Default 'white'.
+    :param shininess: (Phong Only) Specular intensity. Default is 1
+    :param roughness: (Physical Only) How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1
+    :param metalness: (Physical Only) How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
+    :param cast_shadow: (Non-Default) Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
+    :param receive_shadow: (Non-Default) Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
+    :param flat_shading: (Physical, Phong) A technique for color computing where all polygons reflect as a flat surface. Default True
     :return: :any:`Mesh`
     """
     fig = gcf()
@@ -344,25 +383,89 @@ def plot_trisurf(x, y, z, triangles=None, lines=None, color=default_color, u=Non
         triangles = np.array(triangles).astype(dtype=np.uint32)
     if lines is not None:
         lines = np.array(lines).astype(dtype=np.uint32)
-    mesh = ipv.Mesh(x=x, y=y, z=z, triangles=triangles, lines=lines, color=color, u=u, v=v, texture=texture)
+    mesh = ipv.Mesh(
+        x=x, 
+        y=y, 
+        z=z, 
+        triangles=triangles, 
+        lines=lines, 
+        color=color, 
+        u=u, v=v, 
+        texture=texture,
+        lighting_model=lighting_model,
+        opacity=opacity,
+        emissive_intensity=emissive_intensity,
+        specular_color=specular_color,
+        shininess=shininess,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow,
+        flat_shading=flat_shading
+        )
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
     fig.meshes = fig.meshes + [mesh]
+
     return mesh
 
 
 @_docsubst
-def plot_surface(x, y, z, color=default_color, wrapx=False, wrapy=False):
+def plot_surface(
+    x, 
+    y, 
+    z, 
+    color=default_color, 
+    wrapx=False, 
+    wrapy=False,
+    lighting_model='DEFAULT',
+    opacity=1,
+    emissive_intensity=emissive_intensity_default,
+    specular_color='white',
+    shininess=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=True,
+    receive_shadow=True,
+    flat_shading=True
+    ):
     """Draws a 2d surface in 3d, defined by the 2d ordered arrays x,y,z.
 
     :param x: {x2d}
     :param y: {y2d}
     :param z: {z2d}
-    :param color: {color2d}
+    :param color: {color2d} Color of the material, essentially a solid color unaffected by other lighting. Default is 'red'
     :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the end end begin points
     :param bool wrapy: simular for the y coordinate
+    :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
+    :param opacity: (Non-Default) 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param emissive_intensity: (Non-Default) Factor multiplied with color. Takes values between 0 and 1. Default is 0.2
+    :param specular_color: {color} (Phong Only) Color of the specular tint. Default 'white'.
+    :param shininess: (Phong Only) Specular intensity. Default is 1
+    :param roughness: (Physical Only) How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1
+    :param metalness: (Physical Only) How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
+    :param cast_shadow: (Non-Default) Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
+    :param receive_shadow: (Non-Default) Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
+    :param flat_shading: (Physical, Phong) A technique for color computing where all polygons reflect as a flat surface. Default True
     :return: :any:`Mesh`
     """
-    return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=False)
+    return plot_mesh(
+        x, 
+        y, 
+        z, 
+        color=color, 
+        wrapx=wrapx, 
+        wrapy=wrapy, 
+        wireframe=False,
+        lighting_model=lighting_model,
+        opacity=opacity,
+        emissive_intensity=emissive_intensity,
+        specular_color=specular_color,
+        shininess=shininess,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow,
+        flat_shading=flat_shading)
 
 
 @_docsubst
@@ -383,21 +486,51 @@ def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False):
 
 
 def plot_mesh(
-    x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None, texture=None
+    x, 
+    y, 
+    z, 
+    color=default_color, 
+    wireframe=True, 
+    surface=True, 
+    wrapx=False, 
+    wrapy=False, 
+    u=None, 
+    v=None, 
+    texture=None,
+    lighting_model='DEFAULT',
+    opacity=1,
+    emissive_intensity=emissive_intensity_default,
+    specular_color='white',
+    shininess=1,
+    roughness=0,
+    metalness=0,
+    cast_shadow=True,
+    receive_shadow=True,
+    flat_shading=True
 ):
     """Draws a 2d wireframe+surface in 3d: generalization of :any:`plot_wireframe` and :any:`plot_surface`.
 
     :param x: {x2d}
     :param y: {y2d}
     :param z: {z2d}
-    :param color: {color2d}
+    :param color: {color2d} Color of the material, essentially a solid color unaffected by other lighting. Default is 'red'
     :param bool wireframe: draw lines between the vertices
     :param bool surface: draw faces/triangles between the vertices
     :param bool wrapx: when True, the x direction is assumed to wrap, and polygons are drawn between the begin and end points
-    :param boool wrapy: idem for y
+    :param bool wrapy: idem for y
     :param u: {u}
     :param v: {v}
     :param texture: {texture}
+    :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'LAMBERT', 'PHONG', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
+    :param opacity: (Non-Default) 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param emissive_intensity: (Non-Default) Factor multiplied with color. Takes values between 0 and 1. Default is 0.2
+    :param specular_color: {color} (Phong Only) Color of the specular tint. Default 'white'.
+    :param shininess: (Phong Only) Specular intensity. Default is 1
+    :param roughness: (Physical Only) How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1
+    :param metalness: (Physical Only) How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
+    :param cast_shadow: (Non-Default) Property of a mesh to cast shadows. Default False. Works only with Directional, Point and Spot lights
+    :param receive_shadow: (Non-Default) Property of a mesh to receive shadows. Default False. Works only with Directional, Point and Spot lights
+    :param flat_shading: (Physical, Phong) A technique for color computing where all polygons reflect as a flat surface. Default True
     :return: :any:`Mesh`
     """
     fig = gcf()
@@ -471,13 +604,28 @@ def plot_mesh(
         u=u,
         v=v,
         texture=texture,
+        lighting_model=lighting_model,
+        opacity=opacity,
+        emissive_intensity=emissive_intensity,
+        specular_color=specular_color,
+        shininess=shininess,
+        roughness=roughness,
+        metalness=metalness,
+        cast_shadow=cast_shadow,
+        receive_shadow=receive_shadow,
+        flat_shading=flat_shading
     )
     fig.meshes = fig.meshes + [mesh]
     return mesh
 
 
 @_docsubst
-def plot(x, y, z, color=default_color, **kwargs):
+def plot(
+    x, 
+    y, 
+    z, 
+    color=default_color,
+    **kwargs):
     """Plot a line in 3d.
 
     :param x: {x}
@@ -493,7 +641,12 @@ def plot(x, y, z, color=default_color, **kwargs):
         visible_lines=True, color_selected=None, size_selected=1, size=1, connected=True, visible_markers=False
     )
     kwargs = dict(defaults, **kwargs)
-    s = ipv.Scatter(x=x, y=y, z=z, color=color, **kwargs)
+    s = ipv.Scatter(
+        x=x, 
+        y=y, 
+        z=z, 
+        color=color,
+        **kwargs)
     s.material.visible = False
     fig.scatters = fig.scatters + [s]
     return s
@@ -511,20 +664,31 @@ def scatter(
     marker="diamond",
     selection=None,
     grow_limits=True,
+    lighting_model='DEFAULT',
+    opacity=1,
+    emissive_intensity=emissive_intensity_default,
+    roughness=0,
+    metalness=0,
     **kwargs
 ):
     """Plot many markers/symbols in 3d.
-
+       Due to certain shader limitations, should not use with Spot Lights and Point Lights.
+       Does not support shadow mapping.
     :param x: {x}
     :param y: {y}
     :param z: {z}
-    :param color: {color}
+    :param color: {color} Color of the material, essentially a solid color unaffected by other lighting. Default is 'red'
     :param size: {size}
     :param size_selected: like size, but for selected glyphs
     :param color_selected:  like color, but for selected glyphs
     :param marker: {marker}
     :param selection: numpy array of shape (N,) or (S, N) with indices of x,y,z arrays of the selected markers, which
                       can have a different size and color
+    :param lighting_model: The lighting model used to calculate the final color of the mesh. Can be 'DEFAULT', 'PHYSICAL'. implicit 'DEFAULT'. Will be automatically updated to 'PHYSICAL' if a light is added to figure
+    :param opacity: (Physical Only) 0 - Mesh is fully transparent; 1 - Mesh is fully opaque
+    :param emissive_intensity: (Physical Only) Factor multiplied with color. Takes values between 0 and 1. Default is 0.2
+    :param roughness: (Physical Only) How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. Default is 1
+    :param metalness: (Physical Only) How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between
     :param kwargs:
     :return: :any:`Scatter`
     """
@@ -541,6 +705,11 @@ def scatter(
         size_selected=size_selected,
         geo=marker,
         selection=selection,
+        lighting_model=lighting_model,
+        opacity=opacity,
+        emissive_intensity=emissive_intensity,
+        roughness=roughness,
+        metalness=metalness,
         **kwargs
     )
     fig.scatters = fig.scatters + [s]
@@ -1518,3 +1687,467 @@ def _make_triangles_lines(shape, wrapx=False, wrapy=False):
     lines[3::4, 0], lines[3::4, 1] = t1[1], t2[1]
 
     return triangles, lines
+
+def ambient_light(
+    light_color=default_color_selected, 
+    intensity = 1):
+    """Create a new Ambient Light 
+        An Ambient Light source represents an omni-directional, fixed-intensity and fixed-color light source that affects all objects in the scene equally (is omni-present). 
+        This light cannot be used to cast shadows.
+    :param light_color: {color} Color of the Ambient Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Ambient Light intensity. Default is 1
+    :return: :any:`pythreejs.AmbientLight`
+    """
+
+    light = pythreejs.AmbientLight(color=light_color, intensity=intensity)
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+def hemisphere_light(
+    light_color=default_color_selected, 
+    light_color2=default_color, 
+    intensity = 1, 
+    position=[0, 1, 0]):
+    """Create a new Hemisphere Light 
+        A light source positioned directly above the scene, with color fading from the sky color to the ground color.
+        This light cannot be used to cast shadows.
+    :param light_color: {color} Sky color. Default 'white'
+    :param light_color2: {color} Ground color. Default 'red'
+    :param intensity: Factor used to increase or decrease the Hemisphere Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Hemisphere Light. Default [0, 1, 0]
+    :return: :any:`pythreejs.HemisphereLight`
+    """
+
+    light = pythreejs.HemisphereLight(color=light_color, groundColor=light_color2, intensity=intensity, position=position)
+
+    fig = gcf()
+    fig.lights = fig.lights + [light]
+
+    return light
+
+def directional_light(
+    light_color=default_color_selected, 
+    intensity = 1, 
+    position=[10, 10, 10],
+    target=[0, 0, 0], 
+    cast_shadow=True):
+    """Create a new Directional Light 
+        A Directional Light source illuminates all objects equally from a given direction.
+        This light can be used to cast shadows.
+    :param light_color: {color} Color of the Directional Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Directional Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Directional Light. Default [10, 10, 10]
+    :param target: 3-element array (x y z) which describes the target of the Directional Light. Default [0, 0, 0]
+    :param cast_shadow: Property of a Directional Light to cast shadows. Default True
+    :return: :any:`pythreejs.DirectionalLight`
+    """
+    near=0.5
+    far=5000
+    shadow_map_size=1024
+    shadow_bias=-0.0008
+    shadow_radius=1
+    shadow_camera_orthographic_size=256
+
+    # Shadow params
+    camera = pythreejs.OrthographicCamera(
+        near=near,
+        far=far,
+        left=-shadow_camera_orthographic_size/2,
+        right=shadow_camera_orthographic_size/2,
+        top=shadow_camera_orthographic_size/2,
+        bottom=-shadow_camera_orthographic_size/2
+    )
+    shadow = pythreejs.DirectionalLightShadow(
+        mapSize=(shadow_map_size, shadow_map_size),
+        radius=shadow_radius,
+        bias=shadow_bias,
+        camera=camera
+    )
+    # Light params
+    target = pythreejs.Object3D(position=target)
+    light = pythreejs.DirectionalLight(
+        color=light_color, 
+        intensity=intensity, 
+        position=position, 
+        target=target, 
+        castShadow=cast_shadow,
+        shadow=shadow
+    )
+
+    fig = gcf()
+
+    fig.lights = fig.lights + [light]
+
+    return light
+    
+def spot_light(
+    light_color=default_color_selected, 
+    intensity = 1, 
+    position=[10, 10, 10], 
+    target=[0, 0, 0],
+    cast_shadow=True):
+    """Create a new Spot Light 
+        A Spot Light produces a directed cone of light. The light becomes more intense closer to the spotlight source and to the center of the light cone.
+        This light can be used to cast shadows.
+    :param light_color: {color} Color of the Spot Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Spot Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Spot Light. Default [0 1 0]
+    :param target: 3-element array (x y z) which describes the target of the Spot Light. Default [0 0 0]
+    :param cast_shadow: Property of a Spot Light to cast shadows. Default False
+    :return: :any:`pythreejs.SpotLight`
+    """
+
+    angle=0.8
+    penumbra=0
+    distance=0
+    decay=1
+    shadow_map_size=1024
+    shadow_bias=-0.0008
+    shadow_radius=1
+    near=0.5
+    far=5000
+    fov=90
+    aspect=1
+
+    # Shadow params
+    camera = pythreejs.PerspectiveCamera(
+        near=near,
+        far=far,
+        fov=fov,
+        aspect=aspect
+    )
+    shadow = pythreejs.LightShadow(
+        mapSize=(shadow_map_size,shadow_map_size),
+        radius=shadow_radius,
+        bias=shadow_bias,
+        camera=camera
+    )
+    # Light params
+    target = pythreejs.Object3D(position=target)
+    light = pythreejs.SpotLight(
+        color=light_color, 
+        intensity=intensity, 
+        position=position, 
+        target=target, 
+        angle=angle, 
+        distance=distance, 
+        decay=decay, 
+        penumbra=penumbra, 
+        castShadow=cast_shadow,
+        shadow=shadow
+    )
+    
+    fig = gcf()
+
+    fig.lights = fig.lights + [light]
+
+    return light
+
+def point_light(
+    light_color=default_color_selected, 
+    intensity = 1,
+    position=[10, 10, 10],
+    cast_shadow=True):
+    """Create a new Point Light 
+        A Point Light originates from a single point and spreads outward in all directions.
+        This light can be used to cast shadows.
+    :param light_color: {color} Color of the Point Light. Default 'white'
+    :param intensity: Factor used to increase or decrease the Point Light intensity. Default is 1
+    :param position: 3-element array (x y z) which describes the position of the Point Light. Default [0 1 0]
+    :param cast_shadow: Property of a Point Light to cast shadows. Default False
+    :return: :any:`PointLight`
+    """
+    near=0.5
+    far=5000
+    fov=90
+    aspect=1
+    distance=0
+    decay=1
+    shadow_map_size=1024
+    shadow_bias=-0.0008
+    shadow_radius=1
+
+    # Shadow params
+    camera = pythreejs.PerspectiveCamera(
+        near=near,
+        far=far,
+        fov=fov,
+        aspect=aspect
+    )
+    shadow = pythreejs.LightShadow(
+        mapSize=(shadow_map_size,shadow_map_size),
+        radius=shadow_radius,
+        bias=shadow_bias,
+        camera=camera
+    )
+    # Light params
+    light = pythreejs.PointLight(
+        color=light_color, 
+        intensity=intensity, 
+        position=position, 
+        distance=distance, 
+        decay=decay, 
+        castShadow=cast_shadow,
+        shadow=shadow
+    )
+
+
+    fig = gcf()
+
+    fig.lights = fig.lights + [light]
+
+    return light
+
+def setup_material_widgets(mesh=None, tab=None, index=0):
+    """Set up customization widgets for Mesh object materials inside an ipywidget.Tab
+        For more accessibility call show_lighting_widgets() instead
+    :param mesh: {Mesh} Mesh object 
+    :param tab: {ipywidgets.Tab} Parent ipywidget.Tab
+    :param index: Index of current ipywidget.Tab
+    """
+    if tab == None or mesh == None:
+        return None
+    style = {'description_width': '200px'}
+    layout = {'width': '450px'}
+    
+    surf_color = ipywidgets.ColorPicker(description='Color:', value=str(mesh.color), continuous_update=True, style=style, layout=layout)
+    mlm = 'PHYSICAL' if len(gcf().lights) > 0 and mesh.lighting_model=='DEFAULT' else mesh.lighting_model
+    surf_lighting_model = ipywidgets.Dropdown(options=['DEFAULT','LAMBERT','PHONG','PHYSICAL'],value=mlm, description='Lighting Model:',style=style, layout=layout)
+    surf_opacity = ipywidgets.FloatSlider(description='Opacity (Non-Default):',value=mesh.opacity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_emissive_intensity = ipywidgets.FloatSlider(description='Emissive Intensity (Non-Default):',value=mesh.emissive_intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_specular_color = ipywidgets.ColorPicker(description='Specular Color (Phong):',value=str(mesh.specular_color), continuous_update=True, style=style, layout=layout)
+    surf_shininess = ipywidgets.FloatSlider(description='Shininess (Phong):',value=mesh.shininess, min=0.01, max=100.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_roughness = ipywidgets.FloatSlider(description='Roughness (Physical):',value=mesh.roughness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+    surf_metalness = ipywidgets.FloatSlider(description='Metalness (Physical):',value=mesh.metalness, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    surf_cast_shadow = ipywidgets.widgets.Checkbox(value=mesh.cast_shadow, description='Cast Shadow (Non-Default)', style=style, layout=layout)
+    surf_receive_shadow = ipywidgets.widgets.Checkbox(value=mesh.cast_shadow, description='Receive Shadow (Non-Default)', style=style, layout=layout)
+    surf_flat_shading = ipywidgets.widgets.Checkbox(value=mesh.flat_shading, description='Flat Shading (Physical, Phong)', style=style, layout=layout)
+
+    def set_params(color, 
+                   lighting_model, 
+                   opacity, 
+                   emissive_intensity,
+                   specular_color,
+                   shininess,
+                   roughness,
+                   metalness,
+                   cast_shadow, 
+                   receive_shadow,
+                   flat_shading):
+        mesh.color = color
+        mesh.lighting_model = lighting_model
+        mesh.opacity = opacity
+        mesh.emissive_intensity = emissive_intensity
+        mesh.specular_color = specular_color
+        mesh.shininess = shininess
+        mesh.roughness = roughness
+        mesh.metalness = metalness
+        mesh.cast_shadow = cast_shadow
+        mesh.receive_shadow = receive_shadow
+        mesh.flat_shading = flat_shading
+    
+    interactables = ipywidgets.interactive(set_params, 
+                     color=surf_color,
+                     lighting_model=surf_lighting_model, 
+                     opacity=surf_opacity,
+                     emissive_intensity = surf_emissive_intensity,
+                     specular_color = surf_specular_color,
+                     shininess = surf_shininess,
+                     roughness = surf_roughness,
+                     metalness = surf_metalness,
+                     cast_shadow = surf_cast_shadow,
+                     receive_shadow = surf_receive_shadow,
+                     flat_shading = surf_flat_shading)
+    
+    box = ipywidgets.VBox(children = interactables.children)
+    tab.children += (box,) 
+    tab.set_title(index, "Mesh "+str(index))
+
+
+
+def setup_light_widgets(light=None, tab=None, index=0):
+    """Set up customization widgets for pythreejs.Light objects inside an ipywidget.Tab
+        For more accessibility call show_lighting_widgets() instead
+    :param mesh: {pythreejs.Light} Light object. Can be AmbientLight, HemisphereLight, DirectionalLight, SpotLight or PointLight
+    :param tab: {ipywidgets.Tab} Parent ipywidget.Tab
+    :param index: Index of current ipywidget.Tab
+    """
+    if tab == None or light == None:
+        return None
+    interactables = None
+    style = {'description_width': '200px'}
+    layout = {'width': '450px'}
+    if light.type == 'AmbientLight':
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.color), continuous_update=True, style=style, layout=layout)
+        light_intensity = ipywidgets.FloatSlider(description='Intensity:', value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+    
+        def set_params_ambiental(color, intensity):
+            light.color = color
+            light.intensity = intensity
+    
+        interactables = ipywidgets.interactive(set_params_ambiental, 
+                                     color=light_color,
+                                     intensity=light_intensity)
+    elif light.type == 'HemisphereLight':
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.color), continuous_update=True, style=style, layout=layout)
+        light_color2 = ipywidgets.ColorPicker(description='Light Color2:', value=str(light.groundColor), continuous_update=True, style=style, layout=layout)
+        light_intensity = ipywidgets.FloatSlider(description='Intensity:', value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+        position_x = ipywidgets.FloatText(description='Position X:', value=light.position[0], style=style, layout=layout)
+        position_y = ipywidgets.FloatText(description='Position Y:', value=light.position[1], style=style, layout=layout)
+        position_z = ipywidgets.FloatText(description='Position Z:', value=light.position[2], style=style, layout=layout)
+        def set_params_hemisphere(color, color2, intensity, pos_x, pos_y, pos_z):
+            light.color = color
+            light.groundColor = color2
+            light.intensity = intensity
+            light.position = (pos_x, pos_y, pos_z)
+    
+        interactables = ipywidgets.interactive(set_params_hemisphere, 
+                                    color=light_color,
+                                    color2=light_color2,
+                                    intensity=light_intensity,
+                                    pos_x=position_x,
+                                    pos_y=position_y,
+                                    pos_z=position_z)
+        
+    elif light.type == 'DirectionalLight':
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.color), continuous_update=True, style=style, layout=layout)
+        light_intensity = ipywidgets.FloatSlider(description='Intensity:', value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+        position_x = ipywidgets.FloatText(description='Position X:',value=light.position[0], style=style, layout=layout)
+        position_y = ipywidgets.FloatText(description='Position Y:',value=light.position[1], style=style, layout=layout)
+        position_z = ipywidgets.FloatText(description='Position Z:',value=light.position[2], style=style, layout=layout)
+        target_x = ipywidgets.FloatText(description='Target X:', value=light.target.position[0], style=style, layout=layout)
+        target_y = ipywidgets.FloatText(description='Target Y:', value=light.target.position[1], style=style, layout=layout)
+        target_z = ipywidgets.FloatText(description='Target Z:', value=light.target.position[2], style=style, layout=layout)
+        cast_shadow = ipywidgets.Checkbox(value=light.castShadow, description='Cast Shadow', style=style, layout=layout)
+        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow.bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal',readout=True, readout_format='.7f', style=style, layout=layout)
+        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow.radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
+        shadow_camera_orthographic_size = ipywidgets.FloatSlider(description='Shadow Cam Ortho Size:', value=light.shadow.camera.right * 2, min=0, max=1024, step=0.01, continuous_update=True, orientation='horizontal', readout=True,  style=style, layout=layout)
+  
+        def set_params_directional(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, cast_shadow, bias, radius, ortho_size):
+            light.color = color
+            light.intensity = intensity
+            light.position = (pos_x, pos_y, pos_z)
+            light.target.position = (tar_x, tar_y, tar_z)
+            light.castShadow = cast_shadow
+            light.shadow.bias = bias
+            light.shadow.radius = radius
+            light.shadow.camera.left   = -ortho_size/2
+            light.shadow.camera.right  =  ortho_size/2
+            light.shadow.camera.top    =  ortho_size/2
+            light.shadow.camera.bottom = -ortho_size/2
+
+    
+        interactables = ipywidgets.interactive(set_params_directional, 
+                                    color=light_color,
+                                    intensity=light_intensity,
+                                    pos_x=position_x,
+                                    pos_y=position_y,
+                                    pos_z=position_z,
+                                    tar_x=target_x,
+                                    tar_y=target_y,
+                                    tar_z=target_z,
+                                    cast_shadow=cast_shadow,
+                                    bias=shadow_bias,
+                                    radius=shadow_radius,
+                                    ortho_size=shadow_camera_orthographic_size)
+        
+    elif light.type == 'SpotLight':
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.color), continuous_update=True, style=style, layout=layout)
+        light_intensity = ipywidgets.FloatSlider(description='Intensity:',value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+        position_x = ipywidgets.FloatText(description='Position X:',value=light.position[0], style=style, layout=layout)
+        position_y = ipywidgets.FloatText(description='Position Y:',value=light.position[1], style=style, layout=layout)
+        position_z = ipywidgets.FloatText(description='Position Z:',value=light.position[2], style=style, layout=layout)
+        target_x = ipywidgets.FloatText(description='Target X:', value=light.target.position[0], style=style, layout=layout)
+        target_y = ipywidgets.FloatText(description='Target Y:', value=light.target.position[1], style=style, layout=layout)
+        target_z = ipywidgets.FloatText(description='Target Z:', value=light.target.position[2], style=style, layout=layout)
+        angle = ipywidgets.FloatSlider(description='Angle:', value=light.angle, min=math.pi/100, max=math.pi/2, step=0.001,  continuous_update=True, orientation='horizontal', readout=True, readout_format='.07f', style=style, layout=layout)
+        penumbra = ipywidgets.FloatSlider(description='Penumbra:', value=light.penumbra, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+        cast_shadow = ipywidgets.Checkbox(value=light.castShadow, description='Cast Shadow', style=style, layout=layout)
+        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow.bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal', readout=True, readout_format='.7f', style=style, layout=layout)
+        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow.radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+
+        def set_params_spot(color, intensity, pos_x, pos_y, pos_z, tar_x, tar_y, tar_z, angle, penumbra, cast_shadow, bias, radius):
+            light.color = color
+            light.intensity = intensity
+            light.position = (pos_x, pos_y, pos_z)
+            light.target.position = (tar_x, tar_y, tar_z)
+            light.angle = angle
+            light.penumbra = penumbra
+            light.castShadow = cast_shadow
+            light.shadow.bias = bias
+            light.shadow.radius = radius
+    
+        interactables = ipywidgets.interactive(set_params_spot, 
+                                    color=light_color,
+                                    intensity=light_intensity,
+                                    pos_x=position_x,
+                                    pos_y=position_y,
+                                    pos_z=position_z,
+                                    tar_x=target_x,
+                                    tar_y=target_y,
+                                    tar_z=target_z,
+                                    angle = angle,
+                                    penumbra = penumbra,
+                                    cast_shadow=cast_shadow,
+                                    bias=shadow_bias,
+                                    radius=shadow_radius)
+     
+    elif light.type == 'PointLight':
+        light_color = ipywidgets.ColorPicker(description='Light Color:', value=str(light.color), continuous_update=True, style=style, layout=layout)
+        light_intensity = ipywidgets.FloatSlider(description='Intensity:',value=light.intensity, min=0.0, max=1.0, step=0.01, continuous_update=True, orientation='horizontal',readout=True, style=style, layout=layout)
+        position_x = ipywidgets.FloatText(description='Position X:',value=light.position[0], style=style, layout=layout)
+        position_y = ipywidgets.FloatText(description='Position Y:',value=light.position[1], style=style, layout=layout)
+        position_z = ipywidgets.FloatText(description='Position Z:',value=light.position[2], style=style, layout=layout)
+        distance = ipywidgets.FloatSlider(description='Max Distance:', value=light.distance, min=0, max=1000, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+        cast_shadow = ipywidgets.Checkbox(value=light.castShadow, description='Cast Shadow', style=style, layout=layout)
+        shadow_bias = ipywidgets.FloatSlider(description='Shadow Bias:', value=light.shadow.bias, min=-0.001, max=0.001, step=0.00001, continuous_update=True, orientation='horizontal', readout=True, readout_format='.7f', style=style, layout=layout)
+        shadow_radius = ipywidgets.FloatSlider(description='Shadow Radius:', value=light.shadow.radius, min=0, max=10, step=0.01, continuous_update=True, orientation='horizontal', readout=True, style=style, layout=layout)
+
+        def set_params_point(color, intensity, pos_x, pos_y, pos_z, distance, cast_shadow, bias, radius):
+            light.color = color
+            light.intensity = intensity
+            light.position = (pos_x, pos_y, pos_z)
+            light.distance = distance
+            light.castShadow = cast_shadow
+            light.shadow.bias = bias
+            light.shadow.radius = radius
+
+    
+        interactables = ipywidgets.interactive(set_params_point, 
+                                    color=light_color,
+                                    intensity=light_intensity,
+                                    pos_x=position_x,
+                                    pos_y=position_y,
+                                    pos_z=position_z,
+                                    distance=distance,
+                                    cast_shadow=cast_shadow,
+                                    bias=shadow_bias,
+                                    radius=shadow_radius)
+
+
+    if interactables:
+        box = ipywidgets.VBox(children = interactables.children)
+        tab.children += (box,) 
+        tab.set_title(index, light.type + " " + str(index))
+
+
+
+def show_lighting_widgets():
+    """Set up and show customization widgets for pythreejs.Light objects and Mesh object materials inside an ipywidget.Tab
+    Function will parse all lights and meshes from the current figure and will generate and display tabs for each object
+    """
+    tab = ipywidgets.Tab()
+    fig = gcf()
+    index = 0
+    for l in fig.lights:
+        setup_light_widgets(light=l, tab=tab, index=index)
+        index+=1
+    for m in fig.meshes:
+        setup_material_widgets(mesh=m, tab=tab, index=index)
+        index+=1
+    display(tab)
+
+
