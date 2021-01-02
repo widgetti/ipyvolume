@@ -49,7 +49,20 @@ def _screenshot_data(
     # else:
     #     assert isinstance(fig, ipv.Figure)
 
-    chrome = PyChromeDevTools.ChromeInterface(headless_kwargs)
+
+    try:
+        host = "localhost"
+        port = 9222
+
+        if headless_kwargs.get("host"):
+            host = headless_kwargs.get("host")
+
+        chrome = PyChromeDevTools.ChromeInterface(host=host, port=port)
+        #chrome = PyChromeDevTools.ChromeInterface(host="localhost")
+    except:
+        print("Falied to connect to headless chrome, please make sure it's running on host={} and port={}".format(host, port))
+        raise 
+
     chrome.Network.enable()
     chrome.Page.enable()
     chrome.Page.navigate(url=html_filename)
@@ -59,16 +72,19 @@ def _screenshot_data(
     result = chrome.Runtime.evaluate(expression='ipvss()')
     tries = 0
     while tries < 10:
+        #print(str(result))
         try:
-            url = result['result']['result']['value']
+            url = result[0]['result']['result']['value']
             return url
-        except:
-            if 'ipvss' in result['result']['result']['description']:
+        except Exception as ex:
+            #print(str(ex))
+            #raise ex
+            if 'ipvss' in result[0]['result']['result']['description']:
                 tries += 1
                 time.sleep(0.5)
             else:
                 print('error getting result, return value was:', result)
-                raise
+                raise ex
 
 
 def _main():
