@@ -33,9 +33,6 @@
       "@jupyter-widgets/base": {
         "bundled": false,
         "singleton": true
-      },
-      "threejs": {
-        "bundled": true
       }
     }
   },
