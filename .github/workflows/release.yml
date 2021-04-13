@@ -1,8 +1,13 @@
 name: Publish Package
 
+# on:
+#   release:
+#     types: [published]
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - *
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
