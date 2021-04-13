@@ -64,7 +64,9 @@ jobs:
       run: pytest ipyvolume
 
     - name: JavaScript tests
-      run: npm run test
+      run: |
+        npm install
+        npm run test
       working-directory: js
 
     - name: Build Python package
