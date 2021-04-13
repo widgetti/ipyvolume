@@ -39,9 +39,10 @@ def skip_if_exists(paths, CommandClass):
 
     return SkipIfExistCommand
 
-log.set_verbosity(log.DEBUG)
-log.info('setup.py entered')
-log.info('$PATH=%s' % os.environ['PATH'])
+# jupyter lab install will fail it we print out info
+# log.set_verbosity(log.DEBUG)
+# log.info('setup.py entered')
+# log.info('$PATH=%s' % os.environ['PATH'])
 
 
 def read(fname):

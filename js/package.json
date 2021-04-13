@@ -37,7 +37,7 @@
     }
   },
   "devDependencies": {
-    "@jupyterlab/builder": "^3.0.0-rc.13",
+    "@jupyterlab/builder": "^3.0.0",
     "@types/chai": "^4.1.4",
     "@types/d3": "^5.7.2",
     "@types/expect.js": "^0.3.29",
