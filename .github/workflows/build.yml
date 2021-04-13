@@ -99,7 +99,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: ipyvolume-test
-          environment-file: test-environment.yml
+          environment-file: environment-test.yml
           python-version: 3.9
           mamba-version: "*"
           auto-activate-base: false
@@ -163,7 +163,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: ipyvolume-test
-          environment-file: test-environment.yml
+          environment-file: environment-test.yml
           python-version: ${{ matrix.python-version }}
           mamba-version: "*"
           auto-activate-base: false
