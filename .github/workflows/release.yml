@@ -1,0 +1,39 @@
+name: Publish Package
+
+on:
+  release:
+    types: [published]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install node
+      uses: actions/setup-node@v1
+      with:
+        node-version: '14.x'
+        registry-url: 'https://registry.npmjs.org'
+    - name: Install Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install twine wheel jupyter-packaging jupyterlab
+    - name: Publish the Python package
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        python setup.py sdist bdist_wheel
+        # twine upload dist/*
+    - name: Publish the NPM package
+      run: |
+        cd js
+        echo $PRE_RELEASE
+        if [[ $PRE_RELEASE == "true" ]]; then export TAG="next"; else export TAG="latest"; fi
+        # npm publish --tag ${TAG} --access public
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        PRE_RELEASE: ${{ github.event.release.prerelease }}
