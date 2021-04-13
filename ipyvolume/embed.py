@@ -1,5 +1,6 @@
 import os
 import io
+import sys
 import zipfile
 import shutil
 
@@ -41,12 +42,17 @@ def save_ipyvolumejs(
     pyv_filepath = os.path.join(target, pyv_filename)
 
     devfile = os.path.join(os.path.abspath(ipyvolume.__path__[0]), "..", "js", "dist", "index.js")
+    devfile_share = os.path.join(sys.prefix, 'share/jupyter/nbextensions/ipyvolume/index.js')
+
     if devmode:
-        if not os.path.exists(devfile):
-            raise IOError('devmode=True but cannot find : {}'.format(devfile))
         if target and not os.path.exists(target):
             os.makedirs(target)
-        shutil.copy(devfile, pyv_filepath)
+        if os.path.exists(devfile_share):
+            shutil.copy(devfile_share, pyv_filepath)
+        else:
+            if not os.path.exists(devfile):
+                raise IOError(f'devmode=True but cannot find : {devfile} or {devfile_share}')
+            shutil.copy(devfile, pyv_filepath)
     else:
         download_to_file(url, pyv_filepath)
 

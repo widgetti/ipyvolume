@@ -1,4 +1,4 @@
-name: bqplot-test
+name: ipyvolume-test
 channels:
     - conda-forge
 dependencies:
