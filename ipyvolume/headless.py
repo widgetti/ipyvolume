@@ -42,7 +42,8 @@ def _get_browser():
 
 
 def _screenshot_data(
-    html_filename, timeout_seconds=10, output_widget=None, format="png", width=None, height=None, fig=None, **headless_kwargs):
+        html_filename, timeout_seconds=10, output_widget=None, format="png", width=None, height=None, fig=None,
+        **headless_kwargs):
     # browser = _get_browser()
     # if fig is None:
     #     fig = gcf()

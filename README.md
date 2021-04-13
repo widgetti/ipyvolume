@@ -113,18 +113,12 @@ $ jupyter nbextension enable --py --user widgetsnbextension
 $ git clone https://github.com/maartenbreddels/ipyvolume.git
 $ cd ipyvolume
 $ pip install -e .
-$ jupyter nbextension install --py --symlink --sys-prefix ipyvolume
+$ jupyter nbextension install --py --overwrite --symlink --sys-prefix ipyvolume
 $ jupyter nbextension enable --py --sys-prefix ipyvolume
+# for jupyterlab (>=3.0), symlink share/jupyter/labextensions/bqplot-image-gl
+$ jupyter labextension develop . --overwrite
 ```
 
-For all cases make sure [ipywidgets is enabled](http://ipywidgets.readthedocs.io/en/latest/user_install.html) if you use Jupyter notebook version < 5.3 (using `--user` instead of `--sys-prefix` if doing a local install):
-
-```
-$ jupyter nbextension enable --py --sys-prefix widgetsnbextension
-$ jupyter nbextension enable --py --sys-prefix pythreejs
-$ jupyter nbextension enable --py --sys-prefix ipywebrtc
-$ jupyter nbextension enable --py --sys-prefix ipyvolume
-```
 
 ## Developer workflow
 

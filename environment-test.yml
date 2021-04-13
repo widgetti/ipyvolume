@@ -1,0 +1,27 @@
+name: ipyvolume-test
+channels:
+    - conda-forge
+dependencies:
+    - pip
+    - python
+    - yarn
+    - nodejs=12
+    - ipywidgets >=5.2.2
+    - traitlets >=4.3.0
+    - traittypes >=0.0.6
+    - numpy >=1.10.4
+    - pandas
+    - scipy
+    - jupyter
+    - jupyterlab=3.0.3  # to build the lab federated bundle
+    - jupyter-packaging # to build the wheel
+    - pytest
+    - nbval
+    - pytest-cov
+    - selenium
+    - flake8
+    - nose
+    - bokeh
+    - matplotlib
+    - scikit-image
+    - shapely
