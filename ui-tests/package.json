@@ -1,0 +1,19 @@
+{
+  "name": "ipyvolume-ui-tests",
+  "version": "1.0.0",
+  "description": "ipyvolume UI Tests",
+  "private": true,
+  "scripts": {
+    "start-jlab": "jupyter lab --config ./jupyter_server_config.py",
+    "start-jlab:detached": "yarn run start-jlab&",
+    "clean": "rimraf tests/notebooks/.ipynb_checkpoints && rimraf test-output",
+    "test": "yarn run clean && galata --jlab-base-url http://localhost:8999 --image-match-threshold 0.25",
+    "update-references": "galata --update-references"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@jupyterlab/galata": "3.0.3-3",
+    "klaw-sync": "^6.0.0",
+    "rimraf": "^3.0.2"
+  }
+}

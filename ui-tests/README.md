@@ -1,0 +1,1 @@
+Should be run the same as https://github.com/bqplot/bqplot/tree/master/ui-tests
