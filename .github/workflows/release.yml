@@ -6,7 +6,6 @@ name: Publish Package
 on:
   push:
     tags:
-      - *
 
 jobs:
   deploy:
@@ -32,13 +31,13 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
         python setup.py sdist bdist_wheel
-        # twine upload dist/*
+        twine upload dist/*
     - name: Publish the NPM package
       run: |
         cd js
         echo $PRE_RELEASE
         if [[ $PRE_RELEASE == "true" ]]; then export TAG="next"; else export TAG="latest"; fi
-        # npm publish --tag ${TAG} --access public
+        npm publish --tag ${TAG} --access public
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         PRE_RELEASE: ${{ github.event.release.prerelease }}

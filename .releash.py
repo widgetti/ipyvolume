@@ -14,9 +14,9 @@ package_python.version_source = version_python
 package_python.version_targets.append(VersionTarget(package_python, '{path}/ipyvolume/_version.py'))
 
 package_python.release_targets.append(gittag)
-package_python.release_targets.append(ReleaseTargetSourceDist(package_python, universal_wheel=True))
+# package_python.release_targets.append(ReleaseTargetSourceDist(package_python, universal_wheel=True))
 #core.release_targets.append(gitpush)
-package_python.release_targets.append(ReleaseTargetCondaForge(package_python, '../feedstocks/ipyvolume-feedstock'))
+# package_python.release_targets.append(ReleaseTargetCondaForge(package_python, '../feedstocks/ipyvolume-feedstock'))
 
 
 # js part
@@ -31,7 +31,7 @@ package_js.version_targets.append(VersionTarget(package_js, '{path}/../ipyvolume
 package_js.version_targets.append(VersionTargetJson(package_js, '{path}/package.json'))
 
 package_js.release_targets.append(gittag)
-package_js.release_targets.append(ReleaseTargetNpm(package_js))
+# package_js.release_targets.append(ReleaseTargetNpm(package_js))
 #core.release_targets.append(gitpush)
 #package_python.release_targets.append(ReleaseTargetCondaForge(package_python, '../feedstocks/ipyvolume-feedstock'))
 
