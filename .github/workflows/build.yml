@@ -125,7 +125,7 @@ jobs:
       - name: Wait for JupyterLab
         uses: ifaxity/wait-on-action@v1
         with:
-          resource: http-get://localhost:8888/api
+          resource: http-get://localhost:8999/api
           timeout: 20000
 
       - name: Run UI Tests
