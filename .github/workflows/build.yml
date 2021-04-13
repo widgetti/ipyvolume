@@ -52,19 +52,19 @@ jobs:
       run: jupyter labextension list 2>&1 | grep ipyvolume
 
     - name: Python PEP8 check
-      run: flake8 ipyvolume --ignore=E501,W504,W503
+      run: flake8 ipyvolume
 
-    - name: JavaScript prettyfier
-      run: |
-        yarn install
-        yarn run prettier --check .
-      working-directory: js
+    # - name: JavaScript prettyfier
+    #   run: |
+    #     yarn install
+    #     yarn run prettier --check .
+    #   working-directory: js
 
     - name: Python tests
-      run: pytest tests examples/Marks
+      run: pytest ipyvolume
 
     - name: JavaScript tests
-      run: yarn run test
+      run: npm run test
       working-directory: js
 
     - name: Build Python package
