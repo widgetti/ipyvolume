@@ -6,6 +6,7 @@ name: Publish Package
 on:
   push:
     tags:
+     - '*'
 
 jobs:
   deploy:
