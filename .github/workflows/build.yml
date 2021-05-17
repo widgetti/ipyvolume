@@ -14,6 +14,26 @@ defaults:
     shell: bash -l {0}
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: ipyvolume-test
+        environment-file: environment-test.yml
+        python-version: ${{ matrix.python-version }}
+        mamba-version: "*"
+        auto-activate-base: false
+        channels: conda-forge
+
+    - name: Python PEP8 check
+      run: flake8 ipyvolume
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -50,9 +70,6 @@ jobs:
 
     - name: Validate the labextension
       run: jupyter labextension list 2>&1 | grep ipyvolume
-
-    - name: Python PEP8 check
-      run: flake8 ipyvolume
 
     # - name: JavaScript prettyfier
     #   run: |
