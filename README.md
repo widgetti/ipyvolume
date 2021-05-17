@@ -53,6 +53,8 @@ Documentation is generated at readthedocs: [![Documentation](https://readthedocs
 
 # Installation
 
+If you want to use Jupyter Lab, please use version 3.0.
+
 ## Using pip
 
 *Advice: Make sure you use conda or virtualenv. If you are not a root user and want to use the `--user` argument for pip, you expose the installation to all python environments, which is a bad practice, make sure you know what you are doing.*
@@ -65,18 +67,6 @@ $ pip install ipyvolume
 
 ```
 $ conda install -c conda-forge ipyvolume
-```
-
-## For Jupyter lab users
-
-The Jupyter lab extension is not enabled by default (yet).
-
-```
-$ conda install -c conda-forge nodejs  # or some other way to have a recent node
-$ jupyter labextension install @jupyter-widgets/jupyterlab-manager
-$ jupyter labextension install ipyvolume
-$ jupyter labextension install jupyter-threejs
-
 ```
 
 
