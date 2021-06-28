@@ -34,10 +34,10 @@ import "./three/THREEx.FullScreen.js";
 import "./three/TrackballControls.js";
 
 const shaders = {
-    screen_fragment: (require("raw-loader!../glsl/screen-fragment.glsl") as any).default,
-    screen_vertex: (require("raw-loader!../glsl/screen-vertex.glsl") as any).default,
-    volr_fragment: (require("raw-loader!../glsl/volr-fragment.glsl") as any).default,
-    volr_vertex: (require("raw-loader!../glsl/volr-vertex.glsl") as any).default,
+    "screen-fragment": (require("raw-loader!../glsl/screen-fragment.glsl") as any).default,
+    "screen-vertex": (require("raw-loader!../glsl/screen-vertex.glsl") as any).default,
+    "volr-fragment": (require("raw-loader!../glsl/volr-fragment.glsl") as any).default,
+    "volr-vertex": (require("raw-loader!../glsl/volr-vertex.glsl") as any).default,
 };
 
 // similar to _.bind, except it
@@ -152,6 +152,7 @@ class FigureModel extends widgets.DOMWidgetModel {
             panorama_mode: "no",
             capture_fps: null,
             cube_resolution: 512,
+            _shaders: {},  // override shaders / hot reload
         };
     }
 }
@@ -721,8 +722,8 @@ class FigureView extends widgets.DOMWidgetView {
                     value: this.screen_pass_target.texture,
                 },
             },
-            vertexShader: shaders.screen_vertex,
-            fragmentShader: shaders.screen_fragment,
+            vertexShader: shaders["screen-vertex"],
+            fragmentShader: shaders["screen-fragment"],
             depthWrite: false,
         });
 
@@ -733,8 +734,8 @@ class FigureView extends widgets.DOMWidgetView {
                     value: this.cube_camera.renderTarget.texture,
                 },
             },
-            vertexShader: shaders.screen_vertex,
-            fragmentShader: shaders.screen_fragment,
+            vertexShader: shaders["screen-vertex"],
+            fragmentShader: shaders["screen-fragment"],
             defines: {},
             depthWrite: false,
         });
@@ -992,6 +993,12 @@ class FigureView extends widgets.DOMWidgetView {
         this.model.on("change:diffuse_coefficient", this.update_light, this);
         this.model.on("change:specular_coefficient", this.update_light, this);
         this.model.on("change:specular_exponent", this.update_light, this);
+
+        const hot_reload_shaders = () => {
+            this.rebuild_multivolume_rendering_material();
+            this.update();
+        }
+        this.model.on("change:_shaders", hot_reload_shaders, this);
 
         const update_center = () => {
             // WARNING: we cheat a little by setting the scene positions (hence the minus) since it is
@@ -2329,8 +2336,9 @@ class FigureView extends widgets.DOMWidgetView {
             };
             return Mustache.render(template_shader, view);
         };
-        material_depth.fragmentShader = material.fragmentShader = mustache_render(shaders.volr_fragment);
-        material_depth.vertexShader = material.vertexShader = shaders.volr_vertex;
+        const _shaders = this.model.get("_shaders");
+        material_depth.fragmentShader = material.fragmentShader = mustache_render(_shaders["volr-fragment"] || shaders["volr-fragment"]);
+        material_depth.vertexShader = material.vertexShader = _shaders["volr-vertex"] || shaders["volr-vertex"];
         material_depth.needsUpdate = material.needsUpdate = true;
     }
 

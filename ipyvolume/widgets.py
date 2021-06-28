@@ -397,6 +397,12 @@ class Figure(ipywebrtc.MediaStream):
     mouse_mode = traitlets.Unicode(default_value='normal').tag(sync=True)
     panorama_mode = traitlets.Enum(values=['no', '360', '180'], default_value='no').tag(sync=True)
 
+    _shaders = traitlets.Dict(default_value={}).tag(sync=True)
+
+    def _hot_reload(self):
+        from .hotreload import watch
+        watch(self)
+
     # xlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     # y#lim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
     # zlim = traitlets.Tuple(traitlets.CFloat(0), traitlets.CFloat(1)).tag(sync=True)
