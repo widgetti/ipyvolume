@@ -94,6 +94,9 @@ class Values {
             }
             this.values[name] = value;
         }
+        if(this.length == Infinity) {
+            this.length = 1; // no arrays?
+        }
     }
 
     trim(new_length) {
