@@ -131,6 +131,9 @@ def klein_bottle(
             x = 6 * cos(u) * (1 + sin(u)) + r * cos(u) * cos(v) * (u < pi) + r * cos(v + pi) * (u >= pi)
             y = 16 * sin(u) + r * sin(u) * cos(v) * (u < pi)
             z = r * sin(v)
+            x = x / 20
+            y = y / 20
+            z = z / 20
     if draw:
         if texture:
             uv = True
