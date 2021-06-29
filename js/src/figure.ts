@@ -38,6 +38,8 @@ const shaders = {
     "screen-vertex": (require("raw-loader!../glsl/screen-vertex.glsl") as any).default,
     "volr-fragment": (require("raw-loader!../glsl/volr-fragment.glsl") as any).default,
     "volr-vertex": (require("raw-loader!../glsl/volr-vertex.glsl") as any).default,
+    "shadow-fragment": (require("raw-loader!../glsl/shadow-fragment.glsl") as any).default,
+    "shadow-vertex": (require("raw-loader!../glsl/shadow-vertex.glsl") as any).default,
 };
 
 // similar to _.bind, except it
@@ -2225,60 +2227,28 @@ class FigureView extends widgets.DOMWidgetView {
             throw "No light with a shadow map found."
         }
         const light = lights[0];
-        const target = light.shadow.map;
+        const target = light.shadow.map.texture;
         const textureWidth = target.width;
         const textureHeight = target.height;
         const quadCamera = new THREE.OrthographicCamera (textureWidth / - 2, textureHeight / 2, textureWidth / 2, textureHeight / - 2, -1000, 1000);
         quadCamera.position.z = 100;
         var quadScene = new THREE.Scene();
 
+        const _shaders = this.model.get("_shaders");
+        const fragmentShader = _shaders["shadow-fragment"] || shaders["shadow-fragment"];
+        const vertexShader = _shaders["shadow-vertex"] || shaders["shadow-vertex"];
+
         const quadMaterial = new THREE.ShaderMaterial ({
-
-                uniforms:
-                {
-                    map: { type: "t", value: null },
-                },
-
-                vertexShader:
-                [
-                    "varying vec2 vUv;",
-
-                    "void main ()",
-                    "{",
-                        "vUv = vec2 (uv.x, 1.0 - uv.y);",
-                        "gl_Position = projectionMatrix * modelViewMatrix * vec4 (position, 1.0);",
-                    "}"
-                ].join("\n"),
-
-                fragmentShader:
-                [
-                    "uniform sampler2D map;",
-                    "varying vec2 vUv;",
-                    "#include <packing>",
-
-                    "float unpack_depth (const in vec4 rgba_depth)",
-                    "{",
-                        "const vec4 bit_shift = vec4 (1.0 / (256.0 * 256.0 * 256.0), 1.0 / (256.0 * 256.0), 1.0 / 256.0, 1.0);",
-                        "float depth = dot (rgba_depth, bit_shift);",
-
-                        "return depth;",
-                    "}",
-
-                    "void main ()",
-                    "{",
-                        "vec4 rgbaDepth = texture2D (map, vUv);",
-                        "float fDepth = unpackRGBAToDepth(rgbaDepth);",
-
-                        "gl_FragColor = vec4 (vec3 (fDepth), 1.0);",
-                    "}"
-                ].join("\n"),
-
-                blending: THREE.NoBlending,
-                depthTest: false,
-                depthWrite: false,
+            uniforms: {
+                map: { type: "t", value: null },
+            },
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+            depthTest: false,
+            depthWrite: false,
         });
 
-        quadScene.add (new THREE.Mesh (new THREE.PlaneGeometry (textureWidth, textureHeight), quadMaterial));
+        quadScene.add(new THREE.Mesh (new THREE.PlaneGeometry (textureWidth, textureHeight), quadMaterial));
         quadMaterial.uniforms.map.value = target;
         this.renderer.render(quadScene, quadCamera);
     }
