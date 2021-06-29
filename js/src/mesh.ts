@@ -26,6 +26,8 @@ class MeshView extends widgets.WidgetView {
 
     material: any;
     material_rgb: any;
+    material_depth: any;
+    material_distance: any;
     line_material: any;
     line_material_rgb: any;
     materials: any;
@@ -46,7 +48,7 @@ class MeshView extends widgets.WidgetView {
             throw 'Mesh cannot be displayed, should be added to Figure'
         }
         this.figure.model.on('change:_shaders', () => {
-            console.log('updating shader (hot reload)')
+            console.log('updating mesh shader (hot reload)')
             this._update_materials();
         }, this);
         this.previous_values = {};
@@ -378,17 +380,40 @@ class MeshView extends widgets.WidgetView {
         this.line_material.visible = this.line_material.visible && this.model.get("visible");
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
 
-       const vertexShader = this.figure.model.get('_shaders')['mesh-vertex'] || shaders['mesh-vertex']
-       const fragmentShader = this.figure.model.get('_shaders')['mesh-fragment'] || shaders['mesh-fragment']
+        const vertexShader = this.figure.model.get('_shaders')['mesh-vertex'] || shaders['mesh-vertex']
+        const fragmentShader = this.figure.model.get('_shaders')['mesh-fragment'] || shaders['mesh-fragment']
+
+        //  + Math.random() * 0.01 to avoid the cache of threejs
+        // see https://github.com/mrdoob/three.js/pull/17567
+        const cache_thrasher = Math.random() * 0.01;
+
+        this.material_depth = new MeshDepthMaterialCustom(() => {
+            const defines = {...this.material.defines};
+            // unset lighting model
+            delete defines[`AS_${this.lighting_model}`];
+            return {AS_DEPTH: true, ...defines};
+        }, this.uniforms, vertexShader, fragmentShader, {
+            depthPacking: THREE.RGBADepthPacking,
+            alphaTest: 0.5 + cache_thrasher,
+        });
+
+        this.material_distance = new MeshDistanceMaterialCustom(() => {
+            const defines = {...this.material.defines};
+            // unset lighting model
+            delete defines[`AS_${this.lighting_model}`];
+            return {AS_DISTANCE: true, ...defines};
+        }, this.uniforms, vertexShader, fragmentShader,  {
+            alphaTest: 0.5 + cache_thrasher
+        });
+
         this.materials.forEach((material) => {
-            material.vertexShader = vertexShader;
-            material.fragmentShader = fragmentShader;
             material.onBeforeCompile = (shader) => {
                 shader.vertexShader = vertexShader;
                 shader.fragmentShader = fragmentShader;
                 shader.uniforms = {...shader.uniforms, ...this.uniforms};
                 patchShader(shader);
             };
+            material.alphaTest = 0.5 + cache_thrasher;
             material.needsUpdate = true;
             material.lights = true;
         });
@@ -404,15 +429,8 @@ class MeshView extends widgets.WidgetView {
         this.line_material.needsUpdate = true;
         this.line_material_rgb.needsUpdate = true;
         if(this.surface_mesh) {
-            this.surface_mesh.customDepthMaterial.needsUpdate = true;
-            this.surface_mesh.customDistanceMaterial.needsUpdate = true;
-            // although we request needsUpdate, threejs will find the program in the cache
-            // changing alphaTest a bit forces a recompilation of the program
-            // see https://github.com/mrdoob/three.js/pull/17567
-            // However, this does seem to affect the rendering of the shadow map in debug mode
-            // so this somehow has an effect on shadowmap (renders black)
-            // for debug mode it might be usefull to disable this
-            this.surface_mesh.customDepthMaterial.alphaTest += 1e-5;
+            this.surface_mesh.customDepthMaterial = this.material_depth;
+            this.surface_mesh.customDistanceMaterial = this.material_distance;
         }
 
         this.figure.update();
@@ -556,21 +574,8 @@ class MeshView extends widgets.WidgetView {
             const fragmentShader = this.figure.model.get('_shaders')['mesh-fragment'] || shaders['mesh-fragment']
 
             this.surface_mesh = new THREE.Mesh(geometry, this.material);
-            this.surface_mesh.customDepthMaterial = new MeshDepthMaterialCustom(() => {
-                const defines = {...this.material.defines};
-                // unset lighting model
-                delete defines[`AS_${this.lighting_model}`];
-                return {AS_DEPTH: true, ...defines};
-            }, this.uniforms, vertexShader, fragmentShader, {
-                depthPacking: THREE.RGBADepthPacking,
-                alphaTest: 0.5,
-            });
-            this.surface_mesh.customDistanceMaterial = new MeshDistanceMaterialCustom(() => {
-                const defines = {...this.material.defines};
-                // unset lighting model
-                delete defines[`AS_${this.lighting_model}`];
-                return {AS_DISTANCE: true, ...defines};
-            }, this.uniforms, vertexShader, fragmentShader,  {});
+            this.surface_mesh.customDepthMaterial = this.material_depth;
+            this.surface_mesh.customDistanceMaterial = this.material_distance;
             // BUG? because of our custom shader threejs thinks our object if out
             // of the frustum
             this.surface_mesh.frustumCulled = false;
