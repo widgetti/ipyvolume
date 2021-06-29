@@ -1,4 +1,5 @@
 import * as bqplot from "bqplot";
+import * as threejs from 'jupyter-threejs';
 import { expect } from "chai";
 import * as ipyvolume from "../";
 import {DummyManager} from "./dummy-manager";
@@ -11,7 +12,7 @@ const pixel_red = [255, 0, 0, 255];
 
 describe("volume >", () => {
     beforeEach(async function() {
-        this.manager = new DummyManager({ipyvolume, bqplot});
+        this.manager = new DummyManager({ipyvolume, bqplot, 'jupyter-threejs': threejs});
     });
 
     it("canvas/png render check", async function() {

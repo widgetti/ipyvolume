@@ -213,6 +213,7 @@ def figure(
         current.container = current.containers[key]
     else:
         current.figure = ipv.Figure(width=width, height=height, **kwargs)
+        current.material = None
         current.container = ipywidgets.VBox()
         current.container.children = [current.figure]
         if key is None:

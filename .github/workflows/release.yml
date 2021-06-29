@@ -32,7 +32,7 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
         python setup.py sdist bdist_wheel
-        twine upload dist/*
+        twine upload --skip-existing dist/*
     - name: Publish the NPM package
       run: |
         cd js
