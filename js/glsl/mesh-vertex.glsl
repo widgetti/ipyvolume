@@ -248,6 +248,7 @@ void main(void) {
 
     #ifdef AS_COORDINATE
         // vertex_color = vec4(model_pos + vec3(0.5, 0.5, 0.5), 1.0);
+        vertex_color = vec4(transformed + vec3(0.5, 0.5, 0.5), 1.0);
     #else
         #ifdef USE_COLORMAP
             float color_animated = mix(color_previous, color_current, animation_time_color);
@@ -260,6 +261,7 @@ void main(void) {
 
 
 #if defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( transformed, 1.0 );;
     // vec3 model_pos = vec3(SCALE_X(animated_position.x), SCALE_Y(animated_position.y), SCALE_Z(animated_position.z));
     // gl_Position = projectionMatrix *
     //             modelViewMatrix *
