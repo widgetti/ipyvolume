@@ -9,12 +9,14 @@ import * as values from "./values.js";
 // tslint:disable-next-line: no-var-requires
 const cat_data = require("../data/cat.json");
 
-const vertexShader = (require("raw-loader!../glsl/scatter-vertex.glsl") as any).default;
-const fragmentShader = (require("raw-loader!../glsl/scatter-fragment.glsl") as any).default;
+const shaders = {
+    "scatter-vertex": (require("raw-loader!../glsl/scatter-vertex.glsl") as any).default,
+    "scatter-fragment": (require("raw-loader!../glsl/scatter-fragment.glsl") as any).default,
+};
 
 export
 class ScatterView extends widgets.WidgetView {
-    renderer: any;
+    figure: any;
     previous_values: {color?: any, size?: any, sequence_index?: any, selected?: any};
     attributes_changed: {color?: any, size?: any, sequence_index?: any, selected?: any};
     scale_defines: {};
@@ -38,7 +40,17 @@ class ScatterView extends widgets.WidgetView {
 
     render() {
 
-        this.renderer = this.options.parent;
+        this.figure = this.options.parent;
+
+        this.figure = this.options.parent;
+        if(!this.figure) {
+            throw 'Scatter cannot be displayed, should be added to Figure'
+        }
+        this.figure.model.on('change:_shaders', () => {
+            console.log('updating shader (hot reload)')
+            this._update_materials();
+        }, this);
+
         this.previous_values = {};
         this.attributes_changed = {};
         (window as any).last_scatter = this;
@@ -151,11 +163,11 @@ class ScatterView extends widgets.WidgetView {
         this.model.on("change:geo_matrix", () => {
             this.uniforms.geo_matrix.value = this.model.get('geo_matrix');
             this._update_materials();
-            this.renderer.update();
+            this.figure.update();
         });
         this.model.on("change:shader_snippets", () => {
             this._update_materials();
-            this.renderer.update();
+            this.figure.update();
         });
 
         this._update_color_scale();
@@ -187,7 +199,7 @@ class ScatterView extends widgets.WidgetView {
                 }
                 this.uniforms[uniform_name].value = [min, max];
                 if(this.mesh) {
-                    this.renderer.update();
+                    this.figure.update();
                 }
             }
             update_scale_domain();
@@ -209,7 +221,7 @@ class ScatterView extends widgets.WidgetView {
                 if (scale) {
                     scale.on("domain_changed", update_scale_domain, this);
                     update_scale_domain();
-                    this.renderer.update();
+                    this.figure.update();
                 }
                 // if (this.mesh) { // we don't need to do so on initialization
                 //     this.update_();
@@ -264,19 +276,19 @@ class ScatterView extends widgets.WidgetView {
         }
     }
     add_to_scene() {
-        this.renderer.scene.add(this.mesh);
+        this.figure.scene.add(this.mesh);
         if (this.line_segments) {
-            this.renderer.scene.add(this.line_segments);
+            this.figure.scene.add(this.line_segments);
         }
     }
     remove_from_scene() {
-        if (this.renderer.scene.children.indexOf(this.mesh) === -1) {
+        if (this.figure.scene.children.indexOf(this.mesh) === -1) {
             console.warn("trying to removing scatter mesh from scene that does not include it");
         }
-        this.renderer.scene.remove(this.mesh);
+        this.figure.scene.remove(this.mesh);
         this.mesh.geometry.dispose();
         if (this.line_segments) {
-            this.renderer.scene.remove(this.line_segments);
+            this.figure.scene.remove(this.line_segments);
             this.line_segments.geometry.dispose();
         }
     }
@@ -315,7 +327,7 @@ class ScatterView extends widgets.WidgetView {
         this.remove_from_scene();
         this.create_mesh();
         this.add_to_scene();
-        this.renderer.update();
+        this.figure.update();
     }
     _get_value(value, index, default_value) {
         if (!value) {
@@ -366,7 +378,7 @@ class ScatterView extends widgets.WidgetView {
             color_scale.on("colors_changed", this._update_color_scale_texture, this);
             this._update_color_scale_texture();
             this._update_color_scale_domain();
-            this.renderer.update();
+            this.figure.update();
         }
         if (this.mesh) { // we don't need to do so on initialization
             this.update_();
@@ -375,7 +387,7 @@ class ScatterView extends widgets.WidgetView {
     _update_color_scale_texture() {
         const color_scale = this.model.get("color_scale");
         this.uniforms.colormap.value = createColormap(color_scale);
-        this.renderer.update();
+        this.figure.update();
     }
     _update_color_scale_domain() {
         const color_scale = this.model.get("color_scale");
@@ -402,7 +414,7 @@ class ScatterView extends widgets.WidgetView {
             }
 
         }
-        this.renderer.update();
+        this.figure.update();
     }
      _update_materials() {
 
@@ -442,6 +454,8 @@ class ScatterView extends widgets.WidgetView {
         this.line_material.visible = this.line_material.visible && this.model.get("visible");
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
 
+        const vertexShader = this.figure.model.get('_shaders')['scatter-vertex'] || shaders['scatter-vertex']
+        const fragmentShader = this.figure.model.get('_shaders')['scatter-fragment'] || shaders['scatter-fragment']
 
 
         this.materials.forEach((material) => {
@@ -478,7 +492,7 @@ class ScatterView extends widgets.WidgetView {
             // not sure why we do not see the problem here
         }
 
-        this.renderer.update();
+        this.figure.update();
     }
     create_mesh() {
         let geo = this.model.get("geo");
@@ -632,7 +646,7 @@ class ScatterView extends widgets.WidgetView {
             const set = (value) => {
                 this.uniforms[property].value = value;
             };
-            this.renderer.transition(set, done, this);
+            this.figure.transition(set, done, this);
         }
         this.attributes_changed = {};
     }
