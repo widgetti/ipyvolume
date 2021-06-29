@@ -30,6 +30,7 @@ class ScatterView extends widgets.WidgetView {
     material: any;
     material_rgb: any;
     material_depth: any;
+    material_distance: any;
     line_material: any;
     line_material_rgb: any;
     materials: any[];
@@ -47,7 +48,7 @@ class ScatterView extends widgets.WidgetView {
             throw 'Scatter cannot be displayed, should be added to Figure'
         }
         this.figure.model.on('change:_shaders', () => {
-            console.log('updating shader (hot reload)')
+            console.log('updating scatter shader (hot reload)')
             this._update_materials();
         }, this);
 
@@ -457,6 +458,33 @@ class ScatterView extends widgets.WidgetView {
         const vertexShader = this.figure.model.get('_shaders')['scatter-vertex'] || shaders['scatter-vertex']
         const fragmentShader = this.figure.model.get('_shaders')['scatter-fragment'] || shaders['scatter-fragment']
 
+        //  + Math.random() * 0.01 to avoid the cache of threejs
+        // see https://github.com/mrdoob/three.js/pull/17567
+        const cache_thrasher = Math.random() * 0.01;
+
+        this.material_depth = new MeshDepthMaterialCustom(() => {
+            const defines = {...this.material.defines};
+            delete defines[`AS_${this.lighting_model}`];
+            const as_sprite = this.model.get("geo").endsWith("2d");
+            if (as_sprite) {
+                defines.AS_SPRITE = true;
+            }
+            return {AS_DEPTH: true, ...defines};
+        }, this.uniforms, vertexShader, fragmentShader, {
+            depthPacking: THREE.RGBADepthPacking,
+            alphaTest: 0.5 + cache_thrasher,
+        });
+        this.material_distance = new MeshDistanceMaterialCustom(() => {
+            const defines = {...this.material.defines};
+            delete defines[`AS_${this.lighting_model}`];
+            const as_sprite = this.model.get("geo").endsWith("2d");
+            if (as_sprite) {
+                defines.AS_SPRITE = true;
+            }
+            return {AS_DISTANCE: true, ...defines};
+        }, this.uniforms, vertexShader, fragmentShader, {
+            alphaTest: 0.5 + cache_thrasher
+        });
 
         this.materials.forEach((material) => {
             material.onBeforeCompile = (shader) => {
@@ -465,6 +493,7 @@ class ScatterView extends widgets.WidgetView {
                 shader.uniforms = {...shader.uniforms, ...this.uniforms};
                 patchShader(shader);
             };
+            material.alphaTest = 0.5 + cache_thrasher;
             material.needsUpdate = true;
             material.lights = true;
         });
@@ -486,10 +515,8 @@ class ScatterView extends widgets.WidgetView {
         this.line_material.needsUpdate = true;
         this.line_material_rgb.needsUpdate = true;
         if(this.mesh) {
-            this.mesh.customDistanceMaterial.needsUpdate = true;
-            this.mesh.customDepthMaterial.needsUpdate = true;
-            // See mesh.ts and its problems with updating the depth material / shader
-            // not sure why we do not see the problem here
+            this.mesh.customDepthMaterial = this.material_depth;
+            this.mesh.customDistanceMaterial = this.material_distance;
         }
 
         this.figure.update();
@@ -582,27 +609,8 @@ class ScatterView extends widgets.WidgetView {
         // see also https://discourse.threejs.org/t/shadow-for-instances/7947/7
         // or https://jsfiddle.net/mikatalk/4fn1oqz9/
 
-        this.mesh.customDepthMaterial = new MeshDepthMaterialCustom(() => {
-            const defines = {...this.material.defines};
-            delete defines[`AS_${this.lighting_model}`];
-            const as_sprite = this.model.get("geo").endsWith("2d");
-            if (as_sprite) {
-                defines.AS_SPRITE = true;
-            }
-            return {AS_DEPTH: true, ...defines};
-        }, this.uniforms, vertexShader, fragmentShader, {
-            depthPacking: THREE.RGBADepthPacking,
-            alphaTest: 0.5,
-        });
-        this.mesh.customDistanceMaterial = new MeshDistanceMaterialCustom(() => {
-            const defines = {...this.material.defines};
-            delete defines[`AS_${this.lighting_model}`];
-            const as_sprite = this.model.get("geo").endsWith("2d");
-            if (as_sprite) {
-                defines.AS_SPRITE = true;
-            }
-            return {AS_DISTANCE: true, ...defines};
-        }, this.uniforms, vertexShader, fragmentShader, {});
+        this.mesh.customDepthMaterial = this.material_depth;
+        this.mesh.customDistanceMaterial = this.material_distance;
         this.mesh.material_rgb = this.material_rgb;
         this.mesh.material_normal = this.material;
 
