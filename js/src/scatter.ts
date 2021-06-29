@@ -471,6 +471,12 @@ class ScatterView extends widgets.WidgetView {
         this.material_rgb.needsUpdate = true;
         this.line_material.needsUpdate = true;
         this.line_material_rgb.needsUpdate = true;
+        if(this.mesh) {
+            this.mesh.customDistanceMaterial.needsUpdate = true;
+            this.mesh.customDepthMaterial.needsUpdate = true;
+            // See mesh.ts and its problems with updating the depth material / shader
+            // not sure why we do not see the problem here
+        }
 
         this.renderer.update();
     }

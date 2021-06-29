@@ -1667,12 +1667,26 @@ class FigureView extends widgets.DOMWidgetView {
                 }
                 this.update();
             }
+            if(light.target) {
+                this.scene.add(light.target)
+            }
             light_model.on("change", on_light_change);
             light_model.on("childchange", on_light_change);
             this.scene.add(light);
         });
+        // if we update the lights, we need to force all materials to update/
+        // see https://stackoverflow.com/questions/16879378/adding-and-removing-three-js-lights-at-run-time
+        const children = [
+            ...Object.values(this.mesh_views),
+            ...Object.values(this.scatter_views),
+        ]
+        for(const child of children) {
+            child._update_materials();
+        }
         this.update();
     }
+
+
 
     update_shadows() {
         // Activate shadow mapping

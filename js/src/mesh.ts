@@ -390,6 +390,17 @@ class MeshView extends widgets.WidgetView {
         this.material_rgb.needsUpdate = true;
         this.line_material.needsUpdate = true;
         this.line_material_rgb.needsUpdate = true;
+        if(this.surface_mesh) {
+            this.surface_mesh.customDepthMaterial.needsUpdate = true;
+            this.surface_mesh.customDistanceMaterial.needsUpdate = true;
+            // although we request needsUpdate, threejs will find the program in the cache
+            // changing alphaTest a bit forces a recompilation of the program
+            // see https://github.com/mrdoob/three.js/pull/17567
+            // However, this does seem to affect the rendering of the shadow map in debug mode
+            // so this somehow has an effect on shadowmap (renders black)
+            // for debug mode it might be usefull to disable this
+            this.surface_mesh.customDepthMaterial.alphaTest += 1e-5;
+        }
 
         this.renderer.update();
     }
