@@ -2190,20 +2190,90 @@ class FigureView extends widgets.DOMWidgetView {
             });
         }
 
-        // render to screen
-        this.screen_texture = {
-            Volume: this.color_pass_target,
-            Back: this.volume_back_target,
-            Geometry_back: this.geometry_depth_target,
-            Coordinate: this.coordinate_target,
-        }[this.model.get("show")];
-        // TODO: remove any
-        this.screen_material.uniforms.tex.value = (this.screen_texture as any).texture;
+        if(this.model.get("show") == "Shadow") {
+            this._render_shadow();
+        } else {
+            // render to screen
+            this.screen_texture = {
+                Volume: this.color_pass_target,
+                Back: this.volume_back_target,
+                Geometry_back: this.geometry_depth_target,
+                Coordinate: this.coordinate_target,
+            }[this.model.get("show")];
+            // TODO: remove any
+            this.screen_material.uniforms.tex.value = (this.screen_texture as any).texture;
 
-        this.renderer.setRenderTarget(null);
-        this.renderer.clear(true, true, true);
-        this.renderer.render(this.screen_scene, this.screen_camera);
+            this.renderer.setRenderTarget(null);
+            this.renderer.clear(true, true, true);
+            this.renderer.render(this.screen_scene, this.screen_camera);
+        }
         restoreVisible();
+    }
+
+    _render_shadow() {
+        const lights =  this.model.get('lights').map((model) => model.obj).filter((light) => {
+            return Boolean(light.shadow) && Boolean(light.shadow.map);
+        });
+        if(lights.length == 0) {
+            throw "No light with a shadow map found."
+        }
+        const light = lights[0];
+        const target = light.shadow.map;
+        const textureWidth = target.width;
+        const textureHeight = target.height;
+        const quadCamera = new THREE.OrthographicCamera (textureWidth / - 2, textureHeight / 2, textureWidth / 2, textureHeight / - 2, -1000, 1000);
+        quadCamera.position.z = 100;
+        var quadScene = new THREE.Scene();
+
+        const quadMaterial = new THREE.ShaderMaterial ({
+
+                uniforms:
+                {
+                    map: { type: "t", value: null },
+                },
+
+                vertexShader:
+                [
+                    "varying vec2 vUv;",
+
+                    "void main ()",
+                    "{",
+                        "vUv = vec2 (uv.x, 1.0 - uv.y);",
+                        "gl_Position = projectionMatrix * modelViewMatrix * vec4 (position, 1.0);",
+                    "}"
+                ].join("\n"),
+
+                fragmentShader:
+                [
+                    "uniform sampler2D map;",
+                    "varying vec2 vUv;",
+                    "#include <packing>",
+
+                    "float unpack_depth (const in vec4 rgba_depth)",
+                    "{",
+                        "const vec4 bit_shift = vec4 (1.0 / (256.0 * 256.0 * 256.0), 1.0 / (256.0 * 256.0), 1.0 / 256.0, 1.0);",
+                        "float depth = dot (rgba_depth, bit_shift);",
+
+                        "return depth;",
+                    "}",
+
+                    "void main ()",
+                    "{",
+                        "vec4 rgbaDepth = texture2D (map, vUv);",
+                        "float fDepth = unpackRGBAToDepth(rgbaDepth);",
+
+                        "gl_FragColor = vec4 (vec3 (fDepth), 1.0);",
+                    "}"
+                ].join("\n"),
+
+                blending: THREE.NoBlending,
+                depthTest: false,
+                depthWrite: false,
+        });
+
+        quadScene.add (new THREE.Mesh (new THREE.PlaneGeometry (textureWidth, textureHeight), quadMaterial));
+        quadMaterial.uniforms.map.value = target;
+        this.renderer.render(quadScene, quadCamera);
     }
 
     rebuild_multivolume_rendering_material() {

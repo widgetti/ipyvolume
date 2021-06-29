@@ -231,7 +231,7 @@ def figure(
         if controls_light:
             globals()['controls_light']()
         if debug:
-            show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front", "Coordinate"])
+            show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front", "Coordinate", "Shadow"])
             current.container.children += (show,)
             # ipywidgets.jslink((current.figure, 'show'), (show, 'value'))
             traitlets.link((current.figure, 'show'), (show, 'value'))
