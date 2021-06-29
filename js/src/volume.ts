@@ -167,11 +167,11 @@ class VolumeView extends widgets.WidgetView {
 
         const on_change_material = () => {
             const material = this.model.get('material').obj;
-            // console.log('uniforms', uniforms);
-            this.uniform_volumes_values.diffuseColor = material.color;
-            this.uniform_volumes_values.specular = material.specular;
-            this.uniform_volumes_values.shininess = material.shininess;
-            this.uniform_volumes_values.emissive = material.emissive;
+            const white = new THREE.Color('white');
+            this.uniform_volumes_values.diffuseColor = material.color || white;
+            this.uniform_volumes_values.specular = material.specular || white;
+            this.uniform_volumes_values.shininess = material.shininess || white;
+            this.uniform_volumes_values.emissive = material.emissive || white;
             this.renderer.rebuild_multivolume_rendering_material();
             this.renderer.update();
         };

@@ -137,7 +137,7 @@ class FigureModel extends widgets.DOMWidgetModel {
             displayscale: 1,
             scatters: null,
             meshes: null,
-            lights: null,
+            lights: [],
             volumes: null,
             show: "Volume",
             scales: {},
@@ -641,14 +641,18 @@ class FigureView extends widgets.DOMWidgetView {
 
         this.ticks = 5; // hardcoded for now
 
-        this.scene = this.model.get("scene").obj;
+        if(this.model.get("scene")) // null in testing
+            this.scene = this.model.get("scene").obj;
+        else
+            this.scene = new THREE.Scene();
         // // we have our 'private' scene, if we use the real scene, it gives buggy
         // // results in the volume rendering when we have two views
         // this.scene_volume = new THREE.Scene();
         // could be removed when https://github.com/jovyan/pythreejs/issues/176 is solved
         // the default for pythreejs is white, which leads the volume rendering pass to make everything white
         this.scene.background = null;
-        this.model.get("scene").on("rerender", () => this.update());
+        if(this.model.get("scene"))
+            this.model.get("scene").on("rerender", () => this.update());
 
         // if (this.model.get("scene")) {
         //     this.shared_scene = this.model.get("scene").obj;

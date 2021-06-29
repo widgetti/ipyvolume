@@ -129,8 +129,9 @@ export
 async function create_figure_volume(manager, data, extent, transfer_function) {
     const layout = await create_model(manager, "@jupyter-widgets/base", "LayoutModel", "LayoutView", "layout_figure1", {_dom_classes: "", width: "400px", height: "500px"});
 
+    const material = await create_model(manager, "jupyter-threejs", `ShaderMaterialModel`, 'ShaderMaterial', 'shader1', {});
     const volumeModel = await create_model_ipyvolume(manager, "Volume", "volume1", {
-        data, extent, tf: "IPY_MODEL_" + String(transfer_function.model_id), _view_module_version: "*", _view_module: "ipyvolume"});
+        data, extent, material: "IPY_MODEL_" + String(material.model_id), tf: "IPY_MODEL_" + String(transfer_function.model_id), _view_module_version: "*", _view_module: "ipyvolume"});
     const figure  = await create_figure(manager, volumeModel);
     await manager.display_view(undefined, figure);
     return {figure, volume: await figure.mesh_views[volumeModel.cid]};
