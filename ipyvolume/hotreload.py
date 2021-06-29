@@ -9,7 +9,7 @@ _watching = set()
 
 
 def _update_shaders(path=None, file_changed=None):
-    names = ['volr-fragment', 'volr-vertex']
+    names = ['volr-fragment', 'volr-vertex', 'mesh-vertex', 'mesh-fragment']
     for figure in _figures:
         shaders = {}
         # TODO: only read the ones we change

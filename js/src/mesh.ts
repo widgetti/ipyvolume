@@ -8,12 +8,14 @@ import * as serialize from "./serialize.js";
 import { materialToLightingModel, semver_range } from "./utils";
 import * as values from "./values.js";
 
-const vertexShader = (require("raw-loader!../glsl/mesh-vertex.glsl") as any).default;
-const fragmentShader = (require("raw-loader!../glsl/mesh-fragment.glsl") as any).default;
+const shaders = {
+    "mesh-vertex": (require("raw-loader!../glsl/mesh-vertex.glsl") as any).default,
+    "mesh-fragment": (require("raw-loader!../glsl/mesh-fragment.glsl") as any).default,
+};
 
 export
 class MeshView extends widgets.WidgetView {
-    renderer: FigureView;
+    figure: FigureView;
     previous_values: any;
     attributes_changed: any;
     meshes: any;
@@ -39,7 +41,14 @@ class MeshView extends widgets.WidgetView {
         // console.log("created mesh view, parent is")
         // console.log(this.options.parent)
 
-        this.renderer = this.options.parent;
+        this.figure = this.options.parent;
+        if(!this.figure) {
+            throw 'Mesh cannot be displayed, should be added to Figure'
+        }
+        this.figure.model.on('change:_shaders', () => {
+            console.log('updating shader (hot reload)')
+            this._update_materials();
+        }, this);
         this.previous_values = {};
         this.attributes_changed = {};
         (window as any).last_mesh_view = this;
@@ -157,7 +166,7 @@ class MeshView extends widgets.WidgetView {
 
     add_to_scene() {
         this.meshes.forEach((mesh) => {
-            this.renderer.scene.add(mesh);
+            this.figure.scene.add(mesh);
         });
     }
 
@@ -171,7 +180,7 @@ class MeshView extends widgets.WidgetView {
 
     remove_from_scene() {
         this.meshes.forEach((mesh) => {
-            this.renderer.scene.remove(mesh);
+            this.figure.scene.remove(mesh);
             mesh.geometry.dispose();
         });
     }
@@ -304,13 +313,13 @@ class MeshView extends widgets.WidgetView {
             color_scale.on("colors_changed", this._update_color_scale_texture, this);
             this._update_color_scale_texture();
             this._update_color_scale_domain();
-            this.renderer.update();
+            this.figure.update();
         }
     }
     _update_color_scale_texture() {
         const color_scale = this.model.get("color_scale");
         this.uniforms.colormap.value = createColormap(color_scale);
-        this.renderer.update();
+        this.figure.update();
     }
     _update_color_scale_domain() {
         const color_scale = this.model.get("color_scale");
@@ -337,7 +346,7 @@ class MeshView extends widgets.WidgetView {
             }
 
         }
-        this.renderer.update();
+        this.figure.update();
     }
 
     _update_materials() {
@@ -369,7 +378,11 @@ class MeshView extends widgets.WidgetView {
         this.line_material.visible = this.line_material.visible && this.model.get("visible");
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
 
+       const vertexShader = this.figure.model.get('_shaders')['mesh-vertex'] || shaders['mesh-vertex']
+       const fragmentShader = this.figure.model.get('_shaders')['mesh-fragment'] || shaders['mesh-fragment']
         this.materials.forEach((material) => {
+            material.vertexShader = vertexShader;
+            material.fragmentShader = fragmentShader;
             material.onBeforeCompile = (shader) => {
                 shader.vertexShader = vertexShader;
                 shader.fragmentShader = fragmentShader;
@@ -402,7 +415,7 @@ class MeshView extends widgets.WidgetView {
             this.surface_mesh.customDepthMaterial.alphaTest += 1e-5;
         }
 
-        this.renderer.update();
+        this.figure.update();
     }
 
     create_mesh() {
@@ -539,6 +552,9 @@ class MeshView extends widgets.WidgetView {
             }
             geometry.computeVertexNormals();
 
+            const vertexShader = this.figure.model.get('_shaders')['mesh-vertex'] || shaders['mesh-vertex']
+            const fragmentShader = this.figure.model.get('_shaders')['mesh-fragment'] || shaders['mesh-fragment']
+
             this.surface_mesh = new THREE.Mesh(geometry, this.material);
             this.surface_mesh.customDepthMaterial = new MeshDepthMaterialCustom(() => {
                 const defines = {...this.material.defines};
@@ -609,8 +625,8 @@ class MeshView extends widgets.WidgetView {
                 });
             };
             // uniforms of material_rgb has a reference to these same object
-            // this.renderer.transition(this.material.uniforms[property], "value", done, this)
-            this.renderer.transition((value) => {
+            // this.figure.transition(this.material.uniforms[property], "value", done, this)
+            this.figure.transition((value) => {
                 this.uniforms[property].value = time_offset + time_delta * value;
             }, done, this);
         }
