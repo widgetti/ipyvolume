@@ -10,7 +10,7 @@ from jupyter_packaging import (
     get_version,
 )
 
-import os
+import os  # check ci
 from os.path import join as pjoin
 from pathlib import Path
 from distutils import log
