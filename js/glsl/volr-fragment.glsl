@@ -89,7 +89,9 @@ uniform int steps;
 
 
 vec2 compute_slice_offset(float slice, float columns, vec2 uv_slice_spacing) {
-    return uv_slice_spacing * vec2(mod(slice, columns), floor(slice / columns));
+    float column = floor((slice+0.5) / (columns));
+    float row = slice - column * columns;
+    return uv_slice_spacing * vec2(row, column);
 }
 vec4 sample_as_3d_texture(sampler2D tex, vec2 tex_size, vec3 texCoord, vec2 slice_size, float slices, float rows, float columns) {
   float slice   = texCoord.z*slices*(slices-1.)/slices ;
@@ -370,12 +372,30 @@ void main(void) {
     #else
         gl_FragColor = color;
     #endif
-    //gl_FragColor = vec4(ray_begin.xyz, 0.1) * brightness;
+    // code below is used for debugging purposes
+    // float x = floor((pixel.x *500. / 10.));
+    // float y = floor((pixel.y *500. / 10.));
+    // // gl_FragColor = vec4(x / 10., 0.0, 0.0, 1.0);
+    // // gl_FragColor = vec4(y / 10., 0.0, 0.0, 1.0);
+    // vec2 result;
+    // float eps = 1. - 1e-4;
+    // float modulo = mod(x, y * eps);
+    // float offset = x - modulo * y;
+    // offset = floor(x / y);
+    // gl_FragColor = vec4(mod(x, x) > 0. ? 1.0 : 0., 0.0, 0.0, 1.0);
+    // gl_FragColor = vec4(modulo >= x ? 1.0 : 0., 0.0, 0.0, 1.0);
+    // gl_FragColor = vec4(offset >= 0.5 ? 1.0 : 0., 0.0, 0.0, 1.0);
+    // gl_FragColor = vec4(offset/x, 0.0, 0.0, 1.0);
+    // eps = 0.;
+    // gl_FragColor = vec4(float(int(x / (y - eps))) / 1., 0.0, 0.0, 1.0);
+    // gl_FragColor = vec4(texture2D(data[0], pixel).a * 140., 0., 0., 1.0);
+    // gl_FragColor = vec4(ray_begin.xyz, 1.);
+    // gl_FragColor = vec4(ray_begin.xyz, 0.1) * brightness;
     //gl_FragColor = vec4(rotation[0], 1) * brightness;
-    //gl_FragColor = vec4(alpha_total, 0., 0., 1.);
+    // gl_FragColor = vec4(alpha_total, 0., 0., 1.);
     //gl_FragColor = texture2D(volume, vec2(ray_begin.x, ray_begin.y));
-    // gl_FragColor = vec4(ray_pos.x, ray_pos.y, ray_pos.z, 1);
-    //gl_FragColor = texture2D(transfer_function, vec2(pixel.x, 0.5));
+    // gl_FragColor = vec4(ray_begin.x, ray_begin.y, ray_begin.z, 1.);
+    // gl_FragColor = texture2D(transfer_function, vec2(pixel.x, 0.5));
     //gl_FragColor = vec4(texture2D(volume, vec2(pixel.x, pixel.y)).rgb, 1.0);
     // gl_FragColor = vec4(pixel.x, pixel.y, 0, 1);
     // gl_FragColor = vec4(ray_end, 1.);
