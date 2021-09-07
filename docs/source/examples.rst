@@ -12,6 +12,7 @@ Examples
    examples/scales
    examples/moebius
    examples/bars
+   examples/lighting
 
 Feel free to contribute new examples:
 
