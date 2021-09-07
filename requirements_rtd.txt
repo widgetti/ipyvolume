@@ -17,3 +17,4 @@ sphinx_gallery
 vaex-core
 vaex-hdf5
 nbformat==4.4.0
+jupyter_client<7.0
