@@ -311,6 +311,8 @@ class Figure(ipywebrtc.MediaStream):
     camera_fov = traitlets.CFloat(45, min=0.1, max=179.9).tag(sync=True)
     camera_center = traitlets.List(traitlets.CFloat(), default_value=[0, 0, 0]).tag(sync=True)
     # Tuple(traitlets.CFloat(0), traitlets.CFloat(0), traitlets.CFloat(0)).tag(sync=True)
+    box_center = traitlets.List(traitlets.CFloat(), default_value=[0.5, 0.5, 0.5]).tag(sync=True)
+    box_size = traitlets.List(traitlets.CFloat(), default_value=[1, 1, 1]).tag(sync=True)
 
     camera = traitlets.Instance(
         pythreejs.Camera, allow_none=True, help='A :any:`pythreejs.Camera` instance to control the camera'

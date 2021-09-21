@@ -15,6 +15,8 @@ __all__ = [
     'zlim',
     'xyzlim',
     'squarelim',
+    'set_box_aspect',
+    'set_box_aspect_data',
     'plot_trisurf',
     'plot_surface',
     'plot_wireframe',
@@ -317,6 +319,36 @@ def squarelim():
     xlim(xc - width / 2, xc + width / 2)
     ylim(yc - width / 2, yc + width / 2)
     zlim(zc - width / 2, zc + width / 2)
+
+
+def set_box_aspect(aspect, *, zoom=1):
+    '''Sets the aspects of the bounding box/axes.
+
+    Example:
+
+    >>> ipv.set_box_aspect((1, 0.5, 0.75))
+
+    :param aspect: 3 tuple defining the relative lengths of the x, y and z axis (normalized by zoom)
+    :param float zoom: length of the largest axis.
+    '''
+    aspect = np.array(aspect, dtype='f8')
+    aspect /= aspect.max()
+    aspect *= zoom
+    fig = gcf()
+    fig.box_size = aspect.tolist()
+
+
+def set_box_aspect_data():
+    '''Sets the aspect of the bounding box equal to the aspects of the data
+
+    For volume rendering, this makes your voxels cubes.
+    '''
+    fig = gcf()
+    xmin, xmax = fig.xlim
+    ymin, ymax = fig.ylim
+    zmin, zmax = fig.zlim
+    size = [abs(xmax - xmin), abs(ymax - ymin), abs(zmax - zmin)]
+    set_box_aspect(size)
 
 
 default_color = "red"

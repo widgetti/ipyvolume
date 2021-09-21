@@ -470,3 +470,11 @@ def test_light_components():
 
     point = ipyvolume.light_point()
     assert point.color == 'white'
+
+
+def test_box_aspect():
+    f = ipv.figure()
+    ipv.set_box_aspect((1, 2, 4))
+    assert f.box_size == [0.25, 0.5, 1.]
+    ipv.set_box_aspect((1, 2, 4), zoom=0.5)
+    assert f.box_size == [0.125, 0.25, 0.5]
