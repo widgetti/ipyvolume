@@ -29,6 +29,7 @@ uniform vec2 domain_size_y;
 uniform vec2 domain_size_z;
 
 uniform mat4 geo_matrix;
+uniform vec3 aspect;
 
 varying vec4 vertex_color;
 varying vec3 vertex_position;
@@ -213,6 +214,8 @@ void main(void) {
         // and we also rotate it into the direction of the vector v
         vec4 position_transformed = geo_matrix * vec4(position, 1.0);
         position_transformed.xyz = position_transformed.xyz / position_transformed.w;
+        // correct the aspect of the bounding box, so that glyphs are not transformed
+        position_transformed.xyz = position_transformed.xyz / aspect;
         model_pos += move_to_vector * (position_transformed.xyz*size_vector);
         vec4 view_pos = viewMatrix * vec4(model_pos, 1.0);
     #endif

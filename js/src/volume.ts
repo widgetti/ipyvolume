@@ -290,11 +290,11 @@ class VolumeView extends widgets.WidgetView {
     }
 
     add_to_scene() {
-        this.renderer.scene.add(this.vol_box_mesh);
+        this.renderer.rootObject.add(this.vol_box_mesh);
     }
 
     remove_from_scene() {
-        this.renderer.scene.remove(this.vol_box_mesh);
+        this.renderer.rootObject.remove(this.vol_box_mesh);
     }
 }
 

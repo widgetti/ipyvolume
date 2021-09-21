@@ -154,6 +154,8 @@ class FigureModel extends widgets.DOMWidgetModel {
             panorama_mode: "no",
             capture_fps: null,
             cube_resolution: 512,
+            box_center: [0.5, 0.5, 0.5],
+            box_size: [1, 1, 1],
             _shaders: {},  // override shaders / hot reload
         };
     }
@@ -244,6 +246,9 @@ class FigureView extends widgets.DOMWidgetView {
     last_tick_selection: d3.Selection<d3.BaseType, unknown, d3.BaseType, unknown>;
     model: FigureModel;
     control_external: any = null;
+    // all plot objects are children of this object, such that we can transform the matrix
+    // without affecting the scene (and thus the camera controls)
+    rootObject: THREE.Object3D = null;
 
     readPixel(x, y) {
         return this.readPixelFrom(this.screen_texture, x, y);
@@ -653,6 +658,8 @@ class FigureView extends widgets.DOMWidgetView {
         this.scene.background = null;
         if(this.model.get("scene"))
             this.model.get("scene").on("rerender", () => this.update());
+        this.rootObject = new THREE.Object3D();
+        this.scene.add(this.rootObject);
 
         // if (this.model.get("scene")) {
         //     this.shared_scene = this.model.get("scene").obj;
@@ -670,6 +677,24 @@ class FigureView extends widgets.DOMWidgetView {
 
         this.scene_opaque.add(this.wire_box);
         this.scene_opaque.add(this.axes);
+
+        const update_box = () => {
+            const box_position = new THREE.Vector3();
+            box_position.fromArray(this.model.get('box_center'));
+            box_position.sub(new THREE.Vector3(0.5, 0.5, 0.5));
+
+            const box_scale = new THREE.Vector3();
+            box_scale.fromArray(this.model.get('box_size'));
+
+            this.scene_opaque.scale.copy(box_scale);
+            this.scene_opaque.position.copy(box_position);
+
+            this.rootObject.scale.copy(box_scale);
+            this.rootObject.position.copy(box_position);
+            this.update();
+        }
+        this.model.on("change:box_center change:box_size", update_box);
+        update_box();
 
         this.mesh_views = {};
         this.scatter_views = {};
@@ -1239,12 +1264,17 @@ class FigureView extends widgets.DOMWidgetView {
         const W = this.camera.matrixWorldInverse;
         // M goes from world to screen
         const M = P.clone().multiply(W);
-        const Mi = M.clone().getInverse(M);
-        const Pi = P.clone().getInverse(P);
 
-        const xlim = this.mouse_down_domain.x;
-        const ylim = this.mouse_down_domain.y;
-        const zlim = this.mouse_down_domain.z;
+        // correct for the aspect of the bounding box
+        const A = new THREE.Matrix4();
+        const box_size = this.model.get('box_size');
+        A.makeScale(box_size[0], box_size[1], box_size[2]);
+        // console.log(A.toArray())
+        M.multiply(A);
+
+        const Mi = M.clone().getInverse(M);
+
+
         const scales = this.model.get("scales");
 
         const scales_d3 = mapValues(scales, createD3Scale);
@@ -1260,15 +1290,6 @@ class FigureView extends widgets.DOMWidgetView {
         sn2.x += right;
         sn2.y += up;
 
-        // start pos in world cooordinates
-        const p1 = this.last_pan_coordinate.clone();
-        // project to screen coordinates
-        const sp1 = p1.clone().applyMatrix4(M);
-        // move p2 in screen coordinates
-        const sp2 = sp1.clone();
-        sp2.x += right;
-        sp2.y += up;
-
         // move them back to world coordinates
         n1 = sn1.clone().applyMatrix4(Mi);
         const n2 = sn2.clone().applyMatrix4(Mi);
@@ -1276,7 +1297,6 @@ class FigureView extends widgets.DOMWidgetView {
 
         const l1 = new THREE.Vector3(0, 0, 0);
         const l2 = new THREE.Vector3(1, 1, 1);
-        const scale = l2.clone().sub(l1);
 
         l1.sub(delta);
         l2.sub(delta);
@@ -1437,19 +1457,16 @@ class FigureView extends widgets.DOMWidgetView {
     _d3_add_axis(node, d, i) {
         const axis = new THREE.Object3D();
 
-        axis.translateX(d.translate[0]);
-        axis.translateY(d.translate[1]);
-        axis.translateZ(d.translate[2]);
+        axis.matrixAutoUpdate = false;
+        const matrixTrans = new THREE.Matrix4();
+        matrixTrans.makeTranslation(d.translate[0], d.translate[1], d.translate[2]);
 
         d3.select(node).attr("translate-x", d.translate[0]);
         d3.select(node).attr("translate-y", d.translate[1]);
         d3.select(node).attr("translate-z", d.translate[2]);
 
-        axis.rotation.reorder(d.rotation_order);
-        axis.rotation.x = d.rotate[0];
-        axis.rotation.y = d.rotate[1];
-        axis.rotation.z = d.rotate[2];
-        this.axes.add(axis);
+        const matrixRot = new THREE.Matrix4();
+        matrixRot.makeRotationFromEuler(new THREE.Euler(d.rotate[0], d.rotate[1], d.rotate[2], d.rotation_order));
 
         // TODO: puzzled by the align not working as expected..
         const aligns = {
@@ -1466,8 +1483,10 @@ class FigureView extends widgets.DOMWidgetView {
         label.material.transparent = true;
         label.material.alphaTest = 0.3;
 
-        const s = 0.01 * 0.4 / 3;
-        label.scale.set(s, s, s);
+        axis.matrix.multiply(matrixTrans);
+        axis.matrix.multiply(matrixRot);
+
+        this.axes.add(axis);
         axis.add(label);
         d.object_label = label;
         d.object = axis;
@@ -1485,11 +1504,38 @@ class FigureView extends widgets.DOMWidgetView {
         d.scale = createD3Scale(scale).range([-0.5, 0.5]);
         d.object_label.fillStyle = this.get_style("axes." + n + ".label.color axes." + n + ".color axes.label.color axes.color");
         d.object_label.visible = this.get_style("axes." + n + ".label.visible axes." + n + ".visible axes.label.visible axes.visible");
+
+        // since the axes/box are scales, we need to do a correction in the unrotated frame for the label to show in aspect=1
+        const matrixRot = new THREE.Matrix4();
+        matrixRot.makeRotationFromEuler(new THREE.Euler(d.rotate[0], d.rotate[1], d.rotate[2], d.rotation_order));
+
+        const matrixRotInv = new THREE.Matrix4();
+        matrixRotInv.getInverse(matrixRot);
+
+        const box_scale = new THREE.Vector3();
+        box_scale.fromArray(this.model.get('box_size'));
+        const vectorScale = new THREE.Vector3(1, 1, 1);
+        vectorScale.divide(box_scale);
+
+        const matrixScale = new THREE.Matrix4();
+        matrixScale.makeScale(vectorScale.x, vectorScale.y, vectorScale.z);
+
+        const s = 0.01 * 0.4 / 3;
+        const matrixScaleSize = new THREE.Matrix4();
+        matrixScaleSize.makeScale(s, s, s);
+        matrixScale.multiply(matrixScaleSize);
+
+        const label = d.object_label;
+        label.matrixAutoUpdate = false;
+        label.matrix.identity();
+        label.matrix.multiply(matrixRotInv);
+        label.matrix.multiply(matrixScale);
+        label.matrix.multiply(matrixRot);
     }
 
     _d3_add_axis_tick(node, d, i) {
         // console.log("add tick", d, node, d3.select(d3.select(node).node().parentNode))
-        const parent_data = d3.select(d3.select(node).node().parentNode).datum(); // TODO: find the proper way to do so
+        const parent_data : any = d3.select(d3.select(node).node().parentNode).datum(); // TODO: find the proper way to do so
         const scale = (parent_data as any).scale;
 
         const tick_format = scale.tickFormat(this.ticks, ".1f");
@@ -1515,8 +1561,6 @@ class FigureView extends widgets.DOMWidgetView {
         // sprite.material.blendDst = THREE.OneMinusSrcAlphaFactor;
         // sprite.material.blendEquation = THREE.AddEquation;
 
-        const s = 0.01 * 0.4 * 0.5 * 0.5 / 3;
-        sprite.scale.multiplyScalar(s);
         const n = (parent_data as any).name; // x, y or z
 
         sprite.fillStyle = this.get_style("axes." + n + ".ticklabel.color axes.ticklabel.color axes." + n + ".color axes.color");
@@ -1530,7 +1574,7 @@ class FigureView extends widgets.DOMWidgetView {
 
     _d3_update_axis_tick(node, d, i) {
         // TODO: find the proper way to do so
-        const parent_data = d3.select(d3.select(node).node().parentNode).datum();
+        const parent_data : any = d3.select(d3.select(node).node().parentNode).datum();
         const scale = (parent_data as any).scale;
         const tick_format = scale.tickFormat(this.ticks, ".1f");
         const tick_text = tick_format(d.value);
@@ -1543,10 +1587,39 @@ class FigureView extends widgets.DOMWidgetView {
             (parent_data as any).object.remove(d.object_ticklabel);
         }
         d.object_ticklabel.text = tick_text;
-        d.object_ticklabel.position.x = scale(d.value);
         const n = (parent_data as any).name; // x, y or z
         d.object_ticklabel.fillStyle = this.get_style("axes." + n + ".ticklabel.color axes.ticklabel.color axes." + n + ".color axes.color");
         d.object_ticklabel.visible = this.get_style("axes." + n + ".ticklabel.visible axes." + n + ".visible axes.visible");
+
+        const matrixRot = new THREE.Matrix4();
+        matrixRot.makeRotationFromEuler(new THREE.Euler(parent_data.rotate[0], parent_data.rotate[1], parent_data.rotate[2], parent_data.rotation_order));
+
+        const matrixRotInv = new THREE.Matrix4();
+        matrixRotInv.getInverse(matrixRot);
+
+        const box_scale = new THREE.Vector3();
+        box_scale.fromArray(this.model.get('box_size'));
+        const vectorScale = new THREE.Vector3(1, 1, 1);
+        vectorScale.divide(box_scale);
+
+        const matrixScale = new THREE.Matrix4();
+        matrixScale.makeScale(vectorScale.x, vectorScale.y, vectorScale.z);
+
+        const s = 0.01 * 0.4 * 0.5 * 0.5 / 3;
+        const matrixScaleSize = new THREE.Matrix4();
+        matrixScaleSize.makeScale(s, s, s);
+        matrixScale.multiply(matrixScaleSize);
+
+        const matrixTranslate = new THREE.Matrix4();
+        matrixTranslate.makeTranslation(scale(d.value), 0, 0)
+
+        const label = d.object_ticklabel;
+        label.matrixAutoUpdate = false;
+        label.matrix.identity();
+        label.matrix.multiply(matrixTranslate);
+        label.matrix.multiply(matrixRotInv);
+        label.matrix.multiply(matrixScale);
+        label.matrix.multiply(matrixRot);
     }
 
     _d3_remove_axis_tick(node, d, i) {
@@ -1822,6 +1895,9 @@ class FigureView extends widgets.DOMWidgetView {
         if (!this.control_external) {
             this.camera.lookAt(0, 0, 0);
         }
+        for (const scatter_view of Object.values(this.scatter_views)) {
+            scatter_view.uniforms.aspect.value = this.model.get('box_size');
+        }
 
         this.renderer.setClearColor(this.get_style_color("background-color"));
         this.x_axis.visible = this.get_style("axes.x.visible axes.visible");
@@ -2007,12 +2083,12 @@ class FigureView extends widgets.DOMWidgetView {
         const has_volumes = this.model.get("volumes").length !== 0;
         const panorama = this.model.get("panorama_mode") !== "no";
         // record who is visible
-        const wasVisible = this.scene.children.reduce((map, o) => {
+        const wasVisible = this.rootObject.children.reduce((map, o) => {
             map[o.id] = o.visible
             return map;
         }, {});
         const setVisible = ({volumes}) => {
-            this.scene.children.forEach((o) => {
+            this.rootObject.children.forEach((o) => {
                 if(volumes) {
                     //@ts-ignore
                     o.visible = Boolean(o.isVolume) || Boolean(o.isLight) || Boolean(o.isCamera)
@@ -2023,7 +2099,7 @@ class FigureView extends widgets.DOMWidgetView {
             })
         };
         const restoreVisible = () => {
-            this.scene.children.forEach((o) => {
+            this.rootObject.children.forEach((o) => {
                 o.visible = wasVisible[o.id];
             });
         };

@@ -132,6 +132,8 @@ class ScatterView extends widgets.WidgetView {
                 animation_time_size : { type: "f", value: 1. },
                 animation_time_color : { type: "f", value: 1. },
                 geo_matrix : { type: "mat4", value: this.model.get('geo_matrix')},
+                // if our bounding box has a non unity aspect, we need to correct the scatter glyphs
+                aspect : { type: "vec3", value: [ 1, 1, 1]},
                 texture: { type: "t", value: null },
                 texture_previous: { type: "t", value: null },
                 colormap: {type: "t", value: null},
@@ -277,19 +279,19 @@ class ScatterView extends widgets.WidgetView {
         }
     }
     add_to_scene() {
-        this.figure.scene.add(this.mesh);
+        this.figure.rootObject.add(this.mesh);
         if (this.line_segments) {
-            this.figure.scene.add(this.line_segments);
+            this.figure.rootObject.add(this.line_segments);
         }
     }
     remove_from_scene() {
-        if (this.figure.scene.children.indexOf(this.mesh) === -1) {
+        if (this.figure.rootObject.children.indexOf(this.mesh) === -1) {
             console.warn("trying to removing scatter mesh from scene that does not include it");
         }
-        this.figure.scene.remove(this.mesh);
+        this.figure.rootObject.remove(this.mesh);
         this.mesh.geometry.dispose();
         if (this.line_segments) {
-            this.figure.scene.remove(this.line_segments);
+            this.figure.rootObject.remove(this.line_segments);
             this.line_segments.geometry.dispose();
         }
     }
