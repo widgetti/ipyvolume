@@ -25,7 +25,8 @@
     "watch": "npm-run-all -p watch:*",
     "watch:lib": "tsc -w --project .",
     "watch:nbextension": "webpack --watch --mode=development",
-    "watch:labextension": "jupyter labextension watch ."
+    "watch:labextension": "jupyter labextension watch .",
+    "watch:dev": "npm-run-all -p watch:lib watch:nbextension"
   },
   "jupyterlab": {
     "extension": "lib/labplugin",
