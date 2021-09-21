@@ -68,7 +68,7 @@ class Mesh(widgets.Widget):
         [
             traitlets.Instance(ipywebrtc.MediaStream),
             Unicode(),
-            traitlets.List(Unicode, [], allow_none=True),
+            traitlets.List(Unicode(), [], allow_none=True),
             Image(default_value=None, allow_none=True),
             traitlets.List(Image(default_value=None, allow_none=True)),
         ]
@@ -163,7 +163,7 @@ class Scatter(widgets.Widget):
         [
             traitlets.Instance(ipywebrtc.MediaStream),
             Unicode(),
-            traitlets.List(Unicode, [], allow_none=True),
+            traitlets.List(Unicode(), [], allow_none=True),
             Image(default_value=None, allow_none=True),
             traitlets.List(Image(default_value=None, allow_none=True)),
         ]
@@ -374,7 +374,7 @@ class Figure(ipywebrtc.MediaStream):
     def zlim(self, value):
         self.scales['z'].min, self.scales['z'].max = _typefix(value)
 
-    scales = traitlets.Dict(trait=traitlets.Instance(scales.Scale)).tag(sync=True, **widgets.widget_serialization)
+    scales = traitlets.Dict(value_trait=traitlets.Instance(scales.Scale)).tag(sync=True, **widgets.widget_serialization)
 
     @traitlets.default('scales')
     def _default_scale(self):
