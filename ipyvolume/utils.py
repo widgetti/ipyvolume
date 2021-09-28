@@ -205,6 +205,8 @@ def reduce_size(data, max_size, extent):
             slices2 = [slice(None, None, None)] * 3
             slices2[axis] = slice(1, None, 2)
             # print(data.shape, data.__getitem__(slices1).shape, data.__getitem__(slices2).shape)
+            slices1 = tuple(slices1)
+            slices2 = tuple(slices2)
             data = (data[slices1] + data[slices2]) / 2
             if shape[axis] % 2:
                 width = xmax - xmin

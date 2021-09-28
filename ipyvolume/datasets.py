@@ -89,7 +89,7 @@ class Dataset(object):
             if self.density:
                 with bz2.BZ2File(self.path) as f:
                     if self.raw:
-                        self.data = np.fromstring(f.read(), self.dtype).reshape(self.shape)
+                        self.data = np.frombuffer(f.read(), self.dtype).reshape(self.shape)
                     else:
                         self.data = np.load(f)
             else:
