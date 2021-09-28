@@ -44,7 +44,7 @@ def xyz(shape=128, limits=[-3, 3], spherical=False, sparse=True, centers=False):
     else:
         x, y, z = np.mgrid.__getitem__(v)
     if spherical:
-        r = np.linalg.norm([x, y, z])
+        r = (x ** 2 + y**2 + z**2)**0.5
         theta = np.arctan2(y, x)
         phi = np.arccos(z / r)
         return x, y, z, r, theta, phi

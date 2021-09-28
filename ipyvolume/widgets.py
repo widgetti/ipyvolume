@@ -263,7 +263,7 @@ class Volume(widgets.Widget):
         viewx, xt = grid_slice(ex[0][0], ex[0][1], shape[2], *xlim)
         viewy, yt = grid_slice(ex[1][0], ex[1][1], shape[1], *ylim)
         viewz, zt = grid_slice(ex[2][0], ex[2][1], shape[0], *zlim)
-        view = [slice(*viewz), slice(*viewy), slice(*viewx)]
+        view = (slice(*viewz), slice(*viewy), slice(*viewx))
         data_view = self.data_original[view]
         extent = [xt, yt, zt]
         data_view, extent = reduce_size(data_view, self.data_max_shape, extent)
@@ -322,7 +322,7 @@ class Figure(ipywebrtc.MediaStream):
     def _default_camera(self):
         # see https://github.com/maartenbreddels/ipyvolume/pull/40 for an explanation
         z = 2 * np.tan(45.0 / 2.0 * np.pi / 180) / np.tan(self.camera_fov / 2.0 * np.pi / 180)
-        return pythreejs.PerspectiveCamera(fov=self.camera_fov, position=(0, 0, z), width=400, height=500)
+        return pythreejs.PerspectiveCamera(fov=self.camera_fov, position=(0, 0, z), aspect=1)
 
     controls = traitlets.Instance(
         pythreejs.Controls, allow_none=True, help='A :any:`pythreejs.Controls` instance to control the camera'

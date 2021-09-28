@@ -88,7 +88,7 @@ def _cube_to_tiles(grid, vmin, vmax):
     grid_normalized = (grid * 1.0 - vmin) / (vmax - vmin)
     grid_normalized[~np.isfinite(grid_normalized)] = 0
     gradient = np.gradient(grid_normalized)
-    with np.errstate(divide='ignore'):
+    with np.errstate(invalid='ignore'):
         gradient = gradient / np.sqrt(gradient[0] ** 2 + gradient[1] ** 2 + gradient[2] ** 2)
         # intensity_normalized = (np.log(self.data3d + 1.) - np.log(mi)) / (np.log(ma) - np.log(mi));
     for y2d in range(rows):
