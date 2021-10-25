@@ -31,9 +31,26 @@
 	box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 	background-color: #f9f9f9;
 	padding-left: 2px;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
 
 }
 .ipyvolume-toolicon-dropdown  {
 	text-align: left;
 	display: block;
+}
+
+.ipyvolume-popup-container {
+	position: absolute;
+	z-index: 3;
+	white-space: nowrap;
+}
+
+.ipyvolume-canvas-container {
+	position: relative;
+	margin: 5px; /* otherwise we get scrollbars */
+}
+
+/* the default is white */
+.ipyvolume-popup-container > .p-Widget > .vuetify-styles > .v-application {
+	background-color: unset;
 }

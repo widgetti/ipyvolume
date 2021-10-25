@@ -1,5 +1,5 @@
 // mesh-fragment shader
-#if defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+#if defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
 varying vec4 vertex_color;
 varying vec3 vertex_position;
 varying vec2 vertex_uv;
@@ -38,7 +38,7 @@ varying vec2 vertex_uv;
     #include <clipping_planes_pars_fragment>
     void main(void)
     {
-        #ifdef AS_COORDINATE
+        #if defined( AS_COORDINATE ) || defined( AS_ID )
             // should we ignore shading for RGB pass?
             gl_FragColor = vec4(vertex_color.rgb, 1.0);
         #else
@@ -59,9 +59,9 @@ varying vec2 vertex_uv;
                     gl_FragColor = vec4(clamp(diffuse, 0.2, 1.) * vertex_color.rgb * shadow_visibility, vertex_color.a);
                 #endif // USE_TEXTURE
             #endif // IS_LINE
-        #endif // AS_COORDINATE
+        #endif // defined( AS_COORDINATE ) || defined( AS_ID )
     }
-#endif //defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+#endif //defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
 
 
 

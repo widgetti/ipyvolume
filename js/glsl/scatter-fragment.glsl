@@ -3,7 +3,7 @@ varying vec4 vertex_color;
 varying vec3 vertex_position;
 varying vec2 vertex_uv;
 
-#if defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+#if defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
     // extra only used for the default shading
 
     #ifdef USE_TEXTURE
@@ -42,7 +42,9 @@ varying vec2 vertex_uv;
 
 void main(void)
 {
-    #ifdef AS_COORDINATE
+    #if defined(AS_COORDINATE)
+        gl_FragColor = vertex_color;
+    #elif defined(AS_ID)
         gl_FragColor = vertex_color;
     #else //AS_COORDINATE
         // 0 when in shadow, 1 if visible

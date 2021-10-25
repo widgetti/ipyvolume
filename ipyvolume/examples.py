@@ -271,7 +271,7 @@ def head(draw=True, show=True, max_shape=256):
         return head_data
 
 
-def gaussian(N=1000, draw=True, show=True, seed=42, color=None, marker='sphere'):
+def gaussian(N=1000, draw=True, show=True, seed=42, color=None, marker='sphere', description="Gaussian blob", **kwargs):
     """Show N random gaussian distributed points using a scatter plot."""
     import ipyvolume as ipv
 
@@ -280,9 +280,9 @@ def gaussian(N=1000, draw=True, show=True, seed=42, color=None, marker='sphere')
 
     if draw:
         if color:
-            mesh = ipv.scatter(x, y, z, marker=marker, color=color)
+            mesh = ipv.scatter(x, y, z, marker=marker, color=color, description=description, **kwargs)
         else:
-            mesh = ipv.scatter(x, y, z, marker=marker)
+            mesh = ipv.scatter(x, y, z, marker=marker, description=description, **kwargs)
         if show:
             # ipv.squarelim()
             ipv.show()

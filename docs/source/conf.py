@@ -384,6 +384,7 @@ nbsphinx_thumbnails = {
     'examples/scales': 'examples/screenshot/scales.png',
     'examples/moebius': 'examples/screenshot/moebius.png',
     'examples/bars': 'examples/screenshot/bars.gif',
+    'examples/popup': 'examples/screenshot/ipyvolume-popup-legend-iris.gif',
     'examples/lighting': 'examples/screenshot/volume-rendering-specular.gif',
 }
 exclude_patterns = ['**.ipynb_checkpoints']

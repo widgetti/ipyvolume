@@ -8,6 +8,7 @@ from ipyvolume import embed  # noqa: F401
 from ipyvolume.widgets import *  # noqa: F401, F403
 from ipyvolume.transferfunction import *  # noqa: F401, F403
 from ipyvolume.pylab import *  # noqa: F401, F403
+import ipyvolume.ui  # noqa: F401, F403
 
 
 def _prefix():

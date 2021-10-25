@@ -84,6 +84,7 @@ from IPython.display import display
 import ipyvolume as ipv
 import ipyvolume.embed
 from ipyvolume import utils
+from . import ui
 
 
 _last_figure = None
@@ -178,7 +179,7 @@ def controls_light(return_widget=False):
         ipywidgets.HBox([ambient_coefficient, diffuse_coefficient]),
         ipywidgets.HBox([specular_coefficient, specular_exponent]),
     ]
-    current.container.children += tuple(widgets_bottom)
+    current.container.children = current.container.children + widgets_bottom
     if return_widget:
         return widgets_bottom
 
@@ -216,8 +217,10 @@ def figure(
     else:
         current.figure = ipv.Figure(width=width, height=height, **kwargs)
         current.material = None
-        current.container = ipywidgets.VBox()
-        current.container.children = [current.figure]
+        legend = ui.Legend(figure=current.figure)
+        current.container = ui.Container(figure=current.figure, legend=legend)
+
+        current.container.children = []
         if key is None:
             key = uuid.uuid4().hex
         current.figures[key] = current.figure
@@ -230,12 +233,12 @@ def figure(
         if controls_vr:
             eye_separation = ipywidgets.FloatSlider(value=current.figure.eye_separation, min=-10, max=10, icon='eye')
             ipywidgets.jslink((eye_separation, 'value'), (current.figure, 'eye_separation'))
-            current.container.children += (eye_separation,)
+            current.container.children = current.container.children + [eye_separation]
         if controls_light:
             globals()['controls_light']()
         if debug:
-            show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front", "Coordinate", "Shadow"])
-            current.container.children += (show,)
+            show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front", "Coordinate", "ID", "Shadow"])
+            current.container.children = current.container.children + [show]
             # ipywidgets.jslink((current.figure, 'show'), (show, 'value'))
             traitlets.link((current.figure, 'show'), (show, 'value'))
     return current.figure
@@ -259,6 +262,9 @@ def _grow_limit(limits, values):
         try:
             values[0]  # test if scalar
         except TypeError:
+            newvmin = values
+            newvmax = values
+        except IndexError:
             newvmin = values
             newvmax = values
         else:
@@ -455,7 +461,8 @@ def plot_trisurf(
         v=None,
         texture=None,
         cast_shadow=True,
-        receive_shadow=True):
+        receive_shadow=True,
+        description=None):
     """Draw a polygon/triangle mesh defined by a coordinate and triangle indices.
 
     The following example plots a rectangle in the z==2 plane, consisting of 2 triangles:
@@ -508,6 +515,7 @@ def plot_trisurf(
         texture=texture,
         cast_shadow=cast_shadow,
         receive_shadow=receive_shadow,
+        description=f"Mesh {len(fig.meshes)}" if description is None else description,
         **kwargs
     )
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
@@ -552,7 +560,9 @@ def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False, cast_
 
 
 def plot_mesh(
-    x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None, texture=None, cast_shadow=True, receive_shadow=True
+    x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None, texture=None,
+    cast_shadow=True, receive_shadow=True,
+    description=None,
 ):
     """Draws a 2d wireframe+surface in 3d: generalization of :any:`plot_wireframe` and :any:`plot_surface`.
 
@@ -647,6 +657,7 @@ def plot_mesh(
         texture=texture,
         cast_shadow=cast_shadow,
         receive_shadow=receive_shadow,
+        description=f"Mesh {len(fig.meshes)}" if description is None else description,
         **kwargs
     )
     fig.meshes = fig.meshes + [mesh]
@@ -692,6 +703,7 @@ def scatter(
     grow_limits=True,
     cast_shadow=True,
     receive_shadow=True,
+    description=None,
     **kwargs
 ):
     """Plot many markers/symbols in 3d.
@@ -713,8 +725,6 @@ def scatter(
     :return: :any:`Scatter`
     """
     fig = gcf()
-    if grow_limits:
-        _grow_limits(x, y, z)
     kwargs = kwargs.copy()
     if current.material is not None and 'material' not in kwargs:
         kwargs['material'] = current.material
@@ -730,8 +740,11 @@ def scatter(
         selection=selection,
         cast_shadow=cast_shadow,
         receive_shadow=receive_shadow,
+        description=f"Scatter {len(fig.scatters)}" if description is None else description,
         **kwargs
     )
+    if grow_limits:
+        _grow_limits(s.x, s.y, s.z)
     fig.scatters = fig.scatters + [s]
     return s
 
@@ -868,7 +881,7 @@ def animation_control(object, sequence_length=None, add=True, interval=200):
         ipywidgets.jslink((slider, 'value'), (object, 'sequence_index'))
     control = ipywidgets.HBox([play, slider])
     if add:
-        current.container.children += (control,)
+        current.container.children = current.container.children + [control]
     else:
         return control
 
@@ -916,7 +929,7 @@ def transfer_function(
     tf = ipv.TransferFunctionWidgetJs3(**tf_kwargs)
     gcf()  # make sure a current container/figure exists
     if controls:
-        current.container.children = (tf.control(max_opacity=max_opacity),) + current.container.children
+        current.container.children = [tf.control(max_opacity=max_opacity)] + current.container.children
     return tf
 
 
@@ -960,7 +973,7 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
         level_slider = ipywidgets.FloatSlider(value=level, min=vmin, max=vmax, step=step, icon='eye')
         recompute_button = ipywidgets.Button(description='update')
         controls = ipywidgets.HBox(children=[level_slider, recompute_button])
-        current.container.children += (controls,)
+        current.container.children = current.container.children + [controls]
 
         def recompute(*_ignore):
             level = level_slider.value
@@ -1004,6 +1017,7 @@ def volshow(
     max_opacity=0.2,
     memorder='C',
     extent=None,
+    description=None,
 ):
     """Visualize a 3d array using volume rendering.
 
@@ -1066,6 +1080,7 @@ def volshow(
         specular_coefficient=specular_coefficient,
         specular_exponent=specular_exponent,
         rendering_lighting=lighting,
+        description=f"Volume {len(fig.volumes)}" if description is None else description,
     )
 
     vol._listen_to(fig)
@@ -1076,7 +1091,7 @@ def volshow(
         ipywidgets.jslink((vol, 'opacity_scale'), (widget_opacity_scale, 'value'))
         ipywidgets.jslink((vol, 'brightness'), (widget_brightness, 'value'))
         widgets_bottom = [ipywidgets.HBox([widget_opacity_scale, widget_brightness])]
-        current.container.children += tuple(widgets_bottom)
+        current.container.children = current.container.children + widgets_bottom
 
     fig.volumes = fig.volumes + [vol]
 
