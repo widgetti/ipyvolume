@@ -19,3 +19,5 @@ vaex-core
 vaex-hdf5
 vaex-ml
 sphinx==3.5.4
+# see https://github.com/sphinx-doc/sphinx/issues/9727#issuecomment-952289876
+docutils==0.17.1
