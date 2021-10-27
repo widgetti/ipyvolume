@@ -18,4 +18,3 @@ sphinx_gallery
 vaex-core
 vaex-hdf5
 vaex-ml
-nbformat==4.4.0
