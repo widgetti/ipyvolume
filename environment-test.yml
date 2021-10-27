@@ -25,3 +25,4 @@ dependencies:
     - matplotlib
     - scikit-image
     - shapely
+    - ipyvuetify
