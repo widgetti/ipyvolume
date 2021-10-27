@@ -22,7 +22,7 @@ dependencies:
     - flake8
     - nose
     - bokeh
-    - matplotlib
+    - matplotlib-base
     - scikit-image
     - shapely
     - ipyvuetify
