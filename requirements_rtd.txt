@@ -18,3 +18,4 @@ sphinx_gallery
 vaex-core
 vaex-hdf5
 vaex-ml
+sphinx==3.5.4
