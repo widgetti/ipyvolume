@@ -138,7 +138,7 @@ _doc_snippets['receive_shadow'] = 'If this objects receives shadows (default) or
 _doc_snippets['opacity'] = "Float in the range of 0.0 - 1.0 indicating how transparent the material is. A value of 0.0 indicates fully transparent, 1.0 is fully opaque."\
     "If the material's transparent property is not set to true, the material will remain fully opaque and this value will only affect its color."
 _doc_snippets['transparent'] = "Defines whether this material is transparent. (NOTE: might not always render correctly, see the topic of order independant transparancy)"
-
+_doc_snippets['description'] = "Used in the legend and in popup to identify the object"
 emissive_intensity_default = 0.2
 
 
@@ -492,6 +492,7 @@ def plot_trisurf(
     :param texture: {texture}
     :param cast_shadow: {cast_shadow}
     :param receive_shadow: {receive_shadow}
+    :param description: {description}
     :return: :any:`Mesh`
     """
     fig = gcf()
@@ -503,7 +504,8 @@ def plot_trisurf(
     if current.material is not None:
         kwargs['material'] = current.material
 
-    # TODO: PHONG and LAMBERT
+    if description is None:
+        description = f"Mesh {len(fig.meshes)}"
     mesh = ipv.Mesh(
         x=x,
         y=y,
@@ -515,7 +517,7 @@ def plot_trisurf(
         texture=texture,
         cast_shadow=cast_shadow,
         receive_shadow=receive_shadow,
-        description=f"Mesh {len(fig.meshes)}" if description is None else description,
+        description=description,
         **kwargs
     )
     _grow_limits(np.array(x).reshape(-1), np.array(y).reshape(-1), np.array(z).reshape(-1))
@@ -559,6 +561,7 @@ def plot_wireframe(x, y, z, color=default_color, wrapx=False, wrapy=False, cast_
     return plot_mesh(x, y, z, color=color, wrapx=wrapx, wrapy=wrapy, wireframe=True, surface=False, cast_shadow=cast_shadow, receive_shadow=receive_shadow)
 
 
+@_docsubst
 def plot_mesh(
     x, y, z, color=default_color, wireframe=True, surface=True, wrapx=False, wrapy=False, u=None, v=None, texture=None,
     cast_shadow=True, receive_shadow=True,
@@ -579,6 +582,7 @@ def plot_mesh(
     :param texture: {texture}
     :param cast_shadow: {cast_shadow}
     :param receive_shadow: {receive_shadow}
+    :param description: {description}
     :return: :any:`Mesh`
     """
     fig = gcf()
@@ -933,7 +937,8 @@ def transfer_function(
     return tf
 
 
-def plot_isosurface(data, level=None, color=default_color, wireframe=True, surface=True, controls=True, extent=None):
+@_docsubst
+def plot_isosurface(data, level=None, color=default_color, wireframe=True, surface=True, controls=True, extent=None, description=None):
     """Plot a surface at constant value (like a 2d contour).
 
     :param data: 3d numpy array
@@ -945,6 +950,7 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     :param bool controls: add controls to change the isosurface
     :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounding box of the mesh,
                    otherwise the viewport is used
+    :param description: {description}
     :return: :any:`Mesh`
     """
     if level is None:
@@ -966,7 +972,10 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
         z = z * np.diff(zlim) / (data.shape[2] - 1) + zlim[0]
         _grow_limits(*extent)
 
-    mesh = plot_trisurf(x, y, z, triangles=triangles, color=color)
+    fig = gcf()
+    if description is None:
+        description = f"Isosurface {len(fig.meshes)}"
+    mesh = plot_trisurf(x, y, z, triangles=triangles, color=color, description=description)
     if controls:
         vmin, vmax = np.percentile(data, 1), np.percentile(data, 99)
         step = (vmax - vmin) / 250
@@ -997,6 +1006,7 @@ def plot_isosurface(data, level=None, color=default_color, wireframe=True, surfa
     return mesh
 
 
+@_docsubst
 def volshow(
     data,
     lighting=False,
@@ -1047,6 +1057,7 @@ def volshow(
     :param float max_opacity: maximum opacity for transfer function controls
     :param extent: list of [[xmin, xmax], [ymin, ymax], [zmin, zmax]] values that define the bounds of the volume,
                    otherwise the viewport is used
+    :param description: {description}
     :return:
     """
     fig = gcf()
@@ -1523,11 +1534,12 @@ for style_name, __ in ipv.styles.styles.items():
 
 
 @_docsubst
-def plot_plane(where="back", texture=None, **kwargs):
+def plot_plane(where="back", texture=None, description=None, **kwargs):
     """Plot a plane at a particular location in the viewbox.
 
     :param str where: 'back', 'front', 'left', 'right', 'top', 'bottom'
     :param texture: {texture}
+    :param description: {description}
     :return: :any:`Mesh`
     """
     fig = gcf()
@@ -1563,7 +1575,9 @@ def plot_plane(where="back", texture=None, **kwargs):
     if texture is not None:
         u = [0.0, 1.0, 1.0, 0.0]
         v = [0.0, 0.0, 1.0, 1.0]
-    mesh = plot_trisurf(x, y, z, triangles, texture=texture, u=u, v=v, **kwargs)
+    if description is None:
+        description = f"Plane: {where}"
+    mesh = plot_trisurf(x, y, z, triangles, texture=texture, u=u, v=v, description=description, **kwargs)
     return mesh
 
 
