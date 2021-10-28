@@ -223,7 +223,10 @@ class VolumeModel extends widgets.WidgetModel {
         this.on("change:data", () => {
             update_texture();
         })
-        this.uniform_volumes_values = {};
+        this.uniform_volumes_values = {
+            scale: [1, 1, 1],
+            offset: [0, 0, 0],
+        };
         this.uniform_data = {type: "tv", value: []};
         update_texture();
 
@@ -274,6 +277,7 @@ class VolumeModel extends widgets.WidgetModel {
             side: THREE.BackSide,
         });
         this.vol_box_mesh = new THREE.Mesh(this.vol_box_geo, this.box_material);
+        this.vol_box_mesh.name = "Box for " + this.get("description");
         this.vol_box_geo = new THREE.BoxBufferGeometry(1, 1, 1);
         //@ts-ignore
         this.vol_box_mesh.isVolume = true;

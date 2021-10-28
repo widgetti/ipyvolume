@@ -157,6 +157,9 @@ class FigureModel extends widgets.DOMWidgetModel {
             box_center: [0.5, 0.5, 0.5],
             box_size: [1, 1, 1],
             popup_debouce: 100,
+            slice_x: 0,
+            slice_y: 0,
+            slice_z: 0,
             _shaders: {},  // override shaders / hot reload
         };
     }
@@ -219,6 +222,7 @@ class FigureView extends widgets.DOMWidgetView {
     volume_views: { [key: string]: VolumeView };
     lights: { [key: string]: THREE.Light };
     volume_back_target: THREE.WebGLRenderTarget;
+    volume_front_target: THREE.WebGLRenderTarget;
     geometry_depth_target: THREE.WebGLRenderTarget;
     color_pass_target: THREE.WebGLRenderTarget;
     screen_pass_target: THREE.WebGLRenderTarget;
@@ -254,6 +258,12 @@ class FigureView extends widgets.DOMWidgetView {
     id_pass_target: THREE.WebGLRenderTarget;
     lastId: number;
     _wantsPopup: boolean;
+
+    // rendered to get the front coordinate
+    front_box_mesh: THREE.Mesh;
+    front_box_geo: THREE.BoxBufferGeometry;
+    front_box_material: THREE.ShaderMaterial;
+    slice_icon: ToolIcon;
 
     readPixel(x, y) {
         return this.readPixelFrom(this.screen_texture, x, y);
@@ -404,6 +414,17 @@ class FigureView extends widgets.DOMWidgetView {
                     this.model.set("mouse_mode", "normal");
                 } else {
                     this.model.set("mouse_mode", "zoom");
+                }
+                this.touch();
+            };
+
+        this.slice_icon = new ToolIcon("fa-cut", this.toolbar_div);
+        this.slice_icon.a.title = "Set slice coordinate by hovering or clicking the edges of the bounding box";
+        this.slice_icon.a.onclick = () => {
+                if (this.model.get("mouse_mode") === "slice") {
+                    this.model.set("mouse_mode", "normal");
+                } else {
+                    this.model.set("mouse_mode", "slice");
                 }
                 this.touch();
             };
@@ -674,6 +695,7 @@ class FigureView extends widgets.DOMWidgetView {
         if(this.model.get("scene"))
             this.model.get("scene").on("rerender", () => this.update());
         this.rootObject = new THREE.Object3D();
+        this.rootObject.name = "rootObject"
         this.scene.add(this.rootObject);
 
         // if (this.model.get("scene")) {
@@ -711,6 +733,20 @@ class FigureView extends widgets.DOMWidgetView {
         this.model.on("change:box_center change:box_size", update_box);
         update_box();
 
+        this.front_box_material = new THREE.ShaderMaterial({
+            uniforms: {
+                offset: { type: "3f", value: [0, 0, 0] },
+                scale : { type: "3f", value: [1, 1, 1] },
+            },
+            fragmentShader: shaders["box-fragment"],
+            vertexShader: shaders["box-vertex"],
+            side: THREE.BackSide,
+        });
+        this.front_box_geo = new THREE.BoxBufferGeometry(1, 1, 1);
+        this.front_box_mesh = new THREE.Mesh(this.front_box_geo, this.front_box_material);
+        this.front_box_mesh.name = "Front object"
+        this.rootObject.add(this.front_box_mesh);
+
         this.mesh_views = {};
         this.scatter_views = {};
         this.volume_views = {};
@@ -730,6 +766,13 @@ class FigureView extends widgets.DOMWidgetView {
             type: THREE.FloatType,
             format: THREE.RGBAFormat,
             generateMipmaps: false,
+        });
+
+        this.volume_front_target = new THREE.WebGLRenderTarget(render_width, render_height, {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.NearestFilter,
+            // format: THREE.RGBAFormat,
+            // generateMipmaps: false,
         });
 
         this.geometry_depth_target = new THREE.WebGLRenderTarget(render_width, render_height, {
@@ -1117,6 +1160,8 @@ class FigureView extends widgets.DOMWidgetView {
         this.select_icon.active(select_mode);
         const zoom_mode = this.model.get("mouse_mode") === "zoom";
         this.zoom_icon.active(zoom_mode);
+        const slice_mode = this.model.get("mouse_mode") === "slice";
+        this.slice_icon.active(slice_mode);
     }
 
     update_mouse_mode() {
@@ -1238,6 +1283,15 @@ class FigureView extends widgets.DOMWidgetView {
                 e.stopPropagation();
             }
         }
+        if (this.model.get("mouse_mode") === "slice") {
+            let [xn, yn, zn, alpha] = this.readPixelFrom(this.volume_front_target, mouseX, mouseY);
+            if(alpha > 0) {
+                xn /= 255.;
+                yn /= 255.;
+                zn /= 255.;
+                this._set_slice(xn, yn, zn);
+            }
+        }
         const id = this.readId(mouseX, mouseY);
         this.on_id_click(id, mouseX, mouseY);
     }
@@ -1261,6 +1315,9 @@ class FigureView extends widgets.DOMWidgetView {
             y: mouseY,
         };
 
+        // console.log(this.readPixelFrom(this.volume_front_target, mouseX, mouseY), mouseX, mouseY)
+        // normalized xyz coordinate of the mouse
+
         const id = this.readId(mouseX, mouseY);
         this.on_id_hover(id, mouseX, mouseY);
 
@@ -1278,6 +1335,46 @@ class FigureView extends widgets.DOMWidgetView {
                 this.mouseDrag(pixels_right, pixels_up);
             }
         }
+        if (this.model.get("mouse_mode") === "slice") {
+            let [xn, yn, zn, alpha] = this.readPixelFrom(this.volume_front_target, mouseX, mouseY);
+            if(alpha > 0) {
+                xn /= 255.;
+                yn /= 255.;
+                zn /= 255.;
+                this._set_slice(xn, yn, zn);
+            }
+        }
+    }
+
+    _set_slice(xn, yn, zn) {
+        const scales = this.model.get("scales");
+        const scales_d3 = mapValues(scales, createD3Scale);
+        const x = scales_d3.x.range([0, 1]).invert(xn);
+        const y = scales_d3.y.range([0, 1]).invert(yn);
+        const z = scales_d3.z.range([0, 1]).invert(zn);
+        // console.log(x, y, z);
+        const [xmin, xmax] = scales_d3.x.domain();
+        const [ymin, ymax] = scales_d3.y.domain();
+        const [zmin, zmax] = scales_d3.z.domain();
+        const dx = Math.abs(xmin - xmax);
+        const dy = Math.abs(ymin - ymax);
+        const dz = Math.abs(zmin - zmax);
+        const on_x = (Math.abs(x - xmin)/dx < 1e-3) || (Math.abs(x - xmax)/dx < 1e-3);
+        const on_y = (Math.abs(y - ymin)/dy < 1e-3) || (Math.abs(y - ymax)/dy < 1e-3);
+        const on_z = (Math.abs(z - zmin)/dz < 1e-3) || (Math.abs(z - zmax)/dz < 1e-3);
+        if(on_x || on_y) {
+            this.model.set("slice_z", z);
+        }
+        if(on_x || on_z) {
+            this.model.set("slice_y", y);
+        }
+        if(on_y || on_z) {
+            this.model.set("slice_x", x);
+        }
+        if(on_x || on_y || on_z) {
+            this.model.save_changes();
+        }
+
     }
 
     on_id_click(id, mouseX, mouseY) {
@@ -1456,7 +1553,16 @@ class FigureView extends widgets.DOMWidgetView {
             this.model.set("selector", "rectangle");
             handled = true;
         }
-        if (evtobj.keyCode === 18) { // shift
+        if (evtobj.keyCode === 16) { // shift
+            // avoid ctrl and shift
+            if (!this.quick_mouse_mode_change) {
+                this.quick_mouse_mode_change = true;
+                this.quick_mouse_previous_mode = this.model.get("mouse_mode");
+                this.model.set("mouse_mode", "slice");
+                handled = true;
+            }
+        }
+        if (evtobj.keyCode === 18) { // alt
             // avoid ctrl and shift
             if (!this.quick_mouse_mode_change) {
                 this.quick_mouse_mode_change = true;
@@ -1486,7 +1592,7 @@ class FigureView extends widgets.DOMWidgetView {
         if (evtobj.altKey) {
             // console.log('released alt', this.hover)
         }
-        if ((evtobj.keyCode === 17) || (evtobj.keyCode === 18)) { // ctrl or shift
+        if ((evtobj.keyCode === 16) || (evtobj.keyCode === 17) || (evtobj.keyCode === 18)) { // ctrl or shift
             if (this.quick_mouse_mode_change) {
                 this.quick_mouse_mode_change = false;
                 this.model.set("mouse_mode", this.quick_mouse_previous_mode);
@@ -2190,6 +2296,8 @@ class FigureView extends widgets.DOMWidgetView {
                    //@ts-ignore
                    o.visible = !Boolean(o.isVolume)
                 }
+                if(o === this.front_box_mesh)
+                    this.front_box_mesh.visible = false;
             })
         };
         const restoreVisible = () => {
@@ -2239,6 +2347,18 @@ class FigureView extends widgets.DOMWidgetView {
             return;
         }
 
+        // we always render the front
+        this.rootObject.children.forEach((o) => {
+            o.visible = false;
+        })
+        this.front_box_mesh.visible = true;
+        (this.front_box_mesh.material as THREE.ShaderMaterial).side  = THREE.FrontSide;
+        this.renderer.setRenderTarget(this.volume_front_target);
+        this.renderer.clear(true, true, true);
+        this.renderer.render(this.scene, camera, this.volume_front_target);
+        this.front_box_mesh.visible = false;
+
+
         // render the back coordinates of the box
         if (has_volumes) {
             // to render the back sides of the boxes, we need to invert the z buffer value
@@ -2264,7 +2384,6 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.render(this.scene, camera, this.geometry_depth_target);
             this.renderer.render(this.scene_opaque, camera, this.geometry_depth_target);
             this.renderer.autoClear = true;
-
         }
 
         // Normal color pass of geometry for final screen pass
@@ -2397,11 +2516,12 @@ class FigureView extends widgets.DOMWidgetView {
         } else {
             // render to screen
             this.screen_texture = {
-                Volume: this.color_pass_target,
-                Back: this.volume_back_target,
-                Geometry_back: this.geometry_depth_target,
-                Coordinate: this.coordinate_target,
-                ID: this.id_pass_target,
+                render: this.color_pass_target,
+                front: this.volume_front_target,
+                back: this.volume_back_target,
+                // Geometry_back: this.geometry_depth_target,
+                coordinate: this.coordinate_target,
+                id: this.id_pass_target,
             }[this.model.get("show")];
             // TODO: remove any
             this.screen_material.uniforms.tex.value = (this.screen_texture as any).texture;
@@ -2565,6 +2685,7 @@ class FigureView extends widgets.DOMWidgetView {
         this.material_multivolume.uniforms.render_size.value = [render_width, render_height];
 
         this.volume_back_target.setSize(render_width, render_height);
+        this.volume_front_target.setSize(render_width, render_height);
         this.geometry_depth_target.setSize(render_width, render_height);
         this.color_pass_target.setSize(render_width, render_height);
         this.screen_pass_target.setSize(render_width, render_height);

@@ -306,7 +306,6 @@ class Mesh(widgets.Widget, LegendData):
     popup = traitlets.Instance(widgets.DOMWidget, default_value=None, allow_none=True).tag(sync=True, **widgets.widget_serialization)
 
 
-
 @widgets.register
 class Figure(ipywebrtc.MediaStream):
     """Widget class representing a volume (rendering) using three.js."""
@@ -435,6 +434,10 @@ class Figure(ipywebrtc.MediaStream):
     selection_mode = traitlets.Unicode(default_value='replace').tag(sync=True)
     mouse_mode = traitlets.Unicode(default_value='normal').tag(sync=True)
     panorama_mode = traitlets.Enum(values=['no', '360', '180'], default_value='no').tag(sync=True)
+
+    slice_x = traitlets.Float(0).tag(sync=True)
+    slice_y = traitlets.Float(0).tag(sync=True)
+    slice_z = traitlets.Float(0).tag(sync=True)
 
     _shaders = traitlets.Dict(default_value={}).tag(sync=True)
 

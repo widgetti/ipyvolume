@@ -610,6 +610,7 @@ class MeshView extends Object3DView {
             const fragmentShader = this.figure.model.get('_shaders')['mesh-fragment'] || shaders['mesh-fragment']
 
             this.surface_mesh = new THREE.Mesh(geometry, this.material);
+            this.surface_mesh.name = "Mesh: " + this.model.get("description");
             this.surface_mesh.customDepthMaterial = this.material_depth;
             this.surface_mesh.customDistanceMaterial = this.material_distance;
             // BUG? because of our custom shader threejs thinks our object if out
@@ -647,6 +648,7 @@ class MeshView extends Object3DView {
             geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
             this.line_segments = new THREE.LineSegments(geometry, this.line_material);
+            this.line_segments.name = "Line for Mesh: " + this.model.get("description");
             this.line_segments.frustumCulled = false;
             // TODO: check lines with volume rendering, also in scatter
             this.line_segments.material_rgb = this.line_material_rgb;
