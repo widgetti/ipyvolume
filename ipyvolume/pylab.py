@@ -462,7 +462,8 @@ def plot_trisurf(
         texture=None,
         cast_shadow=True,
         receive_shadow=True,
-        description=None):
+        description=None,
+        **kwargs):
     """Draw a polygon/triangle mesh defined by a coordinate and triangle indices.
 
     The following example plots a rectangle in the z==2 plane, consisting of 2 triangles:
@@ -500,7 +501,7 @@ def plot_trisurf(
         triangles = np.array(triangles).astype(dtype=np.uint32)
     if lines is not None:
         lines = np.array(lines).astype(dtype=np.uint32)
-    kwargs = {}
+    kwargs = kwargs.copy()
     if current.material is not None:
         kwargs['material'] = current.material
 

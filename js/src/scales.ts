@@ -5,6 +5,7 @@ import { Material, ShaderMaterial } from "three";
 // We also do this in bqplot, does that make sense?
 // tslint:disable-next-line: no-var-requires
 const shader_scales = (require("raw-loader!../glsl/scales.glsl") as any).default;
+const shader_ipyvolume = (require("raw-loader!../glsl/ipyvolume.glsl") as any).default;
 const shader_scales_mod = (require("raw-loader!../glsl/scales.glsl") as any);
 
 export
@@ -16,16 +17,19 @@ const scaleTypeMap = {
 export
 function patchMaterial(material: any) {
     material.onBeforeCompile = (shader) => {
-        patchShader(shader);
+        shader.vertexShader = patchShader(shader.vertexShader);
+        shader.fragmentShader = patchShader(shader.fragmentShader);
     };
 }
 
 export
-function patchShader(shader: any) {
-    shader.vertexShader = // this is the fragment program string in the template format
-    shader.vertexShader.replace( // we have to transform the string
-        "#include <scales>", // we will swap out this chunk
+function patchShader(shader: string) : string {
+    return shader.replace(
+        "#include <scales>",
         shader_scales,
+    ).replace(
+        "#include <ipyvolume>",
+        shader_ipyvolume,
     );
 }
 

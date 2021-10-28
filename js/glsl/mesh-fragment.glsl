@@ -1,8 +1,18 @@
+#include <ipyvolume>
+
+#ifdef USE_VOLUME
+uniform sampler2D volume_texture;
+uniform sampler2D transfer_function;
+uniform Volume volume;
+#endif //USE_VOLUME
+
+
 // mesh-fragment shader
 #if defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
 varying vec4 vertex_color;
 varying vec3 vertex_position;
 varying vec2 vertex_uv;
+varying vec3 vPositionEye;
 
 #ifdef USE_TEXTURE
     uniform sampler2D texture;
@@ -47,8 +57,8 @@ varying vec2 vertex_uv;
             #ifdef IS_LINE
                 gl_FragColor = vec4(vertex_color.rgb * shadow_visibility, vertex_color.a);
             #else
-                vec3 fdx = dFdx( vertex_position );
-                vec3 fdy = dFdy( vertex_position );
+                vec3 fdx = dFdx( vPositionEye );
+                vec3 fdy = dFdy( vPositionEye );
                 vec3 normal = normalize( cross( fdx, fdy ) );
                 float diffuse = dot( normal, vec3( 0.0, 0.0, 1.0 ) );
 
@@ -57,6 +67,18 @@ varying vec2 vertex_uv;
                     gl_FragColor = vec4(clamp(diffuse, 0.2, 1.) * sample.rgb * shadow_visibility, 1.0);
                 #else
                     gl_FragColor = vec4(clamp(diffuse, 0.2, 1.) * vertex_color.rgb * shadow_visibility, vertex_color.a);
+					vec3 sample_position = vertex_position*volume.scale + vec3(0.5, 0.5, 0.5);
+					vec4 sample = sample_as_3d_texture(volume_texture, volume.size, sample_position, volume.slice_size, volume.slices, volume.rows, volume.columns);
+
+					// quite similar to volr-fragment.glsl
+					float raw_data_value = sample.a;
+					float scaled_data_value = (raw_data_value*(volume.data_range[1] - volume.data_range[0])) + volume.data_range[0];
+					float data_value = (scaled_data_value - volume.show_range[0])/(volume.show_range[1] - volume.show_range[0]);
+					vec4 color_sample = texture2D(transfer_function, vec2(data_value, 0.5));
+
+					// TODO: 30 should be configurable
+					gl_FragColor.rgb = color_sample.rgb * volume.brightness * color_sample.a * 30.;
+					gl_FragColor.a = 1.;
                 #endif // USE_TEXTURE
             #endif // IS_LINE
         #endif // defined( AS_COORDINATE ) || defined( AS_ID )

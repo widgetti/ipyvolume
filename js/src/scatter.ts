@@ -502,10 +502,9 @@ class ScatterView extends Object3DView {
 
         this.materials.forEach((material) => {
             material.onBeforeCompile = (shader) => {
-                shader.vertexShader = vertexShader;
-                shader.fragmentShader = fragmentShader;
+                shader.vertexShader = patchShader(vertexShader);
+                shader.fragmentShader = patchShader(fragmentShader);
                 shader.uniforms = {...shader.uniforms, ...this.uniforms};
-                patchShader(shader);
             };
             material.alphaTest = 0.5 + cache_thrasher;
             material.needsUpdate = true;
