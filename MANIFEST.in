@@ -2,3 +2,4 @@ include LICENSE
 include README.rst
 include README.md
 include js/package.json
+recursive-include ipyvolume/vue *.vue

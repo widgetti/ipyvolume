@@ -1,7 +1,9 @@
 import * as widgets from "@jupyter-widgets/base";
+import { WidgetModel, WidgetView } from "@jupyter-widgets/base";
 import { isArray, isEqual, isNumber } from "lodash";
 import * as THREE from "three";
 import { MeshDepthMaterialCustom, MeshDistanceMaterialCustom } from "./materials";
+import { Object3DView } from "./object3d";
 import { createColormap, patchShader, scaleTypeMap } from "./scales";
 import * as serialize from "./serialize.js";
 import { materialToLightingModel, semver_range } from "./utils";
@@ -15,29 +17,31 @@ const shaders = {
 };
 
 export
-class ScatterView extends widgets.WidgetView {
+class ScatterView extends Object3DView {
     figure: any;
     previous_values: {color?: any, size?: any, sequence_index?: any, selected?: any};
     attributes_changed: {color?: any, size?: any, sequence_index?: any, selected?: any};
     scale_defines: {};
     texture_loader: THREE.TextureLoader;
     textures: any;
-    uniforms: any;
     geos: { diamond: THREE.BufferGeometry; box: THREE.BufferGeometry; arrow: THREE.BufferGeometry;
         cylinder: THREE.BufferGeometry; cylinder_hr: THREE.BufferGeometry; sphere: THREE.SphereBufferGeometry;
         cat: THREE.BufferGeometry; square_2d: THREE.BufferGeometry; point_2d: THREE.BufferGeometry; circle_2d: THREE.BufferGeometry;
         triangle_2d: THREE.BufferGeometry; };
     material: any;
+    material_id: any;
     material_rgb: any;
     material_depth: any;
     material_distance: any;
     line_material: any;
     line_material_rgb: any;
+    line_material_id: any;
     materials: any[];
     texture_video: HTMLVideoElement;
     line_segments: any;
     mesh: any;
     lighting_model : any;
+    popupView: WidgetView;
 
     render() {
 
@@ -137,6 +141,7 @@ class ScatterView extends widgets.WidgetView {
                 texture: { type: "t", value: null },
                 texture_previous: { type: "t", value: null },
                 colormap: {type: "t", value: null},
+                id_offset : { type: "f", value: 0 },
                 ...THREE.UniformsUtils.merge([THREE.UniformsLib["common"], THREE.UniformsLib["lights"]])
             };
         const get_material = (name)  => {
@@ -148,9 +153,11 @@ class ScatterView extends widgets.WidgetView {
         };
         this.material = get_material("material");
         this.material_rgb = get_material("material");
+        this.material_id = get_material("material");
         this.line_material = get_material("line_material");
         this.line_material_rgb = get_material("line_material");
-        this.materials = [this.material, this.material_rgb, this.line_material, this.line_material_rgb];
+        this.line_material_id = get_material("line_material");
+        this.materials = [this.material, this.material_id, this.material_rgb, this.line_material, this.line_material_id, this.line_material_rgb];
 
         this._update_materials();
         if (this.model.get("material")) {
@@ -446,16 +453,21 @@ class ScatterView extends widgets.WidgetView {
         this.material.defines = {USE_COLOR: true, USE_COLORMAP: this.model.get("color_scale") !== null, ...this.scale_defines, ...snippet_defines};
         this.material.defines[`AS_${this.lighting_model}`] = true;
         this.material.extensions = {derivatives: true};
+        this.material_id.defines = {AS_ID: true, USE_COLOR: true, ...this.scale_defines, ...snippet_defines};
+        this.material_id.extensions = {derivatives: true};
         this.material_rgb.defines = {AS_COORDINATE: true, USE_COLOR: true, ...this.scale_defines, ...snippet_defines};
         this.material_rgb.extensions = {derivatives: true};
         this.line_material.defines = {IS_LINE: true, USE_COLOR: true, ...this.scale_defines,  ...snippet_defines};
         this.line_material.defines[`AS_${this.lighting_model}`] = true;
         this.line_material_rgb.defines = {AS_COORDINATE: true, IS_LINE: true, USE_COLOR: true};
+        this.line_material_id.defines = {AS_ID: true, IS_LINE: true, USE_COLOR: true};
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");
         this.material_rgb.visible = this.material.visible && this.model.get("visible");
+        this.material_id.visible = this.material.visible && this.model.get("visible");
         this.line_material.visible = this.line_material.visible && this.model.get("visible");
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
+        this.line_material_id.visible = this.line_material.visible && this.model.get("visible");
 
         const vertexShader = this.figure.model.get('_shaders')['scatter-vertex'] || shaders['scatter-vertex']
         const fragmentShader = this.figure.model.get('_shaders')['scatter-fragment'] || shaders['scatter-fragment']
@@ -505,6 +517,7 @@ class ScatterView extends widgets.WidgetView {
         if (sprite) {
             this.material.defines.USE_SPRITE = true;
             this.material_rgb.defines.USE_SPRITE = true;
+            this.material_id.defines.USE_SPRITE = true;
         }
         if (sprite) {
             const texture = this.model.get("texture");
@@ -514,8 +527,10 @@ class ScatterView extends widgets.WidgetView {
         }
         this.material.needsUpdate = true;
         this.material_rgb.needsUpdate = true;
+        this.material_id.needsUpdate = true;
         this.line_material.needsUpdate = true;
         this.line_material_rgb.needsUpdate = true;
+        this.line_material_id.needsUpdate = true;
         if(this.mesh) {
             this.mesh.customDepthMaterial = this.material_depth;
             this.mesh.customDistanceMaterial = this.material_distance;
@@ -585,6 +600,7 @@ class ScatterView extends widgets.WidgetView {
             next.pad(previous);
             (next.array.size as any).fill(0, next_length); // this will make them smoothly fade out
         }
+        this.length = next.length;
         // we are only guaranteed to have 16 attributes for the shader, so better merge some into single vectors
         next.merge_to_vec3(["vx", "vy", "vz"], "v");
         previous.merge_to_vec3(["vx", "vy", "vz"], "v");
@@ -596,6 +612,13 @@ class ScatterView extends widgets.WidgetView {
         // add attributes to the geometry, this makes them available to the shader
         next.add_attributes(instanced_geo, "_next");
         previous.add_attributes(instanced_geo, "_previous");
+
+        const id_array = new Float32Array(next.length);
+        for(let i = 0; i < next.length; i++) {
+            id_array[i] = i;
+        }
+        const id_attribute = new THREE.InstancedBufferAttribute(id_array, 1, false, 1);
+        instanced_geo.addAttribute("instance_id", id_attribute);
         if (sprite) {
             const texture = this.model.get("texture");
             if (texture && this.textures) {
@@ -613,6 +636,7 @@ class ScatterView extends widgets.WidgetView {
 
         this.mesh.customDepthMaterial = this.material_depth;
         this.mesh.customDistanceMaterial = this.material_distance;
+        this.mesh.material_id = this.material_id;
         this.mesh.material_rgb = this.material_rgb;
         this.mesh.material_normal = this.material;
 
@@ -686,6 +710,7 @@ class ScatterModel extends widgets.WidgetModel {
         texture: serialize.texture,
         material: { deserialize: widgets.unpack_models },
         line_material: { deserialize: widgets.unpack_models },
+        popup: { deserialize: widgets.unpack_models },
     };
 
     defaults() {

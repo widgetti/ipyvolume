@@ -47,8 +47,25 @@ def _typefix(value):
         return value
 
 
+class LegendData(traitlets.HasTraits):
+    # legend_name = Unicode('MeshModel').tag(sync=True)
+    description = Unicode('Label').tag(sync=True)
+    icon = Unicode('mdi-chart-bubble').tag(sync=True)
+    description_color = Unicode().tag(sync=True)
+
+    @traitlets.default('description_color')
+    def _description_color(self):
+        value = self.color
+        while value.ndim >= 1 and not isinstance(value, str):
+            value = value[0]
+        value = value.item()
+        if not isinstance(value, str):
+            value = 'red'
+        return value
+
+
 @widgets.register
-class Mesh(widgets.Widget):
+class Mesh(widgets.Widget, LegendData):
     _view_name = Unicode('MeshView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
     _model_name = Unicode('MeshModel').tag(sync=True)
@@ -74,6 +91,8 @@ class Mesh(widgets.Widget):
         ]
     ).tag(sync=True, **texture_serialization)
 
+    hovered = traitlets.Bool(default_value=None, allow_none=True).tag(sync=True)
+    clicked = traitlets.Bool(default_value=None, allow_none=True).tag(sync=True)
     sequence_index = Integer(default_value=0).tag(sync=True)
     color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
     visible = traitlets.CBool(default_value=True).tag(sync=True)
@@ -103,9 +122,12 @@ class Mesh(widgets.Widget):
     cast_shadow = traitlets.CBool(default_value=True).tag(sync=True)
     receive_shadow = traitlets.CBool(default_value=True).tag(sync=True)
 
+    icon = Unicode('mdi-triforce').tag(sync=True)
+    popup = traitlets.Instance(widgets.DOMWidget, default_value=None, allow_none=True).tag(sync=True, **widgets.widget_serialization)
+
 
 @widgets.register
-class Scatter(widgets.Widget):
+class Scatter(widgets.Widget, LegendData):
     _view_name = Unicode('ScatterView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
     _model_name = Unicode('ScatterModel').tag(sync=True)
@@ -124,6 +146,10 @@ class Scatter(widgets.Widget):
     color_scale = traitlets.Instance(scales.ColorScale, default_value=None, allow_none=True)\
         .tag(sync=True, **widgets.widget_serialization)
     selected = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    hovered = traitlets.Bool(default_value=None, allow_none=True).tag(sync=True)
+    clicked = traitlets.Bool(default_value=None, allow_none=True).tag(sync=True)
+    hovered_index = Integer(default_value=None, allow_none=True).tag(sync=True)
+    clicked_index = Integer(default_value=None, allow_none=True).tag(sync=True)
     sequence_index = Integer(default_value=0).tag(sync=True)
     size = traitlets.Union(
         [
@@ -158,6 +184,7 @@ class Scatter(widgets.Widget):
 
     cast_shadow = traitlets.CBool(default_value=True).tag(sync=True)
     receive_shadow = traitlets.CBool(default_value=True).tag(sync=True)
+    popup = traitlets.Instance(widgets.DOMWidget, default_value=None, allow_none=True).tag(sync=True, **widgets.widget_serialization)
 
     texture = traitlets.Union(
         [
@@ -193,7 +220,7 @@ class Scatter(widgets.Widget):
 
 
 @widgets.register
-class Volume(widgets.Widget):
+class Volume(widgets.Widget, LegendData):
     """Widget class representing a volume (rendering) using three.js."""
 
     _view_name = Unicode('VolumeView').tag(sync=True)
@@ -212,6 +239,7 @@ class Volume(widgets.Widget):
     show_max = traitlets.CFloat(1).tag(sync=True)
     clamp_min = traitlets.CBool(False).tag(sync=True)
     clamp_max = traitlets.CBool(False).tag(sync=True)
+    visible = traitlets.CBool(default_value=True).tag(sync=True)
     opacity_scale = traitlets.CFloat(1.0).tag(sync=True)
     brightness = traitlets.CFloat(1.0).tag(sync=True)
     tf = traitlets.Instance(TransferFunction, allow_none=True).tag(sync=True, **widgets.widget_serialization)
@@ -269,6 +297,12 @@ class Volume(widgets.Widget):
         data_view, extent = reduce_size(data_view, self.data_max_shape, extent)
         self.data = np.array(data_view)
         self.extent = extent
+
+    icon = Unicode('mdi-cube-outline').tag(sync=True)
+
+    @traitlets.default('description_color')
+    def _description_color(self):
+        return 'blue'  # maybe sth smarter?
 
 
 @widgets.register
@@ -349,6 +383,7 @@ class Figure(ipywebrtc.MediaStream):
     cube_resolution = traitlets.CInt(512).tag(sync=True)
 
     show = traitlets.Unicode("Volume").tag(sync=True)  # for debugging
+    popup_debouce = traitlets.CInt(100, help="Debouce popup in miliseconds").tag(sync=True)
 
     @property
     def xlim(self):

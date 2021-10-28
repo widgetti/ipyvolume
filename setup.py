@@ -90,6 +90,8 @@ setup(
         'Pillow',
         'ipywebrtc',
         'requests',
+        'ipyvuetify',
+        'ipyvue>=1.7.0',
         'pythreejs>=2.0.0',
         'matplotlib'
     ],
@@ -111,4 +113,5 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
+      package_data={'ipyvolume.vue': ['*.vue']},
 )

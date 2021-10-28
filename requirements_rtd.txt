@@ -6,7 +6,8 @@ traittypes
 traitlets
 Pillow
 scipy
-git+https://github.com/spatialaudio/nbsphinx
+git+https://github.com/maartenbreddels/nbconvert@fix_closing_script_early#egg=nbconvert
+git+https://github.com/maartenbreddels/nbsphinx@fix_closing_script_early#egg=nbsphinx
 recommonmark
 matplotlib==3.1.1
 ipywebrtc
@@ -16,4 +17,7 @@ corner
 sphinx_gallery
 vaex-core
 vaex-hdf5
-nbformat==4.4.0
+vaex-ml
+sphinx==3.5.4
+# see https://github.com/sphinx-doc/sphinx/issues/9727#issuecomment-952289876
+docutils==0.17.1

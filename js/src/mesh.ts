@@ -1,4 +1,5 @@
 import * as widgets from "@jupyter-widgets/base";
+import { WidgetModel, WidgetView } from "@jupyter-widgets/base";
 import { isArray, isEqual, isNumber, isString } from "lodash";
 import * as THREE from "three";
 import { FigureView } from "./figure";
@@ -7,6 +8,7 @@ import { createColormap, patchShader, scaleTypeMap } from "./scales";
 import * as serialize from "./serialize.js";
 import { materialToLightingModel, semver_range } from "./utils";
 import * as values from "./values.js";
+import { Object3DView } from "./object3d";
 
 const shaders = {
     "mesh-vertex": (require("raw-loader!../glsl/mesh-vertex.glsl") as any).default,
@@ -14,7 +16,7 @@ const shaders = {
 };
 
 export
-class MeshView extends widgets.WidgetView {
+class MeshView extends Object3DView {
     figure: FigureView;
     previous_values: any;
     attributes_changed: any;
@@ -26,10 +28,12 @@ class MeshView extends widgets.WidgetView {
 
     material: any;
     material_rgb: any;
+    material_id: any;
     material_depth: any;
     material_distance: any;
     line_material: any;
     line_material_rgb: any;
+    line_material_id: any;
     materials: any;
     scale_defines: {};
 
@@ -38,6 +42,7 @@ class MeshView extends widgets.WidgetView {
     texture_video: any;
 
     lighting_model: any;
+    length = 1;
 
     render() {
         // console.log("created mesh view, parent is")
@@ -77,6 +82,7 @@ class MeshView extends widgets.WidgetView {
                 texture: { type: "t", value: null },
                 texture_previous: { type: "t", value: null },
                 colormap: {type: "t", value: null},
+                id_offset : { type: "f", value: 0 },
                 ...THREE.UniformsUtils.merge([THREE.UniformsLib["common"], THREE.UniformsLib["lights"]])
             };
 
@@ -94,13 +100,15 @@ class MeshView extends widgets.WidgetView {
         };
         this.material = get_material("material");
         this.material_rgb = get_material("material");
+        this.material_id = get_material("material");
         this.line_material = get_material("line_material");
         this.material.polygonOffset = true;
         this.material.polygonOffsetFactor = 1;
         this.material.polygonOffsetUnits = 0.1;
         // this.material.depthFunc = THREE.LessEqualDepth
         this.line_material_rgb = get_material("line_material");
-        this.materials = [this.material, this.material_rgb, this.line_material, this.line_material_rgb];
+        this.line_material_id = get_material("line_material");
+        this.materials = [this.material, this.material_rgb, this.material_id, this.line_material, this.line_material_rgb, this.line_material_id];
         this._update_materials();
         if (this.model.get("material")) {
             this.model.get("material").on("change", () => {
@@ -124,6 +132,7 @@ class MeshView extends widgets.WidgetView {
         this.model.on("change:texture", this._load_textures, this);
         this.model.on("change:visible change:lighting_model change:opacity change:material change:cast_shadow change:receive_shadow", this._update_materials, this);
     }
+
 
     public _load_textures() {
         const texture = this.model.get("texture");
@@ -358,11 +367,17 @@ class MeshView extends widgets.WidgetView {
         if (this.model.get("material")) {
             this.material_rgb.copy(this.model.get("material").obj);
         }
+        if (this.model.get("material")) {
+            this.material_id.copy(this.model.get("material").obj);
+        }
         if (this.model.get("line_material")) {
             this.line_material.copy(this.model.get("line_material").obj);
         }
         if (this.model.get("line_material")) {
             this.line_material_rgb.copy(this.model.get("line_material").obj);
+        }
+        if (this.model.get("line_material")) {
+            this.line_material_id.copy(this.model.get("line_material").obj);
         }
         this.lighting_model = materialToLightingModel(this.material);
         // update material defines in order to run correct shader code
@@ -370,15 +385,19 @@ class MeshView extends widgets.WidgetView {
         this.material.defines[`AS_${this.lighting_model}`] = true;
         this.material.extensions = {derivatives: true};
         this.material_rgb.defines = {AS_COORDINATE: true, USE_COLOR: true, ...this.scale_defines};
+        this.material_id.defines = {AS_ID: true, USE_COLOR: true, ...this.scale_defines};
         this.line_material.defines = {IS_LINE: true, ...this.scale_defines};
         this.line_material.defines[`AS_${this.lighting_model}`] = true;
         this.line_material_rgb.defines = {IS_LINE: true, AS_COORDINATE: true, USE_COLOR: true, ...this.scale_defines};
+        this.line_material_id.defines = {IS_LINE: true, AS_ID: true, USE_COLOR: true, ...this.scale_defines};
 
         // locally and the visible with this object's visible trait
         this.material.visible = this.material.visible && this.model.get("visible");
         this.material_rgb.visible = this.material.visible && this.model.get("visible");
+        this.material_id.visible = this.material.visible && this.model.get("visible");
         this.line_material.visible = this.line_material.visible && this.model.get("visible");
         this.line_material_rgb.visible = this.line_material.visible && this.model.get("visible");
+        this.line_material_id.visible = this.line_material.visible && this.model.get("visible");
 
         const vertexShader = this.figure.model.get('_shaders')['mesh-vertex'] || shaders['mesh-vertex']
         const fragmentShader = this.figure.model.get('_shaders')['mesh-fragment'] || shaders['mesh-fragment']
@@ -426,8 +445,10 @@ class MeshView extends widgets.WidgetView {
         }
         this.material.needsUpdate = true;
         this.material_rgb.needsUpdate = true;
+        this.material_id.needsUpdate = true;
         this.line_material.needsUpdate = true;
         this.line_material_rgb.needsUpdate = true;
+        this.line_material_id.needsUpdate = true;
         if(this.surface_mesh) {
             this.surface_mesh.customDepthMaterial = this.material_depth;
             this.surface_mesh.customDistanceMaterial = this.material_distance;
@@ -580,6 +601,7 @@ class MeshView extends widgets.WidgetView {
             // of the frustum
             this.surface_mesh.frustumCulled = false;
             this.surface_mesh.material_rgb = this.material_rgb;
+            this.surface_mesh.material_id = this.material_id;
             this.surface_mesh.material_normal = this.material;
             this.surface_mesh.castShadow = this.model.get("cast_shadow");
             this.surface_mesh.receiveShadow = this.model.get("receive_shadow");
@@ -613,6 +635,7 @@ class MeshView extends widgets.WidgetView {
             this.line_segments.frustumCulled = false;
             // TODO: check lines with volume rendering, also in scatter
             this.line_segments.material_rgb = this.line_material_rgb;
+            this.line_segments.material_id = this.line_material_id;
             this.line_segments.material_normal = this.line_material;
             this.meshes.push(this.line_segments);
         } else {
@@ -655,6 +678,7 @@ class MeshModel extends widgets.WidgetModel {
         texture: serialize.texture,
         material: { deserialize: widgets.unpack_models },
         line_material: { deserialize: widgets.unpack_models },
+        popup: { deserialize: widgets.unpack_models },
     };
     defaults() {
         return {

@@ -13,6 +13,7 @@ Examples
    examples/moebius
    examples/bars
    examples/lighting
+   examples/popup
 
 Feel free to contribute new examples:
 

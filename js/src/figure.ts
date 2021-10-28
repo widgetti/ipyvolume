@@ -156,6 +156,7 @@ class FigureModel extends widgets.DOMWidgetModel {
             cube_resolution: 512,
             box_center: [0.5, 0.5, 0.5],
             box_size: [1, 1, 1],
+            popup_debouce: 100,
             _shaders: {},  // override shaders / hot reload
         };
     }
@@ -184,6 +185,7 @@ class FigureView extends widgets.DOMWidgetView {
     setting_icon: any;
     setting_icon_180: any;
     setting_icon_360: any;
+    popup_container: HTMLDivElement;
     canvas_container: HTMLDivElement;
     canvas_overlay_container: HTMLDivElement;
     canvas_overlay: HTMLCanvasElement;
@@ -249,9 +251,17 @@ class FigureView extends widgets.DOMWidgetView {
     // all plot objects are children of this object, such that we can transform the matrix
     // without affecting the scene (and thus the camera controls)
     rootObject: THREE.Object3D = null;
+    id_pass_target: THREE.WebGLRenderTarget;
+    lastId: number;
+    _wantsPopup: boolean;
 
     readPixel(x, y) {
         return this.readPixelFrom(this.screen_texture, x, y);
+    }
+
+    readId(x, y) {
+        const [red, green, blue, alpha] = this.readPixelFrom(this.id_pass_target, x, y)
+        return red + green*256 + blue*256*256;
     }
 
     readPixelFrom(target: RenderTarget, x, y) {
@@ -497,14 +507,19 @@ class FigureView extends widgets.DOMWidgetView {
         this.canvas_renderer_container = document.createElement("div");
         this.canvas_renderer_container.appendChild(this.renderer.domElement);
 
+        this.popup_container = document.createElement("div");
+        this.popup_container.classList.add('ipyvolume-popup-container')
+
         this.canvas_container.appendChild(this.canvas_renderer_container);
         this.canvas_container.appendChild(this.canvas_overlay_container);
+        this.canvas_container.appendChild(this.popup_container);
+
         this.canvas_overlay_container.style.position = "absolute";
         this.canvas_overlay_container.style.zIndex = "2";
         this.canvas_overlay_container.style.pointerEvents = "none";
         this.canvas_renderer_container.style.position = "absolute";
         this.canvas_renderer_container.style.zIndex = "1";
-        this.canvas_container.style.position = "relative";
+        this.canvas_container.classList.add("ipyvolume-canvas-container")
         this.el.appendChild(this.canvas_container);
         this.el.setAttribute("tabindex", "1"); // make sure we can have focus
 
@@ -725,6 +740,11 @@ class FigureView extends widgets.DOMWidgetView {
         });
         this.geometry_depth_target.depthTexture = new THREE.DepthTexture(1, 1);
         this.geometry_depth_target.depthTexture.type = THREE.UnsignedShortType;
+
+        this.id_pass_target = new THREE.WebGLRenderTarget(render_width, render_height, {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.NearestFilter,
+        });
 
         this.color_pass_target = new THREE.WebGLRenderTarget(render_width, render_height, {
             minFilter: THREE.LinearFilter,
@@ -1218,6 +1238,8 @@ class FigureView extends widgets.DOMWidgetView {
                 e.stopPropagation();
             }
         }
+        const id = this.readId(mouseX, mouseY);
+        this.on_id_click(id, mouseX, mouseY);
     }
 
     _mouse_move(e) {
@@ -1239,6 +1261,9 @@ class FigureView extends widgets.DOMWidgetView {
             y: mouseY,
         };
 
+        const id = this.readId(mouseX, mouseY);
+        this.on_id_hover(id, mouseX, mouseY);
+
         this.last_zoom_coordinate = null;
         if (this.selector) {
             this.mouse_trail.push([mouseX, mouseY]);
@@ -1253,6 +1278,49 @@ class FigureView extends widgets.DOMWidgetView {
                 this.mouseDrag(pixels_right, pixels_up);
             }
         }
+    }
+
+    on_id_click(id, mouseX, mouseY) {
+        Object.values(this.scatter_views).forEach((scatter_view) => {
+            scatter_view.onClick(id);
+            scatter_view.popup(id, mouseX, mouseY, this.popup_container);
+        })
+        Object.values(this.mesh_views).forEach((mesh_view) => {
+            mesh_view.onClick(id);
+            mesh_view.popup(id, mouseX, mouseY, this.popup_container);
+        })
+    }
+
+    on_id_hover(id, mouseX, mouseY) {
+        this._wantsPopup = true;
+        const check_popup = () => {
+            if(this._wantsPopup) {
+                if(id == this.lastId) {
+                    this._wantsPopup = false;
+                    this._on_id_hover(id, mouseX, mouseY);
+
+                }
+            }
+        };
+        this.lastId = id; // this will avoid 'old' timeouts to show up
+        setTimeout(check_popup, this.model.get('popup_debouce'))
+    }
+
+    _on_id_hover(id, mouseX, mouseY) {
+        Object.values(this.scatter_views).forEach((scatter_view) => {
+            scatter_view.onHover(id);
+            this.popup_container.style.left = `${mouseX}px`
+            const height = this.renderer.domElement.clientHeight;
+            this.popup_container.style.bottom = `${height-mouseY}px`
+            scatter_view.popup(id, mouseX, mouseY, this.popup_container);
+        })
+        Object.values(this.mesh_views).forEach((mesh_view) => {
+            mesh_view.onHover(id);
+            this.popup_container.style.left = `${mouseX}px`
+            const height = this.renderer.domElement.clientHeight;
+            this.popup_container.style.bottom = `${height-mouseY}px`
+            mesh_view.popup(id, mouseX, mouseY, this.popup_container);
+        })
     }
 
     mouseDrag(pixels_right, pixels_up) {
@@ -1661,6 +1729,7 @@ class FigureView extends widgets.DOMWidgetView {
         } else {
             this.scatter_views = {};
         }
+        this._update_id_offsets()
     }
 
     update_meshes() {
@@ -1695,6 +1764,7 @@ class FigureView extends widgets.DOMWidgetView {
         } else {
             this.mesh_views = {};
         }
+        this._update_id_offsets()
     }
 
     update_volumes() {
@@ -1728,6 +1798,19 @@ class FigureView extends widgets.DOMWidgetView {
             }
         } else {
             this.volume_views = {};
+        }
+        this._update_id_offsets();
+    }
+
+    _update_id_offsets() {
+        let offset = 1; // start at 1, 0 is reserved for nothing selected
+        for (const scatterView of Object.values(this.scatter_views)) {
+            scatterView.uniforms.id_offset['value'] = offset;
+            offset += scatterView.length;
+        }
+        for (const meshView of Object.values(this.mesh_views)) {
+            meshView.uniforms.id_offset['value'] = offset;
+            offset += meshView.length;
         }
     }
 
@@ -2234,6 +2317,26 @@ class FigureView extends widgets.DOMWidgetView {
         this.renderer.render(this.scene, camera, this.coordinate_target);
         this.renderer.autoClear = true;
 
+        // id pass
+        // set ID material for coordinate texture render
+        for (const scatter_view of Object.values(this.scatter_views)) {
+            scatter_view.mesh.material = scatter_view.mesh.material_id;
+        }
+        for (const mesh_view of Object.values(this.mesh_views)) {
+            mesh_view.meshes.forEach((threejs_mesh) => {
+                threejs_mesh.material = threejs_mesh.material_id;
+            });
+        }
+
+        // we also render this for the ids
+        this.renderer.autoClear = false;
+        this.renderer.setClearAlpha(0);
+        this.renderer.setRenderTarget(this.id_pass_target);
+        this.renderer.clear(true, true, true);
+        setVisible({volumes: false});
+        this.renderer.render(this.scene, camera, this.id_pass_target);
+        this.renderer.autoClear = true;
+
         // now we render the weighted coordinate for the volumetric data
         // make sure where we don't render, alpha = 0
         if (has_volumes) {
@@ -2288,6 +2391,7 @@ class FigureView extends widgets.DOMWidgetView {
                 Back: this.volume_back_target,
                 Geometry_back: this.geometry_depth_target,
                 Coordinate: this.coordinate_target,
+                ID: this.id_pass_target,
             }[this.model.get("show")];
             // TODO: remove any
             this.screen_material.uniforms.tex.value = (this.screen_texture as any).texture;
@@ -2459,6 +2563,7 @@ class FigureView extends widgets.DOMWidgetView {
         this.color_pass_target.setSize(render_width, render_height);
         this.screen_pass_target.setSize(render_width, render_height);
         this.coordinate_target.setSize(render_width, render_height);
+        this.id_pass_target.setSize(render_width, render_height);
 
         this.screen_texture = this.color_pass_target.texture;
         if (!skip_update) {

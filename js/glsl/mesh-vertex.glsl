@@ -40,7 +40,20 @@ attribute vec3 position_previous;
 #endif
 uniform sampler2D colormap;
 
-#if defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+uniform float id_offset;
+
+vec4 encodeId(float v) {
+    vec4 color;
+    // matches Figure.readId
+    color.b = floor(v / 256.0 / 256.0);
+    color.g = floor((v - color.b * 256.0 * 256.0) / 256.0);
+    color.r = floor(v - color.b * 256.0 * 256.0 - color.g * 256.0);
+    color.a = 255.0;
+    // normalize
+    return color / 255.0;
+}
+
+#if defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
     // similar to phong
     #include <common>
     #include <uv_pars_vertex>
@@ -55,7 +68,7 @@ uniform sampler2D colormap;
     #include <shadowmap_pars_vertex>
     #include <logdepthbuf_pars_vertex>
     #include <clipping_planes_pars_vertex>
-#endif //defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+#endif //defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
 
 #ifdef AS_LAMBERT
     #define LAMBERT
@@ -145,7 +158,7 @@ uniform sampler2D colormap;
 #endif //AS_DISTANCE
 
 void main(void) {
-#if defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+#if defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
     #include <uv_vertex>
 	#include <uv2_vertex>
 	#include <color_vertex>
@@ -157,7 +170,7 @@ void main(void) {
 	#include <defaultnormal_vertex>
 
 	#include <begin_vertex>
-#endif //defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+#endif //defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
 #ifdef AS_LAMBERT
     #include <uv_vertex>
 	#include <uv2_vertex>
@@ -246,9 +259,11 @@ void main(void) {
     // vec3 positionEye = ( modelViewMatrix * vec4(model_pos, 1.0 ) ).xyz;
     // vertex_position = positionEye;
 
-    #ifdef AS_COORDINATE
+    #if defined( AS_COORDINATE )
         // vertex_color = vec4(model_pos + vec3(0.5, 0.5, 0.5), 1.0);
         vertex_color = vec4(transformed + vec3(0.5, 0.5, 0.5), 1.0);
+    #elif defined( AS_ID )
+        vertex_color = encodeId(id_offset);
     #else
         #ifdef USE_COLORMAP
             float color_animated = mix(color_previous, color_current, animation_time_color);
@@ -260,7 +275,7 @@ void main(void) {
     #endif
 
 
-#if defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+#if defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
     gl_Position = projectionMatrix * modelViewMatrix * vec4( transformed, 1.0 );;
     // vec3 model_pos = vec3(SCALE_X(animated_position.x), SCALE_Y(animated_position.y), SCALE_Z(animated_position.z));
     // gl_Position = projectionMatrix *
@@ -268,7 +283,7 @@ void main(void) {
     //             vec4(model_pos, 1.0);
     // vec3 positionEye = ( modelViewMatrix * vec4(model_pos, 1.0 ) ).xyz;
     // vertex_position = positionEye;
-#endif //defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+#endif //defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
 
 #ifdef USE_TEXTURE
     vertex_uv = vec2(mix(u_previous, u, animation_time_u), mix(v_previous, v, animation_time_v));
@@ -279,7 +294,7 @@ void main(void) {
     #endif
 
 
-#if defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+#if defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
 	#include <morphtarget_vertex>
 	#include <skinning_vertex>
 	#include <project_vertex>
@@ -293,7 +308,7 @@ void main(void) {
 	// #include <lights_lambert_vertex>
 	#include <shadowmap_vertex>
 	#include <fog_vertex>
-#endif //defined( AS_DEFAULT ) || defined( AS_COORDINATE )
+#endif //defined( AS_DEFAULT ) || defined( AS_COORDINATE ) || defined( AS_ID )
 #ifdef AS_LAMBERT
 	#include <morphtarget_vertex>
 	#include <skinning_vertex>
