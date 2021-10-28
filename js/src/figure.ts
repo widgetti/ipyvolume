@@ -25,7 +25,7 @@ const axis_names = ["x", "y", "z"];
 (window as any).THREE = THREE;
 
 import { RenderTarget } from "three";
-import { createD3Scale } from "./scales";
+import { createD3Scale, patchShader } from "./scales";
 import "./three/CombinedCamera.js";
 import "./three/DeviceOrientationControls.js";
 import "./three/OrbitControls.js";
@@ -1769,6 +1769,7 @@ class FigureView extends widgets.DOMWidgetView {
 
     update_volumes() {
         const volumes = this.model.get("volumes") as VolumeModel[]; // This is always a list?
+        const previous = this.model.previous("volumes") as VolumeModel[]; // This is always a list?
         if (volumes.length !== 0) { // So now check if list has length 0
             const current_volume_cids = [];
                 // Add new volumes if not already as volume view in figure
@@ -1783,6 +1784,7 @@ class FigureView extends widgets.DOMWidgetView {
                         options,
                         model: volume_model,
                     });
+                    volume_model.add_to_scene(this.rootObject);
                     this.volume_views[volume_model.cid] = volume_view;
                     volume_view.render();
                 }
@@ -1792,12 +1794,19 @@ class FigureView extends widgets.DOMWidgetView {
             for (const cid of Object.keys(this.volume_views)) {
                 const volume_view = this.volume_views[cid];
                 if (current_volume_cids.indexOf(cid) === -1) {
-                    volume_view.remove_from_scene();
+                    // volume_view.remove_from_scene();
                     delete this.volume_views[cid];
                 }
             }
         } else {
             this.volume_views = {};
+        }
+        if(previous) {
+            for(let prev of previous) {
+                if(!volumes.includes(prev)) {
+                    prev.remove_from_scene(this.rootObject);
+                }
+            }
         }
         this._update_id_offsets();
     }
@@ -2163,7 +2172,9 @@ class FigureView extends widgets.DOMWidgetView {
 
     _render_eye(camera) {
         this.camera.updateMatrixWorld();
-        const has_volumes = this.model.get("volumes").length !== 0;
+        let volumes = this.model.get("volumes") as VolumeModel[];
+        volumes = volumes.filter((volume) => volume.get("visible"))
+        const has_volumes = volumes.length !== 0;
         const panorama = this.model.get("panorama_mode") !== "no";
         // record who is visible
         const wasVisible = this.rootObject.children.reduce((map, o) => {
@@ -2233,12 +2244,11 @@ class FigureView extends widgets.DOMWidgetView {
             // to render the back sides of the boxes, we need to invert the z buffer value
             // and invert the test
             this.renderer.state.buffers.depth.setClear(0);
-            // _.each(this.volume_views, (volume_view) => {
-            for (const volume_view of Object.values(this.volume_views)) {
-                volume_view.box_material.side = THREE.BackSide;
-                volume_view.box_material.depthFunc = THREE.GreaterDepth;
-                volume_view.vol_box_mesh.material = volume_view.box_material;
-                volume_view.set_scales(this.model.get("scales"));
+            for (const volume_model of volumes) {
+                volume_model.box_material.side = THREE.BackSide;
+                volume_model.box_material.depthFunc = THREE.GreaterDepth;
+                volume_model.vol_box_mesh.material = volume_model.box_material;
+                volume_model.set_scales(this.model.get("scales"));
             }
             this.renderer.setRenderTarget(this.volume_back_target);
             this.renderer.clear(true, true, true);
@@ -2271,9 +2281,9 @@ class FigureView extends widgets.DOMWidgetView {
             // so that once we render the box again, each fragment will be processed
             // once.
             this.renderer.context.colorMask(0, 0, 0, 0);
-            for (const volume_view of Object.values(this.volume_views)) {
-                volume_view.box_material.side = THREE.FrontSide;
-                volume_view.box_material.depthFunc = THREE.LessEqualDepth;
+            for (const volume_model of volumes) {
+                volume_model.box_material.side = THREE.FrontSide;
+                volume_model.box_material.depthFunc = THREE.LessEqualDepth;
             }
             this.renderer.autoClear = false;
             this.renderer.setRenderTarget(this.color_pass_target);
@@ -2284,8 +2294,8 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.context.colorMask(true, true, true, true);
 
             // TODO: if volume perfectly overlap, we render it twice, use polygonoffset and LESS z test?
-            for (const volume_view of Object.values(this.volume_views)) {
-                volume_view.vol_box_mesh.material = this.material_multivolume;
+            for (const volume_model of volumes) {
+                volume_model.vol_box_mesh.material = this.material_multivolume;
                 // volume_view.set_geometry_depth_tex(this.geometry_depth_target.depthTexture)
             }
             this.renderer.autoClear = false;
@@ -2344,9 +2354,9 @@ class FigureView extends widgets.DOMWidgetView {
             // TODO: this render pass is only needed when the coordinate is required
             // we slow down by a factor of 2 by always doing this
             this.renderer.context.colorMask(0, 0, 0, 0);
-            for (const volume_view of Object.values(this.volume_views)) {
-                volume_view.box_material.side = THREE.FrontSide;
-                volume_view.box_material.depthFunc = THREE.LessEqualDepth;
+            for (const volume_model of volumes) {
+                volume_model.box_material.side = THREE.FrontSide;
+                volume_model.box_material.depthFunc = THREE.LessEqualDepth;
             }
             this.renderer.autoClear = false;
             this.renderer.setRenderTarget(this.color_pass_target);
@@ -2357,8 +2367,8 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.context.colorMask(true, true, true, true);
 
             // TODO: if volume perfectly overlap, we render it twice, use polygonoffset and LESS z test?
-            for (const volume_view of Object.values(this.volume_views)) {
-                volume_view.vol_box_mesh.material = this.material_multivolume_depth;
+            for (const volume_model of volumes) {
+                volume_model.vol_box_mesh.material = this.material_multivolume_depth;
                 // volume_view.set_geometry_depth_tex(this.geometry_depth_target.depthTexture)
             }
             this.renderer.autoClear = false;
@@ -2438,10 +2448,8 @@ class FigureView extends widgets.DOMWidgetView {
     }
 
     rebuild_multivolume_rendering_material() {
-        const volumes = this.model.get("volumes") as VolumeModel[]; // This is always a list?
-        if (volumes.length === 0) {
-            return;
-        }
+        let volumes = this.model.get("volumes") as VolumeModel[];
+        volumes = volumes.filter((volume) => volume.get("visible"))
 
         const material = this.material_multivolume;
         const material_depth = this.material_multivolume_depth;
@@ -2458,23 +2466,21 @@ class FigureView extends widgets.DOMWidgetView {
             return volume_view ? volume_view.get_ray_steps() : 0;
         });
 
-        // _.each(volumes, (vol_model) => {
+        if (volumes.length === 0) {
+            return;
+        }
+
         for (const volume_model of volumes) {
-            const volume_view = this.volume_views[volume_model.cid];
-            // could be that the view was not yet created
-            if (volume_view) {
-                const volume = volume_view.model;
-                if (volume_view.is_normal()) {
-                    count_normal++;
-                    material.uniforms.volumes.value.push(volume_view.uniform_volumes_values);
-                    material.uniforms.data.value.push(volume_view.uniform_data.value[0]);
-                    material.uniforms.transfer_function.value.push(volume_view.uniform_transfer_function.value[0]);
-                } else {
-                    count_max_int++;
-                    material.uniforms.volumes_max_int.value.push(volume_view.uniform_volumes_values);
-                    material.uniforms.data_max_int.value.push(volume_view.uniform_data.value[0]);
-                    material.uniforms.transfer_function_max_int.value.push(volume_view.uniform_transfer_function.value[0]);
-                }
+            if (volume_model.is_normal()) {
+                count_normal++;
+                material.uniforms.volumes.value.push(volume_model.uniform_volumes_values);
+                material.uniforms.data.value.push(volume_model.uniform_data.value[0]);
+                material.uniforms.transfer_function.value.push(volume_model.uniform_transfer_function.value[0]);
+            } else {
+                count_max_int++;
+                material.uniforms.volumes_max_int.value.push(volume_model.uniform_volumes_values);
+                material.uniforms.data_max_int.value.push(volume_model.uniform_data.value[0]);
+                material.uniforms.transfer_function_max_int.value.push(volume_model.uniform_transfer_function.value[0]);
             }
         }
         material.defines.VOLUME_COUNT = count_normal;
@@ -2491,8 +2497,8 @@ class FigureView extends widgets.DOMWidgetView {
             return Mustache.render(template_shader, view);
         };
         const _shaders = this.model.get("_shaders");
-        material_depth.fragmentShader = material.fragmentShader = mustache_render(_shaders["volr-fragment"] || shaders["volr-fragment"]);
-        material_depth.vertexShader = material.vertexShader = _shaders["volr-vertex"] || shaders["volr-vertex"];
+        material_depth.fragmentShader = material.fragmentShader = patchShader(mustache_render(_shaders["volr-fragment"] || shaders["volr-fragment"]));
+        material_depth.vertexShader = material.vertexShader = patchShader(_shaders["volr-vertex"] || shaders["volr-vertex"]);
         material_depth.needsUpdate = material.needsUpdate = true;
     }
 

@@ -17,11 +17,10 @@ class MeshDepthMaterialCustom extends (THREE as any).MeshDepthMaterial {
                     define_code += `#define ${key} ${defines[key]}\n`;
                 }
             }
-            shader.vertexShader = define_code + vertexShader;
-            shader.fragmentShader = define_code + fragmentShader;
+            shader.vertexShader = patchShader(define_code + vertexShader);
+            shader.fragmentShader = patchShader(define_code + fragmentShader);
             // shallow copy the uniforms, so we share them (e.g. updating time)
             shader.uniforms = {...shader.uniforms, ...this.uniforms};
-            patchShader(shader);
         };
     }
 }
@@ -40,11 +39,10 @@ class MeshDistanceMaterialCustom extends (THREE as any).MeshDistanceMaterial {
                     define_code += `#define ${key} ${defines[key]}\n`;
                 }
             }
-            shader.vertexShader = define_code + vertexShader;
-            shader.fragmentShader = define_code + fragmentShader;
+            shader.vertexShader = patchShader(define_code + vertexShader);
+            shader.fragmentShader = patchShader(define_code + fragmentShader);
             // shallow copy the uniforms, so we share them (e.g. updating time)
             shader.uniforms = {...shader.uniforms, ...this.uniforms};
-            patchShader(shader);
         };
     }
 }

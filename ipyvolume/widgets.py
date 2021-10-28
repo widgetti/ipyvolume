@@ -65,68 +65,6 @@ class LegendData(traitlets.HasTraits):
 
 
 @widgets.register
-class Mesh(widgets.Widget, LegendData):
-    _view_name = Unicode('MeshView').tag(sync=True)
-    _view_module = Unicode('ipyvolume').tag(sync=True)
-    _model_name = Unicode('MeshModel').tag(sync=True)
-    _model_module = Unicode('ipyvolume').tag(sync=True)
-    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    x = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
-    y = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
-    z = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
-    u = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
-    v = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
-    triangles = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
-    lines = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
-    color_scale = traitlets.Instance(scales.ColorScale, default_value=None, allow_none=True)\
-        .tag(sync=True, **widgets.widget_serialization)
-    texture = traitlets.Union(
-        [
-            traitlets.Instance(ipywebrtc.MediaStream),
-            Unicode(),
-            traitlets.List(Unicode(), [], allow_none=True),
-            Image(default_value=None, allow_none=True),
-            traitlets.List(Image(default_value=None, allow_none=True)),
-        ]
-    ).tag(sync=True, **texture_serialization)
-
-    hovered = traitlets.Bool(default_value=None, allow_none=True).tag(sync=True)
-    clicked = traitlets.Bool(default_value=None, allow_none=True).tag(sync=True)
-    sequence_index = Integer(default_value=0).tag(sync=True)
-    color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
-    visible = traitlets.CBool(default_value=True).tag(sync=True)
-
-    material = traitlets.Union([
-        traitlets.Instance(pythreejs.ShaderMaterial),
-        traitlets.Instance(pythreejs.MeshPhysicalMaterial),
-        traitlets.Instance(pythreejs.MeshPhongMaterial),
-        traitlets.Instance(pythreejs.MeshLambertMaterial),
-    ], help='A :any:`pythreejs.Material` that is used for the mesh').tag(sync=True, **widgets.widget_serialization)
-
-    @traitlets.default('material')
-    def _default_material(self):
-        return pythreejs.ShaderMaterial(side=pythreejs.enums.Side.DoubleSide)
-
-    line_material = traitlets.Union([
-        traitlets.Instance(pythreejs.ShaderMaterial),
-        traitlets.Instance(pythreejs.MeshPhysicalMaterial),
-        traitlets.Instance(pythreejs.MeshPhongMaterial),
-        traitlets.Instance(pythreejs.MeshLambertMaterial),
-    ], help='A :any:`pythreejs.Material` that is used for the lines/wireframe').tag(sync=True, **widgets.widget_serialization)
-
-    @traitlets.default('line_material')
-    def _default_line_material(self):
-        return pythreejs.ShaderMaterial()
-
-    cast_shadow = traitlets.CBool(default_value=True).tag(sync=True)
-    receive_shadow = traitlets.CBool(default_value=True).tag(sync=True)
-
-    icon = Unicode('mdi-triforce').tag(sync=True)
-    popup = traitlets.Instance(widgets.DOMWidget, default_value=None, allow_none=True).tag(sync=True, **widgets.widget_serialization)
-
-
-@widgets.register
 class Scatter(widgets.Widget, LegendData):
     _view_name = Unicode('ScatterView').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
@@ -303,6 +241,70 @@ class Volume(widgets.Widget, LegendData):
     @traitlets.default('description_color')
     def _description_color(self):
         return 'blue'  # maybe sth smarter?
+
+
+@widgets.register
+class Mesh(widgets.Widget, LegendData):
+    _view_name = Unicode('MeshView').tag(sync=True)
+    _view_module = Unicode('ipyvolume').tag(sync=True)
+    _model_name = Unicode('MeshModel').tag(sync=True)
+    _model_module = Unicode('ipyvolume').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    x = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
+    y = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
+    z = Array(default_value=None).tag(sync=True, **array_sequence_serialization)
+    u = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    v = Array(default_value=None, allow_none=True).tag(sync=True, **array_sequence_serialization)
+    triangles = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+    lines = Array(default_value=None, allow_none=True).tag(sync=True, **array_serialization)
+    color_scale = traitlets.Instance(scales.ColorScale, default_value=None, allow_none=True)\
+        .tag(sync=True, **widgets.widget_serialization)
+    texture = traitlets.Union(
+        [
+            traitlets.Instance(ipywebrtc.MediaStream),
+            Unicode(),
+            traitlets.List(Unicode(), [], allow_none=True),
+            Image(default_value=None, allow_none=True),
+            traitlets.List(Image(default_value=None, allow_none=True)),
+        ]
+    ).tag(sync=True, **texture_serialization)
+    volume = traitlets.Instance(Volume, allow_none=True, default_value=None).tag(sync=True, **widgets.widget_serialization)
+
+    hovered = traitlets.Bool(default_value=None, allow_none=True).tag(sync=True)
+    clicked = traitlets.Bool(default_value=None, allow_none=True).tag(sync=True)
+    sequence_index = Integer(default_value=0).tag(sync=True)
+    color = Array(default_value="red", allow_none=True).tag(sync=True, **color_serialization)
+    visible = traitlets.CBool(default_value=True).tag(sync=True)
+
+    material = traitlets.Union([
+        traitlets.Instance(pythreejs.ShaderMaterial),
+        traitlets.Instance(pythreejs.MeshPhysicalMaterial),
+        traitlets.Instance(pythreejs.MeshPhongMaterial),
+        traitlets.Instance(pythreejs.MeshLambertMaterial),
+    ], help='A :any:`pythreejs.Material` that is used for the mesh').tag(sync=True, **widgets.widget_serialization)
+
+    @traitlets.default('material')
+    def _default_material(self):
+        return pythreejs.ShaderMaterial(side=pythreejs.enums.Side.DoubleSide)
+
+    line_material = traitlets.Union([
+        traitlets.Instance(pythreejs.ShaderMaterial),
+        traitlets.Instance(pythreejs.MeshPhysicalMaterial),
+        traitlets.Instance(pythreejs.MeshPhongMaterial),
+        traitlets.Instance(pythreejs.MeshLambertMaterial),
+    ], help='A :any:`pythreejs.Material` that is used for the lines/wireframe').tag(sync=True, **widgets.widget_serialization)
+
+    @traitlets.default('line_material')
+    def _default_line_material(self):
+        return pythreejs.ShaderMaterial()
+
+    cast_shadow = traitlets.CBool(default_value=True).tag(sync=True)
+    receive_shadow = traitlets.CBool(default_value=True).tag(sync=True)
+
+    icon = Unicode('mdi-triforce').tag(sync=True)
+    popup = traitlets.Instance(widgets.DOMWidget, default_value=None, allow_none=True).tag(sync=True, **widgets.widget_serialization)
+
 
 
 @widgets.register

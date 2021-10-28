@@ -9,6 +9,7 @@ import * as serialize from "./serialize.js";
 import { materialToLightingModel, semver_range } from "./utils";
 import * as values from "./values.js";
 import { Object3DView } from "./object3d";
+import { VolumeModel } from ".";
 
 const shaders = {
     "mesh-vertex": (require("raw-loader!../glsl/mesh-vertex.glsl") as any).default,
@@ -83,6 +84,9 @@ class MeshView extends Object3DView {
                 texture_previous: { type: "t", value: null },
                 colormap: {type: "t", value: null},
                 id_offset : { type: "f", value: 0 },
+                volume_texture: {type: "t", value: null},
+                transfer_function: {type: "t", value: null},
+                volume: {value: null},
                 ...THREE.UniformsUtils.merge([THREE.UniformsLib["common"], THREE.UniformsLib["lights"]])
             };
 
@@ -120,6 +124,11 @@ class MeshView extends Object3DView {
                 this._update_materials();
             });
         }
+
+        const update_volume = () => {
+            this._update_materials();
+        }
+        this.model.on("change:volume", update_volume, this);
 
         this._update_color_scale();
         this.create_mesh();
@@ -427,10 +436,9 @@ class MeshView extends Object3DView {
 
         this.materials.forEach((material) => {
             material.onBeforeCompile = (shader) => {
-                shader.vertexShader = vertexShader;
-                shader.fragmentShader = fragmentShader;
+                shader.vertexShader = patchShader(vertexShader);
+                shader.fragmentShader = patchShader(fragmentShader);
                 shader.uniforms = {...shader.uniforms, ...this.uniforms};
-                patchShader(shader);
             };
             material.alphaTest = 0.5 + cache_thrasher;
             material.needsUpdate = true;
@@ -442,6 +450,13 @@ class MeshView extends Object3DView {
         const texture = this.model.get("texture");
         if (texture && this.textures) {
             this.material.defines.USE_TEXTURE = true;
+        }
+        const volume = this.model.get("volume") as VolumeModel;
+        if (volume) {
+            this.material.defines.USE_VOLUME = true;
+            this.uniforms.volume_texture.value = volume.texture_volume;
+            this.uniforms.transfer_function.value = volume.texture_tf;
+            this.uniforms.volume.value = volume.uniform_volumes_values;
         }
         this.material.needsUpdate = true;
         this.material_rgb.needsUpdate = true;
@@ -676,6 +691,7 @@ class MeshModel extends widgets.WidgetModel {
         color: serialize.color_or_json,
         color_scale: { deserialize: widgets.unpack_models },
         texture: serialize.texture,
+        volume: { deserialize: widgets.unpack_models },
         material: { deserialize: widgets.unpack_models },
         line_material: { deserialize: widgets.unpack_models },
         popup: { deserialize: widgets.unpack_models },

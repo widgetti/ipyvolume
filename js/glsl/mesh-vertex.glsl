@@ -3,6 +3,7 @@
 #define USE_SCALE_Y
 #define USE_SCALE_Z
 #include <scales>
+#include <ipyvolume>
 
 
  // for animation, all between 0 and 1
@@ -19,6 +20,7 @@ uniform vec2 domain_z;
 
 varying vec4 vertex_color;
 varying vec3 vertex_position;
+varying vec3 vPositionEye;
 
 attribute vec3 position_previous;
 
@@ -253,6 +255,7 @@ void main(void) {
     vec3 animated_position = mix(position_previous, position, animation_time);
 
     transformed = vec3(SCALE_X(animated_position.x), SCALE_Y(animated_position.y), SCALE_Z(animated_position.z));
+    vertex_position = transformed;
     // gl_Position = projectionMatrix *
     //             modelViewMatrix *
     //             vec4(model_pos, 1.0);
@@ -304,7 +307,7 @@ void main(void) {
 	#include <worldpos_vertex>
 	#include <envmap_vertex>
     vec3 positionEye = ( modelViewMatrix * vec4(transformed, 1.0 ) ).xyz;
-    vertex_position = positionEye;
+    vPositionEye = positionEye;
 	// #include <lights_lambert_vertex>
 	#include <shadowmap_vertex>
 	#include <fog_vertex>
