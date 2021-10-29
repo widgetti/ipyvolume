@@ -234,13 +234,10 @@ def figure(
             eye_separation = ipywidgets.FloatSlider(value=current.figure.eye_separation, min=-10, max=10, icon='eye')
             ipywidgets.jslink((eye_separation, 'value'), (current.figure, 'eye_separation'))
             current.container.children = current.container.children + [eye_separation]
+        if debug:
+            warnings.warn("debug=True no longer needed", DeprecationWarning, stacklevel=2)
         if controls_light:
             globals()['controls_light']()
-        if debug:
-            show = ipywidgets.ToggleButtons(options=["Volume", "Back", "Front", "Coordinate", "ID", "Shadow"])
-            current.container.children = current.container.children + [show]
-            # ipywidgets.jslink((current.figure, 'show'), (show, 'value'))
-            traitlets.link((current.figure, 'show'), (show, 'value'))
     return current.figure
 
 

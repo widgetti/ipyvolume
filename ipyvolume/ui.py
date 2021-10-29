@@ -23,6 +23,8 @@ class Container(v.VuetifyTemplate):
     legend = traitlets.Instance(Legend).tag(sync=True, **widgets.widget_serialization)
     legend_show = traitlets.Bool(True).tag(sync=True)
     children = traitlets.List().tag(sync=True, **widgets.widget_serialization)
+    models = traitlets.Any({'figure': {}}).tag(sync=True)
+    panels = traitlets.List(traitlets.CInt(), default_value=[0, 1, 2]).tag(sync=True)
 
 
 class Popup(v.VuetifyTemplate):
