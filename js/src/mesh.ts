@@ -727,6 +727,18 @@ class MeshModel extends widgets.WidgetModel {
             visible_faces: true,
             cast_shadow : true,
             receive_shadow : true,
+            volume: null,
+            x_offset: 0,
+            y_offset: 0,
+            z_offset: 0,
+            description: 'mesh - noname',
+            description_color: 'red',
+            hovered: null,
+            icon: null,
+            line_material: null,
+            material: null,
+            popup: null,
+            clicked: null,
         };
     }
 }
