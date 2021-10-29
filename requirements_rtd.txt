@@ -22,3 +22,4 @@ vaex-ml
 vaex-viz
 # see https://github.com/sphinx-doc/sphinx/issues/9727#issuecomment-952289876
 docutils==0.17.1
+bokeh
