@@ -1,6 +1,6 @@
 jupyter_sphinx==0.1.4
 #git+https://github.com/maartenbreddels/jupyter-sphinx@ipywidgets7require_d
-ipyvolume==0.6.0a1
+ipyvolume==0.6.0a9
 ipywidgets>=7.4.0
 traittypes
 traitlets
