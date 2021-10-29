@@ -141,7 +141,7 @@ class FigureModel extends widgets.DOMWidgetModel {
             meshes: null,
             lights: [],
             volumes: null,
-            show: "Volume",
+            show: "render",
             scales: {},
             xlabel: "x",
             ylabel: "y",
