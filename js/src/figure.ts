@@ -771,8 +771,6 @@ class FigureView extends widgets.DOMWidgetView {
         this.volume_front_target = new THREE.WebGLRenderTarget(render_width, render_height, {
             minFilter: THREE.LinearFilter,
             magFilter: THREE.NearestFilter,
-            // format: THREE.RGBAFormat,
-            // generateMipmaps: false,
         });
 
         this.geometry_depth_target = new THREE.WebGLRenderTarget(render_width, render_height, {
