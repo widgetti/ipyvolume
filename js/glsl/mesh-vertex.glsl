@@ -23,6 +23,7 @@ varying vec3 vertex_position;
 varying vec3 vPositionEye;
 
 attribute vec3 position_previous;
+uniform vec3 position_offset;
 
 #ifdef USE_TEXTURE
     attribute float u;
@@ -252,7 +253,7 @@ void main(void) {
 #endif //AS_DISTANCE
 
     vec3 animation_time = vec3(animation_time_x, animation_time_y, animation_time_z);
-    vec3 animated_position = mix(position_previous, position, animation_time);
+    vec3 animated_position = mix(position_previous, position, animation_time) + position_offset;
 
     transformed = vec3(SCALE_X(animated_position.x), SCALE_Y(animated_position.y), SCALE_Z(animated_position.z));
     vertex_position = transformed;

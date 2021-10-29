@@ -86,6 +86,7 @@ class MeshView extends Object3DView {
                 id_offset : { type: "f", value: 0 },
                 volume_texture: {type: "t", value: null},
                 transfer_function: {type: "t", value: null},
+                position_offset : { type: "3f", value: [0, 0, 0] },
                 volume: {value: null},
                 ...THREE.UniformsUtils.merge([THREE.UniformsLib["common"], THREE.UniformsLib["lights"]])
             };
@@ -133,6 +134,16 @@ class MeshView extends Object3DView {
         this._update_color_scale();
         this.create_mesh();
         this.add_to_scene();
+
+        const update_position_offset = () => {
+            const x = this.model.get("x_offset");
+            const y = this.model.get("y_offset");
+            const z = this.model.get("z_offset");
+            this.uniforms.position_offset.value = [x, y, z];
+            this.figure.update();
+        }
+        this.model.on("change:x_offset change:y_offset change:z_offset", update_position_offset);
+        update_position_offset();
 
         this.model.on("change:color change:sequence_index change:x change:y change:z change:v change:u change:triangles change:lines",
             this.on_change, this);

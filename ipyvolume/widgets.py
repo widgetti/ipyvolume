@@ -271,6 +271,11 @@ class Mesh(widgets.Widget, LegendData):
     ).tag(sync=True, **texture_serialization)
     volume = traitlets.Instance(Volume, allow_none=True, default_value=None).tag(sync=True, **widgets.widget_serialization)
 
+    # these are useful for use-driven changes, and will be not animated
+    x_offset = traitlets.Float(0).tag(sync=True)
+    y_offset = traitlets.Float(0).tag(sync=True)
+    z_offset = traitlets.Float(0).tag(sync=True)
+
     hovered = traitlets.Bool(default_value=None, allow_none=True).tag(sync=True)
     clicked = traitlets.Bool(default_value=None, allow_none=True).tag(sync=True)
     sequence_index = Integer(default_value=0).tag(sync=True)
