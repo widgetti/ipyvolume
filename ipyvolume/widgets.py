@@ -368,6 +368,7 @@ class Figure(ipywebrtc.MediaStream):
         pythreejs.Controls, allow_none=True, help='A :any:`pythreejs.Controls` instance to control the camera'
     ).tag(sync=True, **widgets.widget_serialization)
 
+    orientation_control = traitlets.Bool(False).tag(sync=True)
     scene = traitlets.Instance(pythreejs.Scene, allow_none=True).tag(sync=True, **widgets.widget_serialization)
 
     @traitlets.default('scene')
