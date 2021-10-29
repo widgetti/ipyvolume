@@ -77,7 +77,6 @@ try:
 except:
     skimage = None
 import ipywidgets
-import traitlets
 import IPython
 from IPython.display import display
 

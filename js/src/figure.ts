@@ -24,7 +24,7 @@ const axis_names = ["x", "y", "z"];
 
 (window as any).THREE = THREE;
 
-import { RenderTarget } from "three";
+import { RenderTarget, ShaderMaterial } from "three";
 import { createD3Scale, patchShader } from "./scales";
 import "./three/CombinedCamera.js";
 import "./three/DeviceOrientationControls.js";
@@ -40,6 +40,8 @@ const shaders = {
     "volr-vertex": (require("raw-loader!../glsl/volr-vertex.glsl") as any).default,
     "shadow-fragment": (require("raw-loader!../glsl/shadow-fragment.glsl") as any).default,
     "shadow-vertex": (require("raw-loader!../glsl/shadow-vertex.glsl") as any).default,
+    "box-fragment": (require("raw-loader!../glsl/box-fragment.glsl") as any).default,
+    "box-vertex": (require("raw-loader!../glsl/box-vertex.glsl") as any).default,
 };
 
 // similar to _.bind, except it
