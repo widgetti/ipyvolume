@@ -14,6 +14,7 @@ Examples
    examples/bars
    examples/lighting
    examples/popup
+   examples/slice
 
 Feel free to contribute new examples:
 

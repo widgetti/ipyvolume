@@ -8,6 +8,7 @@ Pillow
 scipy
 git+https://github.com/maartenbreddels/nbconvert@fix_closing_script_early#egg=nbconvert
 git+https://github.com/maartenbreddels/nbsphinx@fix_closing_script_early#egg=nbsphinx
+git+https://github.com/maartenbreddels/nbclient@fix_update_widget_buffers#egg=nbclient
 recommonmark
 matplotlib==3.1.1
 ipywebrtc
@@ -18,6 +19,6 @@ sphinx_gallery
 vaex-core
 vaex-hdf5
 vaex-ml
-sphinx==3.5.4
+vaex-viz
 # see https://github.com/sphinx-doc/sphinx/issues/9727#issuecomment-952289876
 docutils==0.17.1
