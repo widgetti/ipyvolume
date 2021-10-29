@@ -39,7 +39,6 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'jupyter_sphinx.embed_widgets',
     'sphinx_gallery.load_style',
 	'nbsphinx',
 ]
@@ -386,5 +385,6 @@ nbsphinx_thumbnails = {
     'examples/bars': 'examples/screenshot/bars.gif',
     'examples/popup': 'examples/screenshot/ipyvolume-popup-legend-iris.gif',
     'examples/lighting': 'examples/screenshot/volume-rendering-specular.gif',
+    'examples/slice': 'examples/screenshot/ipyvolume-slice-head.gif',
 }
 exclude_patterns = ['**.ipynb_checkpoints']
