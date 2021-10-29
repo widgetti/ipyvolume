@@ -1986,6 +1986,8 @@ class FigureView extends widgets.DOMWidgetView {
     }
 
     on_orientationchange(e) {
+        if(!this.model.get("orientation_control"))
+            return;
         for (const scene of [this.scene, this.scene_opaque]) {
             scene.rotation.reorder("XYZ");
             scene.rotation.x = (e.gamma * Math.PI / 180 + Math.PI * 2);
