@@ -234,7 +234,7 @@ def brain(
         return xlist, ylist, zlist, polys
 
 
-def head(draw=True, show=True, max_shape=256):
+def head(draw=True, show=True, max_shape=256, description="Male head"):
     """Show a volumetric rendering of a human male head."""
     # inspired by http://graphicsrunner.blogspot.com/2009/01/volume-rendering-102-transfer-functions.html
     import ipyvolume as ipv
@@ -262,8 +262,9 @@ def head(draw=True, show=True, max_shape=256):
     tf = ipv.TransferFunction(rgba=tf_data.astype(np.float32))
 
     head_data = ipv.datasets.head.fetch().data
+    head_data = head_data.transpose((1, 0, 2))[::-1,::-1,::-1]
     if draw:
-        vol = ipv.volshow(head_data, tf=tf, max_shape=max_shape)
+        vol = ipv.volshow(head_data, tf=tf, max_shape=max_shape, description=description)
         if show:
             ipv.show()
         return vol
