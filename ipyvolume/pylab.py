@@ -1538,7 +1538,7 @@ for style_name, __ in ipv.styles.styles.items():
 def plot_plane(where="back", texture=None, description=None, **kwargs):
     """Plot a plane at a particular location in the viewbox.
 
-    :param str where: 'back', 'front', 'left', 'right', 'top', 'bottom'
+    :param str where: 'back', 'front', 'left', 'right', 'top', 'bottom', 'x', 'y', 'z'
     :param texture: {texture}
     :param description: {description}
     :return: :any:`Mesh`
@@ -1551,12 +1551,20 @@ def plot_plane(where="back", texture=None, description=None, **kwargs):
         x = [xmin, xmax, xmax, xmin]
         y = [ymin, ymin, ymax, ymax]
         z = [zmin, zmin, zmin, zmin]
+    if where == "z":
+        x = [xmin, xmax, xmax, xmin]
+        y = [ymin, ymin, ymax, ymax]
+        z = [0., 0., 0., 0.]
     if where == "front":
         x = [xmin, xmax, xmax, xmin][::-1]
         y = [ymin, ymin, ymax, ymax]
         z = [zmax, zmax, zmax, zmax]
     if where == "left":
         x = [xmin, xmin, xmin, xmin]
+        y = [ymin, ymin, ymax, ymax]
+        z = [zmin, zmax, zmax, zmin]
+    if where == "x":
+        x = [0., 0., 0., 0.]
         y = [ymin, ymin, ymax, ymax]
         z = [zmin, zmax, zmax, zmin]
     if where == "right":
@@ -1570,6 +1578,10 @@ def plot_plane(where="back", texture=None, description=None, **kwargs):
     if where == "bottom":
         x = [xmax, xmin, xmin, xmax]
         y = [ymin, ymin, ymin, ymin]
+        z = [zmin, zmin, zmax, zmax]
+    if where == "y":
+        x = [xmax, xmin, xmin, xmax]
+        y = [0., 0., 0., 0.]
         z = [zmin, zmin, zmax, zmax]
     triangles = [(0, 1, 2), (0, 2, 3)]
     u = v = None
