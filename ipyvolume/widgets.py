@@ -388,7 +388,7 @@ class Figure(ipywebrtc.MediaStream):
     capture_fps = traitlets.CFloat(None, allow_none=True).tag(sync=True)
     cube_resolution = traitlets.CInt(512).tag(sync=True)
 
-    show = traitlets.Unicode("Volume").tag(sync=True)  # for debugging
+    show = traitlets.Unicode("render").tag(sync=True)  # for debugging
     popup_debouce = traitlets.CInt(100, help="Debouce popup in miliseconds").tag(sync=True)
 
     @property
