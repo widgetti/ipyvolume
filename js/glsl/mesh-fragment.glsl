@@ -62,11 +62,10 @@ varying vec3 vPositionEye;
                 vec3 normal = normalize( cross( fdx, fdy ) );
                 float diffuse = dot( normal, vec3( 0.0, 0.0, 1.0 ) );
 
-                #ifdef USE_TEXTURE
+                #if defined(USE_TEXTURE)
                     vec4 sample = mix(texture2D(texture_previous, vertex_uv), texture2D(texture, vertex_uv), animation_time_texture);
                     gl_FragColor = vec4(clamp(diffuse, 0.2, 1.) * sample.rgb * shadow_visibility, 1.0);
-                #else
-                    gl_FragColor = vec4(clamp(diffuse, 0.2, 1.) * vertex_color.rgb * shadow_visibility, vertex_color.a);
+                #elif defined(USE_VOLUME)
 					vec3 sample_position = vertex_position*volume.scale + vec3(0.5, 0.5, 0.5);
 					vec4 sample = sample_as_3d_texture(volume_texture, volume.size, sample_position, volume.slice_size, volume.slices, volume.rows, volume.columns);
 
@@ -79,7 +78,9 @@ varying vec3 vPositionEye;
 					// TODO: 30 should be configurable
 					gl_FragColor.rgb = color_sample.rgb * volume.brightness * color_sample.a * 30.;
 					gl_FragColor.a = 1.;
-                #endif // USE_TEXTURE
+                #else
+                    gl_FragColor = vec4(clamp(diffuse, 0.2, 1.) * vertex_color.rgb * shadow_visibility, vertex_color.a);
+                #endif // USE_TEXTURE / USE_VOLUME
             #endif // IS_LINE
         #endif // defined( AS_COORDINATE ) || defined( AS_ID )
     }

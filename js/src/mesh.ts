@@ -605,9 +605,9 @@ class MeshView extends Object3DView {
             const v = current.array.v;
             if (texture && u && v && this.textures) {
                 const sequence_index_texture = sequence_index;
-                this.material.uniforms.texture.value = this.textures[sequence_index_texture % this.textures.length]; // TODO/BUG: there could
+                this.uniforms.texture.value = this.textures[sequence_index_texture % this.textures.length]; // TODO/BUG: there could
                 // be a situation where texture property is modified, but this.textures isn't done yet..
-                this.material.uniforms.texture_previous.value = this.textures[sequence_index_previous % this.textures.length];
+                this.uniforms.texture_previous.value = this.textures[sequence_index_previous % this.textures.length];
                 geometry.addAttribute("u", new THREE.BufferAttribute(u, 1));
                 geometry.addAttribute("v", new THREE.BufferAttribute(v, 1));
                 const u_previous = previous.array.u;
