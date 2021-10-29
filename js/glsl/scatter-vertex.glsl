@@ -44,9 +44,10 @@ varying vec2 vertex_uv;
     attribute float y_previous;
     attribute float z_next;
     attribute float z_previous;
-    // attribute float aux_next;
-    // attribute float aux_previous;
-
+#ifdef USE_AUX
+    attribute float aux_next;
+    attribute float aux_previous;
+#endif
     attribute vec3 v_next;
     attribute vec3 v_previous;
 
@@ -213,7 +214,9 @@ void main(void) {
     float size_current = mix(size_previous, size_next, animation_time_size);
     // TODO: replace the 0. in SCALE_SIZE_X(0.) by a uniform, so we can make it work with log?
     vec3 size_vector = vec3(SCALE_SIZE_X(size_current) - SCALE_SIZE_X(0.), SCALE_SIZE_Y(size_current) - SCALE_SIZE_Y(0.), SCALE_SIZE_Z(size_current) -  SCALE_SIZE_Z(0.));
-    // float aux_current = mix(aux_previous, aux_next, animation_time_aux);
+#ifdef USE_AUX
+    float aux_current = mix(aux_previous, aux_next, animation_time_aux);
+#endif
     vec3 position_current_offset = mix(position_offset_previous, position_offset_next, animation_time);
     vec3 model_pos = vec3(SCALE_X(position_current_offset.x), SCALE_Y(position_current_offset.y), SCALE_Z(position_current_offset.z));
     // vec3 model_pos = vec3((position_current_offset.x), (position_current_offset.y), (position_current_offset.z));

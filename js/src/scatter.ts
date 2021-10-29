@@ -509,6 +509,9 @@ class ScatterView extends Object3DView {
             material.alphaTest = 0.5 + cache_thrasher;
             material.needsUpdate = true;
             material.lights = true;
+            if (this.model.get("aux")) {
+                material.defines.USE_AUX = true;
+            }
         });
 
         const geo = this.model.get("geo");
