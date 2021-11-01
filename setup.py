@@ -92,7 +92,7 @@ setup(
         'requests',
         'ipyvuetify',
         'ipyvue>=1.7.0',
-        'pythreejs>=2.0.0',
+        'pythreejs @ git+https://github.com/mariobuikhuizen/pythreejs@feat_upgrade_for_xr',
         'matplotlib'
     ],
     license='MIT',
