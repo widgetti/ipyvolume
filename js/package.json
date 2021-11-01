@@ -91,7 +91,7 @@
     "ndarray-pack": "^1.2.1",
     "screenfull": "^3.3.1",
     "style-loader": "^0.18.2",
-    "three": "^0.97.0",
+    "three": "^0.112.1",
     "three-text2d": "~0.4.1",
     "tslint": "^5.20.0",
     "underscore": "^1.8.3",

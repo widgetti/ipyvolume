@@ -32,6 +32,7 @@ import "./three/OrbitControls.js";
 import "./three/StereoEffect.js";
 import "./three/THREEx.FullScreen.js";
 import "./three/TrackballControls.js";
+import {createButton} from "./ar";
 
 const shaders = {
     "screen-fragment": (require("raw-loader!../glsl/screen-fragment.glsl") as any).default,
@@ -260,6 +261,7 @@ class FigureView extends widgets.DOMWidgetView {
     id_pass_target: THREE.WebGLRenderTarget;
     lastId: number;
     _wantsPopup: boolean;
+    controller: any = null;
 
     // rendered to get the front coordinate
     front_box_mesh: THREE.Mesh;
@@ -711,8 +713,40 @@ class FigureView extends widgets.DOMWidgetView {
         // the threejs animation system looks at the parent of the camera and sends rerender msg'es
         // this.shared_scene.add(this.camera);
 
+        const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+        const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+        const cube = new THREE.Mesh( geometry, material );
+        cube.position.set( 0, 0, -3 );
+        this.scene.add( cube );
+
+        // this.renderer.render( this.scene, this.camera );
+
+        const onSelect = () =>  {
+            console.log('controller world:', this.controller.matrixWorld);
+            cube.position.set( 0, 0, -3 ).applyMatrix4( this.controller.matrixWorld )
+            cube.quaternion.setFromRotationMatrix( this.controller.matrixWorld );
+            this.rootObject.position.set( 0, 0, -3 ).applyMatrix4( this.controller.matrixWorld );
+            this.rootObject.quaternion.setFromRotationMatrix( this.controller.matrixWorld );
+            // update_box();
+        }
+
+        this.controller = this.renderer.xr.getController( 0 );
+        this.controller.addEventListener( 'select', onSelect );
+        this.scene.add( this.controller );
+
+        this.renderer.setAnimationLoop(  () => {
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+            // this.renderer.render( this.scene, this.camera );
+            this._real_update();
+        });
+
         // this.scene_scatter = new THREE.Scene();
         this.scene_opaque = new THREE.Scene();
+
+        this.rootObject.add(this.wire_box);
+        this.rootObject.add(this.axes);
+        this.rootObject.add( this.controller );
 
         this.scene_opaque.add(this.wire_box);
         this.scene_opaque.add(this.axes);
@@ -729,7 +763,8 @@ class FigureView extends widgets.DOMWidgetView {
             this.scene_opaque.position.copy(box_position);
 
             this.rootObject.scale.copy(box_scale);
-            this.rootObject.position.copy(box_position);
+            // this.rootObject.position.copy(box_position);
+            this.rootObject.position.set( 0, 0, -3 )
             this.update();
         }
         this.model.on("change:box_center change:box_size", update_box);
@@ -909,7 +944,7 @@ class FigureView extends widgets.DOMWidgetView {
             sync_controls_external();
         });
 
-        window.addEventListener("deviceorientation", this.on_orientationchange.bind(this), false);
+        // window.addEventListener("deviceorientation", this.on_orientationchange.bind(this), false);
 
         const render_size = this.getRenderSize();
 
@@ -1137,6 +1172,13 @@ class FigureView extends widgets.DOMWidgetView {
         this.renderer.domElement.onmouseleave = () => {
             this.hover = false;
         };
+
+        this.renderer.xr.enabled = true;
+        document.getElementById('bliep').appendChild(createButton(this.renderer,
+            () => {this.model.set("render_continuous", true); this.model.set("camera_control", "xr")},
+            () => this.model.set("render_continuous", false)
+            /*{domOverlay: document.getElementById('bliep')}*/));
+
     }
     camera_initial(camera_initial: any) {
         throw new Error("Method not implemented.");
@@ -2357,7 +2399,7 @@ class FigureView extends widgets.DOMWidgetView {
         (this.front_box_mesh.material as THREE.ShaderMaterial).side  = THREE.FrontSide;
         this.renderer.setRenderTarget(this.volume_front_target);
         this.renderer.clear(true, true, true);
-        this.renderer.render(this.scene, camera, this.volume_front_target);
+        this.renderer.render(this.scene, camera);
         this.front_box_mesh.visible = false;
 
 
@@ -2375,7 +2417,7 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.setRenderTarget(this.volume_back_target);
             this.renderer.clear(true, true, true);
             setVisible({volumes: true});
-            this.renderer.render(this.scene, camera, this.volume_back_target);
+            this.renderer.render(this.scene, camera);
             this.renderer.state.buffers.depth.setClear(1);
 
             // Color and depth render pass for volume rendering
@@ -2383,18 +2425,18 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.setRenderTarget(this.geometry_depth_target);
             this.renderer.clear(true, true, true);
             setVisible({volumes: false});
-            this.renderer.render(this.scene, camera, this.geometry_depth_target);
-            this.renderer.render(this.scene_opaque, camera, this.geometry_depth_target);
+            this.renderer.render(this.scene, camera);
+            this.renderer.render(this.scene_opaque, camera);
             this.renderer.autoClear = true;
         }
 
         // Normal color pass of geometry for final screen pass
         this.renderer.autoClear = false;
-        this.renderer.setRenderTarget(this.color_pass_target);
+        this.renderer.setRenderTarget(null);
         this.renderer.clear(true, true, true);
         setVisible({volumes: false});
-        this.renderer.render(this.scene, camera, this.color_pass_target);
-        this.renderer.render(this.scene_opaque, camera, this.color_pass_target);
+        this.renderer.render(this.scene, camera);
+        this.renderer.render(this.scene_opaque, camera);
         this.renderer.autoClear = true;
 
         if (has_volumes) {
@@ -2410,7 +2452,7 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.setRenderTarget(this.color_pass_target);
             this.renderer.clear(false, true, false);
             setVisible({volumes: true});
-            this.renderer.render(this.scene, camera, this.color_pass_target);
+            this.renderer.render(this.scene, camera);
             this.renderer.autoClear = true;
             this.renderer.context.colorMask(true, true, true, true);
 
@@ -2425,7 +2467,7 @@ class FigureView extends widgets.DOMWidgetView {
             // threejs does not want to be called with all three false
             // this.renderer.clear(false, false, false);
             setVisible({volumes: true});
-            this.renderer.render(this.scene, camera, this.color_pass_target);
+            this.renderer.render(this.scene, camera);
             this.renderer.autoClear = true;
         }
 
@@ -2445,7 +2487,7 @@ class FigureView extends widgets.DOMWidgetView {
         this.renderer.setRenderTarget(this.coordinate_target);
         this.renderer.clear(true, true, true);
         setVisible({volumes: false});
-        this.renderer.render(this.scene, camera, this.coordinate_target);
+        this.renderer.render(this.scene, camera);
         this.renderer.autoClear = true;
 
         // id pass
@@ -2465,7 +2507,7 @@ class FigureView extends widgets.DOMWidgetView {
         this.renderer.setRenderTarget(this.id_pass_target);
         this.renderer.clear(true, true, true);
         setVisible({volumes: false});
-        this.renderer.render(this.scene, camera, this.id_pass_target);
+        this.renderer.render(this.scene, camera);
         this.renderer.autoClear = true;
 
         // now we render the weighted coordinate for the volumetric data
@@ -2483,7 +2525,7 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.setRenderTarget(this.color_pass_target);
             this.renderer.clear(false, true, false);
             setVisible({volumes: true});
-            this.renderer.render(this.scene, camera, this.color_pass_target);
+            this.renderer.render(this.scene, camera);
             this.renderer.autoClear = true;
             this.renderer.context.colorMask(true, true, true, true);
 
@@ -2498,7 +2540,7 @@ class FigureView extends widgets.DOMWidgetView {
             // threejs does not want to be called with all three false
             // this.renderer.clear(false, false, false);
             setVisible({volumes: true});
-            this.renderer.render(this.scene, camera, this.coordinate_target);
+            this.renderer.render(this.scene, camera);
             this.renderer.autoClear = true;
 
         }
