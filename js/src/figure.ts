@@ -1175,7 +1175,7 @@ class FigureView extends widgets.DOMWidgetView {
 
         this.renderer.xr.enabled = true;
         document.getElementById('bliep').appendChild(createButton(this.renderer,
-            () => {this.model.set("render_continuous", true); this.model.set("camera_control", "xr")},
+            () => {/*this.model.set("render_continuous", true);*/ this.model.set("camera_control", "xr")},
             () => this.model.set("render_continuous", false)
             /*{domOverlay: document.getElementById('bliep')}*/));
 
