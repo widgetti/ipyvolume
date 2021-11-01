@@ -2432,7 +2432,7 @@ class FigureView extends widgets.DOMWidgetView {
 
         // Normal color pass of geometry for final screen pass
         this.renderer.autoClear = false;
-        this.renderer.setRenderTarget(null);
+        this.renderer.setRenderTarget(this.color_pass_target);
         this.renderer.clear(true, true, true);
         setVisible({volumes: false});
         this.renderer.render(this.scene, camera);
