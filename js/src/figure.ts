@@ -845,6 +845,9 @@ class FigureView extends widgets.DOMWidgetView {
 
         // we rely here on these events listeners to be executed before those of the controls
         // since we disable the controls, seems to work on chrome
+        this.renderer.domElement.addEventListener("touchstart", this._touch_start.bind(this), false);
+        this.renderer.domElement.addEventListener("touchmove", this._touch_move.bind(this), false);
+        this.renderer.domElement.addEventListener("touchcancel", this._touch_cancel.bind(this), false);
         this.renderer.domElement.addEventListener("mousedown", this._mouse_down.bind(this), false);
         this.renderer.domElement.addEventListener("mousemove", this._mouse_move.bind(this), false);
         this.renderer.domElement.addEventListener("dblclick", this._mouse_dbl_click.bind(this), false);
@@ -1343,6 +1346,28 @@ class FigureView extends widgets.DOMWidgetView {
                 zn /= 255.;
                 this._set_slice(xn, yn, zn);
             }
+        }
+    }
+
+    _touch_start(event : TouchEvent) {
+    }
+
+    _touch_cancel(event : TouchEvent) {
+    }
+
+    _touch_move(event : TouchEvent) {
+        const touchX = event.targetTouches[0].clientX;
+        const touchY = event.targetTouches[0].clientY;
+        console.log("move", touchX, touchY)
+        if (this.model.get("mouse_mode") === "slice") {
+            let [xn, yn, zn, alpha] = this.readPixelFrom(this.volume_front_target, touchX, touchY);
+            if(alpha > 0) {
+                xn /= 255.;
+                yn /= 255.;
+                zn /= 255.;
+                this._set_slice(xn, yn, zn);
+            }
+            return false;
         }
     }
 
