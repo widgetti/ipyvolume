@@ -1210,6 +1210,11 @@ class FigureView extends widgets.DOMWidgetView {
             /*{domOverlay: document.getElementById('bliep')}*/));
 
     }
+
+    get in_ar_mode(): boolean {
+        return this.model.get("camera_control") == "xr";
+    }
+
     camera_initial(camera_initial: any) {
         throw new Error("Method not implemented.");
     }
@@ -2146,10 +2151,14 @@ class FigureView extends widgets.DOMWidgetView {
     }
 
     update() {
-        // requestAnimationFrame stacks, so make sure multiple update calls only lead to 1 _real_update call
-        if (!this._update_requested) {
-            this._update_requested = true;
-            requestAnimationFrame(this._real_update.bind(this));
+        if(this.in_ar_mode) {
+            // xr will render continious (via XR api), so ignore
+        } else {
+            // requestAnimationFrame stacks, so make sure multiple update calls only lead to 1 _real_update call
+            if (!this._update_requested) {
+                    this._update_requested = true;
+                    requestAnimationFrame(this._real_update.bind(this));
+            }
         }
     }
 
@@ -2462,7 +2471,8 @@ class FigureView extends widgets.DOMWidgetView {
 
         // Normal color pass of geometry for final screen pass
         this.renderer.autoClear = false;
-        this.renderer.setRenderTarget(this.color_pass_target);
+        // in AR mode we directly need to render to the screen
+        this.renderer.setRenderTarget(this.in_ar_mode ? null : this.color_pass_target);
         this.renderer.clear(true, true, true);
         setVisible({volumes: false});
         this.renderer.render(this.scene, camera);
@@ -2585,24 +2595,26 @@ class FigureView extends widgets.DOMWidgetView {
             });
         }
 
-        if(this.model.get("show") == "Shadow") {
-            this._render_shadow();
-        } else {
-            // render to screen
-            this.screen_texture = {
-                render: this.color_pass_target,
-                front: this.volume_front_target,
-                back: this.volume_back_target,
-                // Geometry_back: this.geometry_depth_target,
-                coordinate: this.coordinate_target,
-                id: this.id_pass_target,
-            }[this.model.get("show")];
-            // TODO: remove any
-            this.screen_material.uniforms.tex.value = (this.screen_texture as any).texture;
+        if(!this.in_ar_mode) {
+            if(this.model.get("show") == "Shadow") {
+                this._render_shadow();
+            } else {
+                // render to screen
+                this.screen_texture = {
+                    render: this.color_pass_target,
+                    front: this.volume_front_target,
+                    back: this.volume_back_target,
+                    // Geometry_back: this.geometry_depth_target,
+                    coordinate: this.coordinate_target,
+                    id: this.id_pass_target,
+                }[this.model.get("show")];
+                // TODO: remove any
+                this.screen_material.uniforms.tex.value = (this.screen_texture as any).texture;
 
-            this.renderer.setRenderTarget(null);
-            this.renderer.clear(true, true, true);
-            this.renderer.render(this.screen_scene, this.screen_camera);
+                this.renderer.setRenderTarget(null);
+                this.renderer.clear(true, true, true);
+                this.renderer.render(this.screen_scene, this.screen_camera);
+            }
         }
         restoreVisible();
     }
