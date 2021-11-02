@@ -2011,7 +2011,7 @@ class FigureView extends widgets.DOMWidgetView {
             // Remove previous lights
             this.model.previous('lights').forEach(light_model => {
                 const light = light_model.obj;
-                this.scene.remove(light);
+                this.rootObject.remove(light);
             });
         }
         
@@ -2029,11 +2029,11 @@ class FigureView extends widgets.DOMWidgetView {
                 this.update();
             }
             if(light.target) {
-                this.scene.add(light.target)
+                this.rootObject.add(light.target)
             }
             light_model.on("change", on_light_change);
             light_model.on("childchange", on_light_change);
-            this.scene.add(light);
+            this.rootObject.add(light);
         });
         // if we update the lights, we need to force all materials to update/
         // see https://stackoverflow.com/questions/16879378/adding-and-removing-three-js-lights-at-run-time
