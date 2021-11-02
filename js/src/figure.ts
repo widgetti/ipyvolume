@@ -2141,7 +2141,7 @@ class FigureView extends widgets.DOMWidgetView {
             scatter_view.uniforms.aspect.value = this.model.get('box_size');
         }
 
-        this.renderer.setClearColor(this.get_style_color("background-color"));
+        this.renderer.setClearColor(this.get_style_color("background-color"), this.get_style("background-opacity"));
         this.x_axis.visible = this.get_style("axes.x.visible axes.visible");
         this.y_axis.visible = this.get_style("axes.y.visible axes.visible");
         this.z_axis.visible = this.get_style("axes.z.visible axes.visible");
