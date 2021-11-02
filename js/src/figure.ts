@@ -268,6 +268,7 @@ class FigureView extends widgets.DOMWidgetView {
     front_box_geo: THREE.BoxBufferGeometry;
     front_box_material: THREE.ShaderMaterial;
     slice_icon: ToolIcon;
+    arRenderLoop: (time: any, frame: any) => void;
 
     readPixel(x, y) {
         return this.readPixelFrom(this.screen_texture, x, y);
@@ -713,33 +714,63 @@ class FigureView extends widgets.DOMWidgetView {
         // the threejs animation system looks at the parent of the camera and sends rerender msg'es
         // this.shared_scene.add(this.camera);
 
-        const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-        const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-        const cube = new THREE.Mesh( geometry, material );
-        cube.position.set( 0, 0, -3 );
-        this.scene.add( cube );
-
-        // this.renderer.render( this.scene, this.camera );
-
         const onSelect = () =>  {
-            console.log('controller world:', this.controller.matrixWorld);
-            cube.position.set( 0, 0, -3 ).applyMatrix4( this.controller.matrixWorld )
-            cube.quaternion.setFromRotationMatrix( this.controller.matrixWorld );
-            this.rootObject.position.set( 0, 0, -3 ).applyMatrix4( this.controller.matrixWorld );
-            this.rootObject.quaternion.setFromRotationMatrix( this.controller.matrixWorld );
-            // update_box();
+            if(lastXrTransform) {
+                // this.rootObject.matrixAutoUpdate = false;
+
+                // this ignores the box_center/scale, but does rotation
+                // this.rootObject.matrix.fromArray(lastXrTransform.matrix);
+                // const matrixTrans = new THREE.Matrix4();
+                // matrixTrans.makeTranslation(0.5, 0.5, 0.5);
+                // this.rootObject.matrix.multiply(matrixTrans);
+
+                const pos = lastXrTransform.position;
+                this.model.set('box_center', [pos.x + 0.5, pos.y + 0.5, pos.z + 0.5]);
+                this.model.save_changes();
+            }
         }
 
         this.controller = this.renderer.xr.getController( 0 );
         this.controller.addEventListener( 'select', onSelect );
         this.scene.add( this.controller );
+        let hitTestSourceRequested = false;
+        let hitTestSource = null;
+        let lastXrTransform = null;
 
-        this.renderer.setAnimationLoop(  () => {
-            cube.rotation.x += 0.01;
-            cube.rotation.y += 0.01;
-            // this.renderer.render( this.scene, this.camera );
+        this.arRenderLoop = (time, frame) => {
+
+            if (frame) {
+                // based on https://threejs.org/examples/webxr_ar_hittest.html
+                const renderer = this.renderer;
+                const referenceSpace = renderer.xr.getReferenceSpace();
+                const session = renderer.xr.getSession();
+
+                if (hitTestSourceRequested === false) {
+                    session.requestReferenceSpace( 'viewer' ).then( function ( referenceSpace ) {
+                        session.requestHitTestSource( { space: referenceSpace } ).then( function ( source ) {
+                            hitTestSource = source;
+                        } );
+                    });
+                    session.addEventListener( 'end', function () {
+                        hitTestSourceRequested = false;
+                        hitTestSource = null;
+                    } );
+                    hitTestSourceRequested = true;
+                }
+                if (hitTestSource) {
+                    const hitTestResults = frame.getHitTestResults( hitTestSource );
+                    if(hitTestResults.length) {
+                        const hit = hitTestResults[ 0 ];
+                        const pose = hit.getPose( referenceSpace )
+                        lastXrTransform = pose.transform;
+                    }
+                }
+            }
             this._real_update();
-        });
+        }
+
+        // TODO: should only be set in AR mode
+        this.renderer.setAnimationLoop(this.arRenderLoop);
 
         // this.scene_scatter = new THREE.Scene();
         this.scene_opaque = new THREE.Scene();
@@ -763,8 +794,7 @@ class FigureView extends widgets.DOMWidgetView {
             this.scene_opaque.position.copy(box_position);
 
             this.rootObject.scale.copy(box_scale);
-            // this.rootObject.position.copy(box_position);
-            this.rootObject.position.set( 0, 0, -3 )
+            this.rootObject.position.copy(box_position);
             this.update();
         }
         this.model.on("change:box_center change:box_size", update_box);
@@ -1175,7 +1205,7 @@ class FigureView extends widgets.DOMWidgetView {
 
         this.renderer.xr.enabled = true;
         document.getElementById('bliep').appendChild(createButton(this.renderer,
-            () => {/*this.model.set("render_continuous", true);*/ this.model.set("camera_control", "xr")},
+            () => {this.model.set("camera_control", "xr")},
             () => this.model.set("render_continuous", false)
             /*{domOverlay: document.getElementById('bliep')}*/));
 
