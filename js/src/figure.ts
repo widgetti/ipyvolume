@@ -315,7 +315,7 @@ class FigureView extends widgets.DOMWidgetView {
                             // this.rootObject.matrix.multiply(matrixTrans);
 
                             const pos = lastXrTransform.position;
-                            this.model.set("box_center", [pos.x + 0.5, pos.y + 0.5, pos.z + 0.5]);
+                            this.model.set("box_center", [pos.x + 0.5, pos.y + 1, pos.z + 1]);
                             this.model.save_changes();
                         }
                     });
