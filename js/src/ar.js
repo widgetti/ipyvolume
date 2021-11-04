@@ -78,7 +78,7 @@ export function stop(renderer) {
     renderer.xr.setSession(null);
     lastXrTransform = null;
     showCloseOverlay(false);
-    renderer.setAnimationLoop(() => null);
+    renderer.setAnimationLoop(null);
     renderer.setSize(lastWidth, lastHeight);
 }
 

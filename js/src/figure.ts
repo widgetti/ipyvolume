@@ -321,7 +321,7 @@ class FigureView extends widgets.DOMWidgetView {
                     });
         }
         this.arRootPositionBackup = this.model.get("box_center").concat();
-        this.model.set("box_center", [0.5, 0.5,-3]);
+        this.model.set("box_center", [0.5, 0.5, -3]);
         ar.start(
                 this.renderer,
                 this._real_update.bind(this),
