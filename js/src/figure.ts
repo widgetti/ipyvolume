@@ -32,7 +32,7 @@ import "./three/OrbitControls.js";
 import "./three/StereoEffect.js";
 import "./three/THREEx.FullScreen.js";
 import "./three/TrackballControls.js";
-import {createButton} from "./ar";
+import * as ar from "./ar";
 
 const shaders = {
     "screen-fragment": (require("raw-loader!../glsl/screen-fragment.glsl") as any).default,
@@ -103,6 +103,18 @@ class ToolIconDropdown {
         }
     }
 }
+
+const arStyle = {
+    "background-opacity": 0,
+    "axes": {
+        "visible": false,
+        "label": {"color": "black"},
+        "ticklabel": {"color": "black"},
+        "color": "black"
+    },
+    "box": {"visible": false},
+    "background-color": "#000001"
+};
 
 export
 class FigureModel extends widgets.DOMWidgetModel {
@@ -261,14 +273,14 @@ class FigureView extends widgets.DOMWidgetView {
     id_pass_target: THREE.WebGLRenderTarget;
     lastId: number;
     _wantsPopup: boolean;
-    controller: any = null;
+    arController: any = null;
+    arRootPositionBackup: any = null;
 
     // rendered to get the front coordinate
     front_box_mesh: THREE.Mesh;
     front_box_geo: THREE.BoxBufferGeometry;
     front_box_material: THREE.ShaderMaterial;
     slice_icon: ToolIcon;
-    arRenderLoop: (time: any, frame: any) => void;
 
     readPixel(x, y) {
         return this.readPixelFrom(this.screen_texture, x, y);
@@ -285,6 +297,47 @@ class FigureView extends widgets.DOMWidgetView {
         const pixel_ratio = this.model.get("pixel_ratio") || window.devicePixelRatio;
         this.renderer.readRenderTargetPixels(target, x * pixel_ratio, (height - y) * pixel_ratio, 1, 1, buffer);
         return buffer;
+    }
+
+    async startAR() {
+        if (this.arController === null) {
+            this.arController = ar.createController(
+                    this.renderer,
+                    this.scene,
+                    (lastXrTransform) => {
+                        if  (lastXrTransform) {
+                            // this.rootObject.matrixAutoUpdate = false;
+
+                            // this ignores the box_center/scale, but does rotation
+                            // this.rootObject.matrix.fromArray(lastXrTransform.matrix);
+                            // const matrixTrans = new THREE.Matrix4();
+                            // matrixTrans.makeTranslation(0.5, 0.5, 0.5);
+                            // this.rootObject.matrix.multiply(matrixTrans);
+
+                            const pos = lastXrTransform.position;
+                            this.model.set("box_center", [pos.x + 0.5, pos.y + 0.5, pos.z + 0.5]);
+                            this.model.save_changes();
+                        }
+                    });
+        }
+        this.arRootPositionBackup = this.model.get("box_center").concat();
+        this.model.set("box_center", [0.5, 0.5,-3]);
+        ar.start(
+                this.renderer,
+                this._real_update.bind(this),
+                this.stopAr.bind(this)
+        );
+        this.model.set("camera_control", "xr");
+        this.model.save_changes();
+    }
+
+    stopAr() {
+        ar.stop(this.renderer);
+        this.arRootPositionBackup && this.model.set("box_center", this.arRootPositionBackup);
+        this.arRootPositionBackup = null;
+        this.model.set("camera_control", "trackball")
+        this.model.set("start_ar", false);
+        this.model.save_changes();
     }
 
     render() {
@@ -714,70 +767,11 @@ class FigureView extends widgets.DOMWidgetView {
         // the threejs animation system looks at the parent of the camera and sends rerender msg'es
         // this.shared_scene.add(this.camera);
 
-        const onSelect = () =>  {
-            if(lastXrTransform) {
-                // this.rootObject.matrixAutoUpdate = false;
-
-                // this ignores the box_center/scale, but does rotation
-                // this.rootObject.matrix.fromArray(lastXrTransform.matrix);
-                // const matrixTrans = new THREE.Matrix4();
-                // matrixTrans.makeTranslation(0.5, 0.5, 0.5);
-                // this.rootObject.matrix.multiply(matrixTrans);
-
-                const pos = lastXrTransform.position;
-                this.model.set('box_center', [pos.x + 0.5, pos.y + 0.5, pos.z + 0.5]);
-                this.model.save_changes();
-            }
-        }
-
-        this.controller = this.renderer.xr.getController( 0 );
-        this.controller.addEventListener( 'select', onSelect );
-        this.scene.add( this.controller );
-        let hitTestSourceRequested = false;
-        let hitTestSource = null;
-        let lastXrTransform = null;
-
-        this.arRenderLoop = (time, frame) => {
-
-            if (frame) {
-                // based on https://threejs.org/examples/webxr_ar_hittest.html
-                const renderer = this.renderer;
-                const referenceSpace = renderer.xr.getReferenceSpace();
-                const session = renderer.xr.getSession();
-
-                if (hitTestSourceRequested === false) {
-                    session.requestReferenceSpace( 'viewer' ).then( function ( referenceSpace ) {
-                        session.requestHitTestSource( { space: referenceSpace } ).then( function ( source ) {
-                            hitTestSource = source;
-                        } );
-                    });
-                    session.addEventListener( 'end', function () {
-                        hitTestSourceRequested = false;
-                        hitTestSource = null;
-                    } );
-                    hitTestSourceRequested = true;
-                }
-                if (hitTestSource) {
-                    const hitTestResults = frame.getHitTestResults( hitTestSource );
-                    if(hitTestResults.length) {
-                        const hit = hitTestResults[ 0 ];
-                        const pose = hit.getPose( referenceSpace )
-                        lastXrTransform = pose.transform;
-                    }
-                }
-            }
-            this._real_update();
-        }
-
-        // TODO: should only be set in AR mode
-        this.renderer.setAnimationLoop(this.arRenderLoop);
-
         // this.scene_scatter = new THREE.Scene();
         this.scene_opaque = new THREE.Scene();
 
         this.rootObject.add(this.wire_box);
         this.rootObject.add(this.axes);
-        this.rootObject.add( this.controller );
 
         this.scene_opaque.add(this.wire_box);
         this.scene_opaque.add(this.axes);
@@ -1203,16 +1197,14 @@ class FigureView extends widgets.DOMWidgetView {
             this.hover = false;
         };
 
-        this.renderer.xr.enabled = true;
-        document.getElementById('bliep').appendChild(createButton(this.renderer,
-            () => {this.model.set("camera_control", "xr")},
-            () => this.model.set("render_continuous", false)
-            /*{domOverlay: document.getElementById('bliep')}*/));
-
+        this.model.get('start_ar') ? this.startAR() : this.stopAr();
+        this.model.on(
+                'change:start_ar',
+                (model, start) => start ? this.startAR() : this.stopAr());
     }
 
     get in_ar_mode(): boolean {
-        return this.model.get("camera_control") == "xr";
+        return this.model.get("start_ar");
     }
 
     camera_initial(camera_initial: any) {
@@ -2350,7 +2342,7 @@ class FigureView extends widgets.DOMWidgetView {
                 } else {
                     return null;
                 }
-            }, this.model.get("style"));
+            }, this.in_ar_mode ? arStyle : this.model.get("style"));
             if (value_found !== null && value[0] === null) {
                 value[0] = value_found;
             }
