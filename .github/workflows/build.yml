@@ -21,15 +21,14 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Install Conda environment with Micromamba
+      uses: mamba-org/provision-with-micromamba@main
       with:
-        activate-environment: ipyvolume-test
-        environment-file: environment-test.yml
-        python-version: ${{ matrix.python-version }}
-        mamba-version: "*"
-        auto-activate-base: false
-        channels: conda-forge
+          environment-file: environment-test.yml
+          environment-name: ipyvolume-test
+          extra-specs: |
+            python=3.9
+            pytest=${{ matrix.pytest }}
 
     - name: Python PEP8 check
       run: flake8 ipyvolume
@@ -41,15 +40,13 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Install Conda environment with Micromamba
+      uses: mamba-org/provision-with-micromamba@main
       with:
-        activate-environment: ipyvolume-test
-        environment-file: environment-test.yml
-        python-version: ${{ matrix.python-version }}
-        mamba-version: "*"
-        auto-activate-base: false
-        channels: conda-forge
+          environment-file: environment-test.yml
+          environment-name: ipyvolume-test
+          extra-specs: |
+            python=${{ matrix.python-version }}
 
     - name: Install the package
       run: |
@@ -112,15 +109,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          activate-environment: ipyvolume-test
           environment-file: environment-test.yml
-          python-version: 3.9
-          mamba-version: "*"
-          auto-activate-base: false
-          channels: conda-forge
+          environment-name: ipyvolume-test
+          extra-specs: |
+            python=3.9
+            pytest=${{ matrix.pytest }}
 
       - uses: actions/download-artifact@v2
         with:
@@ -176,15 +172,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          activate-environment: ipyvolume-test
-          environment-file: environment-test.yml
-          python-version: ${{ matrix.python-version }}
-          mamba-version: "*"
-          auto-activate-base: false
-          channels: conda-forge
+            environment-file: environment-test.yml
+            environment-name: ipyvolume-test
+            extra-specs: |
+              python=${{ matrix.python-version }}
 
       - uses: actions/download-artifact@v2
         with:
@@ -226,12 +220,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          python-version: ${{ matrix.python-version }}
-          mamba-version: "*"
-          channels: conda-forge
+            environment-file: environment-test.yml
+            environment-name: ipyvolume-test
+            extra-specs: |
+              python=${{ matrix.python-version }}
 
       - uses: actions/download-artifact@v2
         with:
