@@ -1,4 +1,22 @@
 {
+  "light": {
+    "background-color": "white",
+    "axes": {
+      "color": "black"
+    }
+  },
+  "dark": {
+    "background-color": "#000001",
+    "axes": {
+      "color": "white",
+      "label": {
+        "color": "white"
+      },
+      "ticklabel": {
+        "color": "white"
+      }
+    }
+  },
   "demo": {
     "background-color": "white",
     "box": {
@@ -6,73 +24,53 @@
       "visible": true
     },
     "axes": {
-      "z": {
-        "color": "#00f",
-        "ticklabel": {
-          "color": "#0f0"
-        },
-        "label": {
-          "color": "#f00"
-        }
-      },
-      "ticklabel": {
-        "color": "black"
-      },
-      "label": {
-        "color": "black"
-      },
+      "color": "black",
+      "visible": true,
       "x": {
         "color": "#f00",
-        "ticklabel": {
-          "color": "#00f"
-        },
         "label": {
           "color": "#0f0"
+        },
+        "ticklabel": {
+          "color": "#00f"
         }
       },
       "y": {
         "color": "#0f0",
-        "ticklabel": {
-          "color": "#f00"
-        },
         "label": {
           "color": "#00f"
+        },
+        "ticklabel": {
+          "color": "#f00"
         }
       },
-      "color": "black",
-      "visible": true
-    }
-  },
-  "dark": {
-    "background-color": "black",
-    "box": {
-      "visible": true
-    },
-    "axes": {
-      "color": "white",
-      "ticklabel": {
-        "color": "white"
-      },
-      "visible": true,
-      "label": {
-        "color": "white"
+      "z": {
+        "color": "#00f",
+        "label": {
+          "color": "#f00"
+        },
+        "ticklabel": {
+          "color": "#0f0"
+        }
       }
     }
   },
-  "light": {
-    "background-color": "white",
+  "nobox": {
     "box": {
-      "visible": true
+      "visible": false
     },
     "axes": {
-      "color": "black",
-      "ticklabel": {
-        "color": "black"
-      },
-      "visible": true,
-      "label": {
-        "color": "black"
-      }
+      "visible": true
+    }
+  },
+  "ar": {
+    "background-color": "#000001",
+    "background-opacity": 0,
+    "box": {
+      "visible": false
+    },
+    "axes": {
+      "visible": false
     }
   }
 }

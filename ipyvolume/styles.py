@@ -3,6 +3,7 @@
 Possible properies
 
  * background-color
+ * background-opacity
  * axes
   * color
   * visible
@@ -31,6 +32,7 @@ from ipyvolume import utils
 
 styles = {}
 _defaults = {
+    'background-opacity': 1.0,
     'axes': {'visible': True, 'label': {'color': 'black'}, 'ticklabel': {'color': 'black'}},
     'box': {'visible': True},
 }
@@ -72,6 +74,13 @@ demo = create(
 
 minimal = {'box': {'visible': False}, 'axes': {'visible': False}}
 nobox = create("nobox", {'box': {'visible': False}, 'axes': {'visible': True}})
+
+_ar = {
+    'background-color': '#000001',  # for some reason we cannot set it to black!?!
+    'background-opacity': 0,
+}
+utils.dict_deep_update(_ar, minimal)
+ar = create("ar", _ar)
 
 if __name__ == "__main__":
     source = __file__

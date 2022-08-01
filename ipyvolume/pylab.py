@@ -1803,11 +1803,11 @@ def light_hemisphere(
 def light_directional(
         light_color=default_color_selected,
         intensity=1,
-        position=[10, 10, 10],
+        position=[2, 2, 2],
         target=[0, 0, 0],
         near=0.1,
-        far=100,
-        shadow_camera_orthographic_size=10,
+        far=5,
+        shadow_camera_orthographic_size=3,
         cast_shadow=True):
     """Create a new Directional Light
 

@@ -32,6 +32,7 @@ import "./three/OrbitControls.js";
 import "./three/StereoEffect.js";
 import "./three/THREEx.FullScreen.js";
 import "./three/TrackballControls.js";
+import * as ar from "./ar";
 
 const shaders = {
     "screen-fragment": (require("raw-loader!../glsl/screen-fragment.glsl") as any).default,
@@ -102,6 +103,18 @@ class ToolIconDropdown {
         }
     }
 }
+
+const arStyle = {
+    "background-opacity": 0,
+    "axes": {
+        "visible": false,
+        "label": {"color": "black"},
+        "ticklabel": {"color": "black"},
+        "color": "black"
+    },
+    "box": {"visible": false},
+    "background-color": "#000001"
+};
 
 export
 class FigureModel extends widgets.DOMWidgetModel {
@@ -260,6 +273,8 @@ class FigureView extends widgets.DOMWidgetView {
     id_pass_target: THREE.WebGLRenderTarget;
     lastId: number;
     _wantsPopup: boolean;
+    arController: any = null;
+    arRootPositionBackup: any = null;
 
     // rendered to get the front coordinate
     front_box_mesh: THREE.Mesh;
@@ -282,6 +297,47 @@ class FigureView extends widgets.DOMWidgetView {
         const pixel_ratio = this.model.get("pixel_ratio") || window.devicePixelRatio;
         this.renderer.readRenderTargetPixels(target, x * pixel_ratio, (height - y) * pixel_ratio, 1, 1, buffer);
         return buffer;
+    }
+
+    async startAR() {
+        if (this.arController === null) {
+            this.arController = ar.createController(
+                    this.renderer,
+                    this.scene,
+                    (lastXrTransform) => {
+                        if  (lastXrTransform) {
+                            // this.rootObject.matrixAutoUpdate = false;
+
+                            // this ignores the box_center/scale, but does rotation
+                            // this.rootObject.matrix.fromArray(lastXrTransform.matrix);
+                            // const matrixTrans = new THREE.Matrix4();
+                            // matrixTrans.makeTranslation(0.5, 0.5, 0.5);
+                            // this.rootObject.matrix.multiply(matrixTrans);
+
+                            const pos = lastXrTransform.position;
+                            this.model.set("box_center", [pos.x + 0.5, pos.y + 1, pos.z + 1]);
+                            this.model.save_changes();
+                        }
+                    });
+        }
+        this.arRootPositionBackup = this.model.get("box_center").concat();
+        this.model.set("box_center", [0.5, 0.5, -3]);
+        ar.start(
+                this.renderer,
+                this._real_update.bind(this),
+                this.stopAr.bind(this)
+        );
+        this.model.set("camera_control", "xr");
+        this.model.save_changes();
+    }
+
+    stopAr() {
+        ar.stop(this.renderer);
+        this.arRootPositionBackup && this.model.set("box_center", this.arRootPositionBackup);
+        this.arRootPositionBackup = null;
+        this.model.set("camera_control", "trackball")
+        this.model.set("start_ar", false);
+        this.model.save_changes();
     }
 
     render() {
@@ -714,6 +770,9 @@ class FigureView extends widgets.DOMWidgetView {
         // this.scene_scatter = new THREE.Scene();
         this.scene_opaque = new THREE.Scene();
 
+        this.rootObject.add(this.wire_box);
+        this.rootObject.add(this.axes);
+
         this.scene_opaque.add(this.wire_box);
         this.scene_opaque.add(this.axes);
 
@@ -912,7 +971,7 @@ class FigureView extends widgets.DOMWidgetView {
             sync_controls_external();
         });
 
-        window.addEventListener("deviceorientation", this.on_orientationchange.bind(this), false);
+        // window.addEventListener("deviceorientation", this.on_orientationchange.bind(this), false);
 
         const render_size = this.getRenderSize();
 
@@ -1140,7 +1199,17 @@ class FigureView extends widgets.DOMWidgetView {
         this.renderer.domElement.onmouseleave = () => {
             this.hover = false;
         };
+
+        this.model.get('start_ar') ? this.startAR() : this.stopAr();
+        this.model.on(
+                'change:start_ar',
+                (model, start) => start ? this.startAR() : this.stopAr());
     }
+
+    get in_ar_mode(): boolean {
+        return this.model.get("start_ar");
+    }
+
     camera_initial(camera_initial: any) {
         throw new Error("Method not implemented.");
     }
@@ -1959,7 +2028,7 @@ class FigureView extends widgets.DOMWidgetView {
             // Remove previous lights
             this.model.previous('lights').forEach(light_model => {
                 const light = light_model.obj;
-                this.scene.remove(light);
+                this.rootObject.remove(light);
             });
         }
         
@@ -1977,11 +2046,11 @@ class FigureView extends widgets.DOMWidgetView {
                 this.update();
             }
             if(light.target) {
-                this.scene.add(light.target)
+                this.rootObject.add(light.target)
             }
             light_model.on("change", on_light_change);
             light_model.on("childchange", on_light_change);
-            this.scene.add(light);
+            this.rootObject.add(light);
         });
         // if we update the lights, we need to force all materials to update/
         // see https://stackoverflow.com/questions/16879378/adding-and-removing-three-js-lights-at-run-time
@@ -2099,10 +2168,14 @@ class FigureView extends widgets.DOMWidgetView {
     }
 
     update() {
-        // requestAnimationFrame stacks, so make sure multiple update calls only lead to 1 _real_update call
-        if (!this._update_requested) {
-            this._update_requested = true;
-            requestAnimationFrame(this._real_update.bind(this));
+        if(this.in_ar_mode) {
+            // xr will render continious (via XR api), so ignore
+        } else {
+            // requestAnimationFrame stacks, so make sure multiple update calls only lead to 1 _real_update call
+            if (!this._update_requested) {
+                    this._update_requested = true;
+                    requestAnimationFrame(this._real_update.bind(this));
+            }
         }
     }
 
@@ -2124,7 +2197,7 @@ class FigureView extends widgets.DOMWidgetView {
             scatter_view.uniforms.aspect.value = this.model.get('box_size');
         }
 
-        this.renderer.setClearColor(this.get_style_color("background-color"));
+        this.renderer.setClearColor(this.get_style_color("background-color"), this.get_style("background-opacity"));
         this.x_axis.visible = this.get_style("axes.x.visible axes.visible");
         this.y_axis.visible = this.get_style("axes.y.visible axes.visible");
         this.z_axis.visible = this.get_style("axes.z.visible axes.visible");
@@ -2294,7 +2367,7 @@ class FigureView extends widgets.DOMWidgetView {
                 } else {
                     return null;
                 }
-            }, this.model.get("style"));
+            }, this.in_ar_mode ? arStyle : this.model.get("style"));
             if (value_found !== null && value[0] === null) {
                 value[0] = value_found;
             }
@@ -2382,7 +2455,7 @@ class FigureView extends widgets.DOMWidgetView {
         (this.front_box_mesh.material as THREE.ShaderMaterial).side  = THREE.FrontSide;
         this.renderer.setRenderTarget(this.volume_front_target);
         this.renderer.clear(true, true, true);
-        this.renderer.render(this.scene, camera, this.volume_front_target);
+        this.renderer.render(this.scene, camera);
         this.front_box_mesh.visible = false;
 
 
@@ -2400,7 +2473,7 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.setRenderTarget(this.volume_back_target);
             this.renderer.clear(true, true, true);
             setVisible({volumes: true});
-            this.renderer.render(this.scene, camera, this.volume_back_target);
+            this.renderer.render(this.scene, camera);
             this.renderer.state.buffers.depth.setClear(1);
 
             // Color and depth render pass for volume rendering
@@ -2408,18 +2481,19 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.setRenderTarget(this.geometry_depth_target);
             this.renderer.clear(true, true, true);
             setVisible({volumes: false});
-            this.renderer.render(this.scene, camera, this.geometry_depth_target);
-            this.renderer.render(this.scene_opaque, camera, this.geometry_depth_target);
+            this.renderer.render(this.scene, camera);
+            this.renderer.render(this.scene_opaque, camera);
             this.renderer.autoClear = true;
         }
 
         // Normal color pass of geometry for final screen pass
         this.renderer.autoClear = false;
-        this.renderer.setRenderTarget(this.color_pass_target);
+        // in AR mode we directly need to render to the screen
+        this.renderer.setRenderTarget(this.in_ar_mode ? null : this.color_pass_target);
         this.renderer.clear(true, true, true);
         setVisible({volumes: false});
-        this.renderer.render(this.scene, camera, this.color_pass_target);
-        this.renderer.render(this.scene_opaque, camera, this.color_pass_target);
+        this.renderer.render(this.scene, camera);
+        this.renderer.render(this.scene_opaque, camera);
         this.renderer.autoClear = true;
 
         if (has_volumes) {
@@ -2435,7 +2509,7 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.setRenderTarget(this.color_pass_target);
             this.renderer.clear(false, true, false);
             setVisible({volumes: true});
-            this.renderer.render(this.scene, camera, this.color_pass_target);
+            this.renderer.render(this.scene, camera);
             this.renderer.autoClear = true;
             this.renderer.context.colorMask(true, true, true, true);
 
@@ -2450,7 +2524,7 @@ class FigureView extends widgets.DOMWidgetView {
             // threejs does not want to be called with all three false
             // this.renderer.clear(false, false, false);
             setVisible({volumes: true});
-            this.renderer.render(this.scene, camera, this.color_pass_target);
+            this.renderer.render(this.scene, camera);
             this.renderer.autoClear = true;
         }
 
@@ -2470,7 +2544,7 @@ class FigureView extends widgets.DOMWidgetView {
         this.renderer.setRenderTarget(this.coordinate_target);
         this.renderer.clear(true, true, true);
         setVisible({volumes: false});
-        this.renderer.render(this.scene, camera, this.coordinate_target);
+        this.renderer.render(this.scene, camera);
         this.renderer.autoClear = true;
 
         // id pass
@@ -2490,7 +2564,7 @@ class FigureView extends widgets.DOMWidgetView {
         this.renderer.setRenderTarget(this.id_pass_target);
         this.renderer.clear(true, true, true);
         setVisible({volumes: false});
-        this.renderer.render(this.scene, camera, this.id_pass_target);
+        this.renderer.render(this.scene, camera);
         this.renderer.autoClear = true;
 
         // now we render the weighted coordinate for the volumetric data
@@ -2508,7 +2582,7 @@ class FigureView extends widgets.DOMWidgetView {
             this.renderer.setRenderTarget(this.color_pass_target);
             this.renderer.clear(false, true, false);
             setVisible({volumes: true});
-            this.renderer.render(this.scene, camera, this.color_pass_target);
+            this.renderer.render(this.scene, camera);
             this.renderer.autoClear = true;
             this.renderer.context.colorMask(true, true, true, true);
 
@@ -2523,7 +2597,7 @@ class FigureView extends widgets.DOMWidgetView {
             // threejs does not want to be called with all three false
             // this.renderer.clear(false, false, false);
             setVisible({volumes: true});
-            this.renderer.render(this.scene, camera, this.coordinate_target);
+            this.renderer.render(this.scene, camera);
             this.renderer.autoClear = true;
 
         }
@@ -2538,24 +2612,26 @@ class FigureView extends widgets.DOMWidgetView {
             });
         }
 
-        if(this.model.get("show") == "Shadow") {
-            this._render_shadow();
-        } else {
-            // render to screen
-            this.screen_texture = {
-                render: this.color_pass_target,
-                front: this.volume_front_target,
-                back: this.volume_back_target,
-                // Geometry_back: this.geometry_depth_target,
-                coordinate: this.coordinate_target,
-                id: this.id_pass_target,
-            }[this.model.get("show")];
-            // TODO: remove any
-            this.screen_material.uniforms.tex.value = (this.screen_texture as any).texture;
+        if(!this.in_ar_mode) {
+            if(this.model.get("show") == "Shadow") {
+                this._render_shadow();
+            } else {
+                // render to screen
+                this.screen_texture = {
+                    render: this.color_pass_target,
+                    front: this.volume_front_target,
+                    back: this.volume_back_target,
+                    // Geometry_back: this.geometry_depth_target,
+                    coordinate: this.coordinate_target,
+                    id: this.id_pass_target,
+                }[this.model.get("show")];
+                // TODO: remove any
+                this.screen_material.uniforms.tex.value = (this.screen_texture as any).texture;
 
-            this.renderer.setRenderTarget(null);
-            this.renderer.clear(true, true, true);
-            this.renderer.render(this.screen_scene, this.screen_camera);
+                this.renderer.setRenderTarget(null);
+                this.renderer.clear(true, true, true);
+                this.renderer.render(this.screen_scene, this.screen_camera);
+            }
         }
         restoreVisible();
     }

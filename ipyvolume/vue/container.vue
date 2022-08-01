@@ -29,6 +29,12 @@
                     </v-expansion-panel-content>
                 </v-expansion-panel>
             </v-expansion-panels>
+            <div v-if="ar_supported">
+                <v-btn @click="startAR" outlined>
+                    <v-icon left>mdi-glasses</v-icon>
+                    start ar
+                </v-btn>
+            </div>
         </div>
     </div>
 </template>
@@ -44,13 +50,17 @@
 
 <script>
     module.export = {
-        created() {
+        async created() {
             console.log('created', this.$refs)
+            if ('xr' in navigator) {
+                const supported = await navigator.xr.isSessionSupported('immersive-ar')
+                this.ar_supported = supported;
+            }
         },
         mounted() {
             const figureComponent = this.$refs.figure;
             (async () => {
-                const figure = await this.viewCtx.getModelById(this.figure.substr(10));
+                const figure = await this.figureModel;
                 function bbproxy(model, attrs, widgetAttrs) {
                     const proxy = {}
 
@@ -109,7 +119,18 @@
                 this.$set(this.models, 'figure', bbproxy(figure, ["show"]));
             })();
         },
+        computed: {
+            figureModel() {
+                return this.viewCtx.getModelById(this.figure.substr(10))
+            }
+        },
         methods: {
+            getFigureModel() {
+                return
+            },
+            async startAR() {
+                (await this.figureModel).set('start_ar', true);
+            }
         }
     }
 
