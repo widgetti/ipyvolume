@@ -11,7 +11,7 @@ Try out in mybinder: [![Binder](http://mybinder.org/badge.svg)](https://beta.myb
 
 3d plotting for Python in the Jupyter notebook based on IPython widgets using WebGL.
 
-Ipyvolume currenty can
+Ipyvolume currently can
  * Do (multi) volume rendering.
  * Create scatter plots (up to ~1 million glyphs).
  * Create quiver plots (like scatter, but with an arrow pointing in a particular direction).
