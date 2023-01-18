@@ -10,7 +10,6 @@ import collections.abc
 import numpy as np
 import requests
 import IPython
-import zmq
 
 
 # https://stackoverflow.com/questions/14267555/find-the-smallest-power-of-2-greater-than-n-in-python
@@ -262,9 +261,10 @@ def grid_slice(amin, amax, shape, bmin, bmax):
 
 
 def get_ioloop():
+    from tornado.ioloop import IOLoop
     ipython = IPython.get_ipython()
     if ipython and hasattr(ipython, 'kernel'):
-        return zmq.eventloop.ioloop.IOLoop.instance()
+        return IOLoop.instance()
 
 
 def debounced(delay_seconds=0.5, method=False):
