@@ -1,16 +1,15 @@
 from __future__ import absolute_import
 
 import ipywidgets as widgets
-from traitlets import Unicode
 from bokeh.models import CustomJS
+from traitlets import Unicode
 
 import ipyvolume
-
 
 semver_range_frontend = "~" + ipyvolume._version.__version_js__
 
 
-@widgets.register('ipyvolume.WidgetManagerHack')
+@widgets.register
 class WidgetManagerHackModel(widgets.Widget):
     _model_name = Unicode('WidgetManagerHackModel').tag(sync=True)
     _model_module = Unicode('ipyvolume').tag(sync=True)
