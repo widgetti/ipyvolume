@@ -220,13 +220,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Conda environment with Micromamba
-        uses: mamba-org/provision-with-micromamba@main
+      - name: Install node
+        uses: actions/setup-node@v1
         with:
-            environment-file: environment-test.yml
-            environment-name: ipyvolume-test
-            extra-specs: |
-              python=${{ matrix.python-version }}
+          node-version: "14.x"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - uses: actions/download-artifact@v2
         with:
@@ -234,7 +237,7 @@ jobs:
           path: ./dist
 
       - name: Install JupyterLab 2
-        run: mamba install yarn jupyterlab=2 nodejs=14
+        run: pip install jupyterlab=2
 
       - name: Install the labextension
         run: jupyter labextension install dist/ipyvolume*.tgz --debug
