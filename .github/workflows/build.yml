@@ -237,7 +237,7 @@ jobs:
           path: ./dist
 
       - name: Install JupyterLab 2
-        run: pip install jupyterlab=2
+        run: pip install jupyterlab==2
 
       - name: Install the labextension
         run: jupyter labextension install dist/ipyvolume*.tgz --debug
