@@ -102,7 +102,8 @@ $ jupyter nbextension enable --py --user widgetsnbextension
 ```
 $ git clone https://github.com/maartenbreddels/ipyvolume.git
 $ cd ipyvolume
-$ pip install -e .
+$ pip install -e . notebook jupyterlab
+$ (cd js; npm run build)
 $ jupyter nbextension install --py --overwrite --symlink --sys-prefix ipyvolume
 $ jupyter nbextension enable --py --sys-prefix ipyvolume
 # for jupyterlab (>=3.0), symlink share/jupyter/labextensions/bqplot-image-gl
