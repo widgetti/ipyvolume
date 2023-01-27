@@ -92,7 +92,7 @@ setup(
         'requests',
         'ipyvuetify',
         'ipyvue>=1.7.0',
-        'pythreejs>=2.0.0',
+        'pythreejs>=2.4.0',
         'matplotlib'
     ],
     license='MIT',
