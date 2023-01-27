@@ -2,9 +2,9 @@
 
  * Update ipyvolume/_version.py
  * Update js/package.json
- * Add and commit, e.g. `git add -u; git commit -m 'Update to version 0.6.1'`
- * Tag: `git tag 0.6.1`
- * Release using push: `git push upstream master 0.6.1`
+ * Add and commit, e.g. `git add -u; git commit -m 'Update to version 0.6.0'`
+ * Tag: `git tag v0.6.0`
+ * Release using push: `git push upstream master v0.6.0`
 
 # Manual
 
