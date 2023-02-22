@@ -1,6 +1,6 @@
-import os
 import bz2
 import gzip
+import os
 import platform
 
 try:
@@ -10,10 +10,14 @@ except ImportError:
 
 import numpy as np
 
-osname = dict(darwin="osx", linux="linux", windows="windows")[platform.system().lower()]
+osname = platform.system().lower()
+osname = dict(darwin="osx", linux="linux", windows="windows").get(osname, osname)
 data_dir = os.path.expanduser("~/.ipyvolume/datasets")
 if not os.path.exists(data_dir):
-    os.makedirs(data_dir)
+    try:
+        os.makedirs(data_dir, exist_ok=True)
+    except Exception:
+        pass
 
 
 class UrlCached(object):
