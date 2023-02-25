@@ -75,7 +75,7 @@ else:
     cmdclass['jsdeps'] = skip_if_exists(jstargets, js_command)
 
 setup(
-    name=name,
+    name="ipyvolume",
     version=version,
     description='IPython widget for rendering 3d volumes',
     long_description=LONG_DESCRIPTION,
