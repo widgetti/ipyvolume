@@ -205,6 +205,7 @@ def figure(
     :param bool debug: show debug buttons or not
     :return: :any:`Figure`
     """
+    utils.colab_workarounds()
     if key is not None and key in current.figures:
         current.figure = current.figures[key]
         current.container = current.containers[key]
@@ -815,7 +816,6 @@ def quiver(
 def show(extra_widgets=[]):
     """Display (like in IPython.display.dispay(...)) the current figure."""
     gcf()  # make sure we have something..
-    utils.colab_workarounds()
     display(gcc())
     for widget in extra_widgets:
         display(widget)
