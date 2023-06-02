@@ -296,3 +296,41 @@ def debounced(delay_seconds=0.5, method=False):
         return execute
 
     return wrapped
+
+
+def environment() -> str:
+    # same as in reacton/utils.py
+    try:
+        module = get_ipython().__module__  # type: ignore
+        shell = get_ipython().__class__.__name__  # type: ignore
+    except NameError:
+        return "python"  # Probably standard Python interpreter
+    else:
+        if module == "google.colab._shell":
+            return "colab"
+        elif shell == "ZMQInteractiveShell":
+            return "jupyter"  # Jupyter notebook, lab or qtconsole
+        elif shell == "TerminalInteractiveShell":
+            return "ipython"  # Terminal running IPython
+        else:
+            return "unknown"  # Other type
+
+
+_colab_enabled_custom_widget_manager = False
+
+
+def colab_workarounds():
+    # similar as in reacton/core.py, but we know we will use ipyvue
+    if environment() == "colab":
+        import IPython.display  # type: ignore
+
+        global _colab_enabled_custom_widget_manager
+        if not _colab_enabled_custom_widget_manager:
+            from google.colab import output
+
+            output.enable_custom_widget_manager()
+            _colab_enabled_custom_widget_manager = True
+        import ipyvue
+
+        # make sure jupyter-vue is loaded in the colab iframe
+        IPython.display.display(ipyvue.Html(tag="span", style_="display: none"))

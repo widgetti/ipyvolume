@@ -815,6 +815,7 @@ def quiver(
 def show(extra_widgets=[]):
     """Display (like in IPython.display.dispay(...)) the current figure."""
     gcf()  # make sure we have something..
+    utils.colab_workarounds()
     display(gcc())
     for widget in extra_widgets:
         display(widget)
