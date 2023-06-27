@@ -386,5 +386,6 @@ nbsphinx_thumbnails = {
     'examples/popup': 'examples/screenshot/ipyvolume-popup-legend-iris.gif',
     'examples/lighting': 'examples/screenshot/volume-rendering-specular.gif',
     'examples/slice': 'examples/screenshot/ipyvolume-slice-head.gif',
+    'examples/volume-clipping': 'examples/screenshot/volume-clip.gif',
 }
 exclude_patterns = ['**.ipynb_checkpoints']
