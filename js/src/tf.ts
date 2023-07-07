@@ -3,6 +3,8 @@ import * as widgets from "@jupyter-widgets/base";
 import {default as ndarray_pack} from "ndarray-pack";
 import * as serialize from "./serialize.js";
 import {semver_range} from "./utils";
+import _ from "underscore";
+import * as THREE from "three";
 
 export
 class TransferFunctionView extends widgets.DOMWidgetView {
@@ -108,6 +110,53 @@ class TransferFunctionJsBumpsModel extends TransferFunctionModel {
             rgba.push(color);
         }
         this.set("rgba", rgba);
+        this.save_changes();
+    }
+}
+
+export
+class TransferFunctionDiscreteModel extends TransferFunctionModel {
+
+    constructor(...args) {
+        super(...args);
+        this.on("change:colors", this.recalculate_rgba, this);
+        this.on("change:opacities", this.recalculate_rgba, this);
+        this.on("change:enabled", this.recalculate_rgba, this);
+        this.recalculate_rgba();
+    }
+    defaults() {
+        return {
+            ...super.defaults(),
+            _model_name : "TransferFunctionDiscreteModel",
+            color: ["red", "#0f0"],
+            opacities: [0.01, 0.01],
+            enabled: [true, true],
+        };
+    }
+
+    recalculate_rgba() {
+        const rgba = [];
+        const colors = _.map(this.get("colors"), (color : string) => {
+            return (new THREE.Color(color)).toArray();
+        });
+        const enabled = this.get("enabled");
+        const opacities = this.get("opacities");
+        (window as any).rgba = rgba;
+        (window as any).tfjs = this;
+        const N = colors.length;
+        for (let i = 0; i < N; i++) {
+            const color = [...colors[i], opacities[i]]; // red, green, blue and alpha
+            color[3] = Math.min(1, color[3]); // clip alpha
+            if(!enabled[i]) {
+                color[3] = 0;
+            }
+            rgba.push(color);
+        }
+        // because we want the shader to sample the center pixel, if we add one extra pixel in the texture
+        // all samples should be shiften by epsilon so the sample the center of the transfer function
+        rgba.push([0, 0, 0, 0]);
+        const rgba_array = ndarray_pack(rgba);
+        this.set("rgba", rgba_array);
         this.save_changes();
     }
 }

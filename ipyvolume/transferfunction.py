@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import
 
-__all__ = ['TransferFunction', 'TransferFunctionJsBumps', 'TransferFunctionWidgetJs3', 'TransferFunctionWidget3']
+__all__ = ['TransferFunction', 'TransferFunctionDiscrete', 'TransferFunctionJsBumps', 'TransferFunctionWidgetJs3', 'TransferFunctionWidget3']
 
 import numpy as np
 import ipywidgets as widgets  # we should not have widgets under two names
@@ -12,6 +12,7 @@ from traittypes import Array
 
 import ipyvolume._version
 from ipyvolume import serialize
+import ipyvuetify as v
 
 
 N = 1024
@@ -26,9 +27,27 @@ class TransferFunction(widgets.DOMWidget):
     _model_module = Unicode('ipyvolume').tag(sync=True)
     _view_module = Unicode('ipyvolume').tag(sync=True)
     style = Unicode("height: 32px; width: 100%;").tag(sync=True)
+    # rgba should be a 2d array of shape (N, 4), where the last dimension is the rgba value
+    # with values between 0 and 1
     rgba = Array(default_value=None, allow_none=True).tag(sync=True, **serialize.ndarray_serialization)
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+
+
+class TransferFunctionDiscrete(TransferFunction):
+    _model_name = Unicode('TransferFunctionDiscreteModel').tag(sync=True)
+    colors = traitlets.List(traitlets.Unicode(), default_value=["red", "#0f0"]).tag(sync=True)
+    opacities = traitlets.List(traitlets.CFloat(), default_value=[0.01, 0.01]).tag(sync=True)
+    enabled = traitlets.List(traitlets.Bool(), default_value=[True, True]).tag(sync=True)
+    labels = traitlets.List(traitlets.Unicode(), default_value=["label1", "label2"]).tag(sync=True)
+
+    def control(self):
+        return TransferFunctionDiscreteView(tf=self)
+
+
+class TransferFunctionDiscreteView(v.VuetifyTemplate):
+    template_file = (__file__, 'vue/tf_discrete.vue')
+    tf = traitlets.Instance(TransferFunctionDiscrete).tag(sync=True, **widgets.widget_serialization)
 
 
 class TransferFunctionJsBumps(TransferFunction):

@@ -9,8 +9,8 @@ import numpy as np
 import pytest
 
 import ipyvolume
-import ipyvolume.pylab as p3
 import ipyvolume as ipv
+import ipyvolume.pylab as p3
 import ipyvolume.examples
 import ipyvolume.datasets
 import ipyvolume.utils
@@ -301,6 +301,15 @@ def test_volshow():
     p3.volshow(x * y * z, opacity=1)
     p3.volshow(x * y * z, level_width=1)
     p3.save("tmp/ipyolume_volume.html")
+
+
+def test_volshow_discrete():
+    boolean_volume = np.random.random((10, 10, 10)) > 0.5
+    ipv.figure()
+    vol = ipv.volshow(boolean_volume)
+    assert isinstance(vol.tf, ipyvolume.TransferFunctionDiscrete)
+    assert len(vol.tf.colors) == 2
+    # int8_volume = np.random.randint(0, 255, size=(10, 10, 10), dtype=np.uint8)
 
 
 def test_volshow_max_shape():

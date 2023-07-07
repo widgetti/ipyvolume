@@ -3,6 +3,8 @@
 from __future__ import absolute_import
 from __future__ import division
 import pythreejs
+from typing import List, Union
+
 
 __all__ = [
     'current',
@@ -29,6 +31,7 @@ __all__ = [
     'animation_control',
     'gcc',
     'transfer_function',
+    'transfer_function_discrete',
     'plot_isosurface',
     'volshow',
     'save',
@@ -894,6 +897,48 @@ def gcc():
     return current.container
 
 
+def transfer_function_discrete(
+    n,
+    colors: List[str] = ["red", "green", "blue"],
+    labels: Union[None, List[str]] = None,
+    opacity: Union[float, List[float]] = 0.1,
+    enabled: Union[bool, List[bool]] = True,
+    controls=True,
+):
+    """Create a discrete transfer function with n layers.
+
+    Each (integer) value of the volumetric data maps to a single color.
+
+    :param n: number of layers
+    :param colors: list of colors, can be any valid HTML color string
+    :param labels: list of labels, if None, labels will be "Layer 0", "Layer 1", etc.
+    :param opacity: opacity of each layer, can be a single value or a list of values
+    :param enabled: whether each layer is enabled, can be a single value or a list of values
+    :param controls: whether to add the controls to the current container
+
+    """
+    if isinstance(opacity, float):
+        opacity = [opacity] * len(colors)
+    if isinstance(enabled, bool):
+        enabled = [enabled] * len(colors)
+
+    def ensure_length(x):
+        repeat = (n + len(colors) - 1) // len(colors)
+        return (x * repeat)[:n]
+
+    if labels is None:
+        labels = []
+        for i in range(n):
+            labels.append(f"Layer {i}")
+
+    tf = ipv.TransferFunctionDiscrete(colors=ensure_length(colors), opacities=ensure_length(opacity), enabled=ensure_length(enabled), labels=ensure_length(labels))
+    gcf()  # make sure a current container/figure exists
+    if controls:
+        current.container.children = [tf.control()] + current.container.children
+
+    return tf
+
+
 def transfer_function(
     level=[0.1, 0.5, 0.9], opacity=[0.01, 0.05, 0.1], level_width=0.1, controls=True, max_opacity=0.2
 ):
@@ -1029,8 +1074,7 @@ def volshow(
 ):
     """Visualize a 3d array using volume rendering.
 
-    Currently only 1 volume can be rendered.
-
+    If the data is of type int8 or bool, :any:`a discrete transfer function will be used <ipv.discrete_transfer_function>`
 
     :param data: 3d numpy array
     :param origin: origin of the volume data, this is to match meshes which have a different origin
@@ -1040,7 +1084,7 @@ def volshow(
     :param float data_max: maximum value to consider for data, if None, computed using np.nanmax
     :parap int max_shape: maximum shape for the 3d cube, if larger, the data is reduced by skipping/slicing (data[::N]),
                           set to None to disable.
-    :param tf: transfer function (or a default one)
+    :param tf: transfer function (or a default one, based on the data)
     :param bool stereo: stereo view for virtual reality (cardboard and similar VR head mount)
     :param ambient_coefficient: lighting parameter
     :param diffuse_coefficient: lighting parameter
@@ -1060,12 +1104,18 @@ def volshow(
     """
     fig = gcf()
 
-    if tf is None:
-        tf = transfer_function(level, opacity, level_width, controls=controls, max_opacity=max_opacity)
     if data_min is None:
         data_min = np.nanmin(data)
     if data_max is None:
         data_max = np.nanmax(data)
+    if tf is None:
+        if (data.dtype == np.uint8) or (data.dtype == bool):
+            if data.dtype == bool:
+                data_max = 1
+
+            tf = transfer_function_discrete(n=data_max + 1)
+        else:
+            tf = transfer_function(level, opacity, level_width, controls=controls, max_opacity=max_opacity)
     if memorder == 'F':
         data = data.T
 
