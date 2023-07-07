@@ -24,3 +24,4 @@ vaex-viz
 docutils==0.17.1
 bokeh
 ipython_genutils
+pydantic<2
