@@ -15,6 +15,8 @@ Examples
    examples/lighting
    examples/popup
    examples/slice
+   examples/slice
+   examples/volume-clipping
 
 Feel free to contribute new examples:
 

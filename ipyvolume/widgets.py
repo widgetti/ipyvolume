@@ -193,6 +193,13 @@ class Volume(widgets.Widget, LegendData):
     extent = traitlets.Any().tag(sync=True)
     extent_original = traitlets.Any()
 
+    clip_x_min = traitlets.CFloat(None, allow_none=True).tag(sync=True)
+    clip_x_max = traitlets.CFloat(None, allow_none=True).tag(sync=True)
+    clip_y_min = traitlets.CFloat(None, allow_none=True).tag(sync=True)
+    clip_y_max = traitlets.CFloat(None, allow_none=True).tag(sync=True)
+    clip_z_min = traitlets.CFloat(None, allow_none=True).tag(sync=True)
+    clip_z_max = traitlets.CFloat(None, allow_none=True).tag(sync=True)
+
     def __init__(self, **kwargs):
         super(Volume, self).__init__(**kwargs)
         self._update_data()

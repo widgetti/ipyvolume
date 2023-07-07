@@ -118,6 +118,9 @@ class VolumeView extends widgets.WidgetView {
             this.renderer.rebuild_multivolume_rendering_material();
             this.renderer.update();
         });
+        this.model.on("change:clip_x_min change:clip_x_max change:clip_y_min change:clip_y_max change:clip_z_min change:clip_z_max", () => {
+            this.renderer.update();
+        });
 
         (window as any).last_volume = this; // for debugging purposes
 
@@ -168,6 +171,7 @@ class VolumeModel extends widgets.WidgetModel {
     };
 
     volume: any;
+    scales?: any;
     texture_volume: THREE.DataTexture;
     uniform_volumes_values: {
         data_range?: any,
@@ -321,13 +325,26 @@ class VolumeModel extends widgets.WidgetModel {
         return this.get("rendering_method") === "NORMAL";
     }
     set_scales(scales) {
-        const sx = createD3Scale(scales.x).range([0, 1]);
-        const sy = createD3Scale(scales.y).range([0, 1]);
-        const sz = createD3Scale(scales.z).range([0, 1]);
+        this.scales = scales;
+        this.update_geometry();
+    }
+    update_geometry() {
+        const sx = createD3Scale(this.scales.x).range([0, 1]);
+        const sy = createD3Scale(this.scales.y).range([0, 1]);
+        const sz = createD3Scale(this.scales.z).range([0, 1]);
 
         const extent = this.get("extent");
 
-       // normalized coordinates of the corners of the box
+        // return v, of the clipped value
+        const or_clip = (v, name) => {
+            const clip_value = this.get("clip_" + name);
+            if ((clip_value === undefined) || (clip_value === null)) {
+                return v;
+            }
+            return clip_value;
+        }
+
+        // normalized coordinates of the corners of the box
         const x0n = sx(extent[0][0]);
         const x1n = sx(extent[0][1]);
         const y0n = sy(extent[1][0]);
@@ -335,13 +352,15 @@ class VolumeModel extends widgets.WidgetModel {
         const z0n = sz(extent[2][0]);
         const z1n = sz(extent[2][1]);
 
-        // clipped coordinates
-        const cx0 = Math.max(x0n,  0);
-        const cx1 = Math.min(x1n,  1);
-        const cy0 = Math.max(y0n,  0);
-        const cy1 = Math.min(y1n,  1);
-        const cz0 = Math.max(z0n,  0);
-        const cz1 = Math.min(z1n,  1);
+        // normalized coordinates of the corners of the box
+        // including the custom clipping, and viewport clipping
+        const cx0 = Math.max(sx(or_clip(extent[0][0], "x_min")), 0);
+        const cx1 = Math.min(sx(or_clip(extent[0][1], "x_max")), 1);
+        const cy0 = Math.max(sy(or_clip(extent[1][0], "y_min")), 0);
+        const cy1 = Math.min(sy(or_clip(extent[1][1], "y_max")), 1);
+        const cz0 = Math.max(sz(or_clip(extent[2][0], "z_min")), 0);
+        const cz1 = Math.min(sz(or_clip(extent[2][1], "z_max")), 1);
+
 
         // the clipped coordinates back to world space, then normalized to extend
         // these are example calculations, the transform goes into scale and offset uniforms below

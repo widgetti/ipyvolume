@@ -12,7 +12,9 @@
                 <v-expansion-panel>
                     <v-expansion-panel-header>Misc</v-expansion-panel-header>
                     <v-expansion-panel-content>
-                        <jupyter-widget v-for="child in children" :key="child" :widget="child"></jupyter-widget>
+                        <div>
+                            <jupyter-widget v-for="child in children" :key="child" :widget="child"></jupyter-widget>
+                        </div>
                     </v-expansion-panel-content>
                 </v-expansion-panel>
                 <v-expansion-panel>
