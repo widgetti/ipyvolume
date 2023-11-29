@@ -192,6 +192,7 @@ def figure(
     controls_vr=False,
     controls_light=False,
     debug=False,
+    show_side_panel=True,
     **kwargs
 ):
     """Create a new figure if no key is given, or return the figure associated with key.
@@ -203,6 +204,7 @@ def figure(
     :param bool controls: show controls or not
     :param bool controls_vr: show controls for VR or not
     :param bool debug: show debug buttons or not
+    :param bool show_side_panel: show side panel (containing legend, misc, and debug) or not
     :return: :any:`Figure`
     """
     utils.colab_workarounds()
@@ -218,7 +220,7 @@ def figure(
         current.figure = ipv.Figure(width=width, height=height, **kwargs)
         current.material = None
         legend = ui.Legend(figure=current.figure)
-        current.container = ui.Container(figure=current.figure, legend=legend)
+        current.container = ui.Container(figure=current.figure, legend=legend, show_side_panel=show_side_panel)
 
         current.container.children = []
         if key is None:
