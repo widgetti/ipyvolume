@@ -1,7 +1,7 @@
 <template>
     <div class="ipyvolume-container-root">
         <jupyter-widget ref="figure" :widget="figure"></jupyter-widget>
-        <div class=ipyvolume-container-controls>
+        <div v-if="show_side_panel" class=ipyvolume-container-controls>
             <v-expansion-panels accordion multiple v-model="panels" flat>
                 <v-expansion-panel>
                     <v-expansion-panel-header>Legend</v-expansion-panel-header>
