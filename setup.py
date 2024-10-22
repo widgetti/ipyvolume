@@ -90,6 +90,7 @@ setup(
         'Pillow',
         'ipywebrtc',
         'requests',
+        'ipython_genutils',
         'ipyvuetify',
         'ipyvue>=1.7.0',
         'pythreejs>=2.4.0',
