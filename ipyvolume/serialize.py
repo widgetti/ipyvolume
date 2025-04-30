@@ -99,7 +99,10 @@ def _cube_to_tiles(grid, vmin, vmax):
                 subdata = data[y2d * Im.shape[0] : (y2d + 1) * Im.shape[0], x2d * Im.shape[1] : (x2d + 1) * Im.shape[1]]
                 subdata[..., 3] = (Im * 255).astype(np.uint8)
                 for i in range(3):
-                    subdata[..., i] = ((gradient[i][zindex] / 2.0 + 0.5) * 255).astype(np.uint8)
+                    subdata[..., i] = np.clip(np.nan_to_num(
+                      (gradient[i][zindex] / 2.0 + 0.5) * 255,
+                      nan=0, posinf=255, neginf=0), 0, 255
+                    ).astype(np.uint8)
                     # for i in range(3):
                     # 	subdata[...,i+1] = subdata[...,0]
     tile_shape = (grid.shape[2], grid.shape[1])
